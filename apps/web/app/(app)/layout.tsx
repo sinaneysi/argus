@@ -1,18 +1,17 @@
 import { cookies } from "next/headers";
 import { logout } from "@/app/actions";
 import { Commands } from "@/components/Commands";
-import { Sidebar } from "@/components/Sidebar";
-import { TopBar } from "@/components/TopBar";
+import { Navigate } from "@/components/Soft";
 import "@/components/settings.css";
 import { RAIL_COOKIE } from "@/lib/names";
-import { apiGet, csrfToken, currentUrl, requireMe } from "@/lib/server";
-import type { Nav, Status } from "@/lib/types";
+import { csrfToken, currentUrl, shellMe, shellNav } from "@/lib/server";
 import "./shell.css";
 import { Button } from "@/components/ui/button";
 
-// The app shell (DESIGN.md 3.1): sidebar | top bar over the page. Every page under it needs a session.
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const me = await requireMe();
+// The app shell (DESIGN.md 3.1): sidebar | top bar over the page. Every page under it needs a session. The sidebar and the
+// top bar are the slots `side` and `top` (components/Shell.tsx): they follow a client navigation, this layout does not.
+export default async function AppLayout({ children, side, top }: { children: React.ReactNode; side: React.ReactNode; top: React.ReactNode }) {
+  const me = await shellMe();
   const url = await currentUrl();
   const path = url.split("?")[0] ?? "/";
   // No shell for a session that must change its password or enrol first: the API refuses what the shell would show. None on
@@ -25,21 +24,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </>
     );
   }
-  const [nav, status] = await Promise.all([apiGet<Nav>("/api/v1/nav"), apiGet<Status>("/api/v1/status")]);
+  const nav = await shellNav();
   const rail = (await cookies()).get(RAIL_COOKIE)?.value === "on";
   return (
     <>
       {me.demo && me.demoBanner ? <p className="demo-strip" role="note"><strong>Demo</strong> {me.demoBanner}</p> : null}
       <div className="shell" data-rail={rail ? "on" : undefined}>
-        <Sidebar me={me} nav={nav.data} path={path} rail={rail} />
+        {side}
         <div className="canvas">
-          <TopBar nav={nav.data} status={status.status === 200 ? status.data : null} path={path} />
+          {top}
           <main id="main" tabIndex={-1} className="page">
             {children}
           </main>
         </div>
       </div>
       <Commands nav={nav.data} admin={me.role === "admin"} />
+      <Navigate />
     </>
   );
 }

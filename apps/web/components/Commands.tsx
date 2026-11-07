@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { actionCommands, goCommands, keyName, ROWS, SHORTCUTS_OFF, type ActionId } from "@/lib/shortcuts";
 import type { Nav } from "@/lib/types";
@@ -28,6 +29,7 @@ function moveRow(step: number) {
 
 /** Ctrl K, the g jumps, the single-key actions and the shortcut list (DESIGN.md 3.23). Mounted once in the app shell. */
 export function Commands({ nav, admin }: { nav: Nav; admin: boolean }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [help, setHelpOpen] = useState(false);
@@ -52,16 +54,16 @@ export function Commands({ nav, admin }: { nav: Nav; admin: boolean }) {
 
   const run = useCallback((id: ActionId) => {
     switch (id) {
-      case "new-task": location.assign("/board/new"); break;
-      case "ask": location.assign("/board/ask"); break;
+      case "new-task": router.push("/board/new"); break;
+      case "ask": router.push("/board/ask"); break;
       case "find": {
         const input = document.querySelector<HTMLInputElement>("[data-side-search] input[type=search]");
-        if (input?.getClientRects().length) input.focus(); else location.assign(nav.search.action);
+        if (input?.getClientRects().length) input.focus(); else router.push(nav.search.action);
         break;
       }
       case "replan": {
         const b = document.querySelector<HTMLButtonElement>("[data-cmd=replan] button");
-        if (!b) location.assign("/today");
+        if (!b) router.push("/today");
         else if (confirm("Re-plan today? Argus collects everything again and refills the day.")) b.click();
         break;
       }
@@ -76,7 +78,7 @@ export function Commands({ nav, admin }: { nav: Nav; admin: boolean }) {
         return !on;
       }); break;
     }
-  }, [nav.search.action, setHelp]);
+  }, [nav.search.action, setHelp, router]);
 
   const live = useRef({ go, actions, run, singleKeys, open });
   live.current = { go, actions, run, singleKeys, open };
@@ -94,7 +96,7 @@ export function Commands({ nav, admin }: { nav: Nav; admin: boolean }) {
       if (jumpAt && Date.now() - jumpAt < JUMP_MS) {
         jumpAt = 0;
         const hit = s.go.find((c) => c.keys === `g ${e.key}`);
-        if (hit) { e.preventDefault(); location.assign(hit.href); }
+        if (hit) { e.preventDefault(); router.push(hit.href); }
         return;
       }
       if (e.key === "g") { jumpAt = Date.now(); return; }
@@ -111,7 +113,7 @@ export function Commands({ nav, admin }: { nav: Nav; admin: boolean }) {
     document.addEventListener("keydown", onKey);
     document.addEventListener("click", onClick);
     return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("click", onClick); };
-  }, [showPalette]);
+  }, [showPalette, router]);
 
   return (
     <>
