@@ -1,12 +1,13 @@
 // Server-only helpers: API reads with the visitor's cookies, writes from server actions that pass the API's cookies
 // back to the browser, the CSRF token for forms, and the one-shot flash banner.
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiCall, type ApiResponse } from "./api";
 import { parseSetCookie } from "./cookies";
 import { CSRF_COOKIE, FLASH_COOKIE } from "./names";
-import type { Banner, Me } from "./types";
+import type { Banner, Me, Nav, Status } from "./types";
 
 /** The request's headers with the cookies as they stand now: an action that rotated the session re-renders the page in
  * the same response, and the request's own Cookie header still holds the token the API just ended. */
@@ -96,3 +97,9 @@ export async function requireMe(): Promise<Me> {
   if (r.data.mfa.enrolRequired && path !== "/account/2fa") redirect("/account/2fa?next=" + encodeURIComponent(url));
   return r.data;
 }
+
+/** What the app shell needs, read once per request: the layout and its sidebar and top bar slots (app/(app)/@side, @top)
+ * share it on a document load, and the slots read it alone on a client navigation. */
+export const shellMe = cache(requireMe);
+export const shellNav = cache(() => apiGet<Nav>("/api/v1/nav"));
+export const shellStatus = cache(() => apiGet<Status>("/api/v1/status"));

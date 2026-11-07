@@ -47,7 +47,7 @@ export function ThemeForm({ cur, csrf, back, compact, themes, action }: { cur: s
     if (v === "light" || v === "dark") html.setAttribute("data-theme", v);
     else html.removeAttribute("data-theme");
     setT(v);
-    // The shell is not re-rendered by a client navigation, so its own copy of the URL can be old: send the one shown.
+    // Send the URL shown: it is the page the choice is saved from, whatever the server rendered first.
     if (backRef.current) backRef.current.value = location.pathname + location.search;
   }
   return (

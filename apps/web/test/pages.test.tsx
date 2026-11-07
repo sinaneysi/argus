@@ -25,6 +25,9 @@ vi.mock("@/lib/server", () => ({
   readFlash: vi.fn(async () => null),
   currentUrl: vi.fn(async () => "/today"),
   requireMe: vi.fn(async () => me),
+  shellMe: vi.fn(async () => me),
+  shellNav: vi.fn(async () => ({ ...answers["/api/v1/nav"]!, setCookies: [] })),
+  shellStatus: vi.fn(async () => ({ ...(answers["/api/v1/status"] ?? { status: 404, data: null }), setCookies: [] })),
   field: vi.fn(),
   formCsrf: vi.fn(),
   setFlash: vi.fn(),
@@ -33,12 +36,19 @@ const railCookie = { value: undefined as string | undefined };
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => (railCookie.value ? { value: railCookie.value } : undefined) }),
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => null,
+vi.mock("next/navigation", () => ({ usePathname: () => null, useRouter: () => ({ push: vi.fn() }),
   redirect: (to: string) => {
     throw new Error("REDIRECT " + to);
   },
 }));
 vi.mock("@/components/ThemeSwitch", () => ({ ThemeSwitch: () => <form className="theme" /> }));
+
+/** The app layout with its two slots, as Next renders it on a document load. */
+async function shell(): Promise<string> {
+  const { default: Layout } = await import("@/app/(app)/layout");
+  const { ShellSide, ShellTop } = await import("@/components/Shell");
+  return html(Layout({ children: <p>body</p>, side: <ShellSide />, top: <ShellTop /> }));
+}
 
 beforeEach(() => {
   for (const k of Object.keys(answers)) delete answers[k];
@@ -187,8 +197,7 @@ describe("pages", () => {
   it("the shell lists the six groups and the freshness pill", async () => {
     answers["/api/v1/nav"] = { status: 200, data: nav };
     answers["/api/v1/status"] = { status: 200, data: status };
-    const { default: Layout } = await import("@/app/(app)/layout");
-    const out = await html(Layout({ children: <p>body</p> }));
+    const out = await shell();
     for (const g of ["Home", "Incidents", "Infrastructure", "Delivery", "Work", "Agent"]) expect(out).toContain(`>${g}<`);
     expect(out).toContain("Data as of");
     expect(out).toContain('aria-current="page"');
@@ -203,8 +212,7 @@ describe("pages", () => {
     answers["/api/v1/nav"] = { status: 200, data: nav };
     answers["/api/v1/status"] = { status: 200, data: status };
     railCookie.value = "on";
-    const { default: Layout } = await import("@/app/(app)/layout");
-    const out = await html(Layout({ children: <p>body</p> }));
+    const out = await shell();
     railCookie.value = undefined;
     expect(out).toContain('data-rail="on"');
     expect((out.match(/<details[^>]*open/g) ?? []).length).toBe(nav.groups.length);

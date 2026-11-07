@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { searchHref, type ActionCommand, type ActionId, type GoCommand } from "@/lib/shortcuts";
 import type { Nav } from "@/lib/types";
@@ -25,6 +26,7 @@ function hit(e: Entry, search: string): boolean {
 export default function Palette({ open, onOpen, nav, go, actions, run }: {
   open: boolean; onOpen: (on: boolean) => void; nav: Nav; go: GoCommand[]; actions: ActionCommand[]; run: (id: ActionId) => void;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [incidents, setIncidents] = useState<Incident[]>([]);
 
@@ -52,7 +54,7 @@ export default function Palette({ open, onOpen, nav, go, actions, run }: {
   const change = (on: boolean) => { onOpen(on); if (!on) setSearch(""); };
   const pick = (e: Entry) => {
     change(false);
-    if (e.href) location.assign(e.href);
+    if (e.href) router.push(e.href);
     else if (e.action) run(e.action);
   };
 
@@ -75,7 +77,7 @@ export default function Palette({ open, onOpen, nav, go, actions, run }: {
               </CommandGroup>
             ))}
             {groups.length ? null : (
-              <CommandItem value="search" onSelect={() => { change(false); location.assign(searchHref(nav, search)); }}>
+              <CommandItem value="search" onSelect={() => { change(false); router.push(searchHref(nav, search)); }}>
                 <span className="inline-flex text-link"><Icon name="search" size={18} /></span>
                 <span className="min-w-0 flex-1 truncate" dir="auto">Search Inventory for “{search}”</span>
               </CommandItem>
