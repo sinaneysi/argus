@@ -595,6 +595,7 @@ checked against this list before they merge. `demo/layout-sweep.mjs` catches the
 | `shrink-0` on Button overflowed at 390px | no fixed-width or non-shrinking utilities on shared primitives; check 390px. *sweep* |
 | A catch-all route swallowed fallback rewrites | catch-all and not-found routes run after rewrites (`afterFiles`) |
 | React #418 hydration errors on slow networks | keep `lib/hydrate-after-parse.ts`; recheck it after any Next upgrade |
+| A native file input: a text box with the browser's grey "Choose File" button inside (Kubernetes upload) | file fields use the shared `input[type="file"]` style in `base.css`: a dashed drop zone with an outline button; never restyle one per page |
 | Copy with internal or company names | product words only (Argus, "chat", "cache edge"); the leak check enforces it |
 | Status shown by colour alone, or a new icon set per page | severity is the signal-bar glyph from `Severity.tsx`; status is tint + word + glyph (§7) |
 
