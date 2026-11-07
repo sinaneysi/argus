@@ -141,9 +141,12 @@ a.tile:hover { text-decoration: none; }
 @media (min-width: 1500px) {
   main.page > .stack:not(:has(.tablewrap, .l-table)) { display: block; columns: 2; column-gap: var(--gap); }
   main.page > .stack:not(:has(.tablewrap, .l-table)) > * { break-inside: avoid; margin: 0 0 var(--gap); }
+  /* a message belongs to the whole page: it spans both columns, so the two columns start level */
+  main.page > .stack:not(:has(.tablewrap, .l-table)) > .banner { column-span: all; }
 }
 @media (min-width: 1700px) {
   .detail > .stack:not(:has(.tablewrap, .l-table)) { display: block; columns: 2; column-gap: var(--gap); }
+  .detail > .stack:not(:has(.tablewrap, .l-table)) > .banner { column-span: all; }
   .detail > .stack:not(:has(.tablewrap, .l-table)) > * { break-inside: avoid; margin: 0 0 var(--gap); }
   .detail > article.plain-card:not(.h-doc) > .md { display: block; columns: 2; column-gap: var(--s6); }
   .detail > article.plain-card:not(.h-doc) > .md > * { break-inside: avoid; margin-top: 0; margin-bottom: 10px; }

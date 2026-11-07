@@ -599,6 +599,7 @@ checked against this list before they merge. `demo/layout-sweep.mjs` catches the
 | After a client navigation the sidebar and top bar still showed the old page (current link, open group, crumb, counts, freshness) | a layout is not re-rendered by a client navigation: anything in the shell that depends on the page is a parallel route slot (`app/(app)/@side`, `@top`, `components/Shell.tsx`), never computed in `layout.tsx`; shared reads go through the `cache()`d `shell*` helpers in `lib/server.ts` |
 | React #418 hydration errors on slow networks | keep `lib/hydrate-after-parse.ts`; recheck it after any Next upgrade |
 | A native file input: a text box with the browser's grey "Choose File" button inside (Kubernetes upload) | file fields use the shared `input[type="file"]` style in `base.css`: a dashed drop zone with an outline button; never restyle one per page |
+| A flash message inside the first column of a two-column page pushed that column down, so the columns no longer started level (Settings → Claude) | messages (`.banner`) span every column (`column-span: all`) and sit above the cards; never inside one column |
 | Copy with internal or company names | product words only (Argus, "chat", "cache edge"); the leak check enforces it |
 | Status shown by colour alone, or a new icon set per page | severity is the signal-bar glyph from `Severity.tsx`; status is tint + word + glyph (§7) |
 
