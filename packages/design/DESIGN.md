@@ -247,7 +247,7 @@ A page with a Help section has a small "?" link 8px after its title (`HelpQ`), h
   a `<select>` in a GET form with an Apply button (which may hide when a script submits on change). Search is a pill
   field (160 to 280px, it gives way first). Reset is an icon-only ghost button (rotate-ccw), disabled while no filter is
   active, so the bar never shifts. The bar fits one line at 1440px: the result count is not shown in it (screen readers
-  hear it as a status; the pager and the counts in each option carry it). The Review queue keeps its "61 waiting · ~2 h".
+  hear it as a status; the pager and the counts in each option carry it). The Review queue shows its total and time estimate in the header status line.
 - **States:** default; active (non-default value) = `--accent-soft` fill, `--accent-soft-fg` value; menu open; focus;
   phone (wraps, search full width first). A disabled filter is never shown: omit it.
 - **Rule:** only filters the server implements end to end.

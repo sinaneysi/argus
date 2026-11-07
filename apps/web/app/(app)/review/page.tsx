@@ -321,8 +321,10 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
             );
           })}
           <Button variant="outline">Apply</Button>
-          {active ? <a data-slot="button" className={buttonVariants({ variant: "ghost" })} href={href({ kind: q.kind })}><Icon name="reset" />Reset</a> : <Button type="button" variant="ghost" disabled><Icon name="reset" />Reset</Button>}
-          <span className="f-meta num">{d.filtered ? `${d.matched} of ${d.kindTotal}` : `${d.matched}`} {d.admin ? <>waiting · ~{minutes(d.estMin)}</> : "waiting"}</span>
+          {active ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href={href({ kind: q.kind })} title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></a>
+            : <Button type="button" variant="ghost" size="icon" disabled title="No filter to reset" aria-label="Reset the filters"><Icon name="reset" /></Button>}
+          {/* the header's status line shows the total and the estimate; the bar fits one line (DESIGN.md §3.5) */}
+          <span className="sr" role="status">{d.filtered ? `${d.matched} of ${d.kindTotal}` : `${d.matched}`} waiting</span>
         </form>
       ) : null}
       {d.kindTotal > 0 ? <p className={cn("mt-2.5 mb-4 text-sm text-muted-foreground", away)}>{d.order}</p> : null}
