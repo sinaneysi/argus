@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 const FIELDS = ["action", "item", "reason", "minutes", "days", "focus_min", "max_items", "max_risky"] as const;
 
@@ -15,7 +15,7 @@ export async function todayAct(fd: FormData): Promise<void> {
     if (v !== "") body[k] = v;
   }
   const r = await apiPost<{ ok?: boolean; redirect?: string }>("/api/v1/today/act", body, formCsrf(fd));
-  if (r.status === 200 && r.data.redirect) redirect(safeNext(r.data.redirect, "/today"));
+  if (r.status === 200 && r.data.redirect) return back(safeNext(r.data.redirect, "/today"));
   const up = stepUpPath(r.data, "/today");
   if (up) redirect(up);
   await setFlash(errorOf(r.data, "Not sent."), r.status === 403 && errorOf(r.data) === "Disabled in the demo" ? "info" : "fail");

@@ -12,6 +12,7 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { LessonRow, Lessons } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 const ACT: Record<string, { label: string; variant: "outline" | "destructive" }> = {
   approve: { label: "Approve", variant: "outline" }, reject: { label: "Reject", variant: "destructive" },
@@ -61,7 +62,7 @@ export async function LessonsFull({ params }: { params: Record<string, string> }
         <p className="meta-line"><b>{d.waiting ? `${plural(d.waiting, "lesson")} waiting for review` : "Nothing waiting"}</b> · {d.on ? "only approved lessons reach a prompt" : <span className="r-denied">lessons off: none proposed or loaded</span>}</p></div></header>
       <Banners list={d.banners} flash={flash} />
       <div className="stack">
-        <nav className="tabs" aria-label="Lesson views">{d.tabs.map((t) => <a key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></a>)}</nav>
+        <nav className="tabs" aria-label="Lesson views">{d.tabs.map((t) => <SoftLink key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></SoftLink>)}</nav>
         <Filters list={d.list} facets={d.facets} label="Filter lessons" placeholder="Title, lesson, service, tag or task" />
         <PlainCard as="section" className="l-card" aria-labelledby="ls-h"><div className="card-h pad"><h2 id="ls-h">{d.title} <span className="ncount">{d.list.matched}</span></h2><a className="small" href="/knowledge">What Argus knows</a></div>
           {d.rows.length ? <ul className="rows">{d.rows.map((l) => <Row key={l.id} l={l} d={d} csrf={csrf} />)}</ul>

@@ -4,17 +4,18 @@ import { Icon } from "./Icon";
 import { Inline, Markdown } from "./Markdown";
 import type { HelpDoc, HelpNode } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { GetForm } from "./Soft";
 
 // The help pages, server components: the search is a GET form and the folds are <details>. The API has
 // already dropped what a viewer may not read; the files are ours, so [label](/path) links are on.
 
 export function HelpSearch({ q, max }: { q?: string; max: number }) {
   return (
-    <form className="filters h-search" method="get" action="/help" role="search" aria-label="Search all help pages">
+    <GetForm className="filters h-search" action="/help" role="search" aria-label="Search all help pages">
       <label className="f-search"><Icon name="search" /><span className="sr">Search all help pages</span>
         <input type="search" name="q" defaultValue={q} maxLength={max} placeholder="A word, a page or a button" autoComplete="off" enterKeyHint="search" /></label>
       <Button variant="outline">Search</Button>
-    </form>
+    </GetForm>
   );
 }
 

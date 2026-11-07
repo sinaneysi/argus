@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 /** A decision from the review panel: the API posts it to the kind's own handler (same fields, roles and 2FA class). */
 export async function reviewAct(fd: FormData): Promise<void> {
@@ -13,13 +13,13 @@ export async function reviewAct(fd: FormData): Promise<void> {
     sel: field(fd, "sel"), action: field(fd, "action"), reason: field(fd, "reason") || undefined,
     plan_version: field(fd, "plan_version") || undefined, return: ret,
   }, formCsrf(fd));
-  if (r.status === 200 && r.data.ok) redirect(safeNext(r.data.redirect, ret));
+  if (r.status === 200 && r.data.ok) return back(safeNext(r.data.redirect, ret));
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   await setFlash(msg === "Disabled in the demo" ? "Disabled in the demo: nothing was sent and nothing changed." : msg,
     msg === "Disabled in the demo" ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 /** A write of a full list: back to that list with the API's banner; a refusal comes back as a flash. */
@@ -28,13 +28,13 @@ async function listWrite(path: string, body: Record<string, string | string[] | 
   const r = await apiPost<{ ok?: boolean; redirect?: string }>(path, body, formCsrf(fd));
   if (r.status === 200 && r.data.ok) {
     const to = safeNext(r.data.redirect, here);
-    redirect(to.includes("mode=full") ? to : to.replace(`/review?kind=${kind}&`, `/review?kind=${kind}&mode=full&`));
+    return back(to.includes("mode=full") ? to : to.replace(`/review?kind=${kind}&`, `/review?kind=${kind}&mode=full&`));
   }
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   await setFlash(msg === "Disabled in the demo" ? "Disabled in the demo: nothing was sent and nothing changed." : msg, msg === "Disabled in the demo" ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 export async function ideaAct(fd: FormData): Promise<void> {

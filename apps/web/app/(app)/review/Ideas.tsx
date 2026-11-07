@@ -9,6 +9,7 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { IdeaRow, Ideas } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 function Acts({ i, csrf, here, reason }: { i: IdeaRow; csrf: string; here: string; reason: Ideas["reason"] }) {
   const has = (a: string) => i.actions.includes(a);
@@ -64,7 +65,7 @@ export async function IdeasFull({ params }: { params: Record<string, string> }) 
       <Banners list={d.banners} flash={flash} />
       <div className="stack">
         {d.total > 0 ? <>
-          <nav className="tabs" aria-label="Idea views">{d.tabs.map((t) => <a key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></a>)}</nav>
+          <nav className="tabs" aria-label="Idea views">{d.tabs.map((t) => <SoftLink key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></SoftLink>)}</nav>
           <Filters list={d.list} facets={d.facets} label="Filter ideas" placeholder="Title, problem, proposal, value, evidence" />
         </> : null}
         <PlainCard as="section" className="l-card" aria-labelledby="il-h"><div className="card-h pad"><h2 id="il-h">{d.heading} <span className="ncount">{d.list.matched}</span></h2></div>

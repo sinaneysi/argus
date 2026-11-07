@@ -12,6 +12,7 @@ import { full, iso } from "@/lib/format";
 import type { Qa, QaIssue } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "Conversations" };
 
@@ -61,7 +62,7 @@ export default async function QaPage({ searchParams }: { searchParams: Search })
   return (
     <>
       <header className="phead"><div><h1>Conversations</h1><HelpQ p="/qa" /><p className="status-line">{d.status.map((s, i) => <Fragment key={s}>{i ? <span className="sep">·</span> : null}{i ? s : <b>{s}</b>}</Fragment>)}</p></div></header>
-      <nav className="tabs" aria-label="View">{d.tabs.map((t) => <a key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label}{t.count != null ? <> <span className="num">{t.count}</span></> : null}</a>)}</nav>
+      <nav className="tabs" aria-label="View">{d.tabs.map((t) => <SoftLink key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label}{t.count != null ? <> <span className="num">{t.count}</span></> : null}</SoftLink>)}</nav>
       <Banners flash={flash} />
       {!d.ready ? <PlainCard as="section"><p className="empty"><b>Nothing yet.</b> {d.empty}</p></PlainCard> : null}
       {d.tiles ? <Tiles tiles={d.tiles} /> : null}

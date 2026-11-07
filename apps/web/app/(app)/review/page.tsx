@@ -20,6 +20,7 @@ import { ProposalsFull } from "./Proposals";
 import { RepliesFull } from "./Replies";
 import { anchorOf, href, queueOf, type Q } from "./query";
 import { cn } from "cn";
+import { GetForm, SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "Review inbox" };
 
@@ -291,15 +292,15 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
         {[{ key: "", label: "All", count: d.total }, ...d.kinds].map((k) => {
           const on = k.key === q.kind;
           return (
-            <a key={k.key || "all"} href={href({ ...queueOf(q), kind: k.key, page: 1 })} className={on ? "on" : undefined} aria-current={on ? "page" : undefined}>
+            <SoftLink key={k.key || "all"} href={href({ ...queueOf(q), kind: k.key, page: 1 })} className={on ? "on" : undefined} aria-current={on ? "page" : undefined}>
               {k.label} <span className="num">{k.count}</span>
-            </a>
+            </SoftLink>
           );
         })}
       </nav>
 
       {d.kindTotal > 0 ? (
-        <form className={cn("filters", away)} method="get" action="/review" role="search" aria-label="Search and filter decisions">
+        <GetForm className={cn("filters", away)} action="/review" role="search" aria-label="Search and filter decisions">
           {q.kind ? <input type="hidden" name="kind" value={q.kind} /> : null}
           <label className="f-search">
             <Icon name="search" />
@@ -325,7 +326,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
             : <Button type="button" variant="ghost" size="icon" disabled title="No filter to reset" aria-label="Reset the filters"><Icon name="reset" /></Button>}
           {/* the header's status line shows the total and the estimate; the bar fits one line (DESIGN.md §3.5) */}
           <span className="sr" role="status">{d.filtered ? `${d.matched} of ${d.kindTotal}` : `${d.matched}`} waiting</span>
-        </form>
+        </GetForm>
       ) : null}
       {d.kindTotal > 0 ? <p className={cn("mt-2.5 mb-4 text-sm text-muted-foreground", away)}>{d.order}</p> : null}
 

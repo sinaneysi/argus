@@ -3,20 +3,20 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 // The Delivery section's two writes. Each posts to the API, which keeps the old pages' roles, 2FA and request files.
 
 type Answer = { ok?: boolean; redirect?: string };
 
 async function finish(r: { status: number; data: Answer }, here: string): Promise<void> {
-  if (r.status === 200 && r.data.ok) redirect(safeNext(r.data.redirect, here));
+  if (r.status === 200 && r.data.ok) return back(safeNext(r.data.redirect, here));
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   const demo = msg === "Disabled in the demo";
   await setFlash(demo ? "Disabled in the demo: nothing was sent and nothing changed." : msg, demo ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 /** Read the repo from GitLab again (read-only, the worker does it). */

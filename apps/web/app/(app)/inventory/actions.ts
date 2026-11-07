@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 // The Infrastructure section's writes. Each posts to the API, which keeps the old pages' roles, 2FA and request files.
 
@@ -12,14 +12,14 @@ type Answer = { ok?: boolean; redirect?: string; errors?: string[] };
 async function finish(r: { status: number; data: Answer }, here: string): Promise<void> {
   if (r.status === 200 && r.data.ok) {
     if (r.data.errors?.length) await setFlash("Not yet: " + r.data.errors.join(" "), "fail");
-    redirect(safeNext(r.data.redirect, here));
+    return back(safeNext(r.data.redirect, here));
   }
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   const demo = msg === "Disabled in the demo";
   await setFlash(demo ? "Disabled in the demo: nothing was sent and nothing changed." : msg, demo ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 /** Scan now: one request file per task; the page shows the progress. */

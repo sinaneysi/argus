@@ -3,4 +3,5 @@ export const CSRF_COOKIE = "argus_csrf";
 export const FLASH_COOKIE = "argus_flash";
 export const SESSION_COOKIE = "opsr_session";
 export const THEME_COOKIE = "opsr_theme";
-export const RAIL_COOKIE = "argus_rail"; // Next only: the sidebar as an icon rail
+// Next only: the sidebar as an icon rail; not httpOnly, the button also sets it in the browser (components/Instant.tsx).
+export const RAIL_COOKIE = "argus_sidebar";

@@ -218,7 +218,8 @@ never replace it).
   open incidents and failing checks. Every count has a screen-reader phrase ("5 left today").
 
 **Rail:** on desktop the sidebar folds to a 72px icon rail, with every group open and its summary hidden. A form sets the
-`argus_rail` cookie, so it works without JavaScript, and the server renders the right width at once. Search and the theme
+`argus_sidebar` cookie, so it works without JavaScript, and the server renders the right width at once. With JavaScript
+the button flips `data-rail` and writes the same cookie in the browser: no request, no jump. Search and the theme
 switch hide on the rail; both stay in the palette. An alarm count becomes a red dot; the count stays for screen readers.
 
 ### 3.3 Top bar
@@ -594,6 +595,7 @@ checked against this list before they merge. `demo/layout-sweep.mjs` catches the
 | A class codemod matched `btn` inside `check-btn` and turned ticks into filled buttons | match class names on word boundaries; compare every page that uses the old class before merging |
 | `shrink-0` on Button overflowed at 390px | no fixed-width or non-shrinking utilities on shared primitives; check 390px. *sweep* |
 | A catch-all route swallowed fallback rewrites | catch-all and not-found routes run after rewrites (`afterFiles`) |
+| A click reloads the page or jumps to the top (sidebar Collapse, filter Apply, a tab, the theme) | with JavaScript a click is never a document load: GET forms are `GetForm` (`next/form`), same-page tabs and links `SoftLink`, UI preferences flip in the browser (`Instant.tsx`), and an action that comes back to its page ends with `return back(here)` (`lib/server.ts`), which re-renders in place; the plain form stays the no-JS fallback, so every one still works without JavaScript |
 | React #418 hydration errors on slow networks | keep `lib/hydrate-after-parse.ts`; recheck it after any Next upgrade |
 | A native file input: a text box with the browser's grey "Choose File" button inside (Kubernetes upload) | file fields use the shared `input[type="file"]` style in `base.css`: a dashed drop zone with an outline button; never restyle one per page |
 | Copy with internal or company names | product words only (Argus, "chat", "cache edge"); the leak check enforces it |

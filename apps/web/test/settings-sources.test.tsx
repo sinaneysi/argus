@@ -11,6 +11,7 @@ const posted: { path: string; body: Record<string, unknown> }[] = [];
 let answer: { status: number; data: unknown } = { status: 200, data: { ok: true, redirect: "/admin/sources?sr=1" } };
 
 vi.mock("@/lib/server", () => ({
+  back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => ({ ...(answers[path.split("?")[0]!] ?? { status: 404, data: {} }), setCookies: [] })),
   apiPost: vi.fn(async (path: string, body: Record<string, unknown>) => { posted.push({ path, body }); return { ...answer, setCookies: [] }; }),
   csrfToken: vi.fn(async () => "csrf-token-0123456789"),
@@ -19,7 +20,7 @@ vi.mock("@/lib/server", () => ({
   formCsrf: (fd: FormData) => String(fd.get("csrf") ?? ""),
   setFlash: vi.fn(async () => undefined),
 }));
-vi.mock("next/navigation", () => ({ redirect: (to: string) => { throw new Error("REDIRECT " + to); }, notFound: () => { throw new Error("NOT FOUND"); } }));
+vi.mock("next/navigation", () => ({ usePathname: () => null, redirect: (to: string) => { throw new Error("REDIRECT " + to); }, notFound: () => { throw new Error("NOT FOUND"); } }));
 
 beforeEach(() => {
   for (const k of Object.keys(answers)) delete answers[k];

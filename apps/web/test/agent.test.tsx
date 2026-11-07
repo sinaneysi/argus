@@ -17,6 +17,7 @@ const posted: { path: string; body: Record<string, unknown>; csrf: string }[] = 
 let answer: { status: number; data: unknown } = { status: 200, data: { ok: true, redirect: "/admin/fix/run?id=1" } };
 
 vi.mock("@/lib/server", () => ({
+  back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => { asked.push(path); return { ...(answers[path.split("?")[0]!] ?? { status: 404, data: { error: "no fixture" } }), setCookies: [] }; }),
   apiPost: vi.fn(async (path: string, body: Record<string, unknown>, csrf: string) => { posted.push({ path, body, csrf }); return { ...answer, setCookies: [] }; }),
   csrfToken: vi.fn(async () => "csrf-token-0123456789"),
@@ -25,7 +26,7 @@ vi.mock("@/lib/server", () => ({
   formCsrf: (fd: FormData) => String(fd.get("csrf") ?? ""),
   setFlash: vi.fn(async () => undefined),
 }));
-vi.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({ usePathname: () => null,
   redirect: (to: string) => { throw new Error("REDIRECT " + to); },
   notFound: () => { throw new Error("NOT FOUND"); },
 }));

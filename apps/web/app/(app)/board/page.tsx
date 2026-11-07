@@ -9,6 +9,7 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Board } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "Tasks" };
 
@@ -35,7 +36,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Search
           {d.ask ? <a data-slot="button" className={buttonVariants({ variant: "outline" })} href="/board/ask">Ask Argus</a> : null}
         </div>
       </header>
-      {d.tabs.length ? <nav className="tabs" aria-label="Tracker">{d.tabs.map((t) => <a key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label}</a>)}</nav> : null}
+      {d.tabs.length ? <nav className="tabs" aria-label="Tracker">{d.tabs.map((t) => <SoftLink key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label}</SoftLink>)}</nav> : null}
       <Banners list={d.notices} flash={flash} />
       {d.choice ? <MoveChoiceForm c={d.choice} csrf={csrf} ret={d.return} /> : null}
       {d.matrix.length ? (

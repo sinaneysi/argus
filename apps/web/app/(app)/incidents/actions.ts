@@ -3,19 +3,19 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 type Answer = { ok?: boolean; redirect?: string };
 
 /** A write's answer: follow it, or come back to the page with the refusal in words. */
 async function finish(r: { status: number; data: Answer }, here: string): Promise<void> {
-  if (r.status === 200 && r.data.ok) redirect(safeNext(r.data.redirect, here));
+  if (r.status === 200 && r.data.ok) return back(safeNext(r.data.redirect, here));
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   const demo = msg === "Disabled in the demo";
   await setFlash(demo ? "Disabled in the demo: nothing was sent and nothing changed." : msg, demo ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 /** Acknowledge, resolve or re-open (the API writes the request file; roles as on the old page). */

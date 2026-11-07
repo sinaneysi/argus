@@ -8,6 +8,7 @@ import { qs } from "@/lib/api";
 import { apiGet, readFlash } from "@/lib/server";
 import type { Cicd } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "CI/CD" };
 
@@ -31,7 +32,7 @@ export default async function CicdPage({ searchParams }: { searchParams: Search 
       {d.envs ? (
         <section className="sec" aria-labelledby="env-h">
           <div className="card-h env-h"><h2 id="env-h">Green by environment</h2>
-            <nav className="tabs" aria-label="Count apps or packages">{d.kindLinks.map((k, i) => { const on = (i === 0) === (d.envs?.kind === "app"); return <a key={k.text} href={k.href} className={on ? "on" : undefined} aria-current={on ? "true" : undefined}>{k.text}</a>; })}</nav></div>
+            <nav className="tabs" aria-label="Count apps or packages">{d.kindLinks.map((k, i) => { const on = (i === 0) === (d.envs?.kind === "app"); return <SoftLink key={k.text} href={k.href} className={on ? "on" : undefined} aria-current={on ? "true" : undefined}>{k.text}</SoftLink>; })}</nav></div>
           <p className="muted small">{d.envs.count} {d.envs.noun} that include {d.envs.engine}: the newest pipeline that ran on each env branch since {d.envs.since} ({d.envs.days} days; [skip ci] pipelines ignored). Every figure opens the matrix filtered to those {d.envs.noun}.</p>
           <div className="envs">{d.envs.cards.map((c) => <EnvCardView key={c.env} c={c} noun={d.envs?.noun ?? "repos"} />)}</div>
         </section>

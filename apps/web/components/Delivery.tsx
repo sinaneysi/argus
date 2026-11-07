@@ -7,6 +7,7 @@ import { repoCheck } from "@/app/(app)/cicd/actions";
 import type { CicdCell, CicdFinding, EnvCard, RepoPage, Seg, VulnAffected, VulnExposure } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { GetForm, SoftLink } from "./Soft";
 
 // The parts the Delivery pages share. Server components: forms post through server actions and the bars are SVG
 // attributes, so everything works without client JavaScript under the strict CSP.
@@ -14,7 +15,7 @@ import { PlainCard } from "@/components/ui/card";
 const TABS = [["Overview", "/cicd"], ["Failures", "/cicd/failures"], ["Stuck", "/cicd/stuck"], ["Branches and variables", "/cicd/audit"]] as const;
 
 export function CicdTabs({ on }: { on?: string }) {
-  return <nav className="tabs" aria-label="CI/CD sections">{TABS.map(([l, h]) => <a key={h} href={h} className={h === on ? "on" : undefined} aria-current={h === on ? "page" : undefined}>{l}</a>)}</nav>;
+  return <nav className="tabs" aria-label="CI/CD sections">{TABS.map(([l, h]) => <SoftLink key={h} href={h} className={h === on ? "on" : undefined} aria-current={h === on ? "page" : undefined}>{l}</SoftLink>)}</nav>;
 }
 
 export function TaskLink({ t }: { t: Seg }) {
@@ -77,17 +78,17 @@ export function EnvCardView({ c, noun }: { c: EnvCard; noun: string }) {
   );
 }
 
-/** The paste box of Check a repo: a plain GET form. */
+/** The paste box of Check a repo: a GET form. */
 export function RepoBox({ value = "", error = "", placeholder }: { value?: string; error?: string; placeholder: string }) {
   return (
-    <PlainCard as="form" className="repobox" method="get" action="/cicd/repo" role="search" aria-label="Check a repo">
+    <GetForm className="plain-card repobox" action="/cicd/repo" role="search" aria-label="Check a repo">
       <div className="repobox-r">
         <label className="field"><span>Check a repo <small>Paste a GitLab project link: Argus checks whether it has what the shared pipeline needs.</small></span>
           <input name="project" type="text" maxLength={300} required autoComplete="off" spellCheck={false} placeholder={placeholder} defaultValue={value} aria-invalid={error ? true : undefined} aria-describedby={error ? "repo-e" : undefined} /></label>
         <Button variant="outline">Check</Button>
       </div>
       {error ? <p className="hot-fail small" id="repo-e" role="alert">{error}</p> : null}
-    </PlainCard>
+    </GetForm>
   );
 }
 
