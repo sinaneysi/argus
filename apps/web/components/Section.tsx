@@ -77,8 +77,10 @@ export function Filters({ list, facets, label, placeholder, children }: { list: 
       ) : null}
       {children}
       <Button variant="outline">Apply</Button>
-      {list.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost" })} href={list.clearHref}><Icon name="reset" />Reset</a> : <Button type="button" variant="ghost" disabled><Icon name="reset" />Reset</Button>}
-      <span className="f-meta num">{list.filtered ? `${list.matched} of ${list.total}` : list.matched} {list.noun}</span>
+      {list.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href={list.clearHref} title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></a>
+        : <Button type="button" variant="ghost" size="icon" disabled title="No filter to reset" aria-label="Reset the filters"><Icon name="reset" /></Button>}
+      {/* the bar fits one line at 1440px: the result count is read out, not shown (the pager and the facet counts show it) */}
+      <span className="sr" role="status">{list.filtered ? `${list.matched} of ${list.total}` : list.matched} {list.noun}</span>
     </form>
   );
 }

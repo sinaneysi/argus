@@ -245,8 +245,9 @@ A page with a Help section has a small "?" link 8px after its title (`HelpQ`), h
 - **Anatomy:** one row, 8px gaps, wraps when narrow. Each filter is a 40px pill (radius 14, `--surface`, 1px border,
   padding 0 12): 16px icon, label 13px `--text-muted`, value 14/500 `--text`, chevron. It opens a menu of links or is
   a `<select>` in a GET form with an Apply button (which may hide when a script submits on change). Search is a pill
-  field (280px). "Reset" ghost link with a rotate-ccw icon only while a filter is active. Right end: result meta
-  ("61 waiting · ~2 h", 13 muted, tabular).
+  field (160 to 280px, it gives way first). Reset is an icon-only ghost button (rotate-ccw), disabled while no filter is
+  active, so the bar never shifts. The bar fits one line at 1440px: the result count is not shown in it (screen readers
+  hear it as a status; the pager and the counts in each option carry it). The Review queue keeps its "61 waiting · ~2 h".
 - **States:** default; active (non-default value) = `--accent-soft` fill, `--accent-soft-fg` value; menu open; focus;
   phone (wraps, search full width first). A disabled filter is never shown: omit it.
 - **Rule:** only filters the server implements end to end.
@@ -588,7 +589,7 @@ checked against this list before they merge. `demo/layout-sweep.mjs` catches the
 | A lonely wide card on an empty page (2FA setup) | a single-task page is a centred column (about 640px) with status, why, steps and one primary |
 | Secondary text squeezed beside a pill in a narrow column (2FA "used …" at 1024px) | put it on its own line; dates and times do not break (`.nw`). *sweep* |
 | Tall stat tiles pushed a list page's first row below half the screen (Incidents) | on a page whose table is the answer use `<Tiles compact>`; keep the subtitle to one line |
-| Filter selects as wide as their longest option | `field-sizing: content` on filter selects; at most two lines of filters at 1440px |
+| Filter selects as wide as their longest option, and a filter bar on two lines | `field-sizing: content` on filter selects; icon-only Reset, no visible result count: one line at 1440px. *sweep* (Incidents) |
 | Board cards of very different heights | titles and plan text clamp to 2 lines; a write plan folds behind its WRITE line |
 | A class codemod matched `btn` inside `check-btn` and turned ticks into filled buttons | match class names on word boundaries; compare every page that uses the old class before merging |
 | `shrink-0` on Button overflowed at 390px | no fixed-width or non-shrinking utilities on shared primitives; check 390px. *sweep* |
