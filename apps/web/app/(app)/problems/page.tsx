@@ -10,6 +10,7 @@ import type { Problems } from "@/lib/types";
 import { problemAct } from "../incidents/actions";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "Problems" };
 
@@ -41,7 +42,7 @@ export default async function ProblemsPage({ searchParams }: { searchParams: Sea
       ) : null}
       {d.hasAny || d.suggested ? (
         <nav className="tabs" aria-label="Problem views">
-          {d.tabs.map((t) => <a key={t.key} href={t.href} className={t.on ? "on" : undefined} aria-current={t.on ? "page" : undefined}>{t.label} <span className="num">{t.count}</span></a>)}
+          {d.tabs.map((t) => <SoftLink key={t.key} href={t.href} className={t.on ? "on" : undefined} aria-current={t.on ? "page" : undefined}>{t.label} <span className="num">{t.count}</span></SoftLink>)}
         </nav>
       ) : null}
       {d.hasAny ? <Filters list={d.list} facets={d.facets} label="Search and filter problems" placeholder="P-12, title, root cause, owner" /> : null}

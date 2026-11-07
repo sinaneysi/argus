@@ -15,6 +15,7 @@ import { noInlineStyle } from "./no-inline-style";
 const answers: Record<string, { status: number; data: unknown }> = {};
 
 vi.mock("@/lib/server", () => ({
+  back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => {
     const key = Object.keys(answers).find((k) => path.startsWith(k));
     return { ...(key ? answers[key]! : { status: 404, data: { error: "no fixture" } }), setCookies: [] };
@@ -32,7 +33,7 @@ const railCookie = { value: undefined as string | undefined };
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => (railCookie.value ? { value: railCookie.value } : undefined) }),
 }));
-vi.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({ usePathname: () => null,
   redirect: (to: string) => {
     throw new Error("REDIRECT " + to);
   },

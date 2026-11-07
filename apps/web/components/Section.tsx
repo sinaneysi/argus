@@ -9,6 +9,7 @@ import { Field, Input, Label, Select } from "./ui/field";
 import { problemAct } from "@/app/(app)/incidents/actions";
 import { ago, full, iso } from "@/lib/format";
 import type { Banner as B, Facet, Fact, Fix, Lazy, ListState, MdDoc, Option, ProblemPanel, ProbItem, ProbLink, ProbSuggestion, Seg, Tile, TimelineEv } from "@/lib/types";
+import { GetForm, SoftLink } from "./Soft";
 
 // The parts the Incidents pages share (DESIGN.md "Queue page", "Detail page"). All server components: forms post
 // through server actions and folds are <details>, so everything works without client JavaScript.
@@ -58,7 +59,7 @@ export function Tiles({ tiles, compact }: { tiles: Tile[]; compact?: boolean }) 
 /** Search, facets and sort as one GET form; every choice shows how many it would leave. */
 export function Filters({ list, facets, label, placeholder, children }: { list: ListState; facets: Facet[]; label: string; placeholder: string; children?: React.ReactNode }) {
   return (
-    <form className="filters" method="get" action={list.path} role="search" aria-label={label}>
+    <GetForm className="filters" action={list.path} role="search" aria-label={label}>
       {Object.entries(list.hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       {list.noSearch ? null : <label className="f-search"><Icon name="search" /><span className="sr">Search</span>
         <input name="q" defaultValue={list.q} maxLength={100} placeholder={placeholder} autoComplete="off" /></label>}
@@ -77,11 +78,11 @@ export function Filters({ list, facets, label, placeholder, children }: { list: 
       ) : null}
       {children}
       <Button variant="outline">Apply</Button>
-      {list.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href={list.clearHref} title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></a>
+      {list.filtered ? <SoftLink data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href={list.clearHref} title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></SoftLink>
         : <Button type="button" variant="ghost" size="icon" disabled title="No filter to reset" aria-label="Reset the filters"><Icon name="reset" /></Button>}
       {/* the bar fits one line at 1440px: the result count is read out, not shown (the pager and the facet counts show it) */}
       <span className="sr" role="status">{list.filtered ? `${list.matched} of ${list.total}` : list.matched} {list.noun}</span>
-    </form>
+    </GetForm>
   );
 }
 
@@ -268,10 +269,10 @@ export function ProblemBox({ p, csrf }: { p: ProblemPanel | null; csrf: string }
   const link = l ? (
     <details className="ctl" open={!!l.pq}><summary>{l.summary}</summary>
       <div className="ctl-f">
-        <form method="get" action={l.path + "#problem"} className="inline-f">
+        <GetForm action={l.path + "#problem"} className="inline-f">
           {Object.entries(l.keep).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
           <Label className={`grid ${GROW}`}><span className="sr">Find a problem</span><Input type="search" name="pq" defaultValue={l.pq} maxLength={80} placeholder="P-number or words of the title" autoComplete="off" /></Label>
-          <Button variant="outline" size="sm">Find</Button></form>
+          <Button variant="outline" size="sm">Find</Button></GetForm>
         {l.picks.length ? (
           <form action={problemAct} className="ctl-f"><Csrf csrf={csrf} action="link" back={p.back} /><input type="hidden" name="ref" value={p.ref} />
             <fieldset className="picks"><legend>{l.pq ? `Open problems matching ‘${l.pq}’` : "Newest open problems"}</legend>

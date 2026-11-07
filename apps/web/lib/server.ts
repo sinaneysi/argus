@@ -1,6 +1,7 @@
 // Server-only helpers: API reads with the visitor's cookies, writes from server actions that pass the API's cookies
 // back to the browser, the CSRF token for forms, and the one-shot flash banner.
 import { cookies, headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiCall, type ApiResponse } from "./api";
 import { parseSetCookie } from "./cookies";
@@ -51,9 +52,25 @@ export async function setFlash(text: string, kind: Banner["kind"] = "ok"): Promi
     path: "/", maxAge: 60, httpOnly: true, secure: true, sameSite: "lax" });
 }
 
-/** The flash message of this request (middleware moved it from its cookie into x-flash and cleared the cookie). */
+/** Back to a page after a write. A submission from the hydrated page that returns to the page it was sent from is
+ * re-rendered in the action's own response: no navigation, so the scroll position and focus stay where they were. A plain
+ * POST (no JavaScript), another page or an anchor still redirect. Call it as `return back(url)`: it returns only when it
+ * did not redirect. */
+export async function back(to: string): Promise<void> {
+  const h = await headers();
+  const here = h.get("x-url");
+  if (!h.has("next-action") || !here || to !== here) redirect(to);
+  const jar = await cookies();
+  const flash = jar.get(FLASH_COOKIE)?.value;
+  // The flash shows in this response; Max-Age=0 so the browser drops it instead of showing it again on the next page.
+  if (flash) jar.set({ name: FLASH_COOKIE, value: flash, path: "/", maxAge: 0, httpOnly: true, secure: true, sameSite: "lax" });
+  revalidatePath(here.split("?")[0] || "/");
+}
+
+/** The flash message of this request: a page request has it in x-flash (middleware moved it there and cleared the
+ * cookie); an action that stayed on its page (back) has it in the cookie it just set. */
 export async function readFlash(): Promise<Banner | null> {
-  const raw = (await headers()).get("x-flash");
+  const raw = (await cookies()).get(FLASH_COOKIE)?.value || (await headers()).get("x-flash");
   if (!raw) return null;
   try {
     const v = JSON.parse(decodeURIComponent(raw)) as Banner;

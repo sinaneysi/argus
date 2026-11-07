@@ -17,6 +17,7 @@ const flashes: string[] = [];
 let answer: { status: number; data: unknown } = { status: 200, data: { ok: true, redirect: "/review?kind=lessons&req=1" } };
 
 vi.mock("@/lib/server", () => ({
+  back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => { asked.push(path); return { ...(answers[path.split("?")[0]!] ?? { status: 404, data: { error: "no" } }), setCookies: [] }; }),
   apiPost: vi.fn(async (path: string, body: Record<string, unknown>, csrf: string) => { posted.push({ path, body, csrf }); return { ...answer, setCookies: [] }; }),
   csrfToken: vi.fn(async () => "csrf-token-0123456789"),
@@ -25,7 +26,7 @@ vi.mock("@/lib/server", () => ({
   formCsrf: (fd: FormData) => String(fd.get("csrf") ?? ""),
   setFlash: vi.fn(async (m: string) => { flashes.push(m); }),
 }));
-vi.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({ usePathname: () => null,
   redirect: (to: string) => { throw new Error("REDIRECT " + to); },
   notFound: () => { throw new Error("NOT FOUND"); },
 }));

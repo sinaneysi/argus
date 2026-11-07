@@ -10,6 +10,7 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { ProposalAccept, ProposalConfirm, ProposalRow, Proposals } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { GetForm, SoftLink } from "@/components/Soft";
 
 const Sev = ({ s }: { s: ProposalRow["severity"] }) => (s ? <Pill tone={tone(s.kind)}>{s.text}</Pill> : null);
 
@@ -98,16 +99,16 @@ export async function ProposalsFull({ query }: { query: string }) {
       <div className="stack">
         <Tiles tiles={d.tiles} />
         <p className="muted small">Rejected today: <a href="/review?kind=proposals&mode=full&view=decided">{d.rejectedToday}</a>, including expired · Created before approval: {d.legacy.length ? <a href="#legacy">{d.legacy.length}</a> : 0}, review only</p>
-        <nav className="tabs" aria-label="Proposed tasks views">{d.tabs.map((t) => <a key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></a>)}</nav>
+        <nav className="tabs" aria-label="Proposed tasks views">{d.tabs.map((t) => <SoftLink key={t.href} href={t.href} className={t.current ? "on" : undefined} aria-current={t.current ? "page" : undefined}>{t.label} <span className="ncount">{t.count}</span></SoftLink>)}</nav>
         {d.confirm ? <Confirm c={d.confirm} csrf={csrf} here={d.here} /> : <>
           {d.total > 0 ? (
             <section className="fl-tools" aria-label="Filter proposed tasks">
-              <form method="get" action="/review" role="search" className="fl-in">
+              <GetForm action="/review" role="search" className="fl-in">
                 {d.search.map(([k, v], n) => <input key={n} type="hidden" name={k} value={v} />)}
                 <label className="sr" htmlFor="pq">Search proposed tasks</label><input id="pq" type="text" name="q" defaultValue={d.q} maxLength={100} placeholder="Title, source, host, reason, labels" autoComplete="off" />
                 {d.sorts.length ? <label className="f-pill"><span className="f-l">Sort</span><select name="sort" defaultValue={d.sort}>{d.sorts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label> : null}
                 <Button variant="outline" size="sm">Apply</Button>{d.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "sm" })} href={d.clear}>Reset</a> : null}
-              </form>
+              </GetForm>
               {d.chips.map((row) => <div key={row.label} className="fl-chips" role="group" aria-label={row.label}><span className="muted small">{row.label}</span>{row.chips.map((c) => <a key={c.label} className={c.on ? "chip on" : "chip"} href={c.href} aria-current={c.on ? "true" : undefined}>{c.label}{c.count >= 0 ? ` ${c.count}` : ""}</a>)}</div>)}
             </section>
           ) : null}
@@ -120,12 +121,12 @@ export async function ProposalsFull({ query }: { query: string }) {
               : d.rows.length ? <ul className="rows">{d.rows.map((p) => <Row key={p.id} p={p} d={d} csrf={csrf} />)}</ul>
                 : <p className="empty pad">{d.total ? <>No proposed task matches these filters. <a href={d.clear}>Clear the filters</a></> : d.view === "pending" ? "No proposed task is waiting. Argus proposes a task when an incident meets the QA intake threshold (or is in production), for page-level incidents when that option is on, and for security, CI/CD and credential findings." : "No proposed task is snoozed. A snoozed proposal comes back to Waiting after 24 hours."}</p>}
             {d.rows.length && d.bulk ? (
-              <form id="pbulk" method="get" action="/review" className="l-bulk" aria-label="Act on the selected proposed tasks">
+              <GetForm id="pbulk" action="/review" className="l-bulk" aria-label="Act on the selected proposed tasks" scroll>
                 {d.bulk.map(([k, v], n) => <input key={n} type="hidden" name={k} value={v} />)}
                 <span className="muted small">Selected</span><Button name="confirm" value="accept" variant="outline" size="sm">Accept &amp; create {d.bulkNoun}…</Button>
                 {d.view !== "snoozed" ? <Button name="confirm" value="snooze" variant="outline" size="sm">Snooze 24 h…</Button> : null}
                 <Button name="confirm" value="reject" variant="destructive" size="sm">Reject…</Button>
-              </form>
+              </GetForm>
             ) : null}
             {d.pager && d.pager.pages > 1 ? <nav className="l-pager" aria-label="Pages"><span className="muted num">{d.pager.from}–{d.pager.to} of {d.pager.matched} · page {d.pager.page} of {d.pager.pages}</span>{d.pager.prev ? <a data-slot="button" className={buttonVariants({ variant: "outline", size: "sm" })} rel="prev" href={d.pager.prev}>Previous</a> : null}{d.pager.next ? <a data-slot="button" className={buttonVariants({ variant: "outline", size: "sm" })} rel="next" href={d.pager.next}>Next</a> : null}</nav> : null}
           </PlainCard>

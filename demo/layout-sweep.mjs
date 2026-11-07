@@ -58,7 +58,7 @@ function check() {
 for (const rail of [false, true]) {
   for (const width of rail ? [1440, 1024] : [1440, 1280, 1024, 390]) {
     const ctx = await browser.newContext({ viewport: { width, height: 900 } });
-    if (rail) await ctx.addCookies([{ name: "argus_rail", value: "on", url: base }]);
+    if (rail) await ctx.addCookies([{ name: "argus_sidebar", value: "on", url: base }]);
     const page = await ctx.newPage();
     await page.goto(`${base}/login?next=/today`);
     await Promise.all([page.waitForURL((u) => u.pathname === "/today", { timeout: 30000 }),

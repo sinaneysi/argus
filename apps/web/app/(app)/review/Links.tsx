@@ -8,6 +8,7 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { LinkConfirm, Links, ProbSuggestion } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { GetForm } from "@/components/Soft";
 
 function Row({ s, d, csrf }: { s: ProbSuggestion; d: Links; csrf: string }) {
   return (
@@ -69,10 +70,10 @@ export async function LinksFull({ query }: { query: string }) {
                 {d.rows?.length ? <ul className="rows">{d.rows.map((s) => <Row key={s.id} s={s} d={d} csrf={csrf} />)}</ul>
                   : <p className="empty pad">No suggestion matches these filters. <a href={d.list?.clearHref}>Clear the filters</a></p>}
                 {d.can && d.rows?.length ? (
-                  <form id="pbsug" method="get" action="/review" className="l-bulk" aria-label="Act on the selected suggestions">
+                  <GetForm id="pbsug" action="/review" className="l-bulk" aria-label="Act on the selected suggestions" scroll>
                     {d.bulk?.map(([k, v], n) => <input key={n} type="hidden" name={k} value={v} />)}
                     <span className="muted small">Selected</span><Button name="confirm" value="accept" variant="outline" size="sm">Accept links…</Button><Button name="confirm" value="reject" variant="destructive" size="sm">Reject…</Button>
-                  </form>
+                  </GetForm>
                 ) : null}
                 {d.list ? <Pager list={d.list} /> : null}
               </PlainCard>

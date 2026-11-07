@@ -7,6 +7,7 @@ import { qs } from "@/lib/api";
 import { apiGet, readFlash } from "@/lib/server";
 import type { CicdFailures, CicdFinding } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { SoftLink } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "CI/CD failures" };
 
@@ -46,7 +47,7 @@ export default async function FailuresPage({ searchParams }: { searchParams: Sea
         <p className="meta-line"><b>{d.open ? `${d.open} open failure${d.open === 1 ? "" : "s"}` : "No open failure"}</b>{d.onRelease ? <a href="/cicd/failures?env=release">{d.onRelease} on release</a> : null}<span>Argus never retries, cancels or plays a pipeline</span></p></div></header>
       <Banners flash={flash} />
       <CicdTabs on="/cicd/failures" />
-      <nav className="tabs" aria-label="Failure views">{d.tabs.map((t) => <a key={t.label} href={t.href} className={t.on ? "on" : undefined} aria-current={t.on ? "page" : undefined}>{t.label} <span className="num">{t.count}</span></a>)}</nav>
+      <nav className="tabs" aria-label="Failure views">{d.tabs.map((t) => <SoftLink key={t.label} href={t.href} className={t.on ? "on" : undefined} aria-current={t.on ? "page" : undefined}>{t.label} <span className="num">{t.count}</span></SoftLink>)}</nav>
       {d.noTools ? null : <Filters list={d.list} facets={d.facets} label="Search and filter failures" placeholder="Title, project, job, author, MR, commit, branch" />}
       <PlainCard as="section" className="l-card" aria-label={openView ? "Open failures" : "Resolved failures"}>
         {d.rows.length ? <ul className="rows">{d.rows.map((f) => <Row key={f.id} f={f} />)}</ul>

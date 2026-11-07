@@ -3,6 +3,8 @@ import { logout, setRail } from "@/app/actions";
 import { csrfToken, currentUrl } from "@/lib/server";
 import type { Me, Nav, NavGroup } from "@/lib/types";
 import { Icon, Mark } from "./Icon";
+import { RailToggle } from "./Instant";
+import { GetForm } from "./Soft";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { Button } from "@/components/ui/button";
 
@@ -38,8 +40,8 @@ function Count({ n, title, alarm, sum }: { n: number; title: string; alarm?: boo
 
 // The sidebar (DESIGN.md 3.2): six groups and Marketing as disclosures (the current page's group open), then Help, Settings, the
 // theme switch and the user. It stays a server component: the groups are <details>, the phone sheet opens through
-// #nav (:target), and the icon rail is a cookie set by a form, so all three work without JavaScript. On the rail every
-// group is open with its summary hidden, so each page keeps its icon; the `rail:` variant is in app/tailwind.css.
+// #nav (:target), and the icon rail is a cookie set by a form, so all three work without JavaScript (with it, RailToggle
+// flips the rail at once). On the rail every group is open with its summary hidden, so each page keeps its icon; the `rail:` variant is in app/tailwind.css.
 export async function Sidebar({ me, nav, path, rail }: { me: Me; nav: Nav; path: string; rail: boolean }) {
   const cur = currentOf(nav, path);
   const [csrf, back] = await Promise.all([csrfToken(), currentUrl()]);
@@ -59,7 +61,7 @@ export async function Sidebar({ me, nav, path, rail }: { me: Me; nav: Nav; path:
           <Icon name="x" /><span className="sr">Close the menu</span>
         </a>
       </div>
-      <form className="rail:hidden" method="get" action={nav.search.action} role="search" data-side-search>
+      <GetForm className="rail:hidden" action={nav.search.action} role="search" data-side-search>
         {Object.entries(nav.search.hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
         <label className="flex h-9 w-full items-center gap-2 rounded-[8px] bg-secondary px-2.5 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--focus)">
           <Icon name="search" />
@@ -69,13 +71,13 @@ export async function Sidebar({ me, nav, path, rail }: { me: Me; nav: Nav; path:
             type="search" name={nav.search.param} placeholder={nav.search.placeholder} maxLength={100} autoComplete="off" spellCheck={false}
           />
         </label>
-      </form>
+      </GetForm>
       <nav className="grid gap-1.5" aria-label="Main">
         {nav.groups.map((g) => {
           const open = cur.group?.key === g.key;
           const sum = g.links.reduce((s, l) => s + (l.count ?? 0), 0);
           return (
-            <details key={g.key} className="group/ng rail:not-last:border-b rail:not-last:pb-1.5" open={open || rail || undefined}>
+            <details key={g.key} className="group/ng rail:not-last:border-b rail:not-last:pb-1.5" open={open || rail || undefined} data-cur={open ? "" : undefined}>
               <summary className={cn("flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2.5 text-sm font-semibold pointer-coarse:min-h-11 hover:bg-accent hover:text-foreground [&::-webkit-details-marker]:hidden rail:hidden", open ? "text-soft-foreground" : "text-ink-2")}>
                 <Icon name="chevron" size={16} className="text-muted-foreground transition-transform duration-(--t) ease-harbor group-open/ng:rotate-90" />
                 <Icon name={GROUP_ICON[g.key] ?? "dot"} size={18} className="mr-1" />
@@ -117,12 +119,7 @@ export async function Sidebar({ me, nav, path, rail }: { me: Me; nav: Nav; path:
             </li>
           ))}
           <li className="max-[900px]:hidden">
-            <form action={setRail}>
-              <input type="hidden" name="back" value={back} />
-              <button name="rail" value={rail ? "off" : "on"} title={rail ? "Expand the sidebar" : "Collapse the sidebar"} className="side-link w-full font-medium">
-                <Icon name="panel" /><span className="rail:sr-only">{rail ? "Expand" : "Collapse"}</span>
-              </button>
-            </form>
+            <RailToggle rail={rail} back={back} action={setRail}><Icon name="panel" /></RailToggle>
           </li>
         </ul>
         <div className="rail:hidden"><ThemeSwitch /></div>

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { errorOf } from "@/lib/api";
 import { safeNext, stepUpPath } from "@/lib/format";
-import { apiPost, field, formCsrf, setFlash } from "@/lib/server";
+import { apiPost, back, field, formCsrf, setFlash } from "@/lib/server";
 
 // The Work section's writes. Each posts to the API, which keeps the Go routes' roles, 2FA and request files.
 
@@ -22,12 +22,12 @@ const DEMO_WORDS = "Disabled in the demo: nothing was sent and nothing changed."
 async function send(path: string, body: Body, fd: FormData, fallback = "/board"): Promise<void> {
   const here = safeNext(field(fd, "return"), fallback);
   const r = await apiPost<Answer>(path, { ...body, return: field(fd, "return") || undefined }, formCsrf(fd));
-  if (r.status === 200 && r.data.ok) redirect(safeNext(r.data.redirect, here));
+  if (r.status === 200 && r.data.ok) return back(safeNext(r.data.redirect, here));
   const up = stepUpPath(r.data, here);
   if (up) redirect(up);
   const msg = errorOf(r.data, "Not sent.");
   await setFlash(msg === DEMO ? DEMO_WORDS : msg, msg === DEMO ? "info" : "fail");
-  redirect(here);
+  return back(here);
 }
 
 /** Move a card: Argus's column, or a column of the Jira board (with the chosen transition when Jira offers several). */

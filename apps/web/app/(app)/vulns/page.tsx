@@ -11,6 +11,7 @@ import type { Banner, VulnGroup, VulnGroupRow, Vulns } from "@/lib/types";
 import { vulnSuppress } from "../cicd/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { GetForm } from "@/components/Soft";
 
 export const metadata: Metadata = { title: "Vulnerabilities" };
 
@@ -104,7 +105,7 @@ function List({ d, flash }: { d: Vulns; flash: Banner | null }) {
       <section className="sec" id="components" aria-labelledby="bc-h">
         <h2 id="bc-h">By component</h2>
         {s.svc ? <p className="muted small">Showing the components that affect <b>{s.svc}</b>. <a href="/vulns#components">Show all</a></p> : null}
-        <form className="filters vfilter" method="get" action="/vulns#components" aria-label="Filter components">
+        <GetForm className="filters vfilter" action="/vulns#components" aria-label="Filter components">
           <Pick name="env" label="Env class" value={s.env ?? ""} options={d.choices.env} />
           <Pick name="pri" label="Priority" value={s.pri ?? ""} options={d.choices.pri} />
           <Pick name="kind" label="Kind" value={s.kind ?? ""} options={d.choices.kind} />
@@ -115,7 +116,7 @@ function List({ d, flash }: { d: Vulns; flash: Banner | null }) {
           <Button variant="outline">Apply</Button>
           {d.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href="/vulns#components" title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></a> : null}
           <span className="sr" role="status">{d.total} components</span>
-        </form>
+        </GetForm>
         <PlainCard as="section" className="l-card" aria-label="Components">
           <GroupTable rows={d.rows} label="Components table" empty={<>{d.empty}{d.filtered ? <> <a href="/vulns">Clear the filters</a></> : null}</>} />
         </PlainCard>
