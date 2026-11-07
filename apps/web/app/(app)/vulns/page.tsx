@@ -113,8 +113,8 @@ function List({ d, flash }: { d: Vulns; flash: Banner | null }) {
           <label className={s.kev ? "f-pill on" : "f-pill"}><input type="checkbox" name="kev" value="1" defaultChecked={s.kev === "1"} /><span>KEV only</span></label>
           <label className={s.state ? "f-pill on" : "f-pill"}><input type="checkbox" name="state" value="suppressed" defaultChecked={s.state === "suppressed"} /><span>Suppressed</span></label>
           <Button variant="outline">Apply</Button>
-          {d.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost" })} href="/vulns#components"><Icon name="reset" />Reset</a> : null}
-          <span className="f-meta num">{d.total} components</span>
+          {d.filtered ? <a data-slot="button" className={buttonVariants({ variant: "ghost", size: "icon" })} href="/vulns#components" title="Reset the filters" aria-label="Reset the filters"><Icon name="reset" /></a> : null}
+          <span className="sr" role="status">{d.total} components</span>
         </form>
         <PlainCard as="section" className="l-card" aria-label="Components">
           <GroupTable rows={d.rows} label="Components table" empty={<>{d.empty}{d.filtered ? <> <a href="/vulns">Clear the filters</a></> : null}</>} />

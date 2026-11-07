@@ -79,7 +79,7 @@ main.page > * + * { margin-top: var(--gap-block); }
   display: inline-flex; align-items: center; gap: 8px; height: var(--control); padding: 0 8px 0 16px; border: 1px solid var(--border);
   border-radius: var(--r-pill); background: var(--surface); color: var(--text-muted); font-size: var(--fs-sm);
 }
-.f-search { flex: 0 1 280px; min-width: 180px; padding-right: 16px; }
+.f-search { flex: 1 1 180px; min-width: 160px; max-width: 280px; padding-right: 16px; }
 .f-search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: var(--fs-sm); color: var(--text); }
 .f-search:focus-within, .f-pill:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 .f-pill select { height: 34px; border: 0; padding: 0 4px; background: transparent; color: var(--text); font-weight: 500; font-size: var(--fs-sm); outline: none; cursor: pointer; }
