@@ -69,6 +69,19 @@ small { font-size: var(--fs-xs); }
   background: var(--surface); font-size: var(--fs-md); min-width: 0;
 }
 .field input:hover, .field select:hover { border-color: var(--text-muted); }
+/* A file field is a drop zone with an outline button, not a text box with the browser's grey button inside */
+input[type="file"], .field input[type="file"] {
+  width: 100%; height: auto; min-height: var(--control-lg); padding: 6px 12px 6px 6px; border: 1px dashed var(--control-border);
+  border-radius: var(--r-control); background: var(--surface-2); color: var(--text-muted); font-size: var(--fs-sm); cursor: pointer;
+}
+input[type="file"]::file-selector-button {
+  height: var(--control-sm); margin-right: 12px; padding: 0 14px; border: 1px solid var(--control-border); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  input[type="file"]:hover { border-color: var(--text-muted); }
+  input[type="file"]:hover::file-selector-button { background: var(--hover); }
+}
 .check { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--text-2); }
 .check input { width: 16px; height: 16px; accent-color: var(--accent-strong); margin: 0; }
 
