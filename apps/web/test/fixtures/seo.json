@@ -1,0 +1,1163 @@
+{
+ "at": 1794043800,
+ "banners": [],
+ "charts": {
+  "p95": {
+   "from": 1794001500,
+   "high": 0.95,
+   "latest": "0.950 s",
+   "low": 0.37,
+   "max": "0.950 s",
+   "min": "0.370 s",
+   "points": [
+    [
+     1794001500,
+     0.413
+    ],
+    [
+     1794002400,
+     0.409
+    ],
+    [
+     1794003300,
+     0.404
+    ],
+    [
+     1794004200,
+     0.4
+    ],
+    [
+     1794005100,
+     0.396
+    ],
+    [
+     1794006000,
+     0.392
+    ],
+    [
+     1794006900,
+     0.388
+    ],
+    [
+     1794007800,
+     0.384
+    ],
+    [
+     1794008700,
+     0.38
+    ],
+    [
+     1794009600,
+     0.377
+    ],
+    [
+     1794010500,
+     0.375
+    ],
+    [
+     1794011400,
+     0.373
+    ],
+    [
+     1794012300,
+     0.371
+    ],
+    [
+     1794013200,
+     0.37
+    ],
+    [
+     1794014100,
+     0.37
+    ],
+    [
+     1794015000,
+     0.37
+    ],
+    [
+     1794015900,
+     0.371
+    ],
+    [
+     1794016800,
+     0.373
+    ],
+    [
+     1794017700,
+     0.375
+    ],
+    [
+     1794018600,
+     0.377
+    ],
+    [
+     1794019500,
+     0.38
+    ],
+    [
+     1794020400,
+     0.384
+    ],
+    [
+     1794021300,
+     0.387
+    ],
+    [
+     1794022200,
+     0.392
+    ],
+    [
+     1794023100,
+     0.396
+    ],
+    [
+     1794024000,
+     0.4
+    ],
+    [
+     1794024900,
+     0.404
+    ],
+    [
+     1794025800,
+     0.408
+    ],
+    [
+     1794026700,
+     0.412
+    ],
+    [
+     1794027600,
+     0.416
+    ],
+    [
+     1794028500,
+     0.42
+    ],
+    [
+     1794029400,
+     0.423
+    ],
+    [
+     1794030300,
+     0.425
+    ],
+    [
+     1794031200,
+     0.427
+    ],
+    [
+     1794032100,
+     0.429
+    ],
+    [
+     1794033000,
+     0.43
+    ],
+    [
+     1794033900,
+     0.43
+    ],
+    [
+     1794034800,
+     0.43
+    ],
+    [
+     1794035700,
+     0.429
+    ],
+    [
+     1794036600,
+     0.427
+    ],
+    [
+     1794037500,
+     0.425
+    ],
+    [
+     1794038400,
+     0.423
+    ],
+    [
+     1794039300,
+     0.42
+    ],
+    [
+     1794040200,
+     0.416
+    ],
+    [
+     1794041100,
+     0.412
+    ],
+    [
+     1794042000,
+     0.408
+    ],
+    [
+     1794042900,
+     0.404
+    ],
+    [
+     1794043800,
+     0.95
+    ]
+   ],
+   "to": 1794043800
+  },
+  "share": {
+   "from": 1794001500,
+   "high": 0.9153318077803204,
+   "latest": "0.92 %",
+   "low": 0,
+   "max": "0.92 %",
+   "min": "0.00 %",
+   "points": [
+    [
+     1794001500,
+     0
+    ],
+    [
+     1794002400,
+     0
+    ],
+    [
+     1794003300,
+     0
+    ],
+    [
+     1794004200,
+     0
+    ],
+    [
+     1794005100,
+     0
+    ],
+    [
+     1794006000,
+     0
+    ],
+    [
+     1794006900,
+     0
+    ],
+    [
+     1794007800,
+     0.6700167504187605
+    ],
+    [
+     1794008700,
+     0
+    ],
+    [
+     1794009600,
+     0
+    ],
+    [
+     1794010500,
+     0
+    ],
+    [
+     1794011400,
+     0
+    ],
+    [
+     1794012300,
+     0
+    ],
+    [
+     1794013200,
+     0
+    ],
+    [
+     1794014100,
+     0
+    ],
+    [
+     1794015000,
+     0
+    ],
+    [
+     1794015900,
+     0
+    ],
+    [
+     1794016800,
+     0
+    ],
+    [
+     1794017700,
+     0
+    ],
+    [
+     1794018600,
+     0
+    ],
+    [
+     1794019500,
+     0
+    ],
+    [
+     1794020400,
+     0
+    ],
+    [
+     1794021300,
+     0
+    ],
+    [
+     1794022200,
+     0
+    ],
+    [
+     1794023100,
+     0
+    ],
+    [
+     1794024000,
+     0
+    ],
+    [
+     1794024900,
+     0
+    ],
+    [
+     1794025800,
+     0
+    ],
+    [
+     1794026700,
+     0
+    ],
+    [
+     1794027600,
+     0
+    ],
+    [
+     1794028500,
+     0
+    ],
+    [
+     1794029400,
+     0
+    ],
+    [
+     1794030300,
+     0
+    ],
+    [
+     1794031200,
+     0
+    ],
+    [
+     1794032100,
+     0
+    ],
+    [
+     1794033000,
+     0
+    ],
+    [
+     1794033900,
+     0
+    ],
+    [
+     1794034800,
+     0
+    ],
+    [
+     1794035700,
+     0
+    ],
+    [
+     1794036600,
+     0
+    ],
+    [
+     1794037500,
+     0
+    ],
+    [
+     1794038400,
+     0
+    ],
+    [
+     1794039300,
+     0
+    ],
+    [
+     1794040200,
+     0
+    ],
+    [
+     1794041100,
+     0.4744958481613286
+    ],
+    [
+     1794042000,
+     0
+    ],
+    [
+     1794042900,
+     0
+    ],
+    [
+     1794043800,
+     0.9153318077803204
+    ]
+   ],
+   "to": 1794043800
+  }
+ },
+ "edges": [
+  {
+   "cache": false,
+   "day": {
+    "p95": "0.400 s",
+    "requests": 401,
+    "share": "0.00 %"
+   },
+   "edge": "prod-edge-01",
+   "hits": "-",
+   "host": "www.northwind.example",
+   "level": {
+    "text": "OK",
+    "kind": "ok"
+   },
+   "now": {
+    "p95": "0.420 s",
+    "requests": 412,
+    "share": "0.24 %"
+   },
+   "verified": "95 %",
+   "week": {
+    "p95": "0.410 s",
+    "requests": 435,
+    "share": "0.00 %"
+   }
+  },
+  {
+   "cache": false,
+   "day": {
+    "p95": "0.420 s",
+    "requests": 387,
+    "share": "0.00 %"
+   },
+   "edge": "prod-edge-02",
+   "hits": "-",
+   "host": "www.northwind.example",
+   "level": {
+    "text": "WARN",
+    "kind": "warn"
+   },
+   "now": {
+    "p95": "0.950 s",
+    "requests": 398,
+    "share": "1.76 %"
+   },
+   "verified": "95 %",
+   "week": {
+    "p95": "0.410 s",
+    "requests": 421,
+    "share": "0.00 %"
+   }
+  },
+  {
+   "cache": true,
+   "day": {
+    "p95": "0.440 s",
+    "requests": 53,
+    "share": "0.00 %"
+   },
+   "edge": "prod-edge-03",
+   "hits": "75 %",
+   "host": "www.northwind.example",
+   "level": {
+    "text": "OK",
+    "kind": "ok"
+   },
+   "now": {
+    "p95": "0.120 s",
+    "requests": 64,
+    "share": "0.00 %"
+   },
+   "verified": "95 %",
+   "week": {
+    "p95": "0.120 s",
+    "requests": 87,
+    "share": "0.00 %"
+   }
+  }
+ ],
+ "empty": false,
+ "gsc": {
+  "clicks": {
+   "from": 1790812800,
+   "high": 4173,
+   "latest": "4173",
+   "low": 3193,
+   "max": "4173",
+   "min": "3193",
+   "points": [
+    [
+     1790812800,
+     3867
+    ],
+    [
+     1790899200,
+     3876
+    ],
+    [
+     1790985600,
+     3885
+    ],
+    [
+     1791072000,
+     3193
+    ],
+    [
+     1791158400,
+     3200
+    ],
+    [
+     1791244800,
+     3912
+    ],
+    [
+     1791331200,
+     3921
+    ],
+    [
+     1791417600,
+     3930
+    ],
+    [
+     1791504000,
+     3939
+    ],
+    [
+     1791590400,
+     3948
+    ],
+    [
+     1791676800,
+     3245
+    ],
+    [
+     1791763200,
+     3252
+    ],
+    [
+     1791849600,
+     3975
+    ],
+    [
+     1791936000,
+     3984
+    ],
+    [
+     1792022400,
+     3993
+    ],
+    [
+     1792108800,
+     4002
+    ],
+    [
+     1792195200,
+     4011
+    ],
+    [
+     1792281600,
+     3296
+    ],
+    [
+     1792368000,
+     3304
+    ],
+    [
+     1792454400,
+     4038
+    ],
+    [
+     1792540800,
+     4047
+    ],
+    [
+     1792627200,
+     4056
+    ],
+    [
+     1792713600,
+     4065
+    ],
+    [
+     1792800000,
+     4074
+    ],
+    [
+     1792886400,
+     3348
+    ],
+    [
+     1792972800,
+     3355
+    ],
+    [
+     1793059200,
+     4101
+    ],
+    [
+     1793145600,
+     4110
+    ],
+    [
+     1793232000,
+     4119
+    ],
+    [
+     1793318400,
+     4128
+    ],
+    [
+     1793404800,
+     4137
+    ],
+    [
+     1793491200,
+     3400
+    ],
+    [
+     1793577600,
+     3407
+    ],
+    [
+     1793664000,
+     4164
+    ],
+    [
+     1793750400,
+     4173
+    ]
+   ],
+   "to": 1793750400
+  },
+  "empty": false,
+  "impressions": {
+   "from": 1790812800,
+   "high": 96307,
+   "latest": "96044",
+   "low": 78476,
+   "max": "96307",
+   "min": "78476",
+   "points": [
+    [
+     1790812800,
+     95801
+    ],
+    [
+     1790899200,
+     95693
+    ],
+    [
+     1790985600,
+     95867
+    ],
+    [
+     1791072000,
+     78854
+    ],
+    [
+     1791158400,
+     78974
+    ],
+    [
+     1791244800,
+     96171
+    ],
+    [
+     1791331200,
+     95875
+    ],
+    [
+     1791417600,
+     95694
+    ],
+    [
+     1791504000,
+     95794
+    ],
+    [
+     1791590400,
+     96084
+    ],
+    [
+     1791676800,
+     78963
+    ],
+    [
+     1791763200,
+     78914
+    ],
+    [
+     1791849600,
+     95959
+    ],
+    [
+     1791936000,
+     95719
+    ],
+    [
+     1792022400,
+     95738
+    ],
+    [
+     1792108800,
+     95997
+    ],
+    [
+     1792195200,
+     96259
+    ],
+    [
+     1792281600,
+     78952
+    ],
+    [
+     1792368000,
+     78758
+    ],
+    [
+     1792454400,
+     95767
+    ],
+    [
+     1792540800,
+     95702
+    ],
+    [
+     1792627200,
+     95911
+    ],
+    [
+     1792713600,
+     96202
+    ],
+    [
+     1792800000,
+     96307
+    ],
+    [
+     1792886400,
+     78827
+    ],
+    [
+     1792972800,
+     78584
+    ],
+    [
+     1793059200,
+     95690
+    ],
+    [
+     1793145600,
+     95831
+    ],
+    [
+     1793232000,
+     96128
+    ],
+    [
+     1793318400,
+     96307
+    ],
+    [
+     1793404800,
+     96204
+    ],
+    [
+     1793491200,
+     78649
+    ],
+    [
+     1793577600,
+     78476
+    ],
+    [
+     1793664000,
+     95765
+    ],
+    [
+     1793750400,
+     96044
+    ]
+   ],
+   "to": 1793750400
+  },
+  "position": {
+   "from": 1790812800,
+   "high": 7.12,
+   "latest": "6.5",
+   "low": 6.54,
+   "max": "7.1",
+   "min": "6.5",
+   "points": [
+    [
+     1790812800,
+     7.12
+    ],
+    [
+     1790899200,
+     7.07
+    ],
+    [
+     1790985600,
+     7.02
+    ],
+    [
+     1791072000,
+     6.99
+    ],
+    [
+     1791158400,
+     6.96
+    ],
+    [
+     1791244800,
+     6.95
+    ],
+    [
+     1791331200,
+     6.94
+    ],
+    [
+     1791417600,
+     6.95
+    ],
+    [
+     1791504000,
+     6.96
+    ],
+    [
+     1791590400,
+     6.97
+    ],
+    [
+     1791676800,
+     6.98
+    ],
+    [
+     1791763200,
+     6.99
+    ],
+    [
+     1791849600,
+     6.99
+    ],
+    [
+     1791936000,
+     6.98
+    ],
+    [
+     1792022400,
+     6.96
+    ],
+    [
+     1792108800,
+     6.93
+    ],
+    [
+     1792195200,
+     6.89
+    ],
+    [
+     1792281600,
+     6.84
+    ],
+    [
+     1792368000,
+     6.79
+    ],
+    [
+     1792454400,
+     6.73
+    ],
+    [
+     1792540800,
+     6.68
+    ],
+    [
+     1792627200,
+     6.64
+    ],
+    [
+     1792713600,
+     6.6
+    ],
+    [
+     1792800000,
+     6.58
+    ],
+    [
+     1792886400,
+     6.57
+    ],
+    [
+     1792972800,
+     6.56
+    ],
+    [
+     1793059200,
+     6.57
+    ],
+    [
+     1793145600,
+     6.58
+    ],
+    [
+     1793232000,
+     6.59
+    ],
+    [
+     1793318400,
+     6.61
+    ],
+    [
+     1793404800,
+     6.61
+    ],
+    [
+     1793491200,
+     6.61
+    ],
+    [
+     1793577600,
+     6.6
+    ],
+    [
+     1793664000,
+     6.58
+    ],
+    [
+     1793750400,
+     6.54
+    ]
+   ],
+   "to": 1793750400
+  },
+  "urls": [
+   {
+    "coverage": "Crawled - currently not indexed",
+    "crawledAs": "MOBILE",
+    "lastCrawl": "2026-11-06T07:43:21Z",
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "url": "https://www.northwind.example/blog/choosing-a-laptop"
+   },
+   {
+    "coverage": "Server error (5xx)",
+    "crawledAs": "MOBILE",
+    "lastCrawl": "2026-11-06T07:43:21Z",
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "url": "https://www.northwind.example/category/phone-cases"
+   },
+   {
+    "coverage": "Blocked by robots.txt",
+    "crawledAs": "",
+    "lastCrawl": "",
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "url": "https://www.northwind.example/search?q=sale"
+   },
+   {
+    "coverage": "Submitted and indexed",
+    "crawledAs": "MOBILE",
+    "lastCrawl": "2026-11-06T07:43:21Z",
+    "level": {
+     "text": "OK",
+     "kind": "ok"
+    },
+    "url": "https://www.northwind.example/"
+   },
+   {
+    "coverage": "Submitted and indexed",
+    "crawledAs": "MOBILE",
+    "lastCrawl": "2026-11-06T07:43:21Z",
+    "level": {
+     "text": "OK",
+     "kind": "ok"
+    },
+    "url": "https://www.northwind.example/category/headphones"
+   },
+   {
+    "coverage": "Submitted and indexed",
+    "crawledAs": "MOBILE",
+    "lastCrawl": "2026-11-06T07:43:21Z",
+    "level": {
+     "text": "OK",
+     "kind": "ok"
+    },
+    "url": "https://www.northwind.example/product/nw-200-wireless"
+   }
+  ]
+ },
+ "level": {
+  "text": "WARN",
+  "kind": "warn"
+ },
+ "refresh": {
+  "seconds": 60
+ },
+ "suggestions": {
+  "day": "2026-11-07",
+  "empty": false,
+  "groups": [
+   {
+    "key": "falling",
+    "rows": [
+     {
+      "action": "Check the page still answers the query: price, stock and the main text. Compare with the pages now above it.",
+      "evidence": "312 clicks in 7 days, 401 per 7 days before (-22 %); position 4.1 to 5.3",
+      "page": "https://www.northwind.example/category/headphones",
+      "title": "Clicks falling: wireless headphones"
+     },
+     {
+      "action": "The product is out of stock. Add a back-in-stock date or link the newer model.",
+      "evidence": "88 clicks in 7 days, 117 before (-25 %)",
+      "page": "https://www.northwind.example/product/nw-200-wireless",
+      "title": "Clicks falling: nw-200"
+     }
+    ],
+    "title": "Clicks falling"
+   },
+   {
+    "key": "ctr",
+    "rows": [
+     {
+      "action": "Rewrite the title and description with the price range and free delivery.",
+      "evidence": "18,400 impressions, CTR 0.9 % at position 3.2 (expected about 10 %)",
+      "page": "https://www.northwind.example/category/laptops",
+      "title": "Low CTR: laptop deals"
+     },
+     {
+      "action": "Put the size range and the lowest price in the title.",
+      "evidence": "6,950 impressions, CTR 1.2 % at position 2.8",
+      "page": "https://www.northwind.example/category/monitors",
+      "title": "Low CTR: 4k monitor"
+     }
+    ],
+    "title": "Low CTR: rewrite the title or description"
+   },
+   {
+    "key": "striking",
+    "rows": [
+     {
+      "action": "Add internal links from the home page and the phone pages to this category.",
+      "evidence": "position 4.6, 22,100 impressions",
+      "page": "https://www.northwind.example/category/smart-watches",
+      "title": "Close to the top 3: smart watch"
+     },
+     {
+      "action": "Add a short comparison table and link the laptop category.",
+      "evidence": "position 5.2, 9,300 impressions",
+      "page": "https://www.northwind.example/blog/choosing-a-laptop",
+      "title": "Close to the top 3: how to choose a laptop"
+     }
+    ],
+    "title": "Close to the top 3"
+   },
+   {
+    "key": "bounce",
+    "rows": [
+     {
+      "action": "Show the cases for the most common phones first; the page opens on a sold-out item.",
+      "evidence": "71 % bounce, 2,140 sessions from Google",
+      "page": "https://www.northwind.example/category/phone-cases",
+      "title": "High bounce from Google: phone case"
+     }
+    ],
+    "title": "High bounce from Google"
+   }
+  ],
+  "summary": [
+   "1. Fix the 5xx on /category/phone-cases first: Google cannot fetch it.",
+   "2. Rewrite the laptop and monitor titles: high impressions, low CTR.",
+   "3. Link the smart watch category from the home page."
+  ]
+ },
+ "summary": {
+  "findings": [
+   {
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "what": "Googlebot gets 503 on /category",
+    "evidence": "6 in the last hour from 10.20.30.21:8081 (prod-shop-01)",
+    "action": "503 comes from the backend or an edge limit. Check the service on 10.20.30.21:8081 (prod-shop-01), its health, and the edge's rate and connection limits for /category. Google crawls less after repeated 503s."
+   },
+   {
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "what": "Googlebot gets 502 on /product",
+    "evidence": "2 in the last hour from 10.20.30.22:8081 (prod-shop-02)",
+    "action": "502 means the edge got no valid answer. Check that the port on 10.20.30.22:8081 (prod-shop-02) listens, and look for restarts or out-of-memory kills."
+   },
+   {
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "what": "Googlebot is slower on prod-edge-02",
+    "evidence": "p95 0.950 s now, 0.410 s 7 days ago",
+    "action": "Check the backend latency on the edge and the recent deploys on the CI/CD page. Slow pages lower the crawl rate."
+   },
+   {
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "what": "Not indexed: https://www.northwind.example/category/phone-cases",
+    "evidence": "Server error (5xx)",
+    "action": "Google could not fetch it (SERVER_ERROR). Check the status, the redirects and the firewall or CDN rules for this URL."
+   },
+   {
+    "level": {
+     "text": "WARN",
+     "kind": "warn"
+    },
+    "what": "Not indexed: https://www.northwind.example/search?q=sale",
+    "evidence": "Blocked by robots.txt",
+    "action": "robots.txt blocks it. Fix the Disallow rule where the edge or the app serves the file."
+   },
+   {
+    "level": {
+     "text": "INFO",
+     "kind": "info"
+    },
+    "what": "Not indexed: https://www.northwind.example/blog/choosing-a-laptop",
+    "evidence": "Crawled - currently not indexed",
+    "action": "Not an operations problem. The content team owns it (noindex tag, internal links, crawl priority)."
+   },
+   {
+    "level": {
+     "text": "INFO",
+     "kind": "info"
+    },
+    "what": "Sitemap with issues: https://www.northwind.example/sitemap-blog.xml",
+    "evidence": "0 errors, 3 warnings, last read 2026-11-05",
+    "action": "Fetch it as Google does: status, gzip, content type, under 50 MB and 50,000 URLs. Check that it lists only URLs that answer 200."
+   }
+  ],
+  "fix": 5
+ }
+}

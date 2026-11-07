@@ -1,0 +1,46 @@
+{
+ "alerts": [
+  {
+   "name": "NodeFilesystemFillsIn7Days",
+   "severity": "warning",
+   "since": "2026-11-01T22:53:44Z",
+   "target": "prod-mon-01:9100"
+  },
+  {
+   "name": "Nginx5xxRateHigh",
+   "severity": "critical",
+   "since": "2026-11-03T15:55:44Z",
+   "target": "prod-edge-01:9113"
+  },
+  {
+   "name": "Nginx5xxRateHigh",
+   "severity": "critical",
+   "since": "2026-11-03T15:56:44Z",
+   "target": "prod-edge-02:9113"
+  },
+  {
+   "name": "SmsOtpQueueBacklog",
+   "severity": "critical",
+   "since": "2026-11-03T18:03:44Z",
+   "target": "prod-pay-01:9100"
+  },
+  {
+   "name": "SmsOtpQueueBacklog",
+   "severity": "critical",
+   "since": "2026-11-03T18:05:44Z",
+   "target": "prod-pay-02:9100"
+  },
+  {
+   "name": "NodeMemoryHigh",
+   "severity": "warning",
+   "since": "2026-11-03T18:31:44Z",
+   "target": "prod-pay-01:9100"
+  }
+ ],
+ "at": 1793745224,
+ "id": 1194,
+ "md": {
+  "md": "WARN: 2 problems: sms-otp backlog draining on prod-pay-01/02; nginx 502 on www.northwind.example from prod-shop-02:3001 (dead upstream)."
+ },
+ "status": "WARN"
+}

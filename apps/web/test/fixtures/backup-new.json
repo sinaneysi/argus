@@ -1,0 +1,137 @@
+{
+"admin": true,
+"banners": [],
+"current": {
+"sha": "",
+"token": "",
+"uriRedacted": ""
+},
+"derived": [
+{
+"label": "Encryption",
+"value": "age (public keys on the host)"
+},
+{
+"label": "Compression",
+"value": "zstd"
+},
+{
+"label": "Staging",
+"value": "stream, no local copy"
+},
+{
+"label": "Retention",
+"value": "14 days (target default)"
+}
+],
+"draft": "",
+"member": "None",
+"members": [],
+"noTarget": false,
+"note": "Save unlocks when the test passes for this exact string.",
+"prod": false,
+"refresh": null,
+"replace": "/backups/new?schedule=daily",
+"repo": "ops/backup-templates",
+"schedules": [
+{
+"error": "",
+"key": "30m",
+"label": "Every 30 min",
+"note": "",
+"runs": [
+"Wed 04 Nov 00:30",
+"Wed 04 Nov 01:00",
+"Wed 04 Nov 01:30",
+"Wed 04 Nov 02:00",
+"Wed 04 Nov 02:30"
+]
+},
+{
+"error": "",
+"key": "hourly",
+"label": "Hourly",
+"note": "",
+"runs": [
+"Wed 04 Nov 01:00",
+"Wed 04 Nov 02:00",
+"Wed 04 Nov 03:00",
+"Wed 04 Nov 04:00",
+"Wed 04 Nov 05:00"
+]
+},
+{
+"error": "",
+"key": "12h",
+"label": "2× daily",
+"note": "",
+"runs": [
+"Wed 04 Nov 03:00",
+"Wed 04 Nov 15:00",
+"Thu 05 Nov 03:00",
+"Thu 05 Nov 15:00",
+"Fri 06 Nov 03:00"
+]
+},
+{
+"error": "",
+"key": "daily",
+"label": "Daily 03:00",
+"note": "",
+"runs": [
+"Wed 04 Nov 03:00",
+"Thu 05 Nov 03:00",
+"Fri 06 Nov 03:00",
+"Sat 07 Nov 03:00",
+"Sun 08 Nov 03:00"
+]
+},
+{
+"error": "",
+"key": "cron",
+"label": "Cron",
+"note": "Type a cron expression (minute hour day month weekday), then Preview.",
+"runs": []
+}
+],
+"target": "",
+"targets": [
+{
+"value": "",
+"label": "Choose a target"
+},
+{
+"value": "backup-east",
+"label": "backup-east · backup/ · write-only · release"
+},
+{
+"value": "backup-west",
+"label": "backup-west · backup-dr/ · write-only · release"
+},
+{
+"value": "staging",
+"label": "staging · backup-stg/ · keys can delete · pre-release, develop"
+}
+],
+"test": {
+"absent": [],
+"facts": [],
+"member": "",
+"missing": "",
+"reason": "failed",
+"state": ""
+},
+"tested": false,
+"topology": "",
+"tz": "UTC",
+"values": {
+"cron": "",
+"databases": "",
+"draft": "",
+"member": "",
+"name": "",
+"retention_days": "",
+"schedule": "daily",
+"target": ""
+}
+}

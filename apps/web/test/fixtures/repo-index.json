@@ -1,0 +1,119 @@
+{
+ "banners": [],
+ "checked": 3,
+ "engine": "example/deployment",
+ "error": "",
+ "facets": [
+  {
+   "any": true,
+   "key": "verdict",
+   "label": "Readiness",
+   "options": [
+    {
+     "count": 1,
+     "label": "Not ready",
+     "value": "not_ready"
+    },
+    {
+     "count": 1,
+     "label": "Ready with warnings",
+     "value": "warn"
+    },
+    {
+     "count": 1,
+     "label": "Ready",
+     "value": "ready"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "list": {
+  "clearHref": "/cicd/repo#repos",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 3,
+  "noun": "checked repos",
+  "page": 1,
+  "pages": 1,
+  "path": "/cicd/repo",
+  "q": "",
+  "sort": "checked",
+  "sorts": [
+   {
+    "label": "Checked",
+    "value": "checked"
+   },
+   {
+    "label": "Blockers",
+    "value": "blockers"
+   },
+   {
+    "label": "Project",
+    "value": "project"
+   }
+  ],
+  "to": 3,
+  "total": 3
+ },
+ "mode": "index",
+ "placeholder": "https://gitlab.example.com/group/project",
+ "rows": [
+  {
+   "at": 1793741571,
+   "blockers": 0,
+   "by": "web",
+   "href": "/cicd/repo?project=orders%2Forder-service",
+   "project": "orders/order-service",
+   "verdict": {
+    "kind": "ok",
+    "text": "Ready"
+   },
+   "warnings": 0
+  },
+  {
+   "at": 1793730771,
+   "blockers": 0,
+   "by": "web",
+   "href": "/cicd/repo?project=search%2Fsearch",
+   "project": "search/search",
+   "verdict": {
+    "kind": "warn",
+    "text": "Ready with warnings"
+   },
+   "warnings": 2
+  },
+  {
+   "at": 1793719971,
+   "blockers": 2,
+   "by": "web",
+   "href": "/cicd/repo?project=platform%2Ffeature-flags",
+   "project": "platform/feature-flags",
+   "verdict": {
+    "kind": "fail",
+    "text": "Not ready"
+   },
+   "warnings": 1
+  }
+ ],
+ "tiles": [
+  {
+   "figure": "1",
+   "label": "Ready",
+   "sub": ""
+  },
+  {
+   "figure": "1",
+   "label": "With warnings",
+   "sub": ""
+  },
+  {
+   "figure": "1",
+   "hot": true,
+   "label": "Not ready",
+   "sub": ""
+  }
+ ],
+ "value": ""
+}

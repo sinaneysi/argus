@@ -1,0 +1,19 @@
+{
+ "demo": true,
+ "demoBanner": "sample data, not a real company",
+ "demoPassword": "northwind-demo-2026",
+ "demoUsers": [
+  {
+   "label": "Sign in as viewer",
+   "username": "demo.viewer"
+  },
+  {
+   "label": "Sign in as admin",
+   "username": "demo.admin"
+  }
+ ],
+ "passwordLogin": true,
+ "product": "Argus",
+ "sso": false,
+ "subtitle": "Northwind Commerce DevOps"
+}

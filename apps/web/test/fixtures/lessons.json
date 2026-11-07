@@ -1,0 +1,236 @@
+{
+"banners": [],
+"empty": "",
+"envs": [
+"",
+"develop",
+"pre-release",
+"release",
+"none"
+],
+"facets": [
+{
+"key": "review",
+"label": "Review",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "new",
+"label": "New",
+"count": 1
+},
+{
+"value": "update",
+"label": "Update of a lesson",
+"count": 1
+}
+]
+},
+{
+"key": "env",
+"label": "Environment",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "develop",
+"label": "develop",
+"count": 1
+},
+{
+"value": "release",
+"label": "release",
+"count": 2
+}
+]
+},
+{
+"key": "lkind",
+"label": "Kind",
+"value": "",
+"any": true,
+"options": []
+}
+],
+"here": "/review?kind=lessons&mode=full",
+"kinds": [
+"",
+"investigate",
+"documentation",
+"change",
+"production",
+"code",
+"unclear",
+"incident",
+"general"
+],
+"list": {
+"clearHref": "/review?kind=lessons&mode=full",
+"filtered": false,
+"from": 1,
+"hidden": {
+"kind": "lessons",
+"mode": "full"
+},
+"matched": 4,
+"noun": "waiting lessons",
+"page": 1,
+"pages": 1,
+"path": "/review",
+"q": "",
+"sort": "newest",
+"sorts": [
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "oldest",
+"label": "Oldest"
+}
+],
+"to": 4,
+"total": 4
+},
+"max": {
+"body": 1500,
+"title": 120
+},
+"on": true,
+"refresh": null,
+"rows": [
+{
+"actions": [
+"approve",
+"reject"
+],
+"body": "Rotating the backup user's password drops its backup role on prod-mongo-02; grant it again and run one test dump.",
+"editable": true,
+"env": "release",
+"evidence": "Task OPS-211 run log",
+"id": 4,
+"kind": "trap",
+"proposedAt": 1793742499,
+"review": "",
+"service": "mongo",
+"source": {
+"text": "OPS-211",
+"href": "/board/task?key=OPS-211"
+},
+"state": "proposed",
+"stateKind": "warn",
+"tags": [
+"backup"
+],
+"title": "Mongo backup user needs its role after a rotation"
+},
+{
+"actions": [
+"approve",
+"reject"
+],
+"body": "Before a coupon-service minor release, compare the health routes; 3.9.0 removed /status.",
+"editable": true,
+"env": "",
+"evidence": "Task OPS-238 run log",
+"id": 5,
+"kind": "procedure",
+"proposedAt": 1793738899,
+"review": "",
+"service": "coupon-service",
+"source": {
+"text": "OPS-238",
+"href": "/board/task?key=OPS-238"
+},
+"state": "proposed",
+"stateKind": "warn",
+"tags": [
+"release"
+],
+"title": "Health check paths change with major releases"
+},
+{
+"actions": [
+"approve",
+"reject"
+],
+"body": "Raise retention or lower the level first; debug logs fill prod-mon-01 in two days.",
+"editable": true,
+"env": "release",
+"evidence": "Task OPS-222 run log",
+"id": 7,
+"kind": "trap",
+"proposedAt": 1793728819,
+"review": "update",
+"service": "loki",
+"source": {
+"text": "OPS-222",
+"href": "/board/task?key=OPS-222"
+},
+"state": "proposed",
+"stateKind": "warn",
+"supersedes": 2,
+"tags": [
+"disk",
+"logging"
+],
+"title": "Loki retention: change it before the log level"
+},
+{
+"actions": [
+"approve",
+"reject"
+],
+"body": "dev-runner-01 fills with images on busy days; prune the week-old images the evening before.",
+"editable": true,
+"env": "develop",
+"evidence": "Task OPS-219 run log",
+"id": 6,
+"kind": "procedure",
+"proposedAt": 1793711539,
+"review": "new",
+"service": "ci-runner",
+"source": {
+"text": "OPS-219",
+"href": "/board/task?key=OPS-219"
+},
+"state": "proposed",
+"stateKind": "warn",
+"tags": [
+"disk",
+"ci"
+],
+"title": "Prune runner images before a release day"
+}
+],
+"tabs": [
+{
+"count": 4,
+"current": true,
+"href": "/review?kind=lessons&mode=full",
+"label": "Waiting"
+},
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=lessons&mode=full&view=approved",
+"label": "Approved"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=lessons&mode=full&view=rejected",
+"label": "Rejected"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=lessons&mode=full&view=retired",
+"label": "Retired"
+}
+],
+"title": "Waiting for review",
+"view": "proposed",
+"waiting": 4
+}

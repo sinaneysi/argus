@@ -1,0 +1,10 @@
+# Settings -> Kubernetes: store, check or remove a kubeconfig as soon as the web app drops a request.
+[Unit]
+Description=Argus Settings -> Kubernetes: kubeconfig requests
+
+[Path]
+PathExistsGlob=/var/lib/argus/settings-in/kube/*.json
+Unit=argus-kube.service
+
+[Install]
+WantedBy=paths.target

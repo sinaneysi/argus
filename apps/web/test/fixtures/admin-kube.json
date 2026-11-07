@@ -1,0 +1,76 @@
+{
+"add": {
+"env": "",
+"open": false,
+"replace": ""
+},
+"busy": false,
+"clusters": [
+{
+"agent": "The agent can read it. The check found read access only. Saved 2d ago by alex.doe.",
+"badge": {
+"kind": "ok",
+"text": "Read-only"
+},
+"env": "develop",
+"findings": [],
+"line": "server k8s-stage.northwind.example:6443 · context stage-ro · user argus-ro · namespace shop.",
+"name": "stage",
+"test": "Last check 3h ago : Kubernetes v1.30.4, 14 namespaces visible.",
+"why": ""
+},
+{
+"agent": "Refused for the agent: this kubeconfig can write. Saved 5h ago by sam.roe.",
+"badge": {
+"kind": "fail",
+"text": "Can write"
+},
+"env": "pre-release",
+"findings": [
+"can create/delete/patch/update deployments.apps",
+"can exec into pods"
+],
+"line": "server k8s-tools.northwind.example:6443 · context tools-admin · user tools-admin.",
+"name": "tools",
+"test": "Last check 3h ago : Kubernetes v1.29.8, 6 namespaces visible.",
+"why": ""
+}
+],
+"help": {
+"cmds": "kubectl apply -f argus-ro.yaml\nkubectl -n kube-system get secret argus-ro-token -o jsonpath='{.data.ca\\.crt}' | base64 -d > ca.crt\nSA_TOKEN=$(kubectl -n kube-system get secret argus-ro-token -o jsonpath='{.data.token}' | base64 -d)\nK=argus-ro.kubeconfig\nkubectl config set-cluster dev --server=https://<api-server>:6443 --certificate-authority=ca.crt --embed-certs=true --kubeconfig=$K\nkubectl config set-credentials argus-ro --token=$SA_TOKEN --kubeconfig=$K\nkubectl config set-context argus-ro --cluster=dev --user=argus-ro --namespace=default --kubeconfig=$K\nkubectl config use-context argus-ro --kubeconfig=$K\nkubectl --kubeconfig=$K auth can-i --list      # get/list/watch only, no secrets",
+"yaml": "apiVersion: v1\nkind: ServiceAccount\nmetadata: {name: argus-ro, namespace: kube-system}\n---\napiVersion: v1\nkind: Secret\ntype: kubernetes.io/service-account-token\nmetadata:\n  name: argus-ro-token\n  namespace: kube-system\n  annotations: {kubernetes.io/service-account.name: argus-ro}\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata: {name: argus-ro}\nrules:\n- apiGroups: [\"\"]\n  resources: [pods, pods/log, services, endpoints, namespaces, nodes, events,\n              persistentvolumes, persistentvolumeclaims, configmaps,\n              serviceaccounts, resourcequotas, limitranges, replicationcontrollers]\n  verbs: [get, list, watch]\n- apiGroups: [apps]\n  resources: [deployments, replicasets, statefulsets, daemonsets]\n  verbs: [get, list, watch]\n- apiGroups: [batch]\n  resources: [jobs, cronjobs]\n  verbs: [get, list, watch]\n- apiGroups: [networking.k8s.io]\n  resources: [ingresses, ingressclasses, networkpolicies]\n  verbs: [get, list, watch]\n- apiGroups: [autoscaling, policy, storage.k8s.io, events.k8s.io, discovery.k8s.io]\n  resources: [horizontalpodautoscalers, poddisruptionbudgets, storageclasses, events, endpointslices]\n  verbs: [get, list, watch]\n- apiGroups: [metrics.k8s.io]\n  resources: [pods, nodes]\n  verbs: [get, list]\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata: {name: argus-ro}\nroleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: argus-ro}\nsubjects:\n- {kind: ServiceAccount, name: argus-ro, namespace: kube-system}"
+},
+"host": "argus-01",
+"notices": [],
+"refresh": null,
+"status": {
+"act": "See tools",
+"badge": "Check",
+"detail": "The check found write or Secret access, or could not reach the cluster. The agent reads only clusters whose login is read-only.",
+"facts": [
+{
+"kind": "ok",
+"label": "kubectl",
+"value": "v1.34.13"
+},
+{
+"kind": "",
+"label": "Clusters",
+"value": "2"
+},
+{
+"kind": "warn",
+"label": "For the agent",
+"value": "1 of 2"
+},
+{
+"kind": "",
+"label": "Last check",
+"value": "3h ago"
+}
+],
+"head": "tools is refused for the agent.",
+"href": "#kube-c-tools",
+"kind": "warn"
+}
+}

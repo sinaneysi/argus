@@ -1,0 +1,23 @@
+{
+ "demo": true,
+ "demoBanner": "sample data, not a real company",
+ "mfa": {
+  "at": 0,
+  "enabled": false,
+  "enrolRequired": false,
+  "via": ""
+ },
+ "mustChangePassword": false,
+ "permissions": {
+  "review.decide": true,
+  "review.read": true,
+  "settings": true,
+  "today.act": true
+ },
+ "product": "Argus",
+ "role": "admin",
+ "source": "local",
+ "subtitle": "Northwind Commerce DevOps",
+ "theme": "auto",
+ "username": "demo.admin"
+}

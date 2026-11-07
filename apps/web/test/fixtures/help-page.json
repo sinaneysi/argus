@@ -1,0 +1,255 @@
+{
+"doc": {
+"admin": true,
+"intro": [
+{
+"kind": "md",
+"text": "\nSettings is at the bottom of the sidebar, for admins only. Its tabs are General, Claude, Kubernetes, Users and access, Jira sync, Backup\ntargets, Integrations and Credentials. The app never applies a setting itself: it writes a request, and a root job on the server\nchecks it again, applies it, logs it, and posts the change to Matrix.\n"
+}
+],
+"sections": [
+{
+"admin": false,
+"id": "general",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [General](/admin).\n\n- **Claude usage:** On (default) or Off, with one button. Argus's model runs use the operator's Claude subscription.\n  Off stops every Claude call: triage, deep RCA, storage and VM analyses, ideas, task runs, the fixer,\n  translations and Lazy readings are skipped and recorded as skipped, never as failures (no incident, no Matrix FAIL\n  notice). Checks still collect their facts. Today, Checks, the brief and the self-check say **Claude paused**.\n  Root can also run `sudo argus-apply-settings claude on|off` on argus-01 (no word prints it).\n- **Schedules:** how often chat triage, log RCA, the backup check and the certificate check run, and whether each is\n  enabled, with the next run.\n- **Thresholds:** Kuma minutes down before a monitor counts (default 5), Kuma downs that count as flapping (3),\n  certificate WARN days (30) and FAIL days (14).\n- **Automatic deep RCA:** see [Deep RCA](/help/operations#deep-rca-auto).\n- **Hub services and sales-event readiness:** hub services raise severity (on); the event name and date (default\n  Black Friday, 2026-11-27); the freeze reminder from D-7; the readiness brief from D-30 to D+2. Reports only.\n- **QA follow-up questions:** on, off, or dry run; **Read images in QA messages** on or off (off by default). Root\n  can also run `sudo argus-apply-settings qa on|off|dry-run|send|images-on|images-off` on argus-01.\n- **Sign-in:** \"SSO only\" (password sign-in refused except for the break-glass account). It has no effect until\n  Keycloak is configured.\n- **Credentials:** status only, checked hourly. Values are never shown. Healthy ones fold.\n- **Change log:** the last 15 changes and who made them.\n\nPress **Save and apply**. It is applied within seconds. If a value is out of range, nothing is saved: your entries\nstay on the page, the field is marked with what is wrong, and the message at the top jumps to it. **Discard changes**\nputs the form back as it was loaded. On **Users and access**, **Reset password…** and **Disable…** open a short\nconfirmation with what happens before the button that does it.\n"
+}
+],
+"title": "General"
+},
+{
+"admin": false,
+"id": "claude",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Claude](/admin/claude). Admins only; every change needs a recent 2FA step.\n\nThe page opens on one answer: **is Argus's AI working right now?** The status block combines the usage switch, the\ntoken and its last test, the location guard and the last real Claude run (a run where the model answered; runs skipped\nwhile AI was off or stopped do not count). It says **Working**, **Check**, **Not working**, **Stopped**, **Paused**\n(usage limit) or **Off**, why in one sentence, and the one thing to do when something is wrong (for example\n**Replace the token** when Claude refuses it). A run that worked after a failed test counts as working.\n\nBelow it, three sections in this order:\n\n- **Claude token:** the login Argus's Claude runs use (an OAuth token from `claude setup-token`, lasts one year),\n  kept by root in the file `ARGUS_CLAUDE_ENV_FILE` names (default `/etc/argus/claude.env`). Only its state shows: set\n  or not, its last 4 characters, who replaced it and when, and the last test with Claude's error when it failed. The\n  token is never shown, logged or kept by the app.\n  - **Test current token** asks Claude for one short answer with the token in place. Nothing changes.\n  - **Replace the token** (folded; open when the token is missing or failing): on a computer signed in to the right\n    Claude account run `claude setup-token`, paste what it prints (it starts with `sk-ant-oat01-`) and choose\n    **Replace and test**. Root on argus-01 (`argus secrets apply-claude`, run by `argus-claude-token.path`) backs up\n    the file (`<file>.bak-<time>-claude`, the last 5 kept), puts the token in, and runs the test as\n    `ARGUS_CLAUDE_RUN_AS`. If the test fails, the previous token is restored at once and the page says why. Under\n    **Advanced**, **Keep the new token even if the test fails** is only for when you know the token is right and\n    Claude itself is down. The audit log records who, when, the variable and the last 4 characters, never the token.\n  - While root applies a request the page shows **Applying on argus-01…** and refreshes itself every 5 seconds; then a\n    short message says what happened and what to do next.\n  - Only the OAuth token is offered. An Anthropic API key would take precedence over the subscription login and is\n    billed per use.\n- **Location guard** (the egress country guard): before every Claude run (`argus claude check`) Argus looks up the\n  country its Claude traffic leaves from, with the same proxy settings Claude itself gets (Cloudflare's trace, then\n  country.is if that fails; `ARGUS_CLAUDE_EGRESS_URLS`), and does not start the run when the country is on the blocked\n  list (default **IR**). The provider does not serve that region, and calls from it can get the account disabled. The\n  run is skipped with the reason, never retried in a loop, and the Checks and Today pages show **AI stopped**. One\n  lookup is reused for 10 minutes (1 minute after a failed one). **Check now** refreshes it; **Test current token** and\n  **Replace and test** check it first, so a token is never tested from a blocked country. **Guard settings** (folded):\n  the on/off toggle (on by default), the blocked countries, and what happens if the lookup fails (**Stop the run**, the\n  default, or **Let the run start**); applied by root and logged. This is a guard, not a bypass: it never changes the\n  route the traffic takes or hides the location; it only stops AI and says why.\n- **Claude usage:** the same On/Off switch as on General.\n"
+}
+],
+"title": "Claude"
+},
+{
+"admin": false,
+"id": "sources",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Data sources](/admin/sources). Admins only; every change needs a recent 2FA step.\n\nEvery system Argus reads, grouped by type: GitLab, Grafana, Kubernetes, Outline, Elasticsearch/OpenSearch and Sentry.\nAdd as many of each type as you have (ten Grafanas, two GitLabs); each has a name that is unique per type, an\nenvironment (develop, pre-release, release, or shared for one system that serves every environment, such as GitLab), an\naddress and a purpose:\n\n- **Agent reads:** the agent reads through it. The login must be read-only; one that can write is **Refused** (an admin\n  can override on develop and pre-release under Advanced, never on release or shared).\n- **Issue tracker** (GitLab): the board's GitLab issues; needs scope `api`.\n- **Publishes docs** (Outline): Argus writes the service docs there; needs a member login.\n\n**Add data source** → pick the type → fill its form → **Save and check**. The token goes to root once and is never\nshown again (the list shows its last four characters). Root (`argus sources apply`) checks the login within seconds,\nand every source again every 6 hours (`argus sources check`): **Read-only** (verified read-only), **OK** (works; its\npurpose needs writes), **Refused: can write**, **Login failed**, **Unreachable**, **Not checked**. Each check only\nreads: GitLab asks for the token's scopes, Grafana for the role (must be Viewer), Outline for the user's role,\nElasticsearch for its privileges, Sentry for the token's scopes. Checks use https only, follow no redirect and never\ncall a loopback or link-local address. Kubernetes clusters are added on the [Kubernetes](#kubernetes) tab and listed\nhere.\n\nThe integrations Argus already had appear here on their own (the GitLab read-only token, the GitLab issues tracker,\nevery Grafana site with a token, Outline, the Kubernetes clusters). Jobs still read their credentials where they always\ndid, so those rows say where: change them on Integrations or Kubernetes, or ask the operator for the ones in the\nconfiguration. The agent sees the list (never a credential) with `argus sources list` and picks the right instance\ninstead of trying all of them. Next: Argus learns which service lives in which source and keeps that table on each\nservice's Outline page.\n"
+}
+],
+"title": "Data sources"
+},
+{
+"admin": false,
+"id": "kubernetes",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Kubernetes](/admin/kube). Admins only; every change needs a recent 2FA step.\n\nGive the agent read-only access to a Kubernetes cluster, for RCA and tasks (pods, logs, events, ingresses). The page\nopens on one answer: **can the agent read our clusters, and only read?** Then one panel per cluster, the form to add\nor replace one, and how to make a read-only login.\n\n- **Add a cluster:** a name (lowercase, for example `dev`; the agent calls it by this name), the environment\n  (develop, pre-release or release) and the kubeconfig, pasted or chosen as a file (YAML or JSON, up to 64 KB), and\n  optionally the context to use. **Save and check** sends it once to root on argus-01; the app never keeps or shows it.\n- **What is refused:** exec and auth-provider plugins, file paths (`client-certificate`, `client-key`,\n  `certificate-authority`, `tokenFile`) and impersonation (`as`). Only inline credentials are stored, so nothing runs on\n  argus-01. Root keeps only the chosen context, its cluster and its user.\n- **The check:** root asks the cluster what the login may do (`kubectl auth can-i --list` plus cluster-wide questions,\n  `version`, `get ns`; run as an unprivileged user, 15 seconds each). **Read-only** (get, list, watch, no Secrets) is\n  enabled for the agent. **Can write** or **Reads Secrets** is stored but refused for the agent; on develop and\n  pre-release an admin can tick **Enable it even if it can write or read Secrets** under **Advanced**. **Release never\n  takes the override.** A cluster that does not answer is refused until **Check again** passes. A later check that finds\n  more rights disables it again.\n- **Where it lives:** `ARGUS_KUBE_DIR/<name>.kubeconfig` (default `/etc/argus/kube`) (root-owned; readable by the agent's group only while\n  enabled). Saving the same name again backs up the previous file to its `backup/` folder (the last 5 kept);\n  **Remove** backs it up too. The audit log records who, which cluster, the server, the user and the verdict, never\n  the kubeconfig.\n- **kubectl:** root installs a pinned kubectl (`ARGUS_KUBECTL_VERSION`, `ARGUS_KUBECTL_SHA256`, `ARGUS_KUBECTL_URL`; `argus secrets install-kubectl`) and\n  checks it at every save. If argus-01 cannot download it, the page says **kubectl is not installed** and every check and agent call is\n  refused until it is there.\n- **Make a read-only login** (on the page, folded): a ServiceAccount `argus-ro` with a ClusterRole that can get, list\n  and watch pods, logs, services, deployments, jobs, ingresses, events and the like, never Secrets (it names resources\n  instead of `*`), its token Secret, and the `kubectl config` commands that build a kubeconfig with the token inline.\n\n**What the agent can run:** `argus tools kube <cluster> get|describe|logs|top|events|api-resources|version|can-i`.\nLogs are capped (`--tail` up to 500, `--since` up to 6h); output is redacted and capped; every call is in\n`ARGUS_KUBE_AUDIT_LOG`. Never Secrets, never ConfigMap contents (names only), never exec, cp, port-forward,\nproxy, edit, apply, delete, scale, rollout, drain, cordon or `--raw`.\n"
+}
+],
+"title": "Kubernetes"
+},
+{
+"admin": false,
+"id": "users",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Users and access](/admin/users).\n\n- Add a local user, reset a password (the new one is temporary and shown only once), change the role, disable or\n  enable an account.\n- The table shows each user's role, source (local or Keycloak), **2FA** (on, and when it was last used), last login,\n  Matrix ID and state.\n- **Reset 2FA** (with a reason): removes the user's authenticator and recovery codes and signs them out everywhere;\n  they set it up again. **Sign out everywhere** ends all their sessions. Both are in the security events below the\n  table and posted to Matrix (resets).\n- **Require 2FA for all users at next login:** users without 2FA must set it up before anything else. Off by default:\n  then they can read and are asked at their first change. See [Sign-in and two-factor](/help/safety#sign-in).\n- Changes on this tab need two-factor authentication: the code typed at sign-in is enough (with `MFA_STEP_UP=on`,\n  a code from the last 10 minutes).\n- Set a user's **Matrix ID** here (or they set it in Account). Only admins with a Matrix ID can send Argus tasks\n  from Matrix.\n- Keycloak users get their role from Keycloak (client role `admin` or `viewer`).\n"
+}
+],
+"title": "Users and access"
+},
+{
+"admin": false,
+"id": "jira",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Jira sync](/admin/board). See [Task board](/help/delivery#board-admin) for the fields.\nAlso here: **Task agent and QA intake**, \"Propose tasks for page-level incidents\", and the sync status (last good\nsync, Jira calls, failed or dropped requests, retries).\n\nEach user can also connect their own Jira in Account; Argus uses that token for that user's changes.\n"
+}
+],
+"title": "Jira sync"
+},
+{
+"admin": false,
+"id": "backup-targets",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Backup targets](/admin/backup-targets). See\n[Backup targets](/help/infrastructure#backup-targets).\n"
+}
+],
+"title": "Backup targets"
+},
+{
+"admin": false,
+"id": "integrations",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Integrations](/admin/outline). Outline service docs, see\n[Outline service docs](/help/agent#outline), and **GitLab issues**, the task tracker beside Jira\n([GitLab issues](/help/delivery#gitlab-issues)).\n\n**Connect GitLab issues:**\n\n1. Open the issue board in GitLab and copy its URL. A **group board** (`…/groups/<group>/-/boards`) shows the issues\n   of every project in the group; a project board only that project's.\n2. Where the board lives (the group or the project) → **Settings → Access tokens** → add a token named `argus`, role\n   **Reporter**, scope **api**, with an expiry date. It is a bot, so nothing depends on one person's account. Do not use\n   a personal token; Argus warns when it sees one. A group board needs a **group** access token.\n3. In Argus, paste the board URL and the token and choose **Test and save**. Argus checks the token, the project or\n   group and its boards from argus-01. For a group board, choose the **Default project for new issues**.\n4. With several boards, choose the one Argus mirrors. The **Board lists** table shows which list is which column.\n5. Optional: **New tasks go to** Jira (the default) or GitLab issues; a **list map** such as `QA=review; Blocked=progress`;\n   a **user map** such as `alex=alex.doe` for assignees.\n\nThe token is stored on argus-01 for root only (`/etc/argus/gitlab-issues.token`) and never shown again.\n**Disconnect** deletes it; revoke it in GitLab too. Argus calls only the allowed GitLab hosts (by default the host of\n`GITLAB_URL`), over https, without following redirects.\n"
+}
+],
+"title": "Integrations"
+},
+{
+"admin": false,
+"id": "credentials",
+"nodes": [
+{
+"kind": "md",
+"text": "\n**Where:** Settings → [Credentials](/admin/credentials). Is any token or key Argus uses near its expiry date?\n\n- Once a day (07:20) and on **Check now**, every credential checks itself on the server: a GitLab token reads its own\n  expiry, Grafana and Jira report what they allow, a Matrix token answers \"who am I\". Only the result reaches this page:\n  name, kind, who uses it, where it lives (the file and the variable name), expires, created, last used. **A value is\n  never shown, stored or sent.**\n- **Expires** shows the date and the days left: green, amber at 30 days or less, red at 7 days or less, **expired**,\n  **rejected** (the service refused the token: revoked or wrong). Without an expiry date it says **no expiry info** or\n  **never expires**, with a \"rotate by\" date (every 180 days by default).\n- What happens: at 30 days a warning on Argus health, a line in the daily digest and a proposed task in [Review](/review?kind=proposals)\n  \"Rotate …\" (never a Jira issue by itself); at 14 days an item on [Today](/today) (10 minutes); at 7 days, or expired\n  or rejected, an incident and a quiet Matrix notice (no ping). Expired or rejected also turns Argus health red.\n- **How to rotate** has the exact steps per kind, with the file to write and, for GitLab group tokens, the rotate API\n  call. Put the new value straight into its file on the server as root, then press **Check now**.\n- TLS certificates are not here: see [Certificates](/help/infrastructure#certificates).\n"
+}
+],
+"title": "Credentials"
+},
+{
+"admin": false,
+"id": "switches",
+"nodes": [
+{
+"kind": "md",
+"text": "\nThese live in the agent's environment file on the server, not in the app. Change them with the operator.\n\n| Setting | Default | What it does |\n|---|---|---|\n| `FEATURE_PROBLEMS` | 0 | Problems pages and records. |\n| `FEATURE_IDEAS` | 0 | The weekly advisers and Ideas decisions. |\n| `FEATURE_CVE` | 0 | The vulnerability scan. |\n| `MATRIX_NOTIFY_ENABLED` | 0 | Any message to the Matrix notify room. |\n| `NOTIFY_STYLE` | classic | `C` = pages at once, everything else in the digest. |\n| `NOTIFY_DIGEST_HOURS` | 9,17 | Digest times, UTC. |\n| `NOTIFY_QUIET` | 23-8 | Quiet hours: only a production page notifies. |\n| `INCIDENT_AUTORESOLVE_HOURS` | 6 | Hours without a matching alert before an incident resolves. |\n| `WATCH_MAX_JOBS_HOUR`, `WATCH_MAX_JOBS_DAY` | 6, 40 | Alert investigations per hour and day. |\n| `CICD_LLM`, `CICD_LLM_MAX_DAY` | on, 10 | The CI/CD triage model call and its daily cap. |\n| `CICD_WRITE` | 0 | CI/CD writes. Needs a write token too; stays off today. |\n| `PROBLEMS_AUTO_ACCEPT` | 0 | Accept very confident problem links automatically. |\n| `IDEAS_DAILY_USD` | 2.00 | All Ideas spend in a day. |\n| `BOARD_DONE_DAYS` | 14 | Done tasks shown in the last board column. |\n| `MFA_REQUIRED_FOR_ACTIONS` | 1 | Every change needs 2FA ([details](/help/safety#sign-in)). |\n| `MFA_STEP_UP` | off | off: the code typed at sign-in covers every change of the session; on: the two windows below apply. |\n| `MFA_STEPUP_MINUTES`, `MFA_SENSITIVE_MINUTES` | 720, 10 | With `MFA_STEP_UP=on`: how recent the last code must be for a change, and for settings, users, suppressions, Mark as OK and the fixer. |\n| `SESSION_REMEMBER_DAYS`, `SESSION_REMEMBER_IDLE_DAYS` | 30, 7 | \"Keep me signed in\": the longest session, and the idle limit. |\n\nCosts are capped per run as well: deep RCA $4, task agent run $5, task intake $0.50, storage analysis $1,\nMatrix translation $0.10, CI/CD triage $0.15, Ideas $0.60. Infrastructure → Checks shows the 30-day total.\n"
+}
+],
+"title": "Switches and limits"
+},
+{
+"admin": false,
+"id": "data",
+"nodes": [
+{
+"kind": "md",
+"text": "\n| What | Where |\n|---|---|\n| History: runs, incidents, RCAs, findings, CVEs, problems, ideas | `ops.db` in the agent's data folder on the server |\n| Tasks, proposals, Matrix previews | `board.db`, written only by root's board sync |\n| Users and sessions | `auth.db` (password hashes only, session token hashes only, 2FA secrets encrypted with a key file only the app container can read, recovery code hashes) |\n| Accepted failures | `ops.db` table `backup_overrides` (who, why, until when), written by `bin/overrides.py` |\n| App requests | `settings-in/` (the app writes; root reads and validates) |\n| Results for the app | `settings-out/` (root writes; the app reads) |\n| Secrets (Jira, Outline, backup keys, tokens) | root-only files under `/etc/argus`; the app never mounts them |\n\nA nightly backup at 03:15 keeps 14 encrypted archives of the databases, settings and state; a monthly restore test is\nshown in Argus health. The archive's passphrase must also be kept outside the server.\n"
+}
+],
+"title": "Where data lives"
+},
+{
+"admin": false,
+"id": "rollback",
+"nodes": [
+{
+"kind": "md",
+"text": "\n- **The web app:** each deploy keeps the previous image. Rolling back is starting the previous image, or resetting\n  the code to the previous commit and rebuilding.\n- **A feature:** most features have a switch (above) or their own timers; turning them off stops them. Their tables\n  are additive and can stay.\n- **A setting:** change it back on the same page; the change log shows the old value.\n- Every change to the live server is recorded with its backup and rollback in the operator's context files.\n"
+}
+],
+"title": "Rollback basics"
+},
+{
+"admin": false,
+"id": "faq",
+"nodes": [
+{
+"kind": "md",
+"text": ""
+},
+{
+"kids": [
+{
+"kind": "md",
+"text": "Root applies it within seconds. If the save was rejected, the page shows \"Last save was rejected\" with the reason."
+}
+],
+"kind": "details",
+"text": "I saved a setting but nothing changed."
+},
+{
+"kind": "md",
+"text": ""
+},
+{
+"kids": [
+{
+"kind": "md",
+"text": "No. Credentials are shown as status only, and tokens are written once and never read back by the app."
+}
+],
+"kind": "details",
+"text": "Can I see a token or password here?"
+},
+{
+"kind": "md",
+"text": ""
+}
+],
+"title": "FAQ"
+}
+],
+"slug": "settings",
+"summary": "For admins - General, Claude, Kubernetes, Users and access, Jira sync, Backup targets, Integrations, Credentials, the important switches and limits, where data lives, and rollback.",
+"title": "Settings"
+},
+"maxQuery": 100,
+"pages": [
+{
+"href": "/help",
+"slug": "index",
+"title": "Help"
+},
+{
+"href": "/help/overview",
+"slug": "overview",
+"title": "Getting started"
+},
+{
+"href": "/help/operations",
+"slug": "operations",
+"title": "Incidents and checks"
+},
+{
+"href": "/help/review",
+"slug": "review",
+"title": "Review"
+},
+{
+"href": "/help/delivery",
+"slug": "delivery",
+"title": "Work and CI/CD"
+},
+{
+"href": "/help/infrastructure",
+"slug": "infrastructure",
+"title": "Estate and hygiene"
+},
+{
+"href": "/help/security",
+"slug": "security",
+"title": "Security"
+},
+{
+"href": "/help/agent",
+"slug": "agent",
+"title": "Argus"
+},
+{
+"href": "/help/settings",
+"slug": "settings",
+"title": "Settings"
+},
+{
+"href": "/help/notifications",
+"slug": "notifications",
+"title": "Notifications"
+},
+{
+"href": "/help/safety",
+"slug": "safety",
+"title": "Is it safe?"
+},
+{
+"href": "/help/glossary",
+"slug": "glossary",
+"title": "Glossary"
+},
+{
+"href": "/help/whats-new",
+"slug": "whats-new",
+"title": "What's new"
+}
+]
+}

@@ -1,0 +1,31 @@
+/* Account → Two-factor: one centred, readable column (the page has no shell around it). */
+.mfa-page { max-width: 640px; margin-inline: auto; }
+.mfa-setup { display: grid; gap: 14px; }
+.mfa-setup > h2 { font-size: var(--fs-lg); line-height: var(--lh-lg); font-weight: 600; }
+.mfa-lead { max-width: var(--measure); color: var(--text-2); }
+.mfa-need { display: grid; gap: 2px; padding: 12px 14px; border-radius: var(--r-inner); background: var(--surface-2); font-size: var(--fs-sm); }
+.mfa-need h3 { font-size: var(--fs-sm); font-weight: 600; }
+.mfa-plan { display: grid; gap: 4px; margin: 0; padding-left: 20px; list-style: decimal; font-size: var(--fs-sm); color: var(--text-2); }
+.mfa-go { max-width: 360px; }
+.mfa-go > .row-act { margin: 0; }
+/* The QR step and the recovery sheet. Dark on white in both themes: scanners need it. */
+.mfa-steps { list-style: decimal; display: grid; gap: 20px; margin: 0; padding-left: 20px; }
+.mfa-qrwrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-top: 8px; }
+.mfa-qr { flex: 0 0 auto; width: min(220px, 100%); padding: 8px; border-radius: var(--r-inner); background: #ffffff; }
+.mfa-qr svg { display: block; width: 100%; height: auto; }
+.mfa-key { flex: 1 1 240px; min-width: 0; }
+.mfa-seed { font-size: var(--fs-md); letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.mfa-uri { overflow-wrap: anywhere; }
+.mfa-act { padding: 8px 0; }
+.mfa-act > summary { display: flex; flex-wrap: wrap; }
+.mfa-steps h2 { font-size: var(--fs-lg); line-height: var(--lh-lg); font-weight: 600; }
+.mfa-codes { list-style: decimal; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 6px 16px; margin: 12px 0; padding-left: 24px; }
+.mfa-ack { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mfa-ack a { visibility: hidden; }
+.mfa-ack:has(input:checked) a { visibility: visible; }
+.mfa-print { display: none; }
+@media print {
+  .mfa-print { display: block; }
+  .mfa-ack, .phead, .bare-top, .demo-strip, .stack > :not(.mfa-sheet) { display: none; }
+  .mfa-sheet, .mfa-sheet * { color: #000000; background: #ffffff; }
+}

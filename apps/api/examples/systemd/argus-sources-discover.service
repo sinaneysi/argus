@@ -1,0 +1,27 @@
+# argus sources discover (the agent's user): list what every data source enabled for the agent holds (GitLab projects,
+# Kubernetes objects through the read-only kube tool, Loki/Prometheus names and dashboards, Sentry projects, index
+# patterns), names only, within budgets, into ARGUS_DB source_inventory; then rebuild the catalogue (source_routes,
+# source_unmapped). Reads only credentials root made readable to the agent's group. Started by
+# argus-sources-discover.timer and by Discover now (argus-sources-actions.service).
+[Unit]
+Description=Argus data sources: discovery and the routing catalogue
+Documentation=https://github.com/sinaneysi/argus/blob/main/docs/architecture/adr/0017-data-sources.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=argus
+Group=argus
+ExecStart=/usr/local/bin/argus sources discover
+Environment=ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+TimeoutStartSec=30min
+UMask=0022
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/argus
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes

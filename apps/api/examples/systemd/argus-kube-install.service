@@ -1,0 +1,22 @@
+# argus secrets install-kubectl (root): installs or verifies the pinned kubectl (ARGUS_KUBECTL_VERSION, _SHA256, _URL)
+# at ARGUS_KUBECTL. A download whose sha256 does not match is refused; a failure is shown on Settings -> Kubernetes.
+[Unit]
+Description=Argus: install or verify the pinned kubectl
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus secrets install-kubectl
+Environment=ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+SuccessExitStatus=1
+TimeoutStartSec=300
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/argus /usr/local/lib/argus
+PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

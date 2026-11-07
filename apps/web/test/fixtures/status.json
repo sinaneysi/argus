@@ -1,0 +1,14 @@
+{
+ "checksAt": 1793714868,
+ "dataAsOf": 1793736244,
+ "failed": [
+  "backup-check",
+  "cert-check",
+  "incident",
+  "log-rca",
+  "vm-explain"
+ ],
+ "now": 1793736542,
+ "state": "failed",
+ "tz": "UTC"
+}

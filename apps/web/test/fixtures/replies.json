@@ -1,0 +1,62 @@
+{
+"banners": [],
+"refresh": null,
+"rows": [
+{
+"pid": "mx-7f3a21",
+"title": "Storefront search returns stale prices after the 09:00 import",
+"requester": "Robin Vale",
+"forwarded": "4h",
+"hours": 20,
+"project": "OPS",
+"summary": "Two shoppers saw yesterday's prices on product pages. · The import finished at 09:04; the search index was not refreshed.",
+"choices": [
+{
+"value": "alex.doe",
+"label": "Alex Doe"
+},
+{
+"value": "jamie.poe",
+"label": "Jamie Poe"
+},
+{
+"value": "taylor.noe",
+"label": "Taylor Noe"
+},
+{
+"value": "",
+"label": "Unassigned"
+}
+],
+"assignee": "jamie.poe"
+},
+{
+"pid": "mx-91c0d4",
+"title": "Add the new warehouse VPN range to the staging allow list",
+"requester": "Casey Lund",
+"forwarded": "6h",
+"hours": 18,
+"project": "OPS",
+"summary": "Warehouse scanners in the new hall cannot reach staging. · Range from the network team: see the thread.",
+"choices": [
+{
+"value": "alex.doe",
+"label": "Alex Doe"
+},
+{
+"value": "jamie.poe",
+"label": "Jamie Poe"
+},
+{
+"value": "taylor.noe",
+"label": "Taylor Noe"
+},
+{
+"value": "",
+"label": "Unassigned"
+}
+],
+"assignee": ""
+}
+]
+}

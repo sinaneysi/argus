@@ -1,0 +1,552 @@
+{
+"autoOn": [
+"Page-level production incidents"
+],
+"banners": [],
+"chips": [
+{
+"label": "Outcome",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full&view=decided",
+"on": true,
+"count": -1
+},
+{
+"label": "Accepted",
+"href": "/review?kind=proposals&mode=full&view=decided&out=accepted",
+"on": false,
+"count": 7
+},
+{
+"label": "Rejected",
+"href": "/review?kind=proposals&mode=full&view=decided&out=rejected",
+"on": false,
+"count": 4
+},
+{
+"label": "Expired",
+"href": "/review?kind=proposals&mode=full&view=decided&out=expired",
+"on": false,
+"count": 4
+}
+]
+},
+{
+"label": "Severity",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full&view=decided",
+"on": true,
+"count": -1
+},
+{
+"label": "Critical",
+"href": "/review?kind=proposals&mode=full&view=decided&sev=critical",
+"on": false,
+"count": 1
+},
+{
+"label": "High",
+"href": "/review?kind=proposals&mode=full&view=decided&sev=high",
+"on": false,
+"count": 5
+},
+{
+"label": "Medium",
+"href": "/review?kind=proposals&mode=full&view=decided&sev=medium",
+"on": false,
+"count": 3
+},
+{
+"label": "Low",
+"href": "/review?kind=proposals&mode=full&view=decided&sev=low",
+"on": false,
+"count": 6
+}
+]
+},
+{
+"label": "Source",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full&view=decided",
+"on": true,
+"count": -1
+},
+{
+"label": "QA",
+"href": "/review?kind=proposals&mode=full&view=decided&src=qa",
+"on": false,
+"count": 3
+},
+{
+"label": "Incident",
+"href": "/review?kind=proposals&mode=full&view=decided&src=page",
+"on": false,
+"count": 5
+},
+{
+"label": "CVE",
+"href": "/review?kind=proposals&mode=full&view=decided&src=cve",
+"on": false,
+"count": 3
+},
+{
+"label": "CI/CD",
+"href": "/review?kind=proposals&mode=full&view=decided&src=cicd",
+"on": false,
+"count": 3
+},
+{
+"label": "Credential",
+"href": "/review?kind=proposals&mode=full&view=decided&src=cred",
+"on": false,
+"count": 1
+}
+]
+},
+{
+"label": "Environment",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full&view=decided",
+"on": true,
+"count": -1
+},
+{
+"label": "release",
+"href": "/review?kind=proposals&mode=full&view=decided&env=release",
+"on": false,
+"count": 10
+},
+{
+"label": "pre-release",
+"href": "/review?kind=proposals&mode=full&view=decided&env=pre-release",
+"on": false,
+"count": 4
+},
+{
+"label": "develop",
+"href": "/review?kind=proposals&mode=full&view=decided&env=develop",
+"on": false,
+"count": 1
+}
+]
+}
+],
+"clear": "/review?kind=proposals&mode=full&view=decided",
+"confirm": null,
+"decided": [
+{
+"at": 1793738899,
+"by": "sam.roe",
+"id": 103,
+"reason": "-",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"source": {
+"text": "103",
+"href": "/vulns"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"title": "Upgrade curl on the edge pool (CVE-2026-21404)"
+},
+{
+"at": 1793738899,
+"by": "sam.roe",
+"id": 7,
+"reason": "-",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"source": {
+"text": "incident #141",
+"href": "/incidents"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"task": {
+"text": "SIR-1",
+"href": "/board/task?id=1"
+},
+"title": "sms-otp: provider timeout and failover"
+},
+{
+"at": 1793731699,
+"by": "alex.doe",
+"id": 105,
+"reason": "already handled by the runner prune",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "CI/CD #105",
+"href": "/cicd"
+},
+"state": {
+"kind": "fail",
+"text": "rejected"
+},
+"title": "media: keep CI artifacts 7 days instead of 30"
+},
+{
+"at": 1793731699,
+"by": "sam.roe",
+"id": 6,
+"reason": "-",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"source": {
+"text": "incident #145",
+"href": "/incidents"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"task": {
+"text": "SIR-2",
+"href": "/board/task?id=2"
+},
+"title": "www.northwind.example 502: restore prod-shop-02:3001"
+},
+{
+"at": 1793728099,
+"by": "jamie.poe",
+"id": 104,
+"reason": "-",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"source": {
+"text": "qa 104",
+"href": "/qa"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"title": "Order history times out for large accounts"
+},
+{
+"at": 1793677699,
+"by": "-",
+"id": 106,
+"reason": "not decided within 14 days",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "incident #106",
+"href": "/incidents"
+},
+"state": {
+"kind": "",
+"text": "expired"
+},
+"title": "prod-misc-01 exporter flapping"
+},
+{
+"at": 1793663299,
+"by": "argus",
+"id": 62,
+"reason": "expired",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "openssl|staging",
+"href": "/vulns"
+},
+"state": {
+"kind": "",
+"text": "expired"
+},
+"title": "OpenSSL 3.0.15 on the staging build image (CVE-2026-28801)"
+},
+{
+"at": 1793649619,
+"by": "alex.doe",
+"id": 42,
+"reason": "-",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"source": {
+"text": "incident #147",
+"href": "/incidents"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"title": "Payment webhook retries pile up on prod-pay-02"
+},
+{
+"at": 1793591299,
+"by": "-",
+"id": 107,
+"reason": "not decided within 14 days",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "credential 107",
+"href": "/certs"
+},
+"state": {
+"kind": "",
+"text": "expired"
+},
+"title": "Rotate the staging SMTP password"
+},
+{
+"at": 1793563219,
+"by": "alex.doe",
+"id": 43,
+"reason": "-",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"source": {
+"text": "CI/CD #706",
+"href": "/cicd"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"title": "orders: run the migrations job before the deploy"
+},
+{
+"at": 1793545939,
+"by": "sam.roe",
+"id": 8,
+"reason": "duplicate of OPS-211 (mongo backup)",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"source": {
+"text": "qa 64",
+"href": "/incidents"
+},
+"state": {
+"kind": "fail",
+"text": "rejected"
+},
+"title": "Paid order not received by the warehouse (A-77812)"
+},
+{
+"at": 1793497699,
+"by": "alex.doe",
+"id": 108,
+"reason": "the staging copy is being removed",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "108",
+"href": "/vulns"
+},
+"state": {
+"kind": "fail",
+"text": "rejected"
+},
+"title": "Patch libxml2 on the staging Matomo copy"
+},
+{
+"at": 1793476819,
+"by": "alex.doe",
+"id": 44,
+"reason": "cosmetic; tracked in the design backlog",
+"severity": {
+"kind": "ok",
+"text": "low"
+},
+"source": {
+"text": "qa 65",
+"href": "/qa"
+},
+"state": {
+"kind": "fail",
+"text": "rejected"
+},
+"title": "Promo banner overlaps the cart button on small screens"
+},
+{
+"at": 1793404099,
+"by": "sam.roe",
+"id": 109,
+"reason": "-",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"source": {
+"text": "CI/CD #109",
+"href": "/cicd"
+},
+"state": {
+"kind": "ok",
+"text": "accepted"
+},
+"title": "coupon-service: add a deploy lock on pre-release"
+},
+{
+"at": 1793209699,
+"by": "-",
+"id": 110,
+"reason": "not decided within 14 days",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"source": {
+"text": "incident #110",
+"href": "/incidents"
+},
+"state": {
+"kind": "",
+"text": "expired"
+},
+"title": "prod-shop-01 nginx worker restarts"
+}
+],
+"expiryDays": 14,
+"filtered": false,
+"here": "/review?kind=proposals&mode=full&view=decided",
+"legacy": [],
+"matched": 15,
+"maxReason": 300,
+"pager": {
+"from": 1,
+"matched": 15,
+"page": 1,
+"pages": 1,
+"to": 15
+},
+"pending": 36,
+"q": "",
+"rejectedToday": 0,
+"rows": [],
+"search": [
+[
+"kind",
+"proposals"
+],
+[
+"mode",
+"full"
+],
+[
+"view",
+"decided"
+]
+],
+"settings": {
+"auto": [
+{
+"key": "qa",
+"label": "QA and monitoring intake",
+"on": false
+},
+{
+"key": "page",
+"label": "Page-level production incidents",
+"on": true
+},
+{
+"key": "cve",
+"label": "Security alerts (CVE)",
+"on": false
+},
+{
+"key": "cicd",
+"label": "CI/CD findings",
+"on": false
+},
+{
+"key": "cred",
+"label": "Credential expiry",
+"on": false
+}
+],
+"expiryDays": 14,
+"note": "auto-create ON for Page-level production incidents",
+"rejectDays": 7
+},
+"sort": "priority",
+"sorts": [],
+"tabs": [
+{
+"count": 36,
+"current": false,
+"href": "/review?kind=proposals&mode=full",
+"label": "Waiting"
+},
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=proposals&mode=full&view=snoozed",
+"label": "Snoozed"
+},
+{
+"count": 15,
+"current": true,
+"href": "/review?kind=proposals&mode=full&view=decided",
+"label": "Decided (14 d)"
+}
+],
+"tiles": [
+{
+"label": "Waiting",
+"figure": "36",
+"sub": "to accept, snooze or reject",
+"href": "/review?kind=proposals&mode=full"
+},
+{
+"label": "Critical or high",
+"figure": "14",
+"sub": "waiting, worst first",
+"href": "/review?kind=proposals&mode=full&sev=critical&sev=high"
+},
+{
+"label": "Expire within 48 h",
+"figure": "6",
+"sub": "if nobody decides",
+"href": "/review?kind=proposals&mode=full&sort=expiring"
+},
+{
+"label": "Accepted today",
+"figure": "0",
+"sub": "created as Jira issues",
+"href": "/review?kind=proposals&mode=full&view=decided"
+}
+],
+"total": 15,
+"view": "decided"
+}

@@ -1,0 +1,805 @@
+{
+ "admin": true,
+ "banners": [],
+ "capped": false,
+ "estMin": 179,
+ "filtered": false,
+ "fullMode": false,
+ "items": [
+  {
+   "at": 1792544148,
+   "due": 1793753748,
+   "dueLeft": "in 4h",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "16",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:16",
+   "sevKey": "critical",
+   "severity": "critical",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-media-01"
+   ],
+   "title": "Disable the MVG coder on prod-media-01 (CVE-2026-25503)",
+   "waiting": "waiting 13d"
+  },
+  {
+   "at": 1793563668,
+   "due": 1794773268,
+   "dueLeft": "in 11d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "2",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:2",
+   "sevKey": "critical",
+   "severity": "critical",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-matomo-01"
+   ],
+   "title": "Rebuild analytics-matomo on PHP 8.3 (CVE-2026-24410, KEV)",
+   "waiting": "waiting 2d"
+  },
+  {
+   "at": 1793725668,
+   "due": 1794935268,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "31",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:31",
+   "sevKey": "critical",
+   "severity": "critical",
+   "source": "page",
+   "sourceLabel": "Incident",
+   "targets": [
+    "prod-search-01"
+   ],
+   "title": "prod-search-01 heap at 92 % after the re-index",
+   "waiting": "waiting 3h"
+  },
+  {
+   "at": 1793733468,
+   "due": 1794943068,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "60",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:60",
+   "sevKey": "critical",
+   "severity": "critical",
+   "source": "page",
+   "sourceLabel": "Incident",
+   "summary": "Only the host on the new release fails; the other two are healthy. Roll prod-api-01 back to 4.11.3 or hold the rollout.",
+   "targets": [
+    "prod-api-01"
+   ],
+   "title": "checkout-api 5xx at 4.2 % on prod-api-01 after the 13:58 deploy",
+   "waiting": "waiting 51m"
+  },
+  {
+   "at": 1792578708,
+   "due": 1793788308,
+   "dueLeft": "in 14h",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "11",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:11",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-edge-01"
+   ],
+   "title": "Patch OpenSSL 3.0.15 on the edge pool (CVE-2026-28801)",
+   "waiting": "waiting 13d"
+  },
+  {
+   "at": 1792682388,
+   "due": 1793891988,
+   "dueLeft": "in 1d",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "27",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:27",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "qa",
+   "sourceLabel": "QA",
+   "targets": [
+    "prod-pay-02"
+   ],
+   "title": "Gift card balance is not refreshed after a partial refund",
+   "waiting": "waiting 12d"
+  },
+  {
+   "at": 1793218068,
+   "due": 1794427668,
+   "dueLeft": "in 7d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "14",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:14",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-db-03"
+   ],
+   "title": "Redis 7.2.7 on prod-db-03 (CVE-2026-22950)",
+   "waiting": "waiting 6d"
+  },
+  {
+   "at": 1793580948,
+   "due": 1794790548,
+   "dueLeft": "in 12d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "4",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:4",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cicd",
+   "sourceLabel": "CI/CD",
+   "targets": [],
+   "title": "checkout: LOG_LEVEL=info on release",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1793642868,
+   "due": 1794852468,
+   "dueLeft": "in 12d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "33",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:33",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cred",
+   "sourceLabel": "Credential",
+   "targets": [
+    "prod-edge-01"
+   ],
+   "title": "TLS certificate for shop.northwind.example expires in 9 days",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1793650068,
+   "due": 1794859668,
+   "dueLeft": "in 12d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "1",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:1",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [],
+   "title": "Kernel reboot wave for CVE-2026-31337 on 21 production hosts",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1793664468,
+   "due": 1794874068,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "23",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:23",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "qa",
+   "sourceLabel": "QA",
+   "targets": [],
+   "title": "Coupon field accepts expired codes at checkout",
+   "waiting": "waiting 20h"
+  },
+  {
+   "at": 1793696868,
+   "due": 1794906468,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "18",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:18",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cicd",
+   "sourceLabel": "CI/CD",
+   "targets": [],
+   "title": "storefront: the release job runs without a lock",
+   "waiting": "waiting 11h"
+  },
+  {
+   "at": 1793704068,
+   "due": 1794913668,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "28",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:28",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "page",
+   "sourceLabel": "Incident",
+   "targets": [
+    "prod-db-02"
+   ],
+   "title": "prod-db-02 replication lag above 30 s at the nightly batch",
+   "waiting": "waiting 9h"
+  },
+  {
+   "at": 1793628468,
+   "due": 1794838068,
+   "dueLeft": "in 12d",
+   "dueWord": "proposal expires",
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "21",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": false,
+   "sel": "proposals:21",
+   "sevKey": "high",
+   "severity": "high",
+   "source": "cicd",
+   "sourceLabel": "CI/CD",
+   "targets": [],
+   "title": "coupon-service: two deploy jobs race on pre-release",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1792647828,
+   "due": 1793857428,
+   "dueLeft": "in 1d",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "12",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:12",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-edge-02"
+   ],
+   "title": "Upgrade nginx 1.26.3 on prod-edge-02 and prod-edge-03",
+   "waiting": "waiting 12d"
+  },
+  {
+   "at": 1793347668,
+   "due": 1794557268,
+   "dueLeft": "in 9d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "34",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:34",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "cred",
+   "sourceLabel": "Credential",
+   "targets": [],
+   "title": "CI deploy token of storefront expires in 12 days",
+   "waiting": "waiting 4d"
+  },
+  {
+   "at": 1793390868,
+   "due": 1794600468,
+   "dueLeft": "in 9d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "19",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:19",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "cicd",
+   "sourceLabel": "CI/CD",
+   "targets": [],
+   "title": "payments: pin the builder image by digest",
+   "waiting": "waiting 4d"
+  },
+  {
+   "at": 1793434068,
+   "due": 1794643668,
+   "dueLeft": "in 10d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "30",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:30",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "page",
+   "sourceLabel": "Incident",
+   "targets": [
+    "prod-backup-02"
+   ],
+   "title": "prod-backup-02 nightly dump finished 2 h late",
+   "waiting": "waiting 3d"
+  },
+  {
+   "at": 1793520468,
+   "due": 1794730068,
+   "dueLeft": "in 11d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "24",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:24",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "qa",
+   "sourceLabel": "QA",
+   "targets": [
+    "prod-api-02"
+   ],
+   "title": "Order history page times out for accounts with 500+ orders",
+   "waiting": "waiting 2d"
+  },
+  {
+   "at": 1793606868,
+   "due": 1794816468,
+   "dueLeft": "in 12d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "29",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:29",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "page",
+   "sourceLabel": "Incident",
+   "targets": [
+    "prod-api-03"
+   ],
+   "title": "api.northwind.example p95 above 2 s for 12 minutes",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1793719548,
+   "due": 1794929148,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "102",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:102",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "chat",
+   "sourceLabel": "Task chat",
+   "targets": [],
+   "title": "Search: run the nightly re-index with 4 workers",
+   "waiting": "waiting 4h"
+  },
+  {
+   "at": 1793733768,
+   "due": 1794943368,
+   "dueLeft": "in 13d",
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "101",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:101",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "chat",
+   "sourceLabel": "Task chat",
+   "targets": [],
+   "title": "Production edge: probe coupon-service on /healthz",
+   "waiting": "waiting 46m"
+  },
+  {
+   "at": 1792604628,
+   "due": 1793814228,
+   "dueLeft": "in 21h",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "35",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": false,
+   "sel": "proposals:35",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "cred",
+   "sourceLabel": "Credential",
+   "targets": [],
+   "title": "Rotate the staging reporting DB password (shared in a ticket)",
+   "waiting": "waiting 13d"
+  },
+  {
+   "at": 1792621908,
+   "due": 1793831508,
+   "dueLeft": "in 1d",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "20",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": false,
+   "sel": "proposals:20",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "cicd",
+   "sourceLabel": "CI/CD",
+   "targets": [],
+   "title": "search: the smoke test stage is allowed to fail",
+   "waiting": "waiting 12d"
+  },
+  {
+   "at": 1793304468,
+   "due": 1794514068,
+   "dueLeft": "in 8d",
+   "dueWord": "proposal expires",
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "25",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": false,
+   "sel": "proposals:25",
+   "sevKey": "medium",
+   "severity": "medium",
+   "source": "qa",
+   "sourceLabel": "QA",
+   "targets": [],
+   "title": "Search filter 'in stock' shows sold-out items",
+   "waiting": "waiting 5d"
+  }
+ ],
+ "kindTotal": 79,
+ "kinds": [
+  {
+   "count": 36,
+   "key": "proposals",
+   "label": "Task proposals",
+   "row": "Task proposal",
+   "verb": "Create issue"
+  },
+  {
+   "count": 2,
+   "key": "approvals",
+   "label": "Action approvals",
+   "row": "Action approval",
+   "verb": "Review execution plan"
+  },
+  {
+   "count": 4,
+   "key": "lessons",
+   "label": "Lessons",
+   "row": "Lesson",
+   "verb": "Approve lesson"
+  },
+  {
+   "count": 26,
+   "key": "ideas",
+   "label": "Ideas",
+   "row": "Idea",
+   "verb": "Generate build prompt"
+  },
+  {
+   "count": 2,
+   "key": "replies",
+   "label": "Chat requests",
+   "row": "Chat request",
+   "verb": "Create task"
+  },
+  {
+   "count": 9,
+   "key": "links",
+   "label": "Problem links",
+   "row": "Problem link",
+   "verb": "Link to problem"
+  }
+ ],
+ "matched": 79,
+ "options": {
+  "env": [
+   {
+    "label": "release (production)",
+    "value": "release"
+   },
+   {
+    "label": "pre-release (staging)",
+    "value": "pre-release"
+   },
+   {
+    "label": "develop",
+    "value": "develop"
+   },
+   {
+    "label": "No environment",
+    "value": "none"
+   }
+  ],
+  "sev": [
+   {
+    "label": "Critical",
+    "value": "critical"
+   },
+   {
+    "label": "High",
+    "value": "high"
+   },
+   {
+    "label": "Medium",
+    "value": "medium"
+   },
+   {
+    "label": "Low or info",
+    "value": "low"
+   },
+   {
+    "label": "No severity",
+    "value": "none"
+   }
+  ],
+  "sort": [
+   {
+    "label": "Urgency",
+    "value": "urgency"
+   },
+   {
+    "label": "Oldest first",
+    "value": "oldest"
+   },
+   {
+    "label": "Newest first",
+    "value": "newest"
+   },
+   {
+    "label": "Expiring first",
+    "value": "expiring"
+   }
+  ],
+  "src": [
+   {
+    "label": "QA",
+    "value": "qa"
+   },
+   {
+    "label": "Incident",
+    "value": "page"
+   },
+   {
+    "label": "CVE",
+    "value": "cve"
+   },
+   {
+    "label": "CI/CD",
+    "value": "cicd"
+   },
+   {
+    "label": "Credential",
+    "value": "cred"
+   },
+   {
+    "label": "Task chat",
+    "value": "chat"
+   }
+  ]
+ },
+ "order": "Sorted by urgency: severity (an unknown severity above low), then release (production) before pre-release (staging) and develop, then the nearest decision deadline, then the longest waiting. How Review orders decisions",
+ "page": 1,
+ "pageSize": 25,
+ "pages": 4,
+ "perKind": 200,
+ "query": {
+  "env": "",
+  "kind": "",
+  "page": 1,
+  "q": "",
+  "sel": "proposals:16",
+  "sev": "",
+  "sort": "urgency",
+  "src": "",
+  "step": ""
+ },
+ "refresh": false,
+ "selGone": false,
+ "selected": {
+  "actions": [
+   {
+    "action": "accept",
+    "label": "Create Jira issue",
+    "style": "primary"
+   },
+   {
+    "href": "/review?kind=proposals&mode=full#p16",
+    "label": "Edit, then create",
+    "style": "secondary"
+   },
+   {
+    "action": "reject",
+    "confirm": true,
+    "label": "Reject proposal",
+    "reason": "Reason (optional, remembered)",
+    "style": "danger"
+   }
+  ],
+  "after": {
+   "text": "Argus creates the Jira issue and a task on the board, as proposed. Accepting creates tracked work only: it runs nothing on a host. There is no undo here; close the issue in the tracker if it was a mistake."
+  },
+  "afterTitle": "If you accept",
+  "evidence": {
+   "missing": true,
+   "text": "No evidence recorded. The source sent only \u201cFrom Argus.\u201d, which names no observation. Check the source before you decide. Inspect the source: imagemagick|production Proposed 2026-10-21 00:55 (13d ago) ; last refreshed by its source 2026-10-29 06:39 (5d ago), 1 time."
+  },
+  "facts": [
+   {
+    "label": "Affected",
+    "mono": true,
+    "value": "prod-media-01"
+   },
+   {
+    "href": "/vulns",
+    "label": "Source",
+    "value": "imagemagick|production CVE"
+   },
+   {
+    "label": "Decision deadline",
+    "value": "Proposal expires 2026-11-04 00:55 (in 4h) An expired proposal is recorded as rejected (\u201cexpired\u201d). That does not resolve the issue."
+   },
+   {
+    "label": "Operational deadline",
+    "missing": true,
+    "value": "None recorded"
+   },
+   {
+    "label": "Waiting since",
+    "value": "2026-10-21 00:55 (13d ago)"
+   }
+  ],
+  "more": [
+   {
+    "label": "Source",
+    "mono": true,
+    "value": "cve imagemagick|production"
+   },
+   {
+    "label": "Intake rule",
+    "value": "matches the cve intake rule"
+   },
+   {
+    "label": "Proposed",
+    "value": "2026-10-21 00:55 (13d ago)"
+   },
+   {
+    "label": "Updated",
+    "value": "2026-10-29 06:39 (refreshed 1 \u00d7)"
+   },
+   {
+    "label": "Expires",
+    "value": "2026-11-04 00:55 unless decided; 14 days after it was proposed"
+   },
+   {
+    "href": "/review?kind=proposals&mode=full&view=decided",
+    "label": "History",
+    "value": "Decided in the last 14 days \u00b7 Snoozed"
+   }
+  ],
+  "note": "Snooze is not offered: it lasts 24 hours, and this proposal expires in 4h, before it would come back. Expiry keeps running while a proposal is snoozed: snoozing never extends it.",
+  "outcome": {
+   "text": "Create a Jira issue titled \u201cDisable the MVG coder on prod-media-01 (CVE-2026-25503)\u201d, priority Highest, labels argus cve, suggested assignee taylor.noe."
+  },
+  "readOnly": false,
+  "row": {
+   "at": 1792544148,
+   "due": 1793753748,
+   "dueLeft": "in 4h",
+   "dueSoon": true,
+   "dueWord": "proposal expires",
+   "env": "release",
+   "envLabel": "release",
+   "id": "16",
+   "kind": "proposals",
+   "kindRow": "Task proposal",
+   "prod": true,
+   "sel": "proposals:16",
+   "sevKey": "critical",
+   "severity": "critical",
+   "source": "cve",
+   "sourceLabel": "CVE",
+   "targets": [
+    "prod-media-01"
+   ],
+   "title": "Disable the MVG coder on prod-media-01 (CVE-2026-25503)",
+   "waiting": "waiting 13d"
+  },
+  "step": ""
+ },
+ "total": 79
+}

@@ -1,0 +1,150 @@
+{
+"autoOn": [
+"Page-level production incidents"
+],
+"banners": [],
+"chips": [],
+"clear": "/review?kind=proposals&mode=full",
+"confirm": {
+"action": "reject",
+"block": "",
+"body": [
+"Rejected proposals are kept in Decided with your name and reason. Argus does not propose the same source again for 7 days, unless its severity rises. There is no undo."
+],
+"button": "Reject 2",
+"cancel": "/review?kind=proposals&mode=full",
+"danger": true,
+"gone": [],
+"head": "Reject 2 proposed tasks?",
+"ids": [
+60,
+31
+],
+"open": [
+{
+"env": "release",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"title": "checkout-api 5xx at 4.2 % on prod-api-01 after the 13:58 deploy"
+},
+{
+"env": "release",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"title": "prod-search-01 heap at 92 % after the re-index"
+}
+],
+"reason": 300,
+"skipped": 0,
+"warn": ""
+},
+"decided": [],
+"expiryDays": 14,
+"filtered": false,
+"here": "/review?kind=proposals&mode=full",
+"legacy": [],
+"matched": 0,
+"maxReason": 300,
+"pager": null,
+"pending": 36,
+"q": "",
+"refresh": null,
+"rejectedToday": 0,
+"rows": [],
+"search": [
+[
+"kind",
+"proposals"
+],
+[
+"mode",
+"full"
+]
+],
+"settings": {
+"auto": [
+{
+"key": "qa",
+"label": "QA and monitoring intake",
+"on": false
+},
+{
+"key": "page",
+"label": "Page-level production incidents",
+"on": true
+},
+{
+"key": "cve",
+"label": "Security alerts (CVE)",
+"on": false
+},
+{
+"key": "cicd",
+"label": "CI/CD findings",
+"on": false
+},
+{
+"key": "cred",
+"label": "Credential expiry",
+"on": false
+}
+],
+"expiryDays": 14,
+"note": "auto-create ON for Page-level production incidents",
+"rejectDays": 7
+},
+"sort": "priority",
+"sorts": [],
+"tabs": [
+{
+"count": 36,
+"current": true,
+"href": "/review?kind=proposals&mode=full",
+"label": "Waiting"
+},
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=proposals&mode=full&view=snoozed",
+"label": "Snoozed"
+},
+{
+"count": 15,
+"current": false,
+"href": "/review?kind=proposals&mode=full&view=decided",
+"label": "Decided (14 d)"
+}
+],
+"tiles": [
+{
+"label": "Waiting",
+"figure": "36",
+"sub": "to accept, snooze or reject",
+"href": "/review?kind=proposals&mode=full"
+},
+{
+"label": "Critical or high",
+"figure": "14",
+"sub": "waiting, worst first",
+"href": "/review?kind=proposals&mode=full&sev=critical&sev=high"
+},
+{
+"label": "Expire within 48 h",
+"figure": "6",
+"sub": "if nobody decides",
+"href": "/review?kind=proposals&mode=full&sort=expiring"
+},
+{
+"label": "Accepted today",
+"figure": "0",
+"sub": "created as Jira issues",
+"href": "/review?kind=proposals&mode=full&view=decided"
+}
+],
+"total": 0,
+"view": "pending"
+}

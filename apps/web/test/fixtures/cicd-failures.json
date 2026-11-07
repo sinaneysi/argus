@@ -1,0 +1,775 @@
+{
+ "facets": [
+  {
+   "any": true,
+   "key": "env",
+   "label": "Environment",
+   "options": [
+    {
+     "count": 9,
+     "label": "release",
+     "value": "release"
+    },
+    {
+     "count": 8,
+     "label": "pre-release",
+     "value": "pre-release"
+    },
+    {
+     "count": 10,
+     "label": "develop",
+     "value": "develop"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "class",
+   "label": "Class",
+   "options": [
+    {
+     "count": 7,
+     "label": "code / build",
+     "value": "code"
+    },
+    {
+     "count": 3,
+     "label": "deploy step",
+     "value": "deploy"
+    },
+    {
+     "count": 2,
+     "label": "flaky",
+     "value": "flaky"
+    },
+    {
+     "count": 2,
+     "label": "health check",
+     "value": "health"
+    },
+    {
+     "count": 2,
+     "label": "lock",
+     "value": "lock"
+    },
+    {
+     "count": 2,
+     "label": "lockfile drift",
+     "value": "lockfile"
+    },
+    {
+     "count": 2,
+     "label": "registry",
+     "value": "registry"
+    },
+    {
+     "count": 2,
+     "label": "runner / infra",
+     "value": "runner"
+    },
+    {
+     "count": 1,
+     "label": "canceled",
+     "value": "canceled"
+    },
+    {
+     "count": 1,
+     "label": "package version",
+     "value": "package"
+    },
+    {
+     "count": 1,
+     "label": "ssh / ansible",
+     "value": "ssh"
+    },
+    {
+     "count": 1,
+     "label": "unknown",
+     "value": "unknown"
+    },
+    {
+     "count": 1,
+     "label": "variable",
+     "value": "variable"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "list": {
+  "clearHref": "/cicd/failures",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 27,
+  "next": "/cicd/failures?page=2",
+  "noun": "open",
+  "page": 1,
+  "pages": 2,
+  "path": "/cicd/failures",
+  "q": "",
+  "sort": "priority",
+  "sorts": [
+   {
+    "label": "Priority",
+    "value": "priority"
+   },
+   {
+    "label": "Most recent",
+    "value": "recent"
+   },
+   {
+    "label": "Most frequent",
+    "value": "frequent"
+   }
+  ],
+  "to": 25,
+  "total": 27
+ },
+ "noTools": false,
+ "onRelease": 9,
+ "open": 27,
+ "rows": [
+  {
+   "author": "drew.foe",
+   "detail": "deploy_production: `alembic upgrade head` waited 300 s for the advisory lock held by a stuck migration from 10-22.",
+   "env": "release",
+   "firstSeen": 1793712771,
+   "id": 701,
+   "job": "deploy_production",
+   "kind": "fail",
+   "klass": "lock",
+   "lastSeen": 1793719971,
+   "mr": "",
+   "occurrences": 1,
+   "project": "warehouse/warehouse-api",
+   "projectId": 328,
+   "proposed": "Ask the operator to end the stuck migration session (pid 48121) on prod-db-01, then retry deploy_production.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/task?id=11",
+    "text": "OPS-208"
+   },
+   "title": "Release deploy of warehouse-api failed: migration lock held"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "payments release job cannot pull the builder image.",
+   "env": "release",
+   "firstSeen": 1793705571,
+   "id": 712,
+   "job": "build",
+   "kind": "fail",
+   "klass": "registry",
+   "lastSeen": 1793712771,
+   "mr": "",
+   "occurrences": 1,
+   "project": "payments/payment-gateway",
+   "projectId": 316,
+   "proposed": "Pin the builder image by digest (proposal 718).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=712",
+    "text": "Create task"
+   },
+   "title": "payments release job cannot pull the builder image"
+  },
+  {
+   "author": "jamie.poe",
+   "detail": "checkout deploy: /health 503 on prod-api-02.",
+   "env": "release",
+   "firstSeen": 1793691171,
+   "id": 714,
+   "job": "deploy_release",
+   "kind": "fail",
+   "klass": "health check",
+   "lastSeen": 1793698371,
+   "mr": "",
+   "occurrences": 3,
+   "project": "shop/checkout",
+   "projectId": 306,
+   "proposed": "Check the env file of prod-api-02, then retry the job.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=714",
+    "text": "Create task"
+   },
+   "title": "checkout deploy: /health 503 on prod-api-02"
+  },
+  {
+   "author": "morgan.koe",
+   "detail": "media: registry quota exceeded on push.",
+   "env": "release",
+   "firstSeen": 1793658771,
+   "id": 734,
+   "job": "build",
+   "kind": "warn",
+   "klass": "registry",
+   "lastSeen": 1793665971,
+   "mr": "",
+   "occurrences": 3,
+   "project": "media/image-resizer",
+   "projectId": 311,
+   "proposed": "Delete old media image tags (keep 20).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=734",
+    "text": "Create task"
+   },
+   "title": "media: registry quota exceeded on push"
+  },
+  {
+   "author": "drew.foe",
+   "detail": "loyalty deploy: systemd unit failed to restart.",
+   "env": "release",
+   "firstSeen": 1793622771,
+   "id": 719,
+   "job": "deploy_release",
+   "kind": "warn",
+   "klass": "deploy step",
+   "lastSeen": 1793629971,
+   "mr": "",
+   "occurrences": 4,
+   "project": "users/loyalty",
+   "projectId": 313,
+   "proposed": "Read the unit journal on prod-app-04; the env file is missing a key.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=719",
+    "text": "Create task"
+   },
+   "title": "loyalty deploy: systemd unit failed to restart"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "notifications: SMTP_HOST empty on release.",
+   "env": "release",
+   "firstSeen": 1793601171,
+   "id": 720,
+   "job": "build",
+   "kind": "warn",
+   "klass": "variable",
+   "lastSeen": 1793608371,
+   "mr": "",
+   "occurrences": 1,
+   "project": "orders/notification",
+   "projectId": 314,
+   "proposed": "Set SMTP_HOST for the release scope.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=720",
+    "text": "Create task"
+   },
+   "title": "notifications: SMTP_HOST empty on release"
+  },
+  {
+   "author": "robin.moe",
+   "detail": "scheduler release pipeline canceled by a newer push.",
+   "env": "release",
+   "firstSeen": 1793565171,
+   "id": 723,
+   "job": "build",
+   "kind": "warn",
+   "klass": "canceled",
+   "lastSeen": 1793572371,
+   "mr": "",
+   "occurrences": 4,
+   "project": "platform/scheduler",
+   "projectId": 321,
+   "proposed": "Nothing to do; the newer pipeline passed.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=723",
+    "text": "Create task"
+   },
+   "title": "scheduler release pipeline canceled by a newer push"
+  },
+  {
+   "author": "casey.loe",
+   "detail": "orders deploy: migration lock held for 5 minutes.",
+   "env": "release",
+   "firstSeen": 1793493171,
+   "id": 725,
+   "job": "deploy_release",
+   "kind": "fail",
+   "klass": "lock",
+   "lastSeen": 1793500371,
+   "mr": "",
+   "occurrences": 2,
+   "project": "orders/order-service",
+   "projectId": 315,
+   "proposed": "Ask the operator to end the stale migration session.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=725",
+    "text": "Create task"
+   },
+   "title": "orders deploy: migration lock held for 5 minutes"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "media deploy: rsync to prod-media-01 interrupted.",
+   "env": "release",
+   "firstSeen": 1793457171,
+   "id": 728,
+   "job": "deploy_release",
+   "kind": "warn",
+   "klass": "deploy step",
+   "lastSeen": 1793464371,
+   "mr": "",
+   "occurrences": 1,
+   "project": "media/image-resizer",
+   "projectId": 311,
+   "proposed": "Retry after the network check of prod-media-01.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=728",
+    "text": "Create task"
+   },
+   "title": "media deploy: rsync to prod-media-01 interrupted"
+  },
+  {
+   "author": "sam.roe",
+   "detail": "storefront e2e: cart drawer test times out.",
+   "env": "pre-release",
+   "firstSeen": 1793719971,
+   "id": 713,
+   "job": "build",
+   "kind": "warn",
+   "klass": "flaky",
+   "lastSeen": 1793727171,
+   "mr": "",
+   "occurrences": 2,
+   "project": "web/shop-front",
+   "projectId": 325,
+   "proposed": "Quarantine the test until the animation wait is fixed.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=713",
+    "text": "Create task"
+   },
+   "title": "storefront e2e: cart drawer test times out"
+  },
+  {
+   "author": "taylor.noe",
+   "detail": "orders: tax rounding test fails on staging.",
+   "env": "pre-release",
+   "firstSeen": 1793698371,
+   "id": 732,
+   "job": "build",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793705571,
+   "mr": "",
+   "occurrences": 1,
+   "project": "orders/order-service",
+   "projectId": 315,
+   "proposed": "Round half-even in the tax helper.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=732",
+    "text": "Create task"
+   },
+   "title": "orders: tax rounding test fails on staging"
+  },
+  {
+   "author": "morgan.koe",
+   "detail": "payments: refund test fails on staging.",
+   "env": "pre-release",
+   "firstSeen": 1793687571,
+   "id": 726,
+   "job": "build",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793694771,
+   "mr": "",
+   "occurrences": 3,
+   "project": "payments/payment-gateway",
+   "projectId": 316,
+   "proposed": "Fix the partial refund state transition.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=726",
+    "text": "Create task"
+   },
+   "title": "payments: refund test fails on staging"
+  },
+  {
+   "author": "casey.loe",
+   "detail": "notifications: env file not written on stg-app-03.",
+   "env": "pre-release",
+   "firstSeen": 1793680371,
+   "id": 733,
+   "job": "deploy_pre_release",
+   "kind": "warn",
+   "klass": "deploy step",
+   "lastSeen": 1793687571,
+   "mr": "",
+   "occurrences": 2,
+   "project": "orders/notification",
+   "projectId": 314,
+   "proposed": "Add SMTP_PORT to the pre-release variables.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=733",
+    "text": "Create task"
+   },
+   "title": "notifications: env file not written on stg-app-03"
+  },
+  {
+   "author": "jamie.poe",
+   "detail": "unit test test_percentage_min_order failed",
+   "env": "pre-release",
+   "firstSeen": 1793676771,
+   "id": 702,
+   "job": "test",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793683971,
+   "mr": "",
+   "occurrences": 4,
+   "project": "shop/coupon-service",
+   "projectId": 307,
+   "proposed": "Fix the null min_order in 3.9.1 (see incident #148).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=702",
+    "text": "Create task"
+   },
+   "title": "coupon-service tests fail on pre-release: percentage coupon division"
+  },
+  {
+   "author": "casey.loe",
+   "detail": "search: npm package version not found.",
+   "env": "pre-release",
+   "firstSeen": 1793673171,
+   "id": 717,
+   "job": "build",
+   "kind": "warn",
+   "klass": "package version",
+   "lastSeen": 1793680371,
+   "mr": "",
+   "occurrences": 2,
+   "project": "search/search",
+   "projectId": 322,
+   "proposed": "Publish @nw/ui 2.4.1 or pin 2.4.0.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=717",
+    "text": "Create task"
+   },
+   "title": "search: npm package version not found"
+  },
+  {
+   "author": "jamie.poe",
+   "detail": "shop-front staging: :3001 not listening after deploy.",
+   "env": "pre-release",
+   "firstSeen": 1793665971,
+   "id": 722,
+   "job": "deploy_pre_release",
+   "kind": "warn",
+   "klass": "health check",
+   "lastSeen": 1793673171,
+   "mr": "",
+   "occurrences": 3,
+   "project": "web/shop-front",
+   "projectId": 325,
+   "proposed": "Same cause as P-8: the second env file is empty.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=722",
+    "text": "Create task"
+   },
+   "title": "shop-front staging: :3001 not listening after deploy"
+  },
+  {
+   "author": "taylor.noe",
+   "detail": "warehouse-api: stg-wh-01 unreachable over SSH.",
+   "env": "pre-release",
+   "firstSeen": 1793637171,
+   "id": 716,
+   "job": "deploy_pre_release",
+   "kind": "warn",
+   "klass": "ssh / ansible",
+   "lastSeen": 1793644371,
+   "mr": "",
+   "occurrences": 1,
+   "project": "warehouse/warehouse-api",
+   "projectId": 328,
+   "proposed": "Check the staging VM and its firewall rule.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=716",
+    "text": "Create task"
+   },
+   "title": "warehouse-api: stg-wh-01 unreachable over SSH"
+  },
+  {
+   "author": "drew.foe",
+   "detail": "storefront build: TypeScript error in ProductCard.",
+   "env": "develop",
+   "firstSeen": 1793737971,
+   "id": 727,
+   "job": "build",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793745171,
+   "mr": "",
+   "occurrences": 4,
+   "project": "web/shop-front",
+   "projectId": 325,
+   "proposed": "Rename to formattedPrice.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=727",
+    "text": "Create task"
+   },
+   "title": "storefront build: TypeScript error in ProductCard"
+  },
+  {
+   "author": "drew.foe",
+   "detail": "orders build fails: undefined field in OrderDTO.",
+   "env": "develop",
+   "firstSeen": 1793734371,
+   "id": 711,
+   "job": "build",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793741571,
+   "mr": "",
+   "occurrences": 4,
+   "project": "orders/order-service",
+   "projectId": 315,
+   "proposed": "Rebase on develop; the field was renamed to DiscountTotal.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=711",
+    "text": "Create task"
+   },
+   "title": "orders build fails: undefined field in OrderDTO"
+  },
+  {
+   "author": "sam.roe",
+   "detail": "coupon-service lint fails on develop.",
+   "env": "develop",
+   "firstSeen": 1793727171,
+   "id": 721,
+   "job": "build",
+   "kind": "warn",
+   "klass": "code / build",
+   "lastSeen": 1793734371,
+   "mr": "",
+   "occurrences": 2,
+   "project": "shop/coupon-service",
+   "projectId": 307,
+   "proposed": "Remove the unused import.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=721",
+    "text": "Create task"
+   },
+   "title": "coupon-service lint fails on develop"
+  },
+  {
+   "author": "robin.moe",
+   "detail": "npm ci: lockfile does not match package.json",
+   "env": "develop",
+   "firstSeen": 1793727171,
+   "id": 703,
+   "job": "build",
+   "kind": "warn",
+   "klass": "lockfile drift",
+   "lastSeen": 1793734371,
+   "mr": "",
+   "occurrences": 4,
+   "project": "search/search",
+   "projectId": 322,
+   "proposed": "Run `npm install` and commit the lockfile on develop.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=703",
+    "text": "Create task"
+   },
+   "title": "search build fails on develop: package-lock.json out of date"
+  },
+  {
+   "author": "morgan.koe",
+   "detail": "cart: go.sum missing entries.",
+   "env": "develop",
+   "firstSeen": 1793712771,
+   "id": 718,
+   "job": "build",
+   "kind": "warn",
+   "klass": "lockfile drift",
+   "lastSeen": 1793719971,
+   "mr": "",
+   "occurrences": 3,
+   "project": "shop/cart",
+   "projectId": 303,
+   "proposed": "Run go mod tidy and commit go.sum.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=718",
+    "text": "Create task"
+   },
+   "title": "cart: go.sum missing entries"
+  },
+  {
+   "author": "sam.roe",
+   "detail": "checkout: flaky currency rounding test.",
+   "env": "develop",
+   "firstSeen": 1793701971,
+   "id": 729,
+   "job": "build",
+   "kind": "warn",
+   "klass": "flaky",
+   "lastSeen": 1793709171,
+   "mr": "",
+   "occurrences": 2,
+   "project": "shop/checkout",
+   "projectId": 306,
+   "proposed": "Use decimal arithmetic in the test helper.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=729",
+    "text": "Create task"
+   },
+   "title": "checkout: flaky currency rounding test"
+  },
+  {
+   "author": "robin.moe",
+   "detail": "media build: no space left on dev-runner-01.",
+   "env": "develop",
+   "firstSeen": 1793651571,
+   "id": 715,
+   "job": "build",
+   "kind": "warn",
+   "klass": "runner / infra",
+   "lastSeen": 1793658771,
+   "mr": "",
+   "occurrences": 4,
+   "project": "media/image-resizer",
+   "projectId": 311,
+   "proposed": "Prune old images on dev-runner-01 (idea: weekly prune).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=715",
+    "text": "Create task"
+   },
+   "title": "media build: no space left on dev-runner-01"
+  },
+  {
+   "author": "jamie.poe",
+   "detail": "search: no runner picked the job for 30 minutes.",
+   "env": "develop",
+   "firstSeen": 1793644371,
+   "id": 730,
+   "job": "build",
+   "kind": "warn",
+   "klass": "runner / infra",
+   "lastSeen": 1793651571,
+   "mr": "",
+   "occurrences": 3,
+   "project": "search/search",
+   "projectId": 322,
+   "proposed": "Bring dev-runner-02 back online.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "low",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=730",
+    "text": "Create task"
+   },
+   "title": "search: no runner picked the job for 30 minutes"
+  }
+ ],
+ "tabs": [
+  {
+   "count": 27,
+   "href": "/cicd/failures",
+   "label": "Open",
+   "on": true
+  },
+  {
+   "count": 7,
+   "href": "/cicd/failures?view=resolved",
+   "label": "Resolved",
+   "on": false
+  }
+ ],
+ "view": "open"
+}

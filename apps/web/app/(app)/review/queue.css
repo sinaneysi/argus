@@ -1,0 +1,36 @@
+/* The full lists of Review (ideas, proposed tasks). Row and list styles are in section.css and work.css. */
+.rows > li.fl-row { display: flex; gap: 12px; align-items: flex-start; }
+.rows > li:has(.l-pick:checked) { background: var(--accent-soft); }
+.fl-row > form, .fl-row > .muted { flex: 0 1 auto; max-width: 40%; }
+.l-card > .l-pager { margin: 0; padding: 10px var(--card-pad); border-top: 1px solid var(--border); }
+.fold-t.plain-card > .tablewrap { margin: 8px calc(-1 * var(--card-pad)) 0; }
+.fold-t.plain-card > .muted { margin-top: 8px; }
+.fl-av { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--text-2); font-size: var(--fs-sm); font-weight: 600; }
+.fl-main { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.fl-t { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.fl-t b { font-weight: 600; overflow-wrap: anywhere; }
+.fl-t time { margin-left: auto; }
+.fl-m { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: var(--fs-sm); color: var(--text-2); }
+.fl-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 4px; }
+.fl-acts form { margin: 0; }
+.fl-acts > details { min-width: 0; }
+.fl-acts > details[open] { flex-basis: 100%; }
+.fl-in { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fl-in input[type="text"] { flex: 1 1 220px; min-width: 0; height: var(--control); padding: 0 10px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: var(--text); }
+.fl-kv { display: grid; gap: 8px; margin: 8px 0 0; }
+.fl-kv dt { font-size: var(--fs-xs); color: var(--text-muted); }
+.fl-kv dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.fl-ev { display: grid; gap: 4px; margin-top: 8px; font-size: var(--fs-sm); }
+@media (pointer: coarse) {
+  .fl-in input[type="text"] { height: var(--target-coarse); }
+  .fl-t a, .card-h h2 a, .fl-m a, .card-h > a.small, .fl-ev a, .fold p.small a { display: inline-flex; align-items: center; min-height: var(--target-coarse); }
+}
+.fl-form { display: grid; gap: 10px; margin-top: 8px; min-width: 0; }
+.fl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.fl-tools { display: grid; gap: 8px; min-width: 0; }
+.fl-tools .fl-in { margin-top: 0; align-items: center; }
+.fl-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fl-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.fl-body { max-width: var(--measure); }
+.fl-in > select { flex: 1 1 180px; min-width: 0; height: var(--control); padding: 0 10px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: var(--text); }
+@media (pointer: coarse) { .fl-in > select { height: var(--target-coarse); } }

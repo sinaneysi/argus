@@ -1,0 +1,21 @@
+/* Sign-in (no session): one centred card on the ground. */
+
+.auth { min-height: 100vh; display: flex; flex-direction: column; }
+.auth-main { flex: 1; display: grid; place-items: center; align-content: center; gap: 16px; padding: var(--pad) 16px; outline: none; }
+.auth-card {
+  width: min(400px, 100%); display: grid; gap: 16px; padding: 32px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-card); box-shadow: var(--shadow-card);
+}
+.auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.auth-brand b { display: block; font-size: var(--fs-lg); font-weight: 600; line-height: var(--lh-lg); }
+.auth-brand small { display: block; font-size: var(--fs-xs); color: var(--text-muted); }
+.auth-card h1 { font-size: var(--fs-xl); line-height: var(--lh-xl); font-weight: 600; letter-spacing: -0.01em; }
+.auth-sub { margin-top: -8px; color: var(--text-muted); }
+.auth-card .banner { margin: 0; }
+.auth-form { display: grid; gap: 14px; }
+.demo-login { display: grid; gap: 8px; }
+.demo-login .hint { font-size: var(--fs-sm); color: var(--text-muted); }
+.or { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: var(--fs-xs); }
+.or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+.auth-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(400px, 100%); font-size: var(--fs-xs); color: var(--text-muted); }
+@media (max-width: 480px) { .auth-card { padding: 24px 20px; } }

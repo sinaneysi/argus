@@ -1,0 +1,59 @@
+{
+ "engineId": "100",
+ "minutes": "10",
+ "rows": [
+  {
+   "author": "alex.doe",
+   "detail": "waiting_for_resource on resource group deploy-pre-release, held by pipeline 88190 (shop/cart) which waits at manual.",
+   "env": "pre-release",
+   "firstSeen": 1793745051,
+   "id": 704,
+   "job": "",
+   "kind": "warn",
+   "klass": "lock",
+   "lastSeen": 1793752251,
+   "mr": "",
+   "occurrences": 4,
+   "project": "users/loyalty",
+   "projectId": 313,
+   "proposed": "Cancel the older pipeline 88190 or play its manual job.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=704",
+    "text": "Create task"
+   },
+   "title": "loyalty pre-release pipeline waits 24 min for the deploy lock"
+  }
+ ],
+ "running": [],
+ "waiting": [
+  {
+   "author": "alex.doe",
+   "detail": "deploy_production is manual on release; the operator plays it.",
+   "env": "release",
+   "firstSeen": 1793723571,
+   "id": 705,
+   "job": "deploy_production",
+   "kind": "warn",
+   "klass": "release deploy",
+   "lastSeen": 1793730771,
+   "mr": "",
+   "occurrences": 1,
+   "project": "web/shop-front",
+   "projectId": 325,
+   "proposed": "The operator plays deploy_production after the 502 fix (incident #145).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=705",
+    "text": "Create task"
+   },
+   "title": "shop-front release deploy waits at manual for 6 h"
+  }
+ ]
+}

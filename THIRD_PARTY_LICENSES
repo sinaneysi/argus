@@ -1,0 +1,49 @@
+Third-party Go modules vendored under apps/api/vendor. Each keeps its own licence; the full texts are in
+the files named below.
+
+github.com/dustin/go-humanize v1.0.1  MIT  apps/api/vendor/github.com/dustin/go-humanize/LICENSE
+github.com/google/uuid v1.6.0  BSD  apps/api/vendor/github.com/google/uuid/LICENSE
+github.com/mattn/go-isatty v0.0.20  MIT  apps/api/vendor/github.com/mattn/go-isatty/LICENSE
+github.com/ncruces/go-strftime v0.1.9  MIT  apps/api/vendor/github.com/ncruces/go-strftime/LICENSE
+github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec  BSD  apps/api/vendor/github.com/remyoudompheng/bigfft/LICENSE
+github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e  MIT  apps/api/vendor/github.com/skip2/go-qrcode/LICENSE
+golang.org/x/crypto v0.31.0  BSD  apps/api/vendor/golang.org/x/crypto/LICENSE
+golang.org/x/sys v0.28.0  BSD  apps/api/vendor/golang.org/x/sys/LICENSE
+modernc.org/libc v1.55.3  BSD  apps/api/vendor/modernc.org/libc/LICENSE, apps/api/vendor/modernc.org/libc/LICENSE-GO
+modernc.org/mathutil v1.6.0  BSD  apps/api/vendor/modernc.org/mathutil/LICENSE
+modernc.org/memory v1.8.0  BSD  apps/api/vendor/modernc.org/memory/LICENSE, apps/api/vendor/modernc.org/memory/LICENSE-GO, apps/api/vendor/modernc.org/memory/LICENSE-MMAP-GO
+modernc.org/sqlite v1.34.5  BSD  apps/api/vendor/modernc.org/sqlite/LICENSE
+
+npm packages shipped in the web image (apps/web, the Next.js standalone server; package-lock.json pins the versions).
+Each keeps its own licence; the texts are in node_modules/<name>/LICENSE.
+
+next 15.5.28  MIT
+@next/env 15.5.28  MIT
+react 19.3.1  MIT
+react-dom 19.3.1  MIT
+scheduler 0.28.0  MIT
+styled-jsx 5.1.6  MIT
+client-only 0.0.1  MIT
+react-cmdk 1.3.9  MIT
+@headlessui/react 1.7.19  MIT
+@heroicons/react 2.2.0  MIT
+@tanstack/react-virtual 3.14.26  MIT
+@tanstack/virtual-core 3.19.11  MIT
+@swc/helpers 0.5.15  Apache-2.0
+postcss 8.5.32  MIT
+nanoid 3.3.20  MIT
+picocolors 1.1.1  ISC
+source-map-js 1.2.2  BSD-3-Clause
+tslib 2.9.1  0BSD
+semver 7.8.6  ISC
+detect-libc 2.1.2  Apache-2.0
+caniuse-lite 1.0.30001820  CC-BY-4.0  (browser-support data used by Next.js's build; attribution: the Can I Use
+  project, https://caniuse.com; a permissive data licence, kept because Next.js depends on it)
+@emnapi/runtime 1.11.3, @img/colour 1.1.0  MIT
+Not shipped: next's optional image optimiser sharp and its libvips binaries (LGPL-3.0-or-later) are installed on
+build machines as an optional dependency and removed from the image (demo/Dockerfile); Argus does not use them.
+Build and test tools (not in any image): typescript (Apache-2.0), eslint and eslint-config-next (MIT), vitest (MIT),
+@types/* (MIT).
+
+Icons: path data from Lucide (ISC licence, https://lucide.dev), inlined in apps/web/components/Icon.tsx.
+Fonts: IBM Plex Sans, JetBrains Mono, Vazirmatn (SIL Open Font License 1.1), packages/design/static/fonts.

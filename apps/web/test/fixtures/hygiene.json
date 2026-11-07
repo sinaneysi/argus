@@ -1,0 +1,162 @@
+{
+"at": 1793741599,
+"banners": [],
+"counters": "2026-11-04, 2026-11-04, 2026-11-04, 2026-11-04, 2026-11-04, 2026-11-04, 2026-11-04",
+"loaded": true,
+"refresh": true,
+"scan": {
+"back": "/hygiene",
+"busy": false,
+"label": "Scan now",
+"meta": "Scan running · safe to leave, results appear here",
+"overdue": "Scan asked 1d ago, not finished",
+"tasks": "insights",
+"title": "Run Capacity and hygiene again now"
+},
+"sections": [
+{
+"note": "Leftover notification tests. They fire at page/critical level and teach the team to ignore pages.",
+"rows": [
+{
+"alert": "TestAlertDoNotPage",
+"dc": "east",
+"detail": "",
+"instance": "prod-mon-01:9093",
+"neverResolved": true,
+"severity": "critical",
+"when": "13 d",
+"why": ""
+}
+],
+"suggestion": "Delete the test rule from monitoring/rules/test.yml",
+"title": "Test alerts still firing",
+"whenLabel": "Firing for"
+},
+{
+"note": "Alerts nobody fixes or silences. “never resolved” = no RESOLVED message for that alert in the counted window.",
+"rows": [
+{
+"alert": "PrometheusTargetDown",
+"dc": "west",
+"detail": "",
+"instance": "prod-backup-02:9100",
+"neverResolved": true,
+"severity": "warning",
+"when": "9 d",
+"why": "Install node_exporter on prod-backup-02 or drop the target"
+},
+{
+"alert": "CertificateExpiresSoon",
+"dc": "east",
+"detail": "",
+"instance": "sellers.northwind.example:443",
+"neverResolved": false,
+"severity": "warning",
+"when": "5 d",
+"why": "Fix the DNS-01 renewal hook (incident #152)"
+}
+],
+"suggestion": "",
+"title": "Firing for more than 7 days",
+"whenLabel": "Firing for"
+},
+{
+"note": "Targets with up == 0 for the whole 7-day window.",
+"rows": [
+{
+"alert": "up == 0",
+"dc": "west",
+"detail": "",
+"instance": "10.30.30.110:9100",
+"neverResolved": false,
+"severity": "",
+"when": "7 d",
+"why": ""
+},
+{
+"alert": "up == 0",
+"dc": "east",
+"detail": "",
+"instance": "10.20.30.99:9187",
+"neverResolved": false,
+"severity": "",
+"when": "7 d",
+"why": ""
+}
+],
+"suggestion": "Remove the target from prometheus.yml or fix the exporter",
+"title": "Dead scrape targets",
+"whenLabel": "Firing for"
+},
+{
+"note": "Fire and resolve again and again (from ops-watch counters).",
+"rows": [
+{
+"alert": "ContainerRestarting",
+"dc": "west",
+"detail": "126 fired, 125 resolved in 7 d",
+"instance": "dev-swarm-02:8080",
+"neverResolved": false,
+"severity": "warning",
+"when": "18 / day",
+"why": ""
+}
+],
+"suggestion": "Raise `for:` to 10m and fix the dev healthcheck",
+"title": "Flapping",
+"whenLabel": "Rate"
+},
+{
+"note": "Warnings firing several times a day that nobody acts on.",
+"rows": [
+{
+"alert": "BlackboxSlowResponse",
+"dc": "east",
+"detail": "63 fired, 63 resolved in 7 d",
+"instance": "https://stats.northwind.example",
+"neverResolved": false,
+"severity": "info",
+"when": "9 / day",
+"why": "Lower to a dashboard panel; nobody acts on it"
+},
+{
+"alert": "HighLoad",
+"dc": "west",
+"detail": "41 fired, 41 resolved in 7 d",
+"instance": "prod-api-03:9100",
+"neverResolved": false,
+"severity": "info",
+"when": "6 / day",
+"why": "Use load per vCPU > 2 for 15m"
+}
+],
+"suggestion": "",
+"title": "Noisy warnings",
+"whenLabel": "Rate"
+}
+],
+"tiles": [
+{
+"label": "Test alerts still firing",
+"figure": "1",
+"sub": "",
+"hot": true
+},
+{
+"label": "Firing for more than 7 days",
+"figure": "2",
+"sub": "",
+"hot": true
+},
+{
+"label": "Dead scrape targets",
+"figure": "2",
+"sub": ""
+},
+{
+"label": "Flapping",
+"figure": "1",
+"sub": ""
+}
+]
+}

@@ -1,0 +1,134 @@
+{
+"doc": {
+"admin": false,
+"intro": [
+{
+"kind": "md",
+"text": "\nReview answers one question: **what waits for my decision?** Argus proposes; a person decides. Nothing reaches\nJira, GitLab, a chat or a host until someone accepts it here. **Where:** [Review](/review), the second item in the\nsidebar. The number next to it is how many decisions wait (admins).\n"
+}
+],
+"sections": [
+{
+"admin": false,
+"id": "inbox",
+"nodes": [
+{
+"kind": "md",
+"text": "\n- **The queue and the panel.** The left side is the queue: every waiting decision, whatever its kind, 25 a page. Each\n  row shows the title, its kind, its severity (task proposals), the environment, the affected host or service, how\n  long it has waited and, for task proposals and chat requests, when the decision expires. Click a row (or press\n  Enter on it) to open it in the review panel beside the queue. The queue keeps its place, filters, sort and page;\n  the address names the selected decision, so refresh, back, forward and a shared link all show the same view.\n- **Narrow screens** (below about 1200 pixels) show the queue, or the selected decision full width with **Back to\n  queue**, which returns to the same filters, page and row.\n- **One toolbar** for All and for every kind: search (title, host, service, ID), severity, environment, source and\n  sort, then **Apply**; **Clear filters** resets them. Severity exists only on task proposals; source is the intake\n  path of a task proposal (QA, incident, CVE, CI/CD, credential, task chat), so choosing one hides the other kinds.\n  Environments use the names this installation shows (for example production for release).\n- **The kind chips** (All, Task proposals, Action approvals, Lessons, Ideas, Chat requests, Problem links) narrow the\n  queue to one kind and keep the search and filters. Each kind's own full list (bulk actions with their confirm step,\n  snoozed and decided proposals, approved or retired lessons, accepted and built ideas, settings) is one link away\n  under the header; old addresses such as `/proposals?view=decided` and `/ideas?status=built` open it.\n- After an action the page comes back to the same queue and says whether Argus applied it. Nothing is opened for\n  you next: pick the next decision yourself.\n"
+}
+],
+"title": "The inbox"
+},
+{
+"admin": false,
+"id": "order",
+"nodes": [
+{
+"kind": "md",
+"text": "\nThe default order is **urgency**, worked out from stored fields only (no score):\n\n1. **Severity**: critical, high, medium, then decisions without a severity, then low and info. Only task proposals\n   carry a severity; action approvals, lessons, ideas, chat requests and problem links have none, and an unknown\n   severity is not assumed to be low.\n2. **Environment**: production (release) first, then staging (pre-release), develop, any other, none.\n3. **Decision deadline**: the soonest first; decisions without one after. A task proposal expires 14 days (the\n   setting) after it was proposed; a chat request after 24 hours. This is the deadline of the *decision*: an expired\n   proposal is recorded as rejected (\"expired\"), which does not mean the issue went away. No kind stores an\n   operational deadline today; the panel says \"None recorded\".\n4. **Waiting time**: the longest waiting first; then kind and ID, so the order never changes on its own.\n\nThe other orders are **Oldest first**, **Newest first** and **Expiring first** (the nearest decision deadline, then\nurgency). The line under the toolbar always says which order is on.\n"
+}
+],
+"title": "How Review orders decisions"
+},
+{
+"admin": false,
+"id": "panel",
+"nodes": [
+{
+"kind": "md",
+"text": "\nIn this order: the title, kind, severity and environment; the affected hosts or services and the deadlines; the\nproposed outcome; the evidence and a link to its source; what happens if you accept; the actions; then the details\nand history, folded. When the source sent no real evidence (for example only \"From Argus.\"), the panel says **No\nevidence recorded** and links the source to check instead. Argus never fills in evidence or a confidence it does not\nhave; a problem link shows the confidence its suggester stored.\n\n- **Task proposals: Create Jira issue** (or GitLab issue, or task on a local board) creates tracked work only; it runs\n  nothing on a host. **Edit, then create** changes the title, assignee, project, priority or labels first.\n  **Snooze 24 h** is offered only when the proposal expires more than 24 hours from now: snoozing never extends the\n  expiry, so a proposal that would expire while snoozed shows why snooze is missing.\n- **Action approvals: Review execution plan** opens the plan review step: the pinned plan version, environment,\n  targets, every step (READ or WRITE), validation and rollback (said to be missing when the plan has none) and the\n  limits. Only that step has **Approve plan vN & start**. If the plan changes, the new version needs its own review.\n  There is no bulk approval of plans."
+}
+],
+"title": "The review panel"
+},
+{
+"admin": false,
+"id": "kinds",
+"nodes": [
+{
+"kind": "md",
+"text": "\n| Kind | The main action | What it does |\n|---|---|---|\n| Task proposals | **Create Jira issue** (or GitLab issue) | Creates the issue as proposed; **Edit, then create** to change the title, assignee or labels first ([Proposed tasks](/help/delivery#proposed-tasks)). |\n| Action approvals | **Review execution plan**, then **Approve plan vN & start** | Starts the task agent on exactly that plan version. If the plan changes, approve the new one. Production plans only write a proposal. |\n| Lessons | **Approve lesson** | Lets later runs use the lesson ([Lessons](/help/agent#lessons)). |\n| Ideas | **Generate build prompt** | Argus writes a build prompt; nothing is built or deployed ([Ideas](/help/agent#ideas)). |\n| Chat requests | **Create task** | Turns a request forwarded in Matrix into a task ([Matrix requests](/help/delivery#matrix-requests)). |\n| Problem links | **Link to P-n** | Links the incident or report to the problem ([Problems](/help/operations#problems)). |\n\nEvery action goes through the same checks as before: your role, the form's security token and, when the operator\nturned it on, a fresh two-factor code. Root re-checks every request before anything happens.\n"
+}
+],
+"title": "Decision kinds"
+},
+{
+"admin": false,
+"id": "roles",
+"nodes": [
+{
+"kind": "md",
+"text": "\nAdmins see every kind and act on it. Viewers see ideas and problem links, read-only, and no count in the sidebar.\n"
+}
+],
+"title": "Who sees what"
+}
+],
+"slug": "review",
+"summary": "Every decision Argus needs from a person, in one inbox - task proposals, plan approvals, lessons, ideas, chat requests and problem links.",
+"title": "Review"
+},
+"maxQuery": 100,
+"pages": [
+{
+"href": "/help",
+"slug": "index",
+"title": "Help"
+},
+{
+"href": "/help/overview",
+"slug": "overview",
+"title": "Getting started"
+},
+{
+"href": "/help/operations",
+"slug": "operations",
+"title": "Incidents and checks"
+},
+{
+"href": "/help/review",
+"slug": "review",
+"title": "Review"
+},
+{
+"href": "/help/delivery",
+"slug": "delivery",
+"title": "Work and CI/CD"
+},
+{
+"href": "/help/infrastructure",
+"slug": "infrastructure",
+"title": "Estate and hygiene"
+},
+{
+"href": "/help/security",
+"slug": "security",
+"title": "Security"
+},
+{
+"href": "/help/agent",
+"slug": "agent",
+"title": "Argus"
+},
+{
+"href": "/help/notifications",
+"slug": "notifications",
+"title": "Notifications"
+},
+{
+"href": "/help/safety",
+"slug": "safety",
+"title": "Is it safe?"
+},
+{
+"href": "/help/glossary",
+"slug": "glossary",
+"title": "Glossary"
+},
+{
+"href": "/help/whats-new",
+"slug": "whats-new",
+"title": "What's new"
+}
+]
+}

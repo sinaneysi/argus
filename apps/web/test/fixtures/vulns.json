@@ -1,0 +1,1061 @@
+{
+ "banners": [],
+ "choices": {
+  "env": [
+   "production",
+   "staging",
+   "dev"
+  ],
+  "kind": [
+   "package",
+   "kernel",
+   "npm",
+   "composer",
+   "software",
+   "runtime",
+   "database",
+   "image",
+   "base-image",
+   "os"
+  ],
+  "pri": [
+   "P1",
+   "P2",
+   "P3",
+   "P4"
+  ],
+  "svc": [
+   "analytics-matomo",
+   "cart",
+   "checkout",
+   "payment-gateway",
+   "shop-front"
+  ]
+ },
+ "components": 0,
+ "coverage": {
+  "containers": {
+   "blind": [
+    {
+     "host": "prod-backup-02",
+     "hostHref": "/inventory/view?id=32",
+     "label": "No package list, no container list",
+     "subject": "prod-backup-02",
+     "why": "no ssh-ro alias and no node_exporter: nothing is known about its packages"
+    },
+    {
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "label": "cAdvisor without image labels",
+     "subject": "prod-media-01:8080",
+     "why": "cAdvisor runs without --docker_only labels"
+    },
+    {
+     "host": "prod-misc-01",
+     "hostHref": "/inventory/view?id=23",
+     "label": "Image could not be analysed",
+     "subject": "registry.northwind.example/shop/recommendation:1.8.0",
+     "why": "registry answered 401: the analyser's pull token has no access to the shop group"
+    },
+    {
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "label": "Declared, not observed",
+     "subject": "registry.northwind.example/media/image-resizer:3.2.1",
+     "why": "declared in config but cAdvisor on prod-media-01 reports no container labels"
+    },
+    {
+     "host": "prod-db-01",
+     "hostHref": "/inventory/view?id=14",
+     "label": "Database host skipped by rule",
+     "subject": "prod-db-01",
+     "why": "database hosts are never logged into (operator rule); packages unknown"
+    },
+    {
+     "host": "prod-db-02",
+     "hostHref": "/inventory/view?id=15",
+     "label": "Database host skipped by rule",
+     "subject": "prod-db-02",
+     "why": "database hosts are never logged into (operator rule)"
+    },
+    {
+     "host": "",
+     "hostHref": "",
+     "label": "Web fingerprint without a version",
+     "subject": "https://sellers.northwind.example",
+     "why": "the server hides its version (server_tokens off)"
+    }
+   ],
+   "blindCounts": "No package list, no container list 1 · cAdvisor without image labels 1 · Image could not be analysed 1 · Declared, not observed 1 · Database host skipped by rule 2 · Web fingerprint without a version 1",
+   "note": "0 hosts have a package list · 0 hosts have container images (0 observed through cAdvisor or docker, the rest declared in config) · 0 of 0 images analysed. Images are read from the registry by root (layers streamed, never run); a declared image is what config says runs there, not what was seen.",
+   "rows": [
+    {
+     "digest": "sha256:bab50f5a4641",
+     "env": "release",
+     "host": "prod-matomo-01",
+     "hostHref": "/inventory/view?id=22#vulns",
+     "image": "registry.northwind.example/analytics/matomo:4.16-php8.1",
+     "inside": "analysed",
+     "name": "analytics-matomo",
+     "source": "cAdvisor (east)"
+    },
+    {
+     "digest": "sha256:b729157f86ab",
+     "env": "release",
+     "host": "prod-misc-01",
+     "hostHref": "/inventory/view?id=23#vulns",
+     "image": "registry.northwind.example/shop/recommendation:1.8.0",
+     "inside": "not analysed",
+     "name": "recommendation",
+     "source": "cAdvisor (east)"
+    },
+    {
+     "digest": "sha256:20e046e7f4e1",
+     "env": "release",
+     "host": "prod-shop-01",
+     "hostHref": "/inventory/view?id=3#vulns",
+     "image": "registry.northwind.example/web/shop-front:2026.10.23",
+     "inside": "analysed",
+     "name": "shop-front",
+     "source": "cAdvisor (east)"
+    },
+    {
+     "digest": "sha256:20e046e7f4e1",
+     "env": "release",
+     "host": "prod-shop-02",
+     "hostHref": "/inventory/view?id=4#vulns",
+     "image": "registry.northwind.example/web/shop-front:2026.10.23",
+     "inside": "analysed",
+     "name": "shop-front",
+     "source": "cAdvisor (east)"
+    },
+    {
+     "digest": "sha256:09760665f0af",
+     "env": "develop",
+     "host": "dev-swarm-01",
+     "hostHref": "/inventory/view?id=37#vulns",
+     "image": "redis:7.2",
+     "inside": "analysed",
+     "name": "redis_dev",
+     "source": "dev docker"
+    },
+    {
+     "digest": "sha256:6f01d5a9f71d",
+     "env": "develop",
+     "host": "dev-swarm-02",
+     "hostHref": "/inventory/view?id=38#vulns",
+     "image": "registry.northwind.example/web/shop-front:develop",
+     "inside": "analysed",
+     "name": "shop-front_dev",
+     "source": "dev docker"
+    },
+    {
+     "digest": "sha256:a375671ab074",
+     "env": "release",
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20#vulns",
+     "image": "registry.northwind.example/media/image-resizer:3.2.1",
+     "inside": "pending",
+     "name": "image-resizer",
+     "source": "declared in config"
+    }
+   ]
+  },
+  "feedHosts": [],
+  "hosts": 0,
+  "kinds": "-",
+  "missing": [
+   {
+    "env": "pre-release",
+    "name": "stg-db-01",
+    "why": "DB host: no login (operator rule)"
+   },
+   {
+    "env": "release",
+    "name": "prod-backup-02",
+    "why": "no ssh-ro alias"
+   },
+   {
+    "env": "release",
+    "name": "prod-db-01",
+    "why": "DB host: no login (operator rule)"
+   },
+   {
+    "env": "release",
+    "name": "prod-db-02",
+    "why": "DB host: no login (operator rule)"
+   },
+   {
+    "env": "release",
+    "name": "prod-db-03",
+    "why": "DB host: no login (operator rule)"
+   }
+  ],
+  "mode": "-",
+  "queries": null,
+  "scanned": 0,
+  "withAccess": 0
+ },
+ "empty": "No host has a package list yet, so nothing can be matched. Findings appear after the next scan.",
+ "feedAt": "never",
+ "filtered": false,
+ "fixFirst": [
+  {
+   "affected": [
+    {
+     "env": "release",
+     "exposure": {
+      "hot": false,
+      "via": "stats.northwind.example",
+      "word": "internet"
+     },
+     "host": "prod-matomo-01",
+     "hostHref": "/inventory/view?id=22",
+     "how": "php-fpm in the image matomo:4.16-php8.1",
+     "service": "analytics-matomo",
+     "serviceHref": "/vulns?svc=analytics-matomo#components",
+     "unit": "container analytics-matomo",
+     "version": "8.1.2"
+    }
+   ],
+   "affects": "Affects: 1 service on 1 host",
+   "class": "production",
+   "due": "2026-11-04",
+   "ecosystem": "container:analytics-matomo",
+   "fixed": "8.3",
+   "href": "/vulns?group=container%3Aanalytics-matomo%7Cphp%7Cproduction",
+   "internet": true,
+   "kev": 1,
+   "kind": "runtime",
+   "late": true,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=container%3Aanalytics-matomo%7Cphp%7Cproduction#affected",
+   "name": "php",
+   "pri": "P1",
+   "priKind": "fail",
+   "targets": 1,
+   "versions": "8.1.2",
+   "vulns": 3
+  },
+  {
+   "affected": [
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "admin.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-admin-01",
+     "hostHref": "/inventory/view?id=21",
+     "how": "runs on the vulnerable kernel",
+     "service": "admin-panel",
+     "serviceHref": "/vulns?svc=admin-panel#components",
+     "unit": "northwind-admin-panel.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "account.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-user-01",
+     "hostHref": "/inventory/view?id=11",
+     "how": "runs on the vulnerable kernel",
+     "service": "auth-service",
+     "serviceHref": "/vulns?svc=auth-service#components",
+     "unit": "northwind-auth-service.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-01",
+     "hostHref": "/inventory/view?id=5",
+     "how": "runs on the vulnerable kernel",
+     "service": "cart",
+     "serviceHref": "/vulns?svc=cart#components",
+     "unit": "northwind-cart.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-02",
+     "hostHref": "/inventory/view?id=6",
+     "how": "runs on the vulnerable kernel",
+     "service": "cart",
+     "serviceHref": "/vulns?svc=cart#components",
+     "unit": "northwind-cart.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-01",
+     "hostHref": "/inventory/view?id=3",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-02",
+     "hostHref": "/inventory/view?id=4",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-03",
+     "hostHref": "/inventory/view?id=27",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "cdn.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "how": "runs on the vulnerable kernel",
+     "service": "cdn-origin",
+     "serviceHref": "/vulns?svc=cdn-origin#components",
+     "unit": "northwind-cdn-origin.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "checkout.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-01",
+     "hostHref": "/inventory/view?id=5",
+     "how": "runs on the vulnerable kernel",
+     "service": "checkout",
+     "serviceHref": "/vulns?svc=checkout#components",
+     "unit": "northwind-checkout.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "checkout.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-02",
+     "hostHref": "/inventory/view?id=6",
+     "how": "runs on the vulnerable kernel",
+     "service": "checkout",
+     "serviceHref": "/vulns?svc=checkout#components",
+     "unit": "northwind-checkout.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "img.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "how": "runs on the vulnerable kernel",
+     "service": "image-resizer",
+     "serviceHref": "/vulns?svc=image-resizer#components",
+     "unit": "northwind-image-resizer.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "pay.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-pay-01",
+     "hostHref": "/inventory/view?id=7",
+     "how": "runs on the vulnerable kernel",
+     "service": "payment-gateway",
+     "serviceHref": "/vulns?svc=payment-gateway#components",
+     "unit": "northwind-payment-gateway.service",
+     "version": "6.8.0-41-generic"
+    }
+   ],
+   "affects": "Affects: 19 services on 21 hosts (host-wide on 21)",
+   "class": "production",
+   "due": "2026-11-03",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "6.8.0-45.45",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+   "internet": false,
+   "kev": 1,
+   "kind": "kernel",
+   "late": true,
+   "moreAffected": 37,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction#affected",
+   "name": "linux",
+   "pri": "P1",
+   "priKind": "fail",
+   "targets": 21,
+   "versions": "6.8.0-41-generic",
+   "vulns": 2
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-06",
+   "ecosystem": "npm",
+   "fixed": "14.2.25",
+   "href": "/vulns?group=npm%7Cnext%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "npm dependency",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=npm%7Cnext%7Cproduction#affected",
+   "name": "next",
+   "pri": "P2",
+   "priKind": "fail",
+   "targets": 3,
+   "versions": "14.2.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "staging",
+   "due": "2026-11-08",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "6.8.0-45.45",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cstaging",
+   "internet": false,
+   "kev": 1,
+   "kind": "kernel",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cstaging#affected",
+   "name": "linux",
+   "pri": "P2",
+   "priKind": "fail",
+   "targets": 4,
+   "versions": "6.8.0-41-generic",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-23",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "16.6",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cpostgresql%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "database",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cpostgresql%7Cproduction#affected",
+   "name": "postgresql",
+   "pri": "P3",
+   "priKind": "warn",
+   "targets": 3,
+   "versions": "16.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-25",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "3.0.13-0ubuntu3.5",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Copenssl%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "OS package",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Copenssl%7Cproduction#affected",
+   "name": "openssl",
+   "pri": "P3",
+   "priKind": "warn",
+   "targets": 30,
+   "versions": "3.0.13-0ubuntu3.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "dev",
+   "due": "2027-01-19",
+   "ecosystem": "image:redis:7.2",
+   "fixed": "7.2.7",
+   "href": "/vulns?group=image%3Aredis%3A7.2%7Credis%7Cdev",
+   "internet": false,
+   "kev": 0,
+   "kind": "container image",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=image%3Aredis%3A7.2%7Credis%7Cdev#affected",
+   "name": "redis",
+   "pri": "P4",
+   "priKind": "ok",
+   "targets": 1,
+   "versions": "7.2.4",
+   "vulns": 1
+  }
+ ],
+ "host": "argus-01",
+ "kev": 0,
+ "more": null,
+ "p1": 0,
+ "p2": 0,
+ "risk": [
+  {
+   "exposure": {
+    "hot": true,
+    "via": "",
+    "word": "customer-facing"
+   },
+   "fix": {
+    "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+    "text": "linux"
+   },
+   "hostList": "prod-shop-01, prod-shop-02, prod-shop-03",
+   "hosts": 3,
+   "href": "/vulns?svc=shop-front#components",
+   "kev": 1,
+   "on": false,
+   "p1": 1,
+   "p2": 2,
+   "service": "shop-front"
+  },
+  {
+   "exposure": {
+    "hot": false,
+    "via": "",
+    "word": "internet"
+   },
+   "fix": {
+    "href": "/vulns?group=container%3Aanalytics-matomo%7Cphp%7Cproduction",
+    "text": "php"
+   },
+   "hostList": "prod-matomo-01",
+   "hosts": 1,
+   "href": "/vulns?svc=analytics-matomo#components",
+   "kev": 1,
+   "on": false,
+   "p1": 1,
+   "p2": 2,
+   "service": "analytics-matomo"
+  },
+  {
+   "exposure": {
+    "hot": true,
+    "via": "",
+    "word": "customer-facing"
+   },
+   "fix": {
+    "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+    "text": "linux"
+   },
+   "hostList": "prod-api-01, prod-api-02, prod-api-03",
+   "hosts": 3,
+   "href": "/vulns?svc=cart#components",
+   "kev": 1,
+   "on": false,
+   "p1": 1,
+   "p2": 1,
+   "service": "cart"
+  },
+  {
+   "exposure": {
+    "hot": true,
+    "via": "",
+    "word": "customer-facing"
+   },
+   "fix": {
+    "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+    "text": "linux"
+   },
+   "hostList": "prod-api-01, prod-api-02, prod-api-03",
+   "hosts": 3,
+   "href": "/vulns?svc=checkout#components",
+   "kev": 1,
+   "on": false,
+   "p1": 1,
+   "p2": 1,
+   "service": "checkout"
+  },
+  {
+   "exposure": {
+    "hot": true,
+    "via": "",
+    "word": "customer-facing"
+   },
+   "fix": {
+    "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+    "text": "linux"
+   },
+   "hostList": "prod-pay-01, prod-pay-02",
+   "hosts": 2,
+   "href": "/vulns?svc=payment-gateway#components",
+   "kev": 1,
+   "on": false,
+   "p1": 1,
+   "p2": 1,
+   "service": "payment-gateway"
+  }
+ ],
+ "rows": [
+  {
+   "affected": [
+    {
+     "env": "release",
+     "exposure": {
+      "hot": false,
+      "via": "stats.northwind.example",
+      "word": "internet"
+     },
+     "host": "prod-matomo-01",
+     "hostHref": "/inventory/view?id=22",
+     "how": "php-fpm in the image matomo:4.16-php8.1",
+     "service": "analytics-matomo",
+     "serviceHref": "/vulns?svc=analytics-matomo#components",
+     "unit": "container analytics-matomo",
+     "version": "8.1.2"
+    }
+   ],
+   "affects": "Affects: 1 service on 1 host",
+   "class": "production",
+   "due": "2026-11-04",
+   "ecosystem": "container:analytics-matomo",
+   "fixed": "8.3",
+   "href": "/vulns?group=container%3Aanalytics-matomo%7Cphp%7Cproduction",
+   "internet": true,
+   "kev": 1,
+   "kind": "runtime",
+   "late": true,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=container%3Aanalytics-matomo%7Cphp%7Cproduction#affected",
+   "name": "php",
+   "pri": "P1",
+   "priKind": "fail",
+   "targets": 1,
+   "versions": "8.1.2",
+   "vulns": 3
+  },
+  {
+   "affected": [
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "admin.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-admin-01",
+     "hostHref": "/inventory/view?id=21",
+     "how": "runs on the vulnerable kernel",
+     "service": "admin-panel",
+     "serviceHref": "/vulns?svc=admin-panel#components",
+     "unit": "northwind-admin-panel.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "account.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-user-01",
+     "hostHref": "/inventory/view?id=11",
+     "how": "runs on the vulnerable kernel",
+     "service": "auth-service",
+     "serviceHref": "/vulns?svc=auth-service#components",
+     "unit": "northwind-auth-service.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-01",
+     "hostHref": "/inventory/view?id=5",
+     "how": "runs on the vulnerable kernel",
+     "service": "cart",
+     "serviceHref": "/vulns?svc=cart#components",
+     "unit": "northwind-cart.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-02",
+     "hostHref": "/inventory/view?id=6",
+     "how": "runs on the vulnerable kernel",
+     "service": "cart",
+     "serviceHref": "/vulns?svc=cart#components",
+     "unit": "northwind-cart.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-01",
+     "hostHref": "/inventory/view?id=3",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-02",
+     "hostHref": "/inventory/view?id=4",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "api.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-shop-03",
+     "hostHref": "/inventory/view?id=27",
+     "how": "runs on the vulnerable kernel",
+     "service": "catalog-api",
+     "serviceHref": "/vulns?svc=catalog-api#components",
+     "unit": "northwind-catalog-api.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "cdn.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "how": "runs on the vulnerable kernel",
+     "service": "cdn-origin",
+     "serviceHref": "/vulns?svc=cdn-origin#components",
+     "unit": "northwind-cdn-origin.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "checkout.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-01",
+     "hostHref": "/inventory/view?id=5",
+     "how": "runs on the vulnerable kernel",
+     "service": "checkout",
+     "serviceHref": "/vulns?svc=checkout#components",
+     "unit": "northwind-checkout.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "checkout.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-api-02",
+     "hostHref": "/inventory/view?id=6",
+     "how": "runs on the vulnerable kernel",
+     "service": "checkout",
+     "serviceHref": "/vulns?svc=checkout#components",
+     "unit": "northwind-checkout.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "img.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-media-01",
+     "hostHref": "/inventory/view?id=20",
+     "how": "runs on the vulnerable kernel",
+     "service": "image-resizer",
+     "serviceHref": "/vulns?svc=image-resizer#components",
+     "unit": "northwind-image-resizer.service",
+     "version": "6.8.0-41-generic"
+    },
+    {
+     "env": "release",
+     "exposure": {
+      "hot": true,
+      "via": "pay.northwind.example",
+      "word": "customer-facing"
+     },
+     "host": "prod-pay-01",
+     "hostHref": "/inventory/view?id=7",
+     "how": "runs on the vulnerable kernel",
+     "service": "payment-gateway",
+     "serviceHref": "/vulns?svc=payment-gateway#components",
+     "unit": "northwind-payment-gateway.service",
+     "version": "6.8.0-41-generic"
+    }
+   ],
+   "affects": "Affects: 19 services on 21 hosts (host-wide on 21)",
+   "class": "production",
+   "due": "2026-11-03",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "6.8.0-45.45",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+   "internet": false,
+   "kev": 1,
+   "kind": "kernel",
+   "late": true,
+   "moreAffected": 37,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction#affected",
+   "name": "linux",
+   "pri": "P1",
+   "priKind": "fail",
+   "targets": 21,
+   "versions": "6.8.0-41-generic",
+   "vulns": 2
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-06",
+   "ecosystem": "npm",
+   "fixed": "14.2.25",
+   "href": "/vulns?group=npm%7Cnext%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "npm dependency",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=npm%7Cnext%7Cproduction#affected",
+   "name": "next",
+   "pri": "P2",
+   "priKind": "fail",
+   "targets": 3,
+   "versions": "14.2.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "staging",
+   "due": "2026-11-08",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "6.8.0-45.45",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cstaging",
+   "internet": false,
+   "kev": 1,
+   "kind": "kernel",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cstaging#affected",
+   "name": "linux",
+   "pri": "P2",
+   "priKind": "fail",
+   "targets": 4,
+   "versions": "6.8.0-41-generic",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-23",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "16.6",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cpostgresql%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "database",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cpostgresql%7Cproduction#affected",
+   "name": "postgresql",
+   "pri": "P3",
+   "priKind": "warn",
+   "targets": 3,
+   "versions": "16.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-25",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "3.0.13-0ubuntu3.5",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Copenssl%7Cproduction",
+   "internet": false,
+   "kev": 0,
+   "kind": "OS package",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Copenssl%7Cproduction#affected",
+   "name": "openssl",
+   "pri": "P3",
+   "priKind": "warn",
+   "targets": 30,
+   "versions": "3.0.13-0ubuntu3.3",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "production",
+   "due": "2026-11-26",
+   "ecosystem": "Ubuntu:24.04:LTS",
+   "fixed": "",
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cnginx%7Cproduction",
+   "internet": true,
+   "kev": 0,
+   "kind": "server software",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Cnginx%7Cproduction#affected",
+   "name": "nginx",
+   "pri": "P3",
+   "priKind": "warn",
+   "targets": 3,
+   "versions": "1.24.0",
+   "vulns": 1
+  },
+  {
+   "affected": [],
+   "affects": "Affects: not mapped yet",
+   "class": "dev",
+   "due": "2027-01-19",
+   "ecosystem": "image:redis:7.2",
+   "fixed": "7.2.7",
+   "href": "/vulns?group=image%3Aredis%3A7.2%7Credis%7Cdev",
+   "internet": false,
+   "kev": 0,
+   "kind": "container image",
+   "late": false,
+   "moreAffected": 0,
+   "moreHref": "/vulns?group=image%3Aredis%3A7.2%7Credis%7Cdev#affected",
+   "name": "redis",
+   "pri": "P4",
+   "priKind": "ok",
+   "targets": 1,
+   "versions": "7.2.4",
+   "vulns": 1
+  }
+ ],
+ "scanned": false,
+ "sel": {
+  "env": "",
+  "eol": "",
+  "host": "",
+  "kev": "",
+  "kind": "",
+  "pri": "",
+  "state": "",
+  "svc": ""
+ },
+ "tiles": [
+  {
+   "figure": "0",
+   "href": "/vulns?pri=P1",
+   "label": "P1",
+   "sub": "0 with a fix today"
+  },
+  {
+   "figure": "0",
+   "href": "/vulns?pri=P2",
+   "label": "P2",
+   "sub": "next"
+  },
+  {
+   "figure": "0",
+   "href": "/vulns?kev=1",
+   "label": "Known exploited",
+   "sub": "in CISA KEV"
+  },
+  {
+   "figure": "0",
+   "href": "/vulns?eol=1",
+   "label": "End of life",
+   "sub": "unsupported releases"
+  },
+  {
+   "figure": "0/0",
+   "href": "#coverage",
+   "label": "Coverage",
+   "sub": "hosts with a package list · 0 components"
+  }
+ ],
+ "total": 8
+}

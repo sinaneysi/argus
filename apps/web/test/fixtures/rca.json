@@ -1,0 +1,226 @@
+{
+ "count": 11,
+ "facets": [
+  {
+   "any": true,
+   "key": "status",
+   "label": "MR state",
+   "options": [
+    {
+     "count": 1,
+     "label": "closed",
+     "value": "closed"
+    },
+    {
+     "count": 1,
+     "label": "local",
+     "value": "local"
+    },
+    {
+     "count": 5,
+     "label": "merged",
+     "value": "merged"
+    },
+    {
+     "count": 4,
+     "label": "open",
+     "value": "open"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "source",
+   "label": "Source",
+   "options": [
+    {
+     "count": 3,
+     "label": "alert-rca",
+     "value": "alert-rca"
+    },
+    {
+     "count": 8,
+     "label": "rca-deep",
+     "value": "rca-deep"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "list": {
+  "clearHref": "/rca",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 11,
+  "noun": "reports",
+  "page": 1,
+  "pages": 1,
+  "path": "/rca",
+  "q": "",
+  "sort": "newest",
+  "sorts": [
+   {
+    "label": "Newest",
+    "value": "newest"
+   },
+   {
+    "label": "Oldest",
+    "value": "oldest"
+   },
+   {
+    "label": "Cost",
+    "value": "cost"
+   }
+  ],
+  "to": 11,
+  "total": 11
+ },
+ "notMerged": 5,
+ "rows": [
+  {
+   "at": 1793739224,
+   "auto": false,
+   "cost": "$1.12 · 28 min",
+   "file": "2026-11-04-sms-otp-provider-timeouts.md",
+   "href": "/rca/view?id=51",
+   "incident": 141,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/151",
+   "source": "rca-deep",
+   "status": "open",
+   "statusKind": "warn",
+   "title": "Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts"
+  },
+  {
+   "at": 1793726624,
+   "auto": true,
+   "cost": "$0.71 · 15 min",
+   "file": "2026-11-03-shop-front-dead-upstream.md",
+   "href": "/rca/view?id=52",
+   "incident": 145,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/152",
+   "source": "rca-deep",
+   "status": "open",
+   "statusKind": "warn",
+   "title": "www.northwind.example 502 — one shop-front instance not listening"
+  },
+  {
+   "at": 1793716184,
+   "auto": false,
+   "cost": "$0.88 · 20 min",
+   "file": "2026-11-03-warehouse-migration-lock.md",
+   "href": "/rca/view?id=46",
+   "incident": 150,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/146",
+   "source": "rca-deep",
+   "status": "open",
+   "statusKind": "warn",
+   "title": "warehouse-api release deploy — stuck migration session"
+  },
+  {
+   "at": 1793681624,
+   "auto": false,
+   "cost": "$0.57 · 20 min",
+   "file": "2026-11-03-staging-coupon-null-min-order.md",
+   "href": "/rca/view?id=47",
+   "incident": 148,
+   "mr": "",
+   "source": "rca-deep",
+   "status": "closed",
+   "statusKind": "fail",
+   "title": "Staging coupon 500 — null minimum order"
+  },
+  {
+   "at": 1793668664,
+   "auto": false,
+   "cost": "$0.18 · 20 min",
+   "file": "2026-11-03-runner-disk-images.md",
+   "href": "/rca/view?id=45",
+   "incident": 149,
+   "mr": "",
+   "source": "alert-rca",
+   "status": "local",
+   "statusKind": "warn",
+   "title": "dev-runner-01 disk at 88 % — no image prune"
+  },
+  {
+   "at": 1793608184,
+   "auto": false,
+   "cost": "$0.34 · 19 min",
+   "file": "2026-11-02-loki-disk-debug-logs.md",
+   "href": "/rca/view?id=44",
+   "incident": 146,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/144",
+   "source": "alert-rca",
+   "status": "open",
+   "statusKind": "warn",
+   "title": "prod-mon-01 loki disk growth — debug logs from checkout"
+  },
+  {
+   "at": 1793521784,
+   "auto": false,
+   "cost": "$0.66 · 13 min",
+   "file": "2026-11-01-search-latency-reindex.md",
+   "href": "/rca/view?id=49",
+   "incident": 147,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/149",
+   "source": "rca-deep",
+   "status": "merged",
+   "statusKind": "ok",
+   "title": "Search latency on api.northwind.example during the catalogue re-index"
+  },
+  {
+   "at": 1793383544,
+   "auto": false,
+   "cost": "$0.92 · 18 min",
+   "file": "2026-10-30-replication-lag-vacuum.md",
+   "href": "/rca/view?id=40",
+   "incident": 131,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/140",
+   "source": "rca-deep",
+   "status": "merged",
+   "statusKind": "ok",
+   "title": "prod-db-02 replication lag — vacuum on orders blocked the replica"
+  },
+  {
+   "at": 1792994744,
+   "auto": false,
+   "cost": "$0.66 · 18 min",
+   "file": "2026-10-26-admin-login-sessions-index.md",
+   "href": "/rca/view?id=41",
+   "incident": 132,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/141",
+   "source": "rca-deep",
+   "status": "merged",
+   "statusKind": "ok",
+   "title": "admin login slow — sequential scan on sessions"
+  },
+  {
+   "at": 1792726904,
+   "auto": false,
+   "cost": "$1.04 · 19 min",
+   "file": "2026-10-23-orders-queue-consumer-deadlock.md",
+   "href": "/rca/view?id=42",
+   "incident": 133,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/142",
+   "source": "rca-deep",
+   "status": "merged",
+   "statusKind": "ok",
+   "title": "Orders queue backlog — notification consumer deadlock"
+  },
+  {
+   "at": 1792476344,
+   "auto": false,
+   "cost": "$0.21 · 19 min",
+   "file": "2026-10-20-staging-wildcard-expired.md",
+   "href": "/rca/view?id=43",
+   "incident": 134,
+   "mr": "https://gitlab.northwind.example/ops/argus/-/merge_requests/143",
+   "source": "alert-rca",
+   "status": "merged",
+   "statusKind": "ok",
+   "title": "Staging wildcard certificate expired — hook not in the check list"
+  }
+ ]
+}

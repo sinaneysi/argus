@@ -1,0 +1,110 @@
+{
+ "facets": [
+  {
+   "any": false,
+   "key": "state",
+   "label": "State",
+   "options": [
+    {
+     "count": 0,
+     "label": "Firing",
+     "value": "firing"
+    },
+    {
+     "count": 0,
+     "label": "Pending",
+     "value": "pending"
+    },
+    {
+     "count": 0,
+     "label": "All",
+     "value": "all"
+    }
+   ],
+   "value": "firing"
+  },
+  {
+   "any": true,
+   "key": "sev",
+   "label": "Severity",
+   "options": [],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "dc",
+   "label": "Datacenter",
+   "options": [],
+   "value": ""
+  }
+ ],
+ "fetchedAt": 0,
+ "firing": 0,
+ "host": "argus-01",
+ "list": {
+  "clearHref": "/alerts",
+  "filtered": false,
+  "from": 0,
+  "hidden": {},
+  "matched": 0,
+  "noun": "firing alerts",
+  "page": 1,
+  "pages": 1,
+  "path": "/alerts",
+  "q": "",
+  "sort": "severity",
+  "sorts": [
+   {
+    "label": "Severity",
+    "value": "severity"
+   },
+   {
+    "label": "Newest",
+    "value": "newest"
+   },
+   {
+    "label": "Longest active",
+    "value": "oldest"
+   }
+  ],
+  "to": 0,
+  "total": 0
+ },
+ "loaded": false,
+ "pending": 0,
+ "rows": [],
+ "sites": "East, West",
+ "tiles": [
+  {
+   "figure": "0",
+   "href": "/alerts?sev=critical",
+   "label": "Critical",
+   "sub": "none firing"
+  },
+  {
+   "figure": "0",
+   "href": "/alerts?sev=page",
+   "label": "Page",
+   "sub": "none firing"
+  },
+  {
+   "figure": "0",
+   "href": "/alerts?sev=error",
+   "label": "Error",
+   "sub": "none firing"
+  },
+  {
+   "figure": "0",
+   "href": "/alerts?sev=warning",
+   "label": "Warning",
+   "sub": "none firing"
+  },
+  {
+   "figure": "0",
+   "href": "/alerts?sev=info",
+   "label": "Info",
+   "sub": "none firing"
+  }
+ ],
+ "warn": ""
+}

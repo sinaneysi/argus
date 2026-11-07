@@ -1,0 +1,618 @@
+{
+"cost": "$33.94",
+"day": 70,
+"dayBad": 19,
+"dayTop": 9.6271,
+"dayTopLabel": "$9.63",
+"days": [
+{
+"day": "2026-10-06",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-07",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-08",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-09",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-10",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-11",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-12",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-13",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-14",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-15",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-16",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-17",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-18",
+"label": "$0.00",
+"usd": 0
+},
+{
+"day": "2026-10-19",
+"label": "$0.10",
+"usd": 0.098
+},
+{
+"day": "2026-10-20",
+"label": "$0.21",
+"usd": 0.21
+},
+{
+"day": "2026-10-21",
+"label": "$1.25",
+"usd": 1.247
+},
+{
+"day": "2026-10-22",
+"label": "$1.58",
+"usd": 1.581
+},
+{
+"day": "2026-10-23",
+"label": "$2.29",
+"usd": 2.295
+},
+{
+"day": "2026-10-24",
+"label": "$1.45",
+"usd": 1.448
+},
+{
+"day": "2026-10-25",
+"label": "$1.48",
+"usd": 1.483
+},
+{
+"day": "2026-10-26",
+"label": "$2.12",
+"usd": 2.116
+},
+{
+"day": "2026-10-27",
+"label": "$1.06",
+"usd": 1.056
+},
+{
+"day": "2026-10-28",
+"label": "$1.42",
+"usd": 1.415
+},
+{
+"day": "2026-10-29",
+"label": "$1.17",
+"usd": 1.165
+},
+{
+"day": "2026-10-30",
+"label": "$2.55",
+"usd": 2.55
+},
+{
+"day": "2026-10-31",
+"label": "$1.68",
+"usd": 1.676
+},
+{
+"day": "2026-11-01",
+"label": "$2.54",
+"usd": 2.539
+},
+{
+"day": "2026-11-02",
+"label": "$3.43",
+"usd": 3.432
+},
+{
+"day": "2026-11-03",
+"label": "$9.63",
+"usd": 9.6271
+},
+{
+"day": "2026-11-04",
+"label": "$0.00",
+"usd": 0
+}
+],
+"facets": [
+{
+"key": "task",
+"label": "Task",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "chat-triage",
+"label": "chat-triage",
+"count": 99
+},
+{
+"value": "log-rca",
+"label": "log-rca",
+"count": 58
+},
+{
+"value": "incident",
+"label": "incident",
+"count": 15
+},
+{
+"value": "backup-check",
+"label": "backup-check",
+"count": 14
+},
+{
+"value": "cert-check",
+"label": "cert-check",
+"count": 14
+},
+{
+"value": "rca-deep",
+"label": "rca-deep",
+"count": 11
+},
+{
+"value": "rca-auto",
+"label": "rca-auto",
+"count": 3
+},
+{
+"value": "disk-explain",
+"label": "disk-explain",
+"count": 1
+},
+{
+"value": "vm-explain",
+"label": "vm-explain",
+"count": 1
+}
+]
+},
+{
+"key": "status",
+"label": "Status",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "OK",
+"label": "OK",
+"count": 183
+},
+{
+"value": "WARN",
+"label": "WARN",
+"count": 33
+}
+]
+}
+],
+"list": {
+"clearHref": "/runs#runs",
+"filtered": false,
+"from": 1,
+"hidden": {},
+"matched": 216,
+"next": "/runs?page=2#runs",
+"noun": "runs",
+"page": 1,
+"pages": 9,
+"path": "/runs",
+"q": "",
+"sort": "newest",
+"sorts": [
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "oldest",
+"label": "Oldest"
+},
+{
+"value": "cost",
+"label": "Cost"
+},
+{
+"value": "duration",
+"label": "Duration"
+}
+],
+"to": 25,
+"total": 216
+},
+"rows": [
+{
+"at": 1793749459,
+"cost": "$0.049",
+"denied": "0",
+"id": 1071,
+"seconds": "16",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 2 messages, no new problem.",
+"task": "chat-triage",
+"turns": "4"
+},
+{
+"at": 1793748499,
+"cost": "$0.310",
+"denied": "0",
+"id": 1194,
+"seconds": "180",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: 2 problems: sms-otp backlog draining on prod-pay-01/02; nginx 502 on www.northwind.example fr…",
+"task": "log-rca",
+"turns": "22"
+},
+{
+"at": 1793747659,
+"cost": "$0.033",
+"denied": "0",
+"id": 1072,
+"seconds": "18",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 1 message, a known incident.",
+"task": "chat-triage",
+"turns": "6"
+},
+{
+"at": 1793747299,
+"cost": "$0.020",
+"denied": "0",
+"id": 1167,
+"seconds": "12",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: nothing new to investigate deeply.",
+"task": "rca-auto",
+"turns": "2"
+},
+{
+"at": 1793745859,
+"cost": "$0.011",
+"denied": "0",
+"id": 1073,
+"seconds": "20",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 1 message, a known incident.",
+"task": "chat-triage",
+"turns": "5"
+},
+{
+"at": 1793744059,
+"cost": "$0.029",
+"denied": "0",
+"id": 1074,
+"seconds": "35",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 1 message, a known incident.",
+"task": "chat-triage",
+"turns": "6"
+},
+{
+"at": 1793742259,
+"cost": "$0.022",
+"denied": "0",
+"id": 1075,
+"seconds": "26",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: no new message in #qa.",
+"task": "chat-triage",
+"turns": "3"
+},
+{
+"at": 1793741899,
+"cost": "$0.201",
+"denied": "0",
+"id": 1015,
+"seconds": "144",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404).",
+"task": "log-rca",
+"turns": "25"
+},
+{
+"at": 1793741059,
+"cost": "$0.179",
+"denied": "0",
+"id": 1177,
+"seconds": "102",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: queue draining",
+"task": "incident",
+"turns": "11"
+},
+{
+"at": 1793740819,
+"cost": "$1.120",
+"denied": "0",
+"id": 1178,
+"seconds": "1680",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts",
+"task": "rca-deep",
+"turns": "46"
+},
+{
+"at": 1793740459,
+"cost": "$0.043",
+"denied": "0",
+"id": 1076,
+"seconds": "30",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 1 message, a known incident.",
+"task": "chat-triage",
+"turns": "4"
+},
+{
+"at": 1793739619,
+"cost": "$0.304",
+"denied": "0",
+"id": 1176,
+"seconds": "41",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog still growing",
+"task": "incident",
+"turns": "10"
+},
+{
+"at": 1793738659,
+"cost": "$0.027",
+"denied": "0",
+"id": 1077,
+"seconds": "32",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 2 messages, no new problem.",
+"task": "chat-triage",
+"turns": "6"
+},
+{
+"at": 1793738539,
+"cost": "$0.032",
+"denied": "0",
+"id": 1175,
+"seconds": "37",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog still growing",
+"task": "incident",
+"turns": "17"
+},
+{
+"at": 1793737099,
+"cost": "$0.089",
+"denied": "0",
+"id": 1174,
+"seconds": "187",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog still growing",
+"task": "incident",
+"turns": "15"
+},
+{
+"at": 1793736859,
+"cost": "$0.055",
+"denied": "0",
+"id": 1078,
+"seconds": "22",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 1 message, a known incident.",
+"task": "chat-triage",
+"turns": "5"
+},
+{
+"at": 1793735659,
+"cost": "$0.249",
+"denied": "0",
+"id": 1173,
+"seconds": "66",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog still growing",
+"task": "incident",
+"turns": "5"
+},
+{
+"at": 1793735059,
+"cost": "$0.016",
+"denied": "0",
+"id": 1079,
+"seconds": "17",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: 2 messages, no new problem.",
+"task": "chat-triage",
+"turns": "5"
+},
+{
+"at": 1793734579,
+"cost": "$0.373",
+"denied": "0",
+"id": 1180,
+"seconds": "135",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: prod-pay-01: memory pressure from the sms-otp backlog",
+"task": "vm-explain",
+"turns": "18"
+},
+{
+"at": 1793734219,
+"cost": "$0.162",
+"denied": "0",
+"id": 1172,
+"seconds": "235",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog still growing",
+"task": "incident",
+"turns": "14"
+},
+{
+"at": 1793733319,
+"cost": "$0.156",
+"denied": "0",
+"id": 1179,
+"seconds": "175",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: Payment failure rate 31 % on checkout (otp_timeout)",
+"task": "incident",
+"turns": "12"
+},
+{
+"at": 1793733259,
+"cost": "$0.012",
+"denied": "0",
+"id": 1080,
+"seconds": "14",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "OK: no new message in #qa.",
+"task": "chat-triage",
+"turns": "4"
+},
+{
+"at": 1793732779,
+"cost": "$0.139",
+"denied": "0",
+"id": 1171,
+"seconds": "228",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: QA: payment OTP code never arrives",
+"task": "chat-triage",
+"turns": "24"
+},
+{
+"at": 1793732239,
+"cost": "$0.300",
+"denied": "0",
+"id": 1170,
+"seconds": "74",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: sms-otp queue backlog: OTP SMS not delivered",
+"task": "incident",
+"turns": "13"
+},
+{
+"at": 1793731519,
+"cost": "$0.406",
+"denied": "0",
+"id": 1181,
+"seconds": "75",
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"summary": "WARN: Kuma: OTP delivery (synthetic) down",
+"task": "incident",
+"turns": "27"
+}
+]
+}

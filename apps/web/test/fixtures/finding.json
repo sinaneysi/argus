@@ -1,0 +1,106 @@
+{
+ "at": 1793731304,
+ "env": "release",
+ "fix": {
+  "action": {
+   "body": [
+    {
+     "text": " Argus never runs this. Copy the prompt above; production changes are run by a human, with the operator's approval per change. "
+    }
+   ],
+   "heading": ""
+  },
+  "checks": [],
+  "note": [
+   {
+    "text": "Production: the operator approves every option."
+   }
+  ],
+  "options": [
+   {
+    "kind": "permanent fix",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "memory stays flat; excess messages wait in RabbitMQ"
+     },
+     {
+      "label": "Effort",
+      "value": "30 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "sms-otp on prod-pay-01"
+     }
+    ],
+    "n": 1,
+    "recommended": true,
+    "title": "Bound the in-memory queue",
+    "what": "`SMS_QUEUE_MAX=2000` and `SMS_QUEUE_SPILL=amqp://prod-queue-01/sms` in sms-otp.env"
+   }
+  ],
+  "prod": true,
+  "prompt": "PRODUCTION CHANGE — needs the operator's explicit approval before any step.\n# Bound the in-memory queue\n## Goal\nsms-otp RSS stays under 1 GB under backlog.\n## Environment and targets\n- Environment: production\n- Hosts: prod-pay-01 (10.20.30.41)\n## Change, step by step\n### Step 1\n- Backup: copy the env file\n- Change: `SMS_QUEUE_MAX=2000` and `SMS_QUEUE_SPILL=amqp://prod-queue-01/sms` in sms-otp.env\n- Check: RSS \u003c 1 GB\n- Rollback: restore the env file\n## Verify\nNo OOM kill in 24 h.\n",
+  "promptHref": "/rca/prompt.md?run=1180\u0026idx=0"
+ },
+ "lazy": {
+  "rows": [
+   {
+    "label": "What broke",
+    "value": "prod-pay-01 at 94 % memory; sms-otp OOM-killed 4 times in an hour."
+   },
+   {
+    "label": "Why",
+    "value": "The sms-otp queue keeps 11,800 message bodies in memory (proven)."
+   },
+   {
+    "label": "Impact",
+    "value": "Each OOM kill drops in-flight OTPs; payment-gateway on the same host slows down."
+   },
+   {
+    "label": "Fix",
+    "value": "Cap the queue at 2,000 and spill to RabbitMQ (Option 1) — the operator approves."
+   }
+  ],
+  "source": "From the report.",
+  "status": "open",
+  "statusKind": "fail"
+ },
+ "md": {
+  "md": "## Evidence\n- cgroup `memory.events`: oom_kill 4.\n- `sms_otp_queue_depth` 11,800 at the peak.\n\n## Root cause\nUnbounded in-memory queue during the provider slowdown."
+ },
+ "problem": {
+  "back": "/incidents/problem?run=1180\u0026idx=0#problem",
+  "banner": [
+   {
+    "text": " Part of "
+   },
+   {
+    "href": "/problems/view?id=7",
+    "text": "P-7 SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+   },
+   {
+    "text": " · known error · 4 linked (through incident #143) "
+   }
+  ],
+  "banners": [],
+  "create": null,
+  "link": null,
+  "ref": "vm_report:1",
+  "suggestions": []
+ },
+ "prod": true,
+ "refresh": false,
+ "sevKind": "fail",
+ "severity": "high",
+ "sources": [
+  "vm-pulse: memory critical 15 min"
+ ],
+ "summary": "Memory 94 %, sms-otp holds 3.1 GB; 4 OOM kills.",
+ "suspicious": false,
+ "title": "prod-pay-01: memory pressure from the sms-otp backlog"
+}

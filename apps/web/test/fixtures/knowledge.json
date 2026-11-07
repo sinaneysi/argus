@@ -1,0 +1,11 @@
+{
+"admin": true,
+"count": 4,
+"md": "## coupon-service\n\n### Restart one staging node at a time\n\n_pre-release, procedure_ · lesson 1\n\nStaging runs a single instance per service behind the edge; restart one node, wait for the edge to mark it healthy, then the next.\n\n## loki\n\n### Check the Loki retention before raising log levels\n\n_release, trap_ · lesson 2\n\nA debug log level on checkout fills /var/lib/loki on prod-mon-01 in about two days; change the retention first.\n\n## mongo\n\n### Grant the backup role after rotating the Mongo password\n\n_release, trap_ · lesson 12\n\nThe rotation drops the role on prod-mongo-02.\n\n## sms-otp\n\n### SMS provider failover is a feature flag, not a deploy\n\n_release, fact_ · lesson 3\n\nsms-otp switches providers with the SMS_PRIMARY flag; no redeploy is needed and the change is audited.\n\n",
+"services": [
+"coupon-service",
+"loki",
+"mongo",
+"sms-otp"
+]
+}

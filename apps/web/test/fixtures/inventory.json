@@ -1,0 +1,1320 @@
+{
+"csv": "/inventory.csv",
+"facets": [
+{
+"key": "view",
+"label": "Show",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "problems",
+"label": "Needs a look",
+"count": 7
+},
+{
+"value": "critical",
+"label": "Critical now",
+"count": 2
+},
+{
+"value": "notready",
+"label": "Services not ready",
+"count": 1
+},
+{
+"value": "dead",
+"label": "Dead upstreams",
+"count": 1
+},
+{
+"value": "apps",
+"label": "Production app hosts",
+"count": 17
+}
+]
+},
+{
+"key": "env",
+"label": "Environment",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "release",
+"label": "release",
+"count": 32
+},
+{
+"value": "pre-release",
+"label": "pre-release",
+"count": 4
+},
+{
+"value": "develop",
+"label": "develop",
+"count": 5
+}
+]
+},
+{
+"key": "dc",
+"label": "Datacenter",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "east",
+"label": "east",
+"count": 29
+},
+{
+"value": "west",
+"label": "west",
+"count": 12
+}
+]
+},
+{
+"key": "flag",
+"label": "Flags",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "not-monitored",
+"label": "Not in Prometheus",
+"count": 1
+},
+{
+"value": "os-eol",
+"label": "OS end of life",
+"count": 1
+},
+{
+"value": "disk-85",
+"label": "Disk ≥ 85 % used",
+"count": 2
+},
+{
+"value": "no-ntp",
+"label": "Clock not synced",
+"count": 1
+},
+{
+"value": "ssh-skipped-db",
+"label": "DB host, no login",
+"count": 4
+}
+]
+}
+],
+"factsAt": 1793748199,
+"list": {
+"clearHref": "/inventory",
+"filtered": false,
+"from": 1,
+"hidden": {},
+"matched": 41,
+"noun": "VMs",
+"page": 1,
+"pages": 1,
+"path": "/inventory",
+"q": "",
+"sort": "worst",
+"sorts": [
+{
+"value": "worst",
+"label": "Worst first"
+},
+{
+"value": "name",
+"label": "Name"
+},
+{
+"value": "env",
+"label": "Environment"
+},
+{
+"value": "vcpu",
+"label": "vCPU"
+},
+{
+"value": "ram",
+"label": "RAM"
+},
+{
+"value": "used",
+"label": "Disk used"
+},
+{
+"value": "seen",
+"label": "Last seen"
+}
+],
+"to": 41,
+"total": 41
+},
+"needs": 7,
+"pressure": "pressure re-measured every 5 min",
+"refresh": false,
+"rows": [
+{
+"analysis": {
+"at": 1793734579,
+"href": "/incidents/problem?run=1180&idx=0",
+"title": "prod-pay-01: memory pressure from the sms-otp backlog",
+"who": "auto"
+},
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "Memory",
+"kind": "fail",
+"title": "memory used 94 % (critical at 95 %), sms-otp worker pool holds 3.1 GB",
+"word": "critical"
+},
+"hit": "",
+"id": 7,
+"ip": "10.20.30.41",
+"ipMore": 0,
+"name": "prod-pay-01",
+"ram": "8 GB",
+"services": "2 of 3 ready 1 restarting",
+"servicesFail": false,
+"uptime": "99 d",
+"used": "55 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "500 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "Disk",
+"kind": "fail",
+"title": "/var/lib/loki 93 % used, full in 4.6 days",
+"word": "critical"
+},
+"hit": "",
+"id": 24,
+"ip": "10.20.30.101",
+"ipMore": 0,
+"name": "prod-mon-01",
+"ram": "16 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "100 d",
+"used": "93 %",
+"vcpu": "4"
+},
+{
+"analysis": {
+"at": 1793728099,
+"href": "/incidents/problem?run=1182&idx=0",
+"title": "502 from nginx upstream shop_front: prod-shop-02:3001 refuses connections",
+"who": "auto"
+},
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "east",
+"dead": 1,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 4,
+"ip": "10.20.30.22",
+"ipMore": 0,
+"name": "prod-shop-02",
+"ram": "16 GB",
+"services": "2 of 3 ready 1 degraded",
+"servicesFail": false,
+"uptime": "68 d",
+"used": "50 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "Memory",
+"kind": "warn",
+"title": "memory used 88 % (pressure at 85 %)",
+"word": "pressure"
+},
+"hit": "",
+"id": 8,
+"ip": "10.20.30.42",
+"ipMore": 0,
+"name": "prod-pay-02",
+"ram": "8 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "60 d",
+"used": "49 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "200 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "Memory",
+"kind": "warn",
+"title": "opensearch heap 87 % of RAM",
+"word": "pressure"
+},
+"hit": "",
+"id": 12,
+"ip": "10.20.30.61",
+"ipMore": 0,
+"name": "prod-search-01",
+"ram": "32 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "116 d",
+"used": "33 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "200 GB",
+"env": "develop",
+"flags": [],
+"health": {
+"detail": "Disk",
+"kind": "warn",
+"title": "/ 88 % used (docker images)",
+"word": "pressure"
+},
+"hit": "",
+"id": 41,
+"ip": "10.30.10.31",
+"ipMore": 0,
+"name": "dev-runner-01",
+"ram": "16 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "77 d",
+"used": "88 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "120 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 9,
+"ip": "10.20.30.51",
+"ipMore": 0,
+"name": "prod-wh-01",
+"ram": "8 GB",
+"services": "2 of 3 ready 1 stopped",
+"servicesFail": false,
+"uptime": "51 d",
+"used": "51 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 21,
+"ip": "10.20.30.92",
+"ipMore": 0,
+"name": "prod-admin-01",
+"ram": "8 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "85 d",
+"used": "64 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 5,
+"ip": "10.20.30.31",
+"ipMore": 0,
+"name": "prod-api-01",
+"ram": "16 GB",
+"services": "4 of 4 ready",
+"servicesFail": false,
+"uptime": "74 d",
+"used": "57 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 6,
+"ip": "10.20.30.32",
+"ipMore": 0,
+"name": "prod-api-02",
+"ram": "16 GB",
+"services": "4 of 4 ready",
+"servicesFail": false,
+"uptime": "57 d",
+"used": "48 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "west",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 28,
+"ip": "10.30.30.31",
+"ipMore": 0,
+"name": "prod-api-03",
+"ram": "16 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "73 d",
+"used": "39 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "4,000 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 25,
+"ip": "10.20.30.110",
+"ipMore": 0,
+"name": "prod-backup-01",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "48 d",
+"used": "50 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "4,000 GB",
+"env": "release",
+"flags": [
+{
+"value": "ssh-ro access, not in Prometheus",
+"label": "Not in Prometheus"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 32,
+"ip": "10.30.30.110",
+"ipMore": 0,
+"name": "prod-backup-02",
+"ram": "8 GB",
+"services": "no ssh-ro",
+"servicesFail": false,
+"uptime": "80 d",
+"used": "61 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "2",
+"dc": "east",
+"dead": 0,
+"disk": "1,000 GB",
+"env": "release",
+"flags": [
+{
+"value": "DB host: no login (operator rule)",
+"label": "DB host, no login"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 14,
+"ip": "10.20.30.71",
+"ipMore": 0,
+"name": "prod-db-01",
+"ram": "64 GB",
+"services": "no ssh-ro",
+"servicesFail": false,
+"uptime": "22 d",
+"used": "54 %",
+"vcpu": "16"
+},
+{
+"analysis": null,
+"cve": "2",
+"dc": "east",
+"dead": 0,
+"disk": "1,000 GB",
+"env": "release",
+"flags": [
+{
+"value": "DB host: no login (operator rule)",
+"label": "DB host, no login"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 15,
+"ip": "10.20.30.72",
+"ipMore": 0,
+"name": "prod-db-02",
+"ram": "64 GB",
+"services": "no ssh-ro",
+"servicesFail": false,
+"uptime": "63 d",
+"used": "43 %",
+"vcpu": "16"
+},
+{
+"analysis": null,
+"cve": "2",
+"dc": "west",
+"dead": 0,
+"disk": "1,000 GB",
+"env": "release",
+"flags": [
+{
+"value": "DB host: no login (operator rule)",
+"label": "DB host, no login"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 29,
+"ip": "10.30.30.71",
+"ipMore": 0,
+"name": "prod-db-03",
+"ram": "64 GB",
+"services": "no ssh-ro",
+"servicesFail": false,
+"uptime": "66 d",
+"used": "36 %",
+"vcpu": "16"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 1,
+"ip": "10.20.30.11",
+"ipMore": 0,
+"name": "prod-edge-01",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "62 d",
+"used": "59 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 2,
+"ip": "10.20.30.12",
+"ipMore": 0,
+"name": "prod-edge-02",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "79 d",
+"used": "56 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "west",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 26,
+"ip": "10.30.30.11",
+"ipMore": 0,
+"name": "prod-edge-03",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "116 d",
+"used": "26 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "120 GB",
+"env": "release",
+"flags": [
+{
+"value": "OS end of life",
+"label": "OS end of life"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 22,
+"ip": "10.20.30.95",
+"ipMore": 0,
+"name": "prod-matomo-01",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "54 d",
+"used": "47 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "400 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 20,
+"ip": "10.20.30.91",
+"ipMore": 0,
+"name": "prod-media-01",
+"ram": "8 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "79 d",
+"used": "34 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 23,
+"ip": "10.20.30.96",
+"ipMore": 0,
+"name": "prod-misc-01",
+"ram": "8 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "86 d",
+"used": "43 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "500 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 31,
+"ip": "10.30.30.101",
+"ipMore": 0,
+"name": "prod-mon-02",
+"ram": "16 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "60 d",
+"used": "54 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "east",
+"dead": 0,
+"disk": "500 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 16,
+"ip": "10.20.30.81",
+"ipMore": 0,
+"name": "prod-mongo-01",
+"ram": "32 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "58 d",
+"used": "68 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "east",
+"dead": 0,
+"disk": "500 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 17,
+"ip": "10.20.30.82",
+"ipMore": 0,
+"name": "prod-mongo-02",
+"ram": "32 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "54 d",
+"used": "62 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "west",
+"dead": 0,
+"disk": "500 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 30,
+"ip": "10.30.30.81",
+"ipMore": 0,
+"name": "prod-mongo-03",
+"ram": "32 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "39 d",
+"used": "67 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 10,
+"ip": "10.20.30.52",
+"ipMore": 0,
+"name": "prod-order-01",
+"ram": "16 GB",
+"services": "4 of 4 ready",
+"servicesFail": false,
+"uptime": "117 d",
+"used": "42 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 19,
+"ip": "10.20.30.86",
+"ipMore": 0,
+"name": "prod-queue-01",
+"ram": "8 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "44 d",
+"used": "46 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 18,
+"ip": "10.20.30.85",
+"ipMore": 0,
+"name": "prod-redis-01",
+"ram": "16 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "68 d",
+"used": "34 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "200 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 13,
+"ip": "10.20.30.62",
+"ipMore": 0,
+"name": "prod-search-02",
+"ram": "32 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "109 d",
+"used": "39 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 3,
+"ip": "10.20.30.21",
+"ipMore": 0,
+"name": "prod-shop-01",
+"ram": "16 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "83 d",
+"used": "30 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 4 open · 1 KEV",
+"dc": "west",
+"dead": 0,
+"disk": "80 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 27,
+"ip": "10.30.30.21",
+"ipMore": 0,
+"name": "prod-shop-03",
+"ram": "16 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "66 d",
+"used": "54 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P1 3 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 11,
+"ip": "10.20.30.53",
+"ipMore": 0,
+"name": "prod-user-01",
+"ram": "8 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "95 d",
+"used": "23 %",
+"vcpu": "4"
+},
+{
+"analysis": null,
+"cve": "1 P2 1 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "120 GB",
+"env": "pre-release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 34,
+"ip": "10.20.20.21",
+"ipMore": 0,
+"name": "stg-app-01",
+"ram": "16 GB",
+"services": "5 of 5 ready",
+"servicesFail": false,
+"uptime": "61 d",
+"used": "57 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P2 1 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "120 GB",
+"env": "pre-release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 35,
+"ip": "10.20.20.22",
+"ipMore": 0,
+"name": "stg-app-02",
+"ram": "16 GB",
+"services": "4 of 4 ready",
+"servicesFail": false,
+"uptime": "67 d",
+"used": "60 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P2 1 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "400 GB",
+"env": "pre-release",
+"flags": [
+{
+"value": "DB host: no login (operator rule)",
+"label": "DB host, no login"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 36,
+"ip": "10.20.20.71",
+"ipMore": 0,
+"name": "stg-db-01",
+"ram": "32 GB",
+"services": "no ssh-ro",
+"servicesFail": false,
+"uptime": "74 d",
+"used": "48 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "1 P2 1 open · 1 KEV",
+"dc": "east",
+"dead": 0,
+"disk": "40 GB",
+"env": "pre-release",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 33,
+"ip": "10.20.20.11",
+"ipMore": 0,
+"name": "stg-edge-01",
+"ram": "4 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "67 d",
+"used": "57 %",
+"vcpu": "2"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "400 GB",
+"env": "develop",
+"flags": [
+{
+"value": "clock not NTP-synchronized",
+"label": "Clock not synced"
+}
+],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 39,
+"ip": "10.30.10.71",
+"ipMore": 0,
+"name": "dev-db-01",
+"ram": "32 GB",
+"services": "3 of 3 ready",
+"servicesFail": false,
+"uptime": "45 d",
+"used": "61 %",
+"vcpu": "8"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "40 GB",
+"env": "develop",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 40,
+"ip": "10.30.10.11",
+"ipMore": 0,
+"name": "dev-edge-01",
+"ram": "4 GB",
+"services": "1 of 1 ready",
+"servicesFail": false,
+"uptime": "17 d",
+"used": "36 %",
+"vcpu": "2"
+},
+{
+"analysis": null,
+"cve": "1",
+"dc": "west",
+"dead": 0,
+"disk": "400 GB",
+"env": "develop",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 37,
+"ip": "10.30.10.21",
+"ipMore": 0,
+"name": "dev-swarm-01",
+"ram": "64 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "75 d",
+"used": "46 %",
+"vcpu": "16"
+},
+{
+"analysis": null,
+"cve": "-",
+"dc": "west",
+"dead": 0,
+"disk": "400 GB",
+"env": "develop",
+"flags": [],
+"health": {
+"detail": "",
+"kind": "ok",
+"title": "",
+"word": "ok"
+},
+"hit": "",
+"id": 38,
+"ip": "10.30.10.22",
+"ipMore": 0,
+"name": "dev-swarm-02",
+"ram": "64 GB",
+"services": "2 of 2 ready",
+"servicesFail": false,
+"uptime": "23 d",
+"used": "40 %",
+"vcpu": "16"
+}
+],
+"scan": {
+"back": "/inventory",
+"busy": false,
+"label": "Scan now",
+"meta": "Last scan 38m ago",
+"overdue": "",
+"tasks": "inventory",
+"title": "Run VM inventory again now"
+},
+"servicesAt": 1793749459,
+"tiles": [
+{
+"label": "VMs",
+"figure": "41",
+"sub": "17 production app hosts",
+"href": "/inventory"
+},
+{
+"label": "Critical now",
+"figure": "2",
+"sub": "a resource at its critical level",
+"href": "/inventory?view=critical",
+"hot": true
+},
+{
+"label": "Services not ready",
+"figure": "1",
+"sub": "down or restarting",
+"href": "/inventory?view=notready",
+"hot": true
+},
+{
+"label": "Dead upstreams",
+"figure": "1",
+"sub": "on 1 VMs: nginx routes there, nothing listens",
+"href": "/inventory?view=dead",
+"hot": true
+},
+{
+"label": "Analyses in 24 h",
+"figure": "2",
+"sub": "2 automatic",
+"href": "/runs"
+}
+],
+"total": 41
+}

@@ -1,0 +1,26 @@
+# argus secrets apply-kube (root): validates each kubeconfig (inline data only), keeps the chosen context, checks it
+# with kubectl as nobody (auth can-i), backs up the previous one and stores ARGUS_KUBE_DIR/<name>.kubeconfig. Only a
+# read-only login is enabled for the agent. The kubeconfig never reaches the journal. Started by argus-kube.path.
+# The settings-in/out and auth paths below are the host side of the web app's mounts; adjust them to your install.
+[Unit]
+Description=Argus Settings -> Kubernetes: store and check kubeconfigs
+Documentation=https://github.com/sinaneysi/argus/blob/main/internal/app/helpdocs/settings.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus secrets apply-kube
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+Environment=ARGUS_AUTH_DB=/var/lib/argus/auth/auth.db
+TimeoutStartSec=600
+UMask=0077
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/argus /var/lib/argus /usr/local/lib/argus
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes

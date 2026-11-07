@@ -1,0 +1,1848 @@
+{
+ "attention": [
+  {
+   "author": "alex.doe",
+   "detail": "The variable is visible in job logs of unprotected branches.",
+   "env": "release",
+   "firstSeen": 1793658771,
+   "id": 706,
+   "job": "",
+   "kind": "fail",
+   "klass": "security / config",
+   "lastSeen": 1793665971,
+   "mr": "",
+   "occurrences": 1,
+   "project": "payments/payment-gateway",
+   "projectId": 316,
+   "proposed": "Mark PAYMENT_API_KEY masked and protected; rotate the key.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "critical",
+   "status": "open",
+   "task": {
+    "href": "/board/task?id=12",
+    "text": "OPS-205"
+   },
+   "title": "payment-gateway: PAYMENT_API_KEY is not masked and not protected"
+  },
+  {
+   "author": "drew.foe",
+   "detail": "deploy_production: `alembic upgrade head` waited 300 s for the advisory lock held by a stuck migration from 10-22.",
+   "env": "release",
+   "firstSeen": 1793712771,
+   "id": 701,
+   "job": "deploy_production",
+   "kind": "fail",
+   "klass": "lock",
+   "lastSeen": 1793719971,
+   "mr": "",
+   "occurrences": 1,
+   "project": "warehouse/warehouse-api",
+   "projectId": 328,
+   "proposed": "Ask the operator to end the stuck migration session (pid 48121) on prod-db-01, then retry deploy_production.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/task?id=11",
+    "text": "OPS-208"
+   },
+   "title": "Release deploy of warehouse-api failed: migration lock held"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "payments release job cannot pull the builder image.",
+   "env": "release",
+   "firstSeen": 1793705571,
+   "id": 712,
+   "job": "build",
+   "kind": "fail",
+   "klass": "registry",
+   "lastSeen": 1793712771,
+   "mr": "",
+   "occurrences": 1,
+   "project": "payments/payment-gateway",
+   "projectId": 316,
+   "proposed": "Pin the builder image by digest (proposal 718).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=712",
+    "text": "Create task"
+   },
+   "title": "payments release job cannot pull the builder image"
+  },
+  {
+   "author": "jamie.poe",
+   "detail": "checkout deploy: /health 503 on prod-api-02.",
+   "env": "release",
+   "firstSeen": 1793691171,
+   "id": 714,
+   "job": "deploy_release",
+   "kind": "fail",
+   "klass": "health check",
+   "lastSeen": 1793698371,
+   "mr": "",
+   "occurrences": 3,
+   "project": "shop/checkout",
+   "projectId": 306,
+   "proposed": "Check the env file of prod-api-02, then retry the job.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=714",
+    "text": "Create task"
+   },
+   "title": "checkout deploy: /health 503 on prod-api-02"
+  },
+  {
+   "author": "morgan.koe",
+   "detail": "media: registry quota exceeded on push.",
+   "env": "release",
+   "firstSeen": 1793658771,
+   "id": 734,
+   "job": "build",
+   "kind": "warn",
+   "klass": "registry",
+   "lastSeen": 1793665971,
+   "mr": "",
+   "occurrences": 3,
+   "project": "media/image-resizer",
+   "projectId": 311,
+   "proposed": "Delete old media image tags (keep 20).",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=734",
+    "text": "Create task"
+   },
+   "title": "media: registry quota exceeded on push"
+  },
+  {
+   "author": "drew.foe",
+   "detail": "loyalty deploy: systemd unit failed to restart.",
+   "env": "release",
+   "firstSeen": 1793622771,
+   "id": 719,
+   "job": "deploy_release",
+   "kind": "warn",
+   "klass": "deploy step",
+   "lastSeen": 1793629971,
+   "mr": "",
+   "occurrences": 4,
+   "project": "users/loyalty",
+   "projectId": 313,
+   "proposed": "Read the unit journal on prod-app-04; the env file is missing a key.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=719",
+    "text": "Create task"
+   },
+   "title": "loyalty deploy: systemd unit failed to restart"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "notifications: SMTP_HOST empty on release.",
+   "env": "release",
+   "firstSeen": 1793601171,
+   "id": 720,
+   "job": "build",
+   "kind": "warn",
+   "klass": "variable",
+   "lastSeen": 1793608371,
+   "mr": "",
+   "occurrences": 1,
+   "project": "orders/notification",
+   "projectId": 314,
+   "proposed": "Set SMTP_HOST for the release scope.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=720",
+    "text": "Create task"
+   },
+   "title": "notifications: SMTP_HOST empty on release"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "waiting_for_resource on resource group deploy-pre-release, held by pipeline 88190 (shop/cart) which waits at manual.",
+   "env": "pre-release",
+   "firstSeen": 1793745051,
+   "id": 704,
+   "job": "",
+   "kind": "warn",
+   "klass": "lock",
+   "lastSeen": 1793752251,
+   "mr": "",
+   "occurrences": 4,
+   "project": "users/loyalty",
+   "projectId": 313,
+   "proposed": "Cancel the older pipeline 88190 or play its manual job.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=704",
+    "text": "Create task"
+   },
+   "title": "loyalty pre-release pipeline waits 24 min for the deploy lock"
+  }
+ ],
+ "attentionTotal": 26,
+ "banners": [
+  {
+   "kind": "fail",
+   "text": "CI/CD data has not loaded: the watcher has written none yet. Failures, stuck pipelines and audits appear here after its first run (every 5 minutes). If this stays, check that argus-cicd-watch.timer is installed on argus-01."
+  }
+ ],
+ "engine": "example/deployment",
+ "envs": {
+  "cards": [
+   {
+    "bar": [
+     {
+      "state": "success",
+      "w": 93.33333333333333,
+      "x": 0
+     },
+     {
+      "state": "failed",
+      "w": 3.3333333333333335,
+      "x": 93.33333333333333
+     },
+     {
+      "state": "canceled",
+      "w": 3.3333333333333335,
+      "x": 96.66666666666666
+     }
+    ],
+    "barLabel": "28 success, 1 failed, 1 canceled or skipped",
+    "branches": 30,
+    "env": "develop",
+    "href": "/cicd?env=develop\u0026state=success#matrix",
+    "rows": [
+     {
+      "count": 1,
+      "hot": false,
+      "href": "/cicd?env=develop\u0026state=failed#matrix",
+      "label": "Failed",
+      "note": "",
+      "state": "failed"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=develop\u0026state=waiting#matrix",
+      "label": "Waiting",
+      "note": "",
+      "state": "waiting"
+     },
+     {
+      "count": 1,
+      "hot": false,
+      "href": "/cicd?env=develop\u0026state=canceled#matrix",
+      "label": "Canceled or skipped",
+      "note": "",
+      "state": "canceled"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=develop\u0026state=nopipeline#matrix",
+      "label": "No pipeline in 30 d",
+      "note": "",
+      "state": "nopipeline"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=develop\u0026state=nobranch#matrix",
+      "label": "No develop branch",
+      "note": "",
+      "state": "nobranch"
+     }
+    ],
+    "success": 28
+   },
+   {
+    "bar": [
+     {
+      "state": "success",
+      "w": 86.66666666666667,
+      "x": 0
+     },
+     {
+      "state": "failed",
+      "w": 3.3333333333333335,
+      "x": 86.66666666666667
+     },
+     {
+      "state": "waiting",
+      "w": 3.3333333333333335,
+      "x": 90
+     },
+     {
+      "state": "nobranch",
+      "w": 6.666666666666667,
+      "x": 93.33333333333333
+     }
+    ],
+    "barLabel": "26 success, 1 failed, 1 waiting, 2 no branch",
+    "branches": 28,
+    "env": "pre-release",
+    "href": "/cicd?env=pre-release\u0026state=success#matrix",
+    "rows": [
+     {
+      "count": 1,
+      "hot": true,
+      "href": "/cicd?env=pre-release\u0026state=failed#matrix",
+      "label": "Failed",
+      "note": "",
+      "state": "failed"
+     },
+     {
+      "count": 1,
+      "hot": false,
+      "href": "/cicd?env=pre-release\u0026state=waiting#matrix",
+      "label": "Waiting",
+      "note": "",
+      "state": "waiting"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=pre-release\u0026state=canceled#matrix",
+      "label": "Canceled or skipped",
+      "note": "",
+      "state": "canceled"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=pre-release\u0026state=nopipeline#matrix",
+      "label": "No pipeline in 30 d",
+      "note": "",
+      "state": "nopipeline"
+     },
+     {
+      "count": 2,
+      "hot": false,
+      "href": "/cicd?env=pre-release\u0026state=nobranch#matrix",
+      "label": "No pre-release branch",
+      "note": "",
+      "state": "nobranch"
+     }
+    ],
+    "success": 26
+   },
+   {
+    "bar": [
+     {
+      "state": "success",
+      "w": 90,
+      "x": 0
+     },
+     {
+      "state": "failed",
+      "w": 3.3333333333333335,
+      "x": 90
+     },
+     {
+      "state": "waiting",
+      "w": 6.666666666666667,
+      "x": 93.33333333333333
+     }
+    ],
+    "barLabel": "27 success, 1 failed, 2 waiting",
+    "branches": 30,
+    "env": "release",
+    "href": "/cicd?env=release\u0026state=success#matrix",
+    "rows": [
+     {
+      "count": 1,
+      "hot": true,
+      "href": "/cicd?env=release\u0026state=failed#matrix",
+      "label": "Failed",
+      "note": "",
+      "state": "failed"
+     },
+     {
+      "count": 2,
+      "hot": false,
+      "href": "/cicd?env=release\u0026state=waiting#matrix",
+      "label": "Waiting for manual deploy",
+      "note": "",
+      "state": "waiting"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=release\u0026state=canceled#matrix",
+      "label": "Canceled or skipped",
+      "note": "",
+      "state": "canceled"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=release\u0026state=nopipeline#matrix",
+      "label": "No pipeline in 30 d",
+      "note": "",
+      "state": "nopipeline"
+     },
+     {
+      "count": 0,
+      "hot": false,
+      "href": "/cicd?env=release\u0026state=nobranch#matrix",
+      "label": "No release branch",
+      "note": "",
+      "state": "nobranch"
+     }
+    ],
+    "success": 27
+   }
+  ],
+  "count": 30,
+  "days": 30,
+  "engine": "example/deployment",
+  "kind": "app",
+  "noun": "repos",
+  "since": "2026-10-05"
+ },
+ "facets": [
+  {
+   "any": false,
+   "key": "view",
+   "label": "Show",
+   "options": [
+    {
+     "count": 13,
+     "label": "Needs attention",
+     "value": "attention"
+    },
+    {
+     "count": 3,
+     "label": "Failing",
+     "value": "failing"
+    },
+    {
+     "count": 1,
+     "label": "Stuck",
+     "value": "stuck"
+    },
+    {
+     "count": 1,
+     "label": "Stale",
+     "value": "stale"
+    },
+    {
+     "count": 32,
+     "label": "All",
+     "value": "all"
+    }
+   ],
+   "value": "all"
+  },
+  {
+   "any": true,
+   "key": "group",
+   "label": "Group",
+   "options": [
+    {
+     "count": 1,
+     "label": "analytics",
+     "value": "analytics"
+    },
+    {
+     "count": 3,
+     "label": "backoffice",
+     "value": "backoffice"
+    },
+    {
+     "count": 2,
+     "label": "media",
+     "value": "media"
+    },
+    {
+     "count": 4,
+     "label": "orders",
+     "value": "orders"
+    },
+    {
+     "count": 3,
+     "label": "payments",
+     "value": "payments"
+    },
+    {
+     "count": 2,
+     "label": "platform",
+     "value": "platform"
+    },
+    {
+     "count": 1,
+     "label": "search",
+     "value": "search"
+    },
+    {
+     "count": 8,
+     "label": "shop",
+     "value": "shop"
+    },
+    {
+     "count": 3,
+     "label": "users",
+     "value": "users"
+    },
+    {
+     "count": 3,
+     "label": "warehouse",
+     "value": "warehouse"
+    },
+    {
+     "count": 2,
+     "label": "web",
+     "value": "web"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "failing": 24,
+ "kindLinks": [
+  {
+   "href": "/cicd",
+   "text": "Apps"
+  },
+  {
+   "href": "/cicd?kind=package",
+   "text": "Packages"
+  }
+ ],
+ "list": {
+  "clearHref": "/cicd#matrix",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 32,
+  "next": "/cicd?view=all\u0026page=2#matrix",
+  "noSearch": true,
+  "noun": "projects",
+  "page": 1,
+  "pages": 2,
+  "path": "/cicd#matrix",
+  "q": "",
+  "sort": "",
+  "sorts": [],
+  "to": 25,
+  "total": 32
+ },
+ "onRelease": 8,
+ "pick": null,
+ "placeholder": "https://gitlab.example.com/group/project",
+ "readiness": "Readiness (Check a repo, 3 of 32 checked): 1 ready · 1 with warnings · 1 not ready. Check a repo",
+ "rows": [
+  {
+   "cells": [
+    {
+     "at": 1793681331,
+     "branch": true,
+     "deployedAt": 1793681751,
+     "env": "develop",
+     "regression": false,
+     "sha": "46aa5a85",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793720511,
+     "branch": true,
+     "deployedAt": 1793720931,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "2504ca0a",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793664651,
+     "branch": true,
+     "deployedAt": 1793665071,
+     "env": "release",
+     "regression": false,
+     "sha": "0fd4eafb",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 301,
+   "include": "v4.2",
+   "name": "analytics-matomo",
+   "readiness": {
+    "href": "/cicd/repo?project=analytics%2Fanalytics-matomo",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793670411,
+     "branch": true,
+     "deployedAt": 1793670831,
+     "env": "develop",
+     "regression": false,
+     "sha": "8d96c759",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793722491,
+     "branch": true,
+     "deployedAt": 1793722911,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "fcc08a47",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793667591,
+     "branch": true,
+     "deployedAt": 1793668011,
+     "env": "release",
+     "regression": false,
+     "sha": "efa9f5dd",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 300,
+   "include": "",
+   "name": "admin-panel",
+   "readiness": {
+    "href": "/cicd/repo?project=backoffice%2Fadmin-panel",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793740971,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "develop",
+     "regression": false,
+     "sha": "21b3207c",
+     "status": {
+      "kind": "warn",
+      "text": "canceled"
+     },
+     "tags": []
+    },
+    {
+     "branch": false,
+     "env": "pre-release"
+    },
+    {
+     "at": 1793718951,
+     "branch": true,
+     "deployedAt": 1793719371,
+     "env": "release",
+     "regression": false,
+     "sha": "7de2e706",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": [
+      "stale"
+     ]
+    }
+   ],
+   "executor": "docker",
+   "id": 319,
+   "include": "v4.2",
+   "name": "report-builder",
+   "readiness": {
+    "href": "/cicd/repo?project=backoffice%2Freport-builder",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793727531,
+     "branch": true,
+     "deployedAt": 1793727951,
+     "env": "develop",
+     "regression": false,
+     "sha": "8ee339df",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793699211,
+     "branch": true,
+     "deployedAt": 1793699631,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "785ab001",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793707311,
+     "branch": true,
+     "deployedAt": 1793707731,
+     "env": "release",
+     "regression": false,
+     "sha": "078361fa",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 323,
+   "include": "v4.2",
+   "name": "seller-portal",
+   "readiness": {
+    "href": "/cicd/repo?project=backoffice%2Fseller-portal",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793719971,
+     "branch": true,
+     "deployedAt": 1793720391,
+     "env": "develop",
+     "regression": false,
+     "sha": "4838c5ca",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793704671,
+     "branch": true,
+     "deployedAt": 1793705091,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "32a0118f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793655951,
+     "branch": true,
+     "deployedAt": 1793656371,
+     "env": "release",
+     "regression": false,
+     "sha": "668ce928",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 305,
+   "include": "v4.2",
+   "name": "cdn-origin",
+   "readiness": {
+    "href": "/cicd/repo?project=media%2Fcdn-origin",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793665071,
+     "branch": true,
+     "deployedAt": 1793665491,
+     "env": "develop",
+     "regression": false,
+     "sha": "b63e19fe",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793676411,
+     "branch": true,
+     "deployedAt": 1793676831,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "ccdd5e0a",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793701791,
+     "branch": true,
+     "deployedAt": 1793702211,
+     "env": "release",
+     "regression": false,
+     "sha": "ddf70f1b",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 311,
+   "include": "v4.2",
+   "name": "image-resizer",
+   "readiness": {
+    "href": "/cicd/repo?project=media%2Fimage-resizer",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793723151,
+     "branch": true,
+     "deployedAt": 1793723571,
+     "env": "develop",
+     "regression": false,
+     "sha": "3d3af809",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793693931,
+     "branch": true,
+     "deployedAt": 1793694351,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "8899ebf4",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793682711,
+     "branch": true,
+     "deployedAt": 1793683131,
+     "env": "release",
+     "regression": false,
+     "sha": "09dcfe02",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 308,
+   "include": "v4.2",
+   "name": "email-sender",
+   "readiness": {
+    "href": "/cicd/repo?project=orders%2Femail-sender",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793738031,
+     "branch": true,
+     "deployedAt": 1793738451,
+     "env": "develop",
+     "regression": false,
+     "sha": "af723349",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793730951,
+     "branch": true,
+     "deployedAt": 1793731371,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "3b19da2e",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793666751,
+     "branch": true,
+     "deployedAt": 1793667171,
+     "env": "release",
+     "regression": false,
+     "sha": "083b8d3a",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 314,
+   "include": "",
+   "name": "notification",
+   "readiness": {
+    "href": "/cicd/repo?project=orders%2Fnotification",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793719491,
+     "branch": true,
+     "deployedAt": 1793719911,
+     "env": "develop",
+     "regression": false,
+     "sha": "d2345f64",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793736231,
+     "branch": true,
+     "deployedAt": 1793736651,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "c82a1841",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793662191,
+     "branch": true,
+     "deployedAt": 1793662611,
+     "env": "release",
+     "regression": false,
+     "sha": "f34c49f3",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 315,
+   "include": "v4.2",
+   "name": "order-service",
+   "readiness": {
+    "href": "/cicd/repo?project=orders%2Forder-service",
+    "pill": {
+     "kind": "ok",
+     "text": "Ready"
+    }
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793741691,
+     "branch": true,
+     "deployedAt": 1793742111,
+     "env": "develop",
+     "regression": false,
+     "sha": "1b7b0b3b",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793670291,
+     "branch": true,
+     "deployedAt": 1793670711,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "50544dcf",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793731611,
+     "branch": true,
+     "deployedAt": 1793732031,
+     "env": "release",
+     "regression": false,
+     "sha": "9fa22e84",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 329,
+   "include": "v4.2",
+   "name": "webhook-relay",
+   "readiness": {
+    "href": "/cicd/repo?project=orders%2Fwebhook-relay",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793670231,
+     "branch": true,
+     "deployedAt": 1793670651,
+     "env": "develop",
+     "regression": false,
+     "sha": "e5fb16c2",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793665191,
+     "branch": true,
+     "deployedAt": 1793665611,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "e9c41c33",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793703831,
+     "branch": true,
+     "deployedAt": 1793704251,
+     "env": "release",
+     "regression": false,
+     "sha": "b226482f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 310,
+   "include": "v4.2",
+   "name": "fraud-check",
+   "readiness": {
+    "href": "/cicd/repo?project=payments%2Ffraud-check",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793731191,
+     "branch": true,
+     "deployedAt": 1793731611,
+     "env": "develop",
+     "regression": false,
+     "sha": "40974e7f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793719371,
+     "branch": true,
+     "deployedAt": 1793719791,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "338a8432",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793711451,
+     "branch": true,
+     "deployedAt": 1793711871,
+     "env": "release",
+     "regression": false,
+     "sha": "62aa970f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 316,
+   "include": "v4.2",
+   "name": "payment-gateway",
+   "readiness": {
+    "href": "/cicd/repo?project=payments%2Fpayment-gateway",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793744031,
+     "branch": true,
+     "deployedAt": 1793744451,
+     "env": "develop",
+     "regression": false,
+     "sha": "d612fd18",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793725731,
+     "branch": true,
+     "deployedAt": 1793726151,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "7752924a",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793667051,
+     "branch": true,
+     "deployedAt": 1793667471,
+     "env": "release",
+     "regression": false,
+     "sha": "1fda0da9",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 326,
+   "include": "v4.2",
+   "name": "sms-otp",
+   "readiness": {
+    "href": "/cicd/repo?project=payments%2Fsms-otp",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793716851,
+     "branch": true,
+     "deployedAt": 1793717271,
+     "env": "develop",
+     "regression": false,
+     "sha": "092422ee",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793726931,
+     "branch": true,
+     "deployedAt": 1793727351,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "5321c76c",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793680911,
+     "branch": true,
+     "deployedAt": 1793681331,
+     "env": "release",
+     "regression": false,
+     "sha": "ed04c4e9",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 309,
+   "include": "v4.2",
+   "name": "feature-flags",
+   "readiness": {
+    "href": "/cicd/repo?project=platform%2Ffeature-flags",
+    "pill": {
+     "kind": "fail",
+     "text": "Not ready"
+    }
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793661711,
+     "branch": true,
+     "deployedAt": 1793662131,
+     "env": "develop",
+     "regression": false,
+     "sha": "05f1fd74",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "branch": false,
+     "env": "pre-release"
+    },
+    {
+     "at": 1793740971,
+     "branch": true,
+     "deployedAt": 1793741391,
+     "env": "release",
+     "regression": false,
+     "sha": "bb678d26",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 321,
+   "include": "",
+   "name": "scheduler",
+   "readiness": {
+    "href": "/cicd/repo?project=platform%2Fscheduler",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793663871,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "develop",
+     "regression": false,
+     "sha": "83f53455",
+     "status": {
+      "kind": "fail",
+      "text": "failed"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793673411,
+     "branch": true,
+     "deployedAt": 1793673831,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "b26eedf7",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793737611,
+     "branch": true,
+     "deployedAt": 1793738031,
+     "env": "release",
+     "regression": false,
+     "sha": "ccc60b4e",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 322,
+   "include": "v4.2",
+   "name": "search",
+   "readiness": {
+    "href": "/cicd/repo?project=search%2Fsearch",
+    "pill": {
+     "kind": "warn",
+     "text": "Warn"
+    }
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 0,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "develop",
+     "regression": false,
+     "sha": "",
+     "status": null,
+     "tags": []
+    },
+    {
+     "branch": false,
+     "env": "pre-release"
+    },
+    {
+     "at": 0,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "release",
+     "regression": false,
+     "sha": "",
+     "status": null,
+     "tags": []
+    }
+   ],
+   "executor": "package",
+   "id": 500,
+   "include": "v4.2",
+   "name": "api-client",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fapi-client",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793709831,
+     "branch": true,
+     "deployedAt": 1793710251,
+     "env": "develop",
+     "regression": false,
+     "sha": "6eeffa21",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793671851,
+     "branch": true,
+     "deployedAt": 1793672271,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "262b1699",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793689251,
+     "branch": true,
+     "deployedAt": 1793689671,
+     "env": "release",
+     "regression": false,
+     "sha": "2dc68824",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 303,
+   "include": "v4.2",
+   "name": "cart",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fcart",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793658831,
+     "branch": true,
+     "deployedAt": 1793659251,
+     "env": "develop",
+     "regression": false,
+     "sha": "ec0f97d3",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793733831,
+     "branch": true,
+     "deployedAt": 1793734251,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "ffeb0b5f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793737671,
+     "branch": true,
+     "deployedAt": 1793738091,
+     "env": "release",
+     "regression": false,
+     "sha": "a419459d",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 304,
+   "include": "v4.2",
+   "name": "catalog-api",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fcatalog-api",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793701071,
+     "branch": true,
+     "deployedAt": 1793701491,
+     "env": "develop",
+     "regression": false,
+     "sha": "6bed4084",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793659311,
+     "branch": true,
+     "deployedAt": 1793659731,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "7ce9cac6",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793676231,
+     "branch": true,
+     "deployedAt": 1793676651,
+     "env": "release",
+     "regression": false,
+     "sha": "8ba327f3",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 306,
+   "include": "v4.2",
+   "name": "checkout",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fcheckout",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793702691,
+     "branch": true,
+     "deployedAt": 1793703111,
+     "env": "develop",
+     "regression": false,
+     "sha": "c08866e6",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793677431,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "e885b52a",
+     "status": {
+      "kind": "fail",
+      "text": "failed"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793667951,
+     "branch": true,
+     "deployedAt": 1793668371,
+     "env": "release",
+     "regression": false,
+     "sha": "fc156cf9",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 307,
+   "include": "",
+   "name": "coupon-service",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fcoupon-service",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793720451,
+     "branch": true,
+     "deployedAt": 1793720871,
+     "env": "develop",
+     "regression": false,
+     "sha": "a782d84f",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793731371,
+     "branch": true,
+     "deployedAt": 1793731791,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "95c830cb",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793665611,
+     "branch": true,
+     "deployedAt": 1793666031,
+     "env": "release",
+     "regression": false,
+     "sha": "201cc8a3",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 317,
+   "include": "v4.2",
+   "name": "pricing",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Fpricing",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793668011,
+     "branch": true,
+     "deployedAt": 1793668431,
+     "env": "develop",
+     "regression": false,
+     "sha": "c7951ff3",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793691411,
+     "branch": true,
+     "deployedAt": 1793691831,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "4ece604c",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793745531,
+     "branch": true,
+     "deployedAt": 0,
+     "env": "release",
+     "regression": false,
+     "sha": "5669e976",
+     "status": {
+      "kind": "warn",
+      "text": "manual"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "systemd",
+   "id": 318,
+   "include": "v4.2",
+   "name": "recommendation",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Frecommendation",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793703891,
+     "branch": true,
+     "deployedAt": 1793704311,
+     "env": "develop",
+     "regression": false,
+     "sha": "4b5638d7",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793703411,
+     "branch": true,
+     "deployedAt": 1793703831,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "e3f06ff0",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793682471,
+     "branch": true,
+     "deployedAt": 1793682891,
+     "env": "release",
+     "regression": false,
+     "sha": "b8ea9d28",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 320,
+   "include": "v4.2",
+   "name": "reviews",
+   "readiness": {
+    "href": "/cicd/repo?project=shop%2Freviews",
+    "pill": null
+   }
+  },
+  {
+   "cells": [
+    {
+     "at": 1793664471,
+     "branch": true,
+     "deployedAt": 1793664891,
+     "env": "develop",
+     "regression": false,
+     "sha": "9e56076c",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793745411,
+     "branch": true,
+     "deployedAt": 1793745831,
+     "env": "pre-release",
+     "regression": false,
+     "sha": "0b4206f1",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    },
+    {
+     "at": 1793681271,
+     "branch": true,
+     "deployedAt": 1793681691,
+     "env": "release",
+     "regression": false,
+     "sha": "d1e60453",
+     "status": {
+      "kind": "ok",
+      "text": "success"
+     },
+     "tags": []
+    }
+   ],
+   "executor": "docker",
+   "id": 302,
+   "include": "v4.2",
+   "name": "auth-service",
+   "readiness": {
+    "href": "/cicd/repo?project=users%2Fauth-service",
+    "pill": null
+   }
+  }
+ ],
+ "stuck": 1,
+ "tiles": [
+  {
+   "figure": "24",
+   "hot": true,
+   "href": "/cicd/failures",
+   "label": "Failing now",
+   "sub": "8 on release"
+  },
+  {
+   "figure": "1",
+   "hot": true,
+   "href": "/cicd/stuck",
+   "label": "Stuck pipelines",
+   "sub": "lock wait \u003e 10 min"
+  },
+  {
+   "figure": "1",
+   "href": "/cicd/audit",
+   "label": "Branch findings",
+   "sub": "1 stale env branches"
+  },
+  {
+   "figure": "69",
+   "href": "#matrix",
+   "label": "Deploys, 24 h",
+   "sub": "develop 23 · pre-release 23 · release 23"
+  },
+  {
+   "figure": "2",
+   "hot": true,
+   "href": "/cicd/audit#security",
+   "label": "Security and config",
+   "sub": "1 critical · variables inferred"
+  }
+ ],
+ "writes": "disabled (CICD_WRITE=0, no write token)"
+}

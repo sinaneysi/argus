@@ -1,0 +1,211 @@
+{
+ "cells": [
+  {
+   "at": 1793681331,
+   "branch": true,
+   "deployedAt": 1793681751,
+   "env": "develop",
+   "regression": false,
+   "sha": "46aa5a85",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   },
+   "tags": []
+  },
+  {
+   "at": 1793720511,
+   "branch": true,
+   "deployedAt": 1793720931,
+   "env": "pre-release",
+   "regression": false,
+   "sha": "2504ca0a",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   },
+   "tags": []
+  },
+  {
+   "at": 1793664651,
+   "branch": true,
+   "deployedAt": 1793665071,
+   "env": "release",
+   "regression": false,
+   "sha": "0fd4eafb",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   },
+   "tags": []
+  }
+ ],
+ "deploys": [
+  {
+   "at": 1793720931,
+   "author": "morgan.koe",
+   "env": "pre-release",
+   "hosts": "-",
+   "sha": "2504ca0a",
+   "verified": {
+    "kind": "warn",
+    "text": "pass"
+   }
+  },
+  {
+   "at": 1793681751,
+   "author": "drew.foe",
+   "env": "develop",
+   "hosts": "-",
+   "sha": "46aa5a85",
+   "verified": {
+    "kind": "warn",
+    "text": "pass"
+   }
+  },
+  {
+   "at": 1793665071,
+   "author": "morgan.koe",
+   "env": "release",
+   "hosts": "prod-matomo-01",
+   "sha": "0fd4eafb",
+   "verified": {
+    "kind": "warn",
+    "text": "pass"
+   }
+  }
+ ],
+ "findings": [],
+ "name": "analytics-matomo",
+ "path": "analytics/analytics-matomo",
+ "pipelines": [
+  {
+   "at": 1793664651,
+   "bridge": "success",
+   "env": "release",
+   "id": 88016,
+   "sha": "0fd4eafb",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793611971,
+   "bridge": "success",
+   "env": "release",
+   "id": 88015,
+   "sha": "9833d8be",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793720511,
+   "bridge": "success",
+   "env": "pre-release",
+   "id": 88014,
+   "sha": "2504ca0a",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793547831,
+   "bridge": "success",
+   "env": "pre-release",
+   "id": 88013,
+   "sha": "2dba8365",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793515311,
+   "bridge": "success",
+   "env": "pre-release",
+   "id": 88012,
+   "sha": "024fb5c1",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793681331,
+   "bridge": "success",
+   "env": "develop",
+   "id": 88011,
+   "sha": "46aa5a85",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793588091,
+   "bridge": "success",
+   "env": "develop",
+   "id": 88010,
+   "sha": "f5ec36f4",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  },
+  {
+   "at": 1793491371,
+   "bridge": "success",
+   "env": "develop",
+   "id": 88009,
+   "sha": "106340ae",
+   "status": {
+    "kind": "ok",
+    "text": "success"
+   }
+  }
+ ],
+ "rail": [
+  {
+   "href": "https://gitlab.example.com/analytics/analytics-matomo",
+   "label": "Project",
+   "mono": true,
+   "value": "analytics/analytics-matomo"
+  },
+  {
+   "label": "Kind",
+   "value": "app"
+  },
+  {
+   "label": "Executor",
+   "value": "docker"
+  },
+  {
+   "label": "Default branch",
+   "mono": true,
+   "value": "main"
+  },
+  {
+   "label": "Include",
+   "mono": true,
+   "value": "develop: v4.2 cicd/app.gitlab-ci.yml · release: v4.2 cicd/app.gitlab-ci.yml"
+  },
+  {
+   "label": "Unit (systemd)",
+   "mono": true,
+   "value": "analytics-analytics-matomo.service"
+  },
+  {
+   "href": "/cicd/repo?project=analytics%2Fanalytics-matomo",
+   "label": "Readiness",
+   "value": "not checked"
+  },
+  {
+   "label": "Scanned",
+   "value": "3h ago"
+  }
+ ]
+}

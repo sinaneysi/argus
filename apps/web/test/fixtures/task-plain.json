@@ -1,0 +1,137 @@
+{
+ "agent": null,
+ "assign": true,
+ "choice": null,
+ "comments": {
+  "blocked": "",
+  "count": 0,
+  "items": [],
+  "max": 4000,
+  "tracker": "Jira"
+ },
+ "description": "Restore shop-front :3001 env file on prod-shop-02.\n\nCreated from Argus.",
+ "env": "release",
+ "evidence": {
+  "fold": false,
+  "from": "RCA fix",
+  "text": "See the linked Argus page."
+ },
+ "fixPrompt": "",
+ "fixer": {
+  "heading": "Fixer",
+  "notes": [
+   [
+    {
+     "text": " Production: Argus never runs this task. A human makes the change, with the operator's approval for that one change."
+    }
+   ]
+  ]
+ },
+ "history": [
+  {
+   "actor": "argus",
+   "at": 1793525243,
+   "kind": "finding",
+   "tag": "created",
+   "text": "created from rca"
+  }
+ ],
+ "id": 2,
+ "labels": [
+  "web"
+ ],
+ "links": [
+  {
+   "href": "https://jira.northwind.example/browse/OPS-232/browse/OPS-232",
+   "text": "Open in Jira"
+  }
+ ],
+ "move": {
+  "key": "OPS-232",
+  "kind": "jira",
+  "options": [
+   {
+    "label": "Backlog",
+    "value": "0"
+   },
+   {
+    "label": "In Progress",
+    "value": "2"
+   },
+   {
+    "label": "In Review",
+    "value": "3"
+   },
+   {
+    "label": "Ready for fixer",
+    "value": "4"
+   },
+   {
+    "label": "Done",
+    "value": "5"
+   }
+  ]
+ },
+ "notices": [],
+ "openedAt": 1793525243,
+ "owner": "Jamie Poe",
+ "priority": "High",
+ "prod": true,
+ "readOnly": "",
+ "record": [
+  {
+   "href": "https://jira.northwind.example/browse/OPS-232/browse/OPS-232",
+   "label": "Jira",
+   "mono": true,
+   "value": "OPS-232"
+  },
+  {
+   "label": "Status",
+   "value": "To Do · Argus: To do"
+  },
+  {
+   "label": "Assignee",
+   "value": "Jamie Poe"
+  },
+  {
+   "label": "Priority",
+   "value": "High"
+  },
+  {
+   "label": "Environment",
+   "value": "release"
+  },
+  {
+   "label": "Host",
+   "mono": true,
+   "value": "prod-shop-02"
+  },
+  {
+   "label": "Source",
+   "value": "RCA 52 fix 1"
+  },
+  {
+   "label": "Created by",
+   "value": "Argus (automatic)"
+  },
+  {
+   "label": "Created",
+   "value": "2026-11-01 12:57"
+  },
+  {
+   "label": "Updated",
+   "value": "2026-11-03 12:57"
+  },
+  {
+   "label": "Synced",
+   "value": "2026-11-04 04:55"
+  }
+ ],
+ "ref": "OPS-232",
+ "refresh": null,
+ "return": "/board/task?id=2",
+ "status": "To Do",
+ "statusKey": "",
+ "tag": "Jira",
+ "title": "Restore shop-front :3001 env file on prod-shop-02"
+}

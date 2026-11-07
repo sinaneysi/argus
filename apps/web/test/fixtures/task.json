@@ -1,0 +1,191 @@
+{
+ "agent": {
+  "admin": true,
+  "chat": {
+   "ask": false,
+   "canPost": true,
+   "empty": "No messages yet. Ask Argus about the task, answer its questions or correct the plan here; a change of plan makes it plan again.",
+   "key": "OPS-225",
+   "messages": [],
+   "note": "Read-only: a message never approves a change; Spin up agent does. Never paste a credential here.",
+   "pending": false
+  },
+  "chatOn": true,
+  "emptyDesc": false,
+  "finished": false,
+  "key": "OPS-225",
+  "kind": "warn",
+  "label": "Waiting for answers",
+  "log": [
+   {
+    "at": 1793705243,
+    "kind": "approve",
+    "text": "taylor.noe approved plan v1"
+   },
+   {
+    "at": 1793701643,
+    "kind": "intake",
+    "text": "plan v1: roll back coupon-service on staging"
+   }
+  ],
+  "meta": [
+   "plan v1",
+   "planning $0.12",
+   "v1 approved by taylor.noe"
+  ],
+  "plan": {
+   "env": "",
+   "kind": "",
+   "needs": [],
+   "prodNote": false,
+   "production": false,
+   "steps": [],
+   "summary": "Roll staging coupon-service back to 3.8.2"
+  },
+  "planVersion": 1,
+  "questions": [],
+  "result": null,
+  "running": false,
+  "secrets": null,
+  "spin": {
+   "can": false,
+   "label": "Spin up agent (read-only; MRs on agent/* only)",
+   "primary": false,
+   "proposal": false,
+   "reason": "Answer the blocking questions first (in the chat below)"
+  },
+  "state": "waiting"
+ },
+ "assign": true,
+ "choice": null,
+ "comments": {
+  "blocked": "",
+  "count": 0,
+  "items": [],
+  "max": 4000,
+  "tracker": "Jira"
+ },
+ "description": "Staging: roll coupon-service back to 3.8.2.\n\nCreated from Argus.",
+ "env": "pre-release",
+ "evidence": {
+  "fold": true,
+  "from": "Incident",
+  "text": "See the linked Argus page."
+ },
+ "fixPrompt": "",
+ "history": [
+  {
+   "actor": "taylor.noe",
+   "at": 1793622443,
+   "kind": "other",
+   "tag": "status",
+   "text": "To Do -\u003e Ready for fixer"
+  },
+  {
+   "actor": "argus",
+   "at": 1793449643,
+   "kind": "finding",
+   "tag": "created",
+   "text": "created from incident"
+  }
+ ],
+ "id": 5,
+ "labels": [
+  "argus-fixer"
+ ],
+ "links": [
+  {
+   "href": "https://jira.northwind.example/browse/OPS-225/browse/OPS-225",
+   "text": "Open in Jira"
+  }
+ ],
+ "move": {
+  "key": "OPS-225",
+  "kind": "jira",
+  "options": [
+   {
+    "label": "Backlog",
+    "value": "0"
+   },
+   {
+    "label": "To Do",
+    "value": "1"
+   },
+   {
+    "label": "In Progress",
+    "value": "2"
+   },
+   {
+    "label": "In Review",
+    "value": "3"
+   },
+   {
+    "label": "Done",
+    "value": "5"
+   }
+  ]
+ },
+ "notices": [],
+ "openedAt": 1793449643,
+ "owner": "Taylor Noe",
+ "priority": "Medium",
+ "prod": false,
+ "readOnly": "",
+ "record": [
+  {
+   "href": "https://jira.northwind.example/browse/OPS-225/browse/OPS-225",
+   "label": "Jira",
+   "mono": true,
+   "value": "OPS-225"
+  },
+  {
+   "label": "Status",
+   "value": "Ready for fixer · Argus: Ready for fixer"
+  },
+  {
+   "label": "Assignee",
+   "value": "Taylor Noe"
+  },
+  {
+   "label": "Priority",
+   "value": "Medium"
+  },
+  {
+   "label": "Environment",
+   "value": "pre-release"
+  },
+  {
+   "label": "Host",
+   "mono": true,
+   "value": "stg-app-01"
+  },
+  {
+   "href": "/incidents/view?id=148",
+   "label": "Source",
+   "value": "incident #148"
+  },
+  {
+   "label": "Created by",
+   "value": "Argus (automatic)"
+  },
+  {
+   "label": "Created",
+   "value": "2026-10-31 15:57"
+  },
+  {
+   "label": "Updated",
+   "value": "2026-11-02 15:57"
+  },
+  {
+   "label": "Synced",
+   "value": "2026-11-04 04:55"
+  }
+ ],
+ "ref": "OPS-225",
+ "refresh": null,
+ "return": "/board/task?key=OPS-225",
+ "status": "Ready for fixer",
+ "statusKey": "",
+ "tag": "Jira",
+ "title": "Staging: roll coupon-service back to 3.8.2"
+}

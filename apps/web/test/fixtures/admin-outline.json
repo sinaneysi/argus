@@ -1,0 +1,135 @@
+{
+"built": 2,
+"collection": "Services",
+"connected": true,
+"connection": {
+"by": "alex.doe",
+"collection": "Services",
+"since": "2026-10-26 05:28",
+"team": "Northwind",
+"url": "https://docs.northwind.example",
+"user": "argus-bot"
+},
+"gitlab": {
+"boards": [],
+"connected": true,
+"connection": {
+"board": "Ops",
+"board_id": 9,
+"bot": true,
+"by": "alex.doe",
+"default_project": "northwind/ops/infra",
+"gitlab": "https://gitlab.northwind.example",
+"since": "2026-10-29 05:28",
+"token_user": "group_50_bot",
+"web_url": "https://gitlab.northwind.example/groups/northwind/ops",
+"where": "northwind/ops",
+"where_kind": "Group"
+},
+"default_project": "71",
+"default_tracker": "jira",
+"group": true,
+"hosts": [
+"gitlab.northwind.example"
+],
+"list_map": "",
+"lists": [
+[
+"Open (no list label)",
+"To do"
+],
+[
+"Doing",
+"In progress"
+],
+[
+"Review",
+"Review"
+],
+[
+"Fixer",
+"Ready for fixer"
+],
+[
+"Closed",
+"Done"
+]
+],
+"notices": [],
+"project": "groups/northwind/ops",
+"projects": [
+{
+"value": "71",
+"label": "infra"
+},
+{
+"value": "72",
+"label": "ops-tasks"
+}
+],
+"url": "https://gitlab.northwind.example",
+"user_map": ""
+},
+"host": "argus-01",
+"hosts": [
+"docs.northwind.example"
+],
+"mode": "preview",
+"notices": [
+{
+"text": "Preview mode: the pages are built here only. Nothing is sent to Outline until you choose Publish.",
+"kind": "warn",
+"segs": [
+{
+"text": " Preview mode: the pages are built here only. Nothing is sent to Outline until you choose Publish. "
+}
+]
+}
+],
+"outline_host": "docs.example.com",
+"pages": [
+{
+"changed": "2026-11-04 00:28",
+"local": {
+"kind": "neutral",
+"text": "new"
+},
+"name": "Services overview",
+"note": "",
+"service": "_index",
+"state": null,
+"url": ""
+},
+{
+"changed": "2026-11-04 00:28",
+"local": {
+"kind": "warn",
+"text": "changed"
+},
+"name": "shop/checkout",
+"note": "",
+"service": "shop/checkout",
+"state": {
+"kind": "ok",
+"text": "up to date"
+},
+"url": "https://docs.northwind.example/doc/checkout"
+},
+{
+"changed": "2026-11-04 00:28",
+"local": {
+"kind": "neutral",
+"text": "new"
+},
+"name": "shop/search",
+"note": "",
+"service": "shop/search",
+"state": null,
+"url": ""
+}
+],
+"refresh": null,
+"scope": "pilot",
+"url": "https://docs.northwind.example",
+"user": "demo.admin"
+}

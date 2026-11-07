@@ -1,0 +1,183 @@
+{
+ "affected": [
+  {
+   "env": "release",
+   "exposure": {
+    "hot": false,
+    "via": "stats.northwind.example",
+    "word": "internet"
+   },
+   "host": "prod-matomo-01",
+   "hostHref": "/inventory/view?id=22",
+   "how": "php-fpm in the image matomo:4.16-php8.1",
+   "service": "analytics-matomo",
+   "serviceHref": "/vulns?svc=analytics-matomo#components",
+   "unit": "container analytics-matomo",
+   "version": "8.1.2"
+  }
+ ],
+ "affects": "1 service on 1 host",
+ "banners": [],
+ "canSuppress": true,
+ "class": "production",
+ "ecosystem": "container:analytics-matomo",
+ "fix": {
+  "action": null,
+  "checks": [],
+  "note": [
+   {
+    "text": "Production: the operator approves every option."
+   }
+  ],
+  "options": [
+   {
+    "kind": "permanent fix",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "PHP 8.3.14 has every fix; 8.1 gets none"
+     },
+     {
+      "label": "Effort",
+      "value": "4 h"
+     },
+     {
+      "label": "Risk",
+      "value": "medium: plugins must be checked against Matomo 5"
+     },
+     {
+      "label": "Blast radius",
+      "value": "analytics only (stats.northwind.example), not the shop"
+     }
+    ],
+    "n": 1,
+    "recommended": true,
+    "title": "Rebuild the image on PHP 8.3",
+    "what": "change the base image in `analytics/matomo` to `matomo:5.1-php8.3-fpm`, run the Matomo upgrade, redeploy"
+   },
+   {
+    "kind": "mitigation",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "removes the exposed CGI path from the internet"
+     },
+     {
+      "label": "Effort",
+      "value": "20 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "the Matomo UI for people outside the VPN"
+     }
+    ],
+    "n": 2,
+    "recommended": false,
+    "title": "Close it to the internet meanwhile",
+    "what": "allow `stats.northwind.example` only from the office VPN and the edge tracking path `/matomo.php`"
+   }
+  ],
+  "prod": true,
+  "prompt": "PRODUCTION CHANGE — needs the operator's explicit approval before any step.\n# Rebuild analytics-matomo on PHP 8.3\n## Goal\nThe container on prod-matomo-01 runs PHP 8.3; `stats.northwind.example` answers 200 and tracks visits.\n## Environment and targets\n- Environment: production; host prod-matomo-01 (10.20.30.95); container `analytics-matomo`\n- Repository `analytics/matomo`, Dockerfile `FROM matomo:4.16-php8.1`\n## Change, step by step\n### Step 1\n- Backup: database dump (the backup plan matomo-db), image tag noted\n- Change: `FROM matomo:5.1-php8.3-fpm`; CI builds and pushes the image\n- Check: `docker exec analytics-matomo php -v` → 8.3.x\n- Rollback: redeploy the previous image tag\n",
+  "promptHref": "/rca/prompt.md?cve=4",
+  "releaseNote": "Argus never runs a production change. Hand this prompt to a person or an agent; the operator approves each step."
+ },
+ "key": "container:analytics-matomo|php|production",
+ "kind": "runtime",
+ "more": null,
+ "name": "php",
+ "open": 3,
+ "pri": "P1",
+ "priKind": "fail",
+ "problem": null,
+ "rules": [],
+ "summary": {
+  "rows": [
+   {
+    "label": "What broke",
+    "value": "The Matomo container on `prod-matomo-01` runs PHP 8.1.2, end of life and exploitable (CVE-2026-24410, KEV)."
+   },
+   {
+    "label": "Why",
+    "value": "The image `matomo:4.16-php8.1` was pinned in 2024 and never rebuilt (proven)."
+   },
+   {
+    "label": "Impact",
+    "value": "`stats.northwind.example` is internet-facing; remote code execution through the PHP-CGI argument flaw."
+   },
+   {
+    "label": "Fix",
+    "value": "Rebuild on `matomo:5.1-php8.3-fpm` and redeploy (Option 1) — the operator approves (production)."
+   }
+  ],
+  "source": "From the report.",
+  "status": "open",
+  "statusKind": "fail"
+ },
+ "suppress": {
+  "component": "php",
+  "env": "production",
+  "until": "2026-12-04",
+  "vuln": "CVE-2026-24410"
+ },
+ "targetCount": 1,
+ "targets": [
+  {
+   "env": "release",
+   "href": "/inventory/view?id=22",
+   "target": "prod-matomo-01",
+   "version": "8.1.2"
+  }
+ ],
+ "vulns": [
+  {
+   "affects": "Affects: 1 service on 1 host",
+   "due": "2026-11-04",
+   "fixed": "8.1.29",
+   "href": "https://nvd.nist.gov/vuln/detail/CVE-2026-24410",
+   "id": "CVE-2026-24410",
+   "kev": true,
+   "pri": "P1",
+   "priKind": "fail",
+   "score": "97",
+   "severity": "critical · CVSS 9.8 · EPSS 0.94",
+   "suppressed": false,
+   "title": "PHP-CGI argument injection allows remote code execution",
+   "why": "9.8 CVSS · +25 known exploited · +15 internet · +10 production"
+  },
+  {
+   "affects": "Affects: 1 service on 1 host",
+   "due": "2026-11-09",
+   "fixed": "8.1.30",
+   "href": "https://nvd.nist.gov/vuln/detail/CVE-2026-24477",
+   "id": "CVE-2026-24477",
+   "kev": false,
+   "pri": "P2",
+   "priKind": "fail",
+   "score": "70",
+   "severity": "high · CVSS 8.1 · EPSS 0.02",
+   "suppressed": false,
+   "title": "PHP: heap buffer overflow in mb_encode_mimeheader",
+   "why": "8.1 CVSS · 0 known exploited · +15 internet · +10 production"
+  },
+  {
+   "affects": "Affects: 1 service on 1 host",
+   "due": "2026-11-09",
+   "fixed": "8.3",
+   "href": "",
+   "id": "EOL-php-8.1",
+   "kev": false,
+   "pri": "P2",
+   "priKind": "fail",
+   "score": "66",
+   "severity": "high · CVSS 7.0 · EPSS 0.02",
+   "suppressed": false,
+   "title": "PHP 8.1 reached end of life: no more security fixes",
+   "why": "7 CVSS · 0 known exploited · +15 internet · +10 production"
+  }
+ ]
+}

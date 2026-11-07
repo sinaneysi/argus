@@ -1,0 +1,637 @@
+{
+"accepted": 0,
+"admin": true,
+"at": 1793728099,
+"banners": [],
+"coverage": {
+"diskKind": "ok",
+"diskPct": "71",
+"families": [
+{
+"defects": "D2",
+"engine": "postgres",
+"how": "nightly pg_dump -Fc, age-encrypted, mc cp",
+"id": "A",
+"issues": "OPS-180",
+"name": "Postgres pg_dump to MinIO",
+"sets": 2,
+"size": "1.3 TB"
+},
+{
+"defects": "D1",
+"engine": "mongodb",
+"how": "mongodump --archive from the secondary, age",
+"id": "B",
+"issues": "OPS-191",
+"name": "Mongo archives",
+"sets": 2,
+"size": "0.5 TB"
+},
+{
+"defects": "",
+"engine": "files",
+"how": "restic / mc mirror",
+"id": "C",
+"issues": "",
+"name": "Files and media",
+"sets": 1,
+"size": "0.8 TB"
+},
+{
+"defects": "D3, D4",
+"engine": "mariadb-mysql",
+"how": "mysqldump | gzip in a cron, not encrypted",
+"id": "D",
+"issues": "OPS-188",
+"name": "Matomo (legacy cron)",
+"sets": 1,
+"size": "0.2 TB"
+},
+{
+"defects": "",
+"engine": "?",
+"how": "objects appear nightly; host and job unknown",
+"id": "E",
+"issues": "",
+"name": "Unknown origin",
+"sets": 2,
+"size": "0.0 TB"
+}
+],
+"gaps": [
+{
+"board": {
+"text": "OPS-193",
+"href": "/board/task?id=14"
+},
+"kind": "fail",
+"meta": "redis · release · only sessions are dumped · OPS-193",
+"risk": "high",
+"title": "Redis (cart and rate limits) on prod-redis-01"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=2-2"
+},
+"kind": "fail",
+"meta": "files · release · no export",
+"risk": "high",
+"title": "RabbitMQ definitions on prod-queue-01"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=2-3"
+},
+"kind": "fail",
+"meta": "files · release · repository missing since 10-20 · OPS-195",
+"risk": "high",
+"title": "OpenSearch snapshots"
+}
+],
+"generated": "2026-10-29",
+"high": [
+{
+"board": {
+"text": "OPS-211",
+"href": "/board/task?id=10"
+},
+"kind": "fail",
+"meta": "prod-mongo-02 cron · OPS-191",
+"risk": "high",
+"title": "Defect 1: mongo backup user lost its role after the 10-21 password rotation; the job exits 0"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=1-3"
+},
+"kind": "fail",
+"meta": "prod-matomo-01 · OPS-188",
+"risk": "high",
+"title": "Defect 3: mysqldump without --single-transaction: the dump stops on a lock timeout"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=1-4"
+},
+"kind": "fail",
+"meta": "prod-matomo-01 · OPS-188",
+"risk": "high",
+"title": "Defect 4: Matomo dumps are not encrypted"
+}
+],
+"host": "prod-backup-01 (10.20.30.110)",
+"issue": "grows 41 GB a day",
+"noscript": [
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=4-1"
+},
+"kind": "warn",
+"meta": "380 objects · 2/day · 12 GB",
+"risk": "medium",
+"title": "legacy_exports"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=4-2"
+},
+"kind": "warn",
+"meta": "911 objects · 9/day · 3 GB",
+"risk": "medium",
+"title": "tmp_reports"
+}
+],
+"pct": 71,
+"tiles": [
+{
+"label": "Families",
+"figure": "5",
+"sub": "8 sets, 2.8 TB"
+},
+{
+"label": "Sets without a known script",
+"figure": "2",
+"sub": "family E",
+"hot": true
+},
+{
+"label": "Unencrypted sets",
+"figure": "4",
+"sub": "unencrypted",
+"hot": true
+},
+{
+"label": "Databases without a backup",
+"figure": "3",
+"sub": "Redis, queues, search, ...",
+"hot": true
+},
+{
+"label": "High-risk defects",
+"figure": "3",
+"sub": "in the real scripts",
+"hot": true
+}
+],
+"total": "3.9",
+"unencrypted": [
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=3-1"
+},
+"kind": "fail",
+"meta": "partly encrypted · .jpg, .webp, .json · 812 GB · family C",
+"risk": "high",
+"title": "minio-media_images"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=3-2"
+},
+"kind": "fail",
+"meta": "not encrypted · .sql.gz · 161 GB · family D",
+"risk": "high",
+"title": "matomo-prod_db"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=3-3"
+},
+"kind": "fail",
+"meta": "not encrypted · .csv.gz · 12 GB · family E",
+"risk": "high",
+"title": "legacy_exports"
+},
+{
+"board": {
+"text": "Create task",
+"href": "/board/new?src=backup&id=3-4"
+},
+"kind": "fail",
+"meta": "unknown encrypted · .xlsx · 3 GB · family E",
+"risk": "high",
+"title": "tmp_reports"
+}
+],
+"used": "2.8"
+},
+"facets": [
+{
+"key": "status",
+"label": "Status",
+"value": "all",
+"any": false,
+"options": [
+{
+"value": "all",
+"label": "All",
+"count": 11
+},
+{
+"value": "fail",
+"label": "Failing",
+"count": 3
+},
+{
+"value": "ok",
+"label": "OK",
+"count": 8
+}
+]
+},
+{
+"key": "bucket",
+"label": "Bucket",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "files-prod",
+"label": "files-prod",
+"count": 1
+},
+{
+"value": "matomo-prod",
+"label": "matomo-prod",
+"count": 1
+},
+{
+"value": "minio-media",
+"label": "minio-media",
+"count": 1
+},
+{
+"value": "mongo-prod",
+"label": "mongo-prod",
+"count": 2
+},
+{
+"value": "opensearch-prod",
+"label": "opensearch-prod",
+"count": 1
+},
+{
+"value": "pg-prod",
+"label": "pg-prod",
+"count": 3
+},
+{
+"value": "pg-stg",
+"label": "pg-stg",
+"count": 1
+},
+{
+"value": "redis-prod",
+"label": "redis-prod",
+"count": 1
+}
+]
+}
+],
+"failing": 3,
+"list": {
+"clearHref": "/backups",
+"filtered": false,
+"from": 1,
+"hidden": {},
+"matched": 11,
+"noSearch": true,
+"noun": "sets",
+"page": 1,
+"pages": 1,
+"path": "/backups",
+"q": "",
+"sort": "",
+"sorts": [],
+"to": 11,
+"total": 11
+},
+"okRows": [
+{
+"accepted": null,
+"age": "7 h",
+"href": "/backups/set?name=files-prod_invoices",
+"kinds": "1",
+"mark": false,
+"name": "files-prod_invoices",
+"newest": "files/invoices/20261103/invoices.tar.age",
+"ratio": "102 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "6.1 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "6 h",
+"href": "/backups/set?name=minio-media_images",
+"kinds": "1",
+"mark": false,
+"name": "minio-media_images",
+"newest": "media/images/20261103/manifest.json",
+"ratio": "99 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "802.4 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "8 h",
+"href": "/backups/set?name=mongo-prod_catalog",
+"kinds": "2",
+"mark": false,
+"name": "mongo-prod_catalog",
+"newest": "mongo/catalog/20261103/catalog.archive.age",
+"ratio": "99 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "63.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "7 h",
+"href": "/backups/set?name=pg-prod_orders",
+"kinds": "3",
+"mark": false,
+"name": "pg-prod_orders",
+"newest": "pg/orders/20261103/orders-20261103.dump.age",
+"ratio": "98 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "144.6 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "5 h",
+"href": "/backups/set?name=pg-prod_payments",
+"kinds": "3",
+"mark": false,
+"name": "pg-prod_payments",
+"newest": "pg/payments/20261103/payments-20261103.dump.age",
+"ratio": "100 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "42.0 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "5 h",
+"href": "/backups/set?name=pg-prod_users",
+"kinds": "3",
+"mark": false,
+"name": "pg-prod_users",
+"newest": "pg/users/20261103/users-20261103.dump.age",
+"ratio": "99 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "18.8 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "9 h",
+"href": "/backups/set?name=pg-stg_all",
+"kinds": "2",
+"mark": false,
+"name": "pg-stg_all",
+"newest": "pg/stg/20261103/all.dump.age",
+"ratio": "98 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "30.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"accepted": null,
+"age": "9 h",
+"href": "/backups/set?name=redis-prod_sessions",
+"kinds": "1",
+"mark": false,
+"name": "redis-prod_sessions",
+"newest": "redis/sessions/20261103/dump.rdb.age",
+"ratio": "99 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "2.0 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+}
+],
+"plans": [
+{
+"destination": "backup/pg/stg",
+"engine": "PostgreSQL",
+"env": "pre-release",
+"id": 4,
+"name": "staging-all",
+"restore": {
+"date": "2026-10-31",
+"kind": "ok",
+"result": "ok"
+},
+"schedule": "daily 01:00",
+"server": "stg-db-01",
+"state": {
+"text": "merged · monitored",
+"kind": "ok"
+}
+},
+{
+"destination": "backup/matomo",
+"engine": "MariaDB / MySQL",
+"env": "release",
+"id": 3,
+"name": "matomo-db",
+"restore": {
+"date": "2026-10-15",
+"kind": "warn",
+"result": "partial"
+},
+"schedule": "daily 04:00",
+"server": "prod-matomo-01",
+"state": {
+"text": "MR open · proposal",
+"kind": "warn"
+}
+},
+{
+"destination": "backup/mongo/reviews",
+"engine": "MongoDB",
+"env": "release",
+"id": 2,
+"name": "reviews-mongo",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"schedule": "daily 03:10",
+"server": "prod-mongo-02 (secondary)",
+"state": {
+"text": "MR open · proposal",
+"kind": "warn"
+}
+},
+{
+"destination": "backup/pg/orders",
+"engine": "PostgreSQL",
+"env": "release",
+"id": 1,
+"name": "orders-nightly",
+"restore": {
+"date": "2026-10-26",
+"kind": "ok",
+"result": "ok"
+},
+"schedule": "daily 02:30",
+"server": "prod-db-02 (replica)",
+"state": {
+"text": "merged · monitored",
+"kind": "ok"
+}
+}
+],
+"ran": true,
+"refresh": false,
+"rows": [
+{
+"accepted": null,
+"age": "7 h",
+"href": "/backups/set?name=matomo-prod_db",
+"kinds": "1",
+"mark": true,
+"name": "matomo-prod_db",
+"newest": "matomo/20261103/matomo.sql.gz",
+"ratio": "18 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "4.1 GB",
+"status": {
+"text": "SMALL",
+"kind": "fail"
+}
+},
+{
+"accepted": null,
+"age": "100 h",
+"href": "/backups/set?name=mongo-prod_reviews",
+"kinds": "2",
+"mark": true,
+"name": "mongo-prod_reviews",
+"newest": "mongo/reviews/20261103/reviews.archive.age",
+"ratio": "100 %",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "9.0 GB",
+"status": {
+"text": "STALE",
+"kind": "fail"
+}
+},
+{
+"accepted": null,
+"age": "no backup found",
+"href": "/backups/set?name=opensearch-prod_snapshots",
+"kinds": "1",
+"mark": true,
+"name": "opensearch-prod_snapshots",
+"newest": "",
+"ratio": "-",
+"restore": {
+"date": "",
+"kind": "",
+"result": "never"
+},
+"size": "-",
+"status": {
+"text": "MISSING",
+"kind": "fail"
+}
+}
+],
+"scan": {
+"back": "/backups",
+"busy": false,
+"label": "Scan now",
+"meta": "Last scan 6h ago · WARN",
+"overdue": "",
+"tasks": "backup-check",
+"title": "Run Backups again now"
+},
+"sets": 11,
+"status": {
+"text": "WARN",
+"kind": "warn"
+},
+"summary": "WARN: 3 of 11 sets need a look.\n\n- **mongo-prod_reviews**: newest backup 52 h old (the job on prod-mongo-02 fails since the 10-21 password rotation).\n- **matomo-prod_db**: newest dump 18 % of the 7-day median (4.1 GB vs 23 GB): the dump stopped at the `log_link_visit_action` table.\n- **opensearch-prod_snapshots**: no snapshot found under `os/snapshots/` (repository not registered after the 10-20 upgrade).",
+"templates": {
+"repo": "ops/backup-templates",
+"url": "https://gitlab.northwind.example/ops/backup-templates"
+}
+}

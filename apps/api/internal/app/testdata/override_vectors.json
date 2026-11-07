@@ -1,0 +1,13 @@
+{"_comment": "Accepted-failure rules shared by bin/overrides.py (evaluate) and apps/api/internal/app/overrides.go (OverrideValid): same inputs, same verdict.",
+ "now": 1800000000,
+ "cases": [
+  {"name": "until-ok, still failing the same way", "ov": {"check_kind": "FAIL(stale)", "scope": "until-ok", "expires": 1800086400, "snapshot": null, "ended_at": null}, "status": "FAIL(stale)", "fp": "a|1", "ok_since": false, "valid": true, "why": "accepted"},
+  {"name": "until-ok, a run passed since", "ov": {"check_kind": "FAIL(stale)", "scope": "until-ok", "expires": 1800086400, "snapshot": null, "ended_at": null}, "status": "FAIL(stale)", "fp": "a|1", "ok_since": true, "valid": false, "why": "passed since"},
+  {"name": "new kind of failure", "ov": {"check_kind": "FAIL(stale)", "scope": "until-ok", "expires": 1800086400, "snapshot": null, "ended_at": null}, "status": "FAIL(small)", "fp": "a|1", "ok_since": false, "valid": false, "why": "new kind of failure"},
+  {"name": "passing now", "ov": {"check_kind": "FAIL(stale)", "scope": "days", "expires": 1800086400, "snapshot": null, "ended_at": null}, "status": "OK", "fp": "a|1", "ok_since": true, "valid": false, "why": "passing"},
+  {"name": "days, inside", "ov": {"check_kind": "FAIL(small)", "scope": "days", "expires": 1800000001, "snapshot": null, "ended_at": null}, "status": "FAIL(small)", "fp": "a|1", "ok_since": true, "valid": true, "why": "accepted"},
+  {"name": "days, expired at the second", "ov": {"check_kind": "FAIL(small)", "scope": "days", "expires": 1800000000, "snapshot": null, "ended_at": null}, "status": "FAIL(small)", "fp": "a|1", "ok_since": false, "valid": false, "why": "expired"},
+  {"name": "until-changed, same object", "ov": {"check_kind": "FAIL(small)", "scope": "until-changed", "expires": 1807776000, "snapshot": "x/2026-10-24.gz|120", "ended_at": null}, "status": "FAIL(small)", "fp": "x/2026-10-24.gz|120", "ok_since": true, "valid": true, "why": "accepted"},
+  {"name": "until-changed, a new object", "ov": {"check_kind": "FAIL(small)", "scope": "until-changed", "expires": 1807776000, "snapshot": "x/2026-10-24.gz|120", "ended_at": null}, "status": "FAIL(small)", "fp": "x/2026-10-25.gz|90", "ok_since": false, "valid": false, "why": "changed"},
+  {"name": "undone", "ov": {"check_kind": "FAIL(empty)", "scope": "until-ok", "expires": 1807776000, "snapshot": null, "ended_at": 1799990000}, "status": "FAIL(empty)", "fp": "|", "ok_since": false, "valid": false, "why": "ended"}
+ ]}

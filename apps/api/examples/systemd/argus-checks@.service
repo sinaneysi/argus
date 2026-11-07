@@ -1,0 +1,53 @@
+# One Argus collector run: argus checks <instance>  (alerts, certs or backups). Started by the argus-checks-*.timer
+# units. The collector is read-only towards its targets and writes only into /var/lib/argus (ARGUS_ALERTS_FILE or
+# ARGUS_DB). Its feature flag (ARGUS_COLLECT_<NAME>=1 in /etc/argus/argus.env) must be on, else it logs "disabled".
+#
+#   install -m 0644 argus-checks@.service argus-checks-*.timer /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now argus-checks-alerts.timer
+#   systemctl start argus-checks@certs.service && journalctl -u argus-checks@certs -n 20
+#
+# A bearer token for the alert sources: put it in /etc/argus/secrets/alerts-token (root 0600) and add a drop-in
+#   [Service]
+#   LoadCredential=alerts-token:/etc/argus/secrets/alerts-token
+#   Environment=ARGUS_ALERTS_TOKEN_FILE=%d/alerts-token
+[Unit]
+Description=Argus collector %i
+Documentation=https://github.com/sinaneysi/argus/blob/main/docs/architecture/CONFIG.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=argus
+Group=argus
+ExecStart=/usr/local/bin/argus checks %i
+TimeoutStartSec=15min
+UMask=0022
+
+# hardening: the collector reads its targets and writes only the state directory
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/argus
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources

@@ -1,0 +1,76 @@
+{
+"counts": {
+"confirmed": 9,
+"proposed": 35,
+"rejected": 1,
+"routes": 46,
+"services": 30,
+"stale": 1,
+"unmapped": 15
+},
+"last_discovery": 1793767096,
+"sources": [
+{
+"source": "elasticsearch/logs",
+"status": "error",
+"mode": "",
+"trigger": "timer",
+"counts": {},
+"calls": 1,
+"note": "indices: the login was refused (HTTP 403)",
+"started_at": 1793766976,
+"finished_at": 1793767096
+},
+{
+"source": "gitlab/main",
+"status": "ok",
+"mode": "incremental",
+"trigger": "timer",
+"counts": {
+"project": 4
+},
+"calls": 2,
+"note": "",
+"started_at": 1793766976,
+"finished_at": 1793767096
+},
+{
+"source": "grafana/east",
+"status": "partial",
+"mode": "full",
+"trigger": "manual",
+"counts": {
+"dashboard": 3,
+"loki": 7,
+"prom-job": 4
+},
+"calls": 9,
+"note": "Loki east: container has more than 5000 values; a cap was hit or a read failed, nothing was pruned",
+"started_at": 1793766976,
+"finished_at": 1793767096
+},
+{
+"source": "kubernetes/stage",
+"status": "ok",
+"mode": "full",
+"trigger": "timer",
+"counts": {
+"ingress": 1,
+"namespace": 3,
+"service": 1,
+"workload": 7
+},
+"calls": 6,
+"note": "",
+"started_at": 1793766976,
+"finished_at": 1793767096
+}
+],
+"verdict": {
+"failed_sources": [
+"elasticsearch/logs"
+],
+"head": "elasticsearch/logs could not be read by the last discovery.",
+"kind": "warn"
+}
+}

@@ -1,0 +1,254 @@
+{
+ "at": 1793739224,
+ "banners": [
+  {
+   "kind": "warn",
+   "text": "Not merged yet: this is the report as the run wrote it."
+  }
+ ],
+ "facts": [
+  {
+   "label": "State",
+   "value": "open"
+  },
+  {
+   "label": "Environment",
+   "value": "release"
+  },
+  {
+   "label": "Written",
+   "value": "2026-11-04 00:23"
+  },
+  {
+   "href": "/incidents/view?id=141",
+   "label": "Incident",
+   "value": "incident #141"
+  },
+  {
+   "label": "Review",
+   "value": "merge request"
+  },
+  {
+   "label": "Source",
+   "value": "rca-deep"
+  },
+  {
+   "label": "Cost",
+   "value": "$1.12 · 28 min"
+  },
+  {
+   "label": "File",
+   "mono": true,
+   "value": "2026-11-04-sms-otp-provider-timeouts.md"
+  }
+ ],
+ "fix": {
+  "action": null,
+  "checks": [],
+  "note": [
+   {
+    "text": "Production: the operator approves every option."
+   }
+  ],
+  "options": [
+   {
+    "kind": "permanent fix",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "a slow provider costs at most 3 s per message and trips the breaker after 20 failures; traffic moves to Fabrikam within a minute"
+     },
+     {
+      "label": "Effort",
+      "value": "1 h"
+     },
+     {
+      "label": "Risk",
+      "value": "low: the release has run on staging for 6 days"
+     },
+     {
+      "label": "Blast radius",
+      "value": "sms-otp on both payment hosts; OTP for payment and login for about 1 minute during the rolling restart"
+     }
+    ],
+    "n": 1,
+    "recommended": true,
+    "title": "Provider timeout and automatic failover",
+    "what": "set `SMS_PROVIDER_TIMEOUT=3s` and `SMS_FAILOVER=fabrikam` in `/etc/northwind/sms-otp.env` on `prod-pay-01` and `prod-pay-02`, deploy `payments/sms-otp` 2.14.0 (circuit breaker, already on staging)"
+   },
+   {
+    "kind": "mitigation",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "the healthy provider carries the traffic; nothing else changes"
+     },
+     {
+      "label": "Effort",
+      "value": "5 min"
+     },
+     {
+      "label": "Risk",
+      "value": "medium: Fabrikam costs 40 % more per message and has a 200 msg/s cap"
+     },
+     {
+      "label": "Blast radius",
+      "value": "none now; a Fabrikam outage would repeat the incident"
+     }
+    ],
+    "n": 2,
+    "recommended": false,
+    "title": "Keep Fabrikam as primary until Contoso confirms the fix",
+    "what": "leave the feature flag `sms.provider=fabrikam`; add a calendar reminder to switch back"
+   },
+   {
+    "kind": "prevention",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "pages 5 minutes into a provider slowdown instead of after the backlog"
+     },
+     {
+      "label": "Effort",
+      "value": "30 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "monitoring only"
+     }
+    ],
+    "n": 3,
+    "recommended": false,
+    "title": "Alert on provider latency and worker saturation",
+    "what": "alert rules `SmsProviderSlow` (p99 \u003e 2 s for 3 min) and `SmsOtpWorkersSaturated` (\u003e 90 % for 2 min) in `monitoring/rules/payments.yml`"
+   }
+  ],
+  "prod": true,
+  "prompt": "PRODUCTION CHANGE — needs the operator's explicit approval before any step.\n# sms-otp: provider timeout and automatic failover on prod-pay-01 / prod-pay-02\n## Goal\n`sms-otp` gives up on a slow SMS provider after 3 s and fails over to Fabrikam Messaging automatically; OTP delivery\nsurvives a provider slowdown.\n## Environment and targets\n- Environment: production\n- Hosts: prod-pay-01 (10.20.30.41), prod-pay-02 (10.20.30.42)\n- Unit: `northwind-sms-otp.service`, env file `/etc/northwind/sms-otp.env`, port 8091\n- Repository: `payments/sms-otp`, tag `2.14.0` (circuit breaker), CI deploy job `deploy_production` (manual)\n## Background\n- Root cause (proven): no provider timeout; 64 workers blocked on Contoso SMS for 2 h 40 min; 2,140 payments failed.\n- Evidence: `sms_otp_workers_busy` 64/64; Contoso p99 31.2 s; `SMS_PROVIDER_TIMEOUT` unset.\n- Timeline (UTC): 17:41 slowdown, 20:23 manual switch to Fabrikam, 20:35 recovered.\n## Constraints and guardrails\n- Production is read-only unless the operator approved this exact change: show each command, its backup and its\n  rollback first, then wait.\n- Never write to a production database. Never run a production deploy pipeline yourself; the operator plays the job.\n- One host at a time; prod-pay-02 first.\n## Pre-checks (run first; stop on any failure)\n1. `curl -fsS http://10.20.30.42:8091/health` → `{\"status\":\"ok\"}`.\n2. `grep -c . /etc/northwind/sms-otp.env` on both hosts → the file exists.\n## Change, step by step\n### Step 1: env file on prod-pay-02\n- Backup: `cp -a /etc/northwind/sms-otp.env /etc/northwind/sms-otp.env.bak-$(date +%Y%m%d%H%M)`\n- Change: append `SMS_PROVIDER_TIMEOUT=3s` and `SMS_FAILOVER=fabrikam`\n- Check: `systemctl restart northwind-sms-otp \u0026\u0026 sleep 5 \u0026\u0026 curl -fsS localhost:8091/health`\n- Rollback: restore the backup and restart the unit.\n### Step 2: the same on prod-pay-01, then ask the operator to play `deploy_production` for 2.14.0\n## Verify\n- `sms_otp_provider_latency_seconds` p99 \u003c 3 s; a test OTP to the QA phone arrives in \u003c 10 s.\n- `SmsOtpQueueBacklog` resolved; payment failure rate at the baseline.\n## Prevention follow-up\n- Alert rules `SmsProviderSlow` and `SmsOtpWorkersSaturated` (Option 3).\n## Do not touch\n- payment-gateway, fraud-check, the database.\n## Report back\n- What you changed (diffs), the backup paths, the verification output, anything still open.\n",
+  "promptHref": "/rca/prompt.md?id=51",
+  "releaseNote": "Argus never runs a production change. Hand this prompt to a person or an agent; the operator approves each step."
+ },
+ "id": 51,
+ "incident": 141,
+ "lazy": {
+  "rows": [
+   {
+    "label": "What broke",
+    "value": "Payment and login OTP SMS were not delivered for 2 h 40 min from 17:41 UTC."
+   },
+   {
+    "label": "Why",
+    "value": "Contoso SMS answered in 30 s or not at all; sms-otp has no timeout, so all 64 workers hung (proven)."
+   },
+   {
+    "label": "Impact",
+    "value": "2,140 card payments failed at the 3-D Secure step; about 31 % of checkouts in that window."
+   },
+   {
+    "label": "Fix",
+    "value": "Set a 3 s provider timeout with failover to Fabrikam Messaging (Option 1) — the operator approves (production)."
+   }
+  ],
+  "source": "From the report.",
+  "status": "mitigated",
+  "statusKind": "ok"
+ },
+ "md": {
+  "md": "# RCA: payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts\n\n## Summary\n\nFrom 17:41 UTC the SMS provider **Contoso SMS** (primary) slowed down: its `POST /v2/messages` answered after\n25–31 s or the TCP connection stayed open without an answer. `sms-otp` on `prod-pay-01` and `prod-pay-02` calls the\nprovider synchronously from a fixed pool of 64 workers and has **no client timeout** (`SMS_PROVIDER_TIMEOUT` is\nunset, the HTTP client default is infinite). Within 6 minutes every worker was waiting on Contoso, the queue grew to\n11,800 messages and the OTP for 3-D Secure card payments and for login stopped arriving. `payment-gateway` waits 90 s\nfor the OTP step and then fails the payment, so checkouts failed with \"Payment could not be confirmed\".\n\nAt 20:23 UTC Alex Doe switched the provider by hand to **Fabrikam Messaging** (secondary) through the feature flag\n`sms.provider=fabrikam` and restarted `sms-otp` on both hosts. The queue drained in 9 minutes; OTPs arrive again\n(median 4 s). The underlying defect — no timeout, no automatic failover — is still in production.\n\n## Evidence\n\n| # | finding | proven/probable | source |\n|---|---|---|---|\n| 1 | Contoso `POST /v2/messages` p99 31.2 s from 17:41 (was 380 ms) | proven | Loki `{app=\"sms-otp\"} |= \"provider=contoso\"` |\n| 2 | 64 of 64 workers busy, queue 11,800 at the peak | proven | metric `sms_otp_workers_busy`, `sms_otp_queue_depth` |\n| 3 | `SMS_PROVIDER_TIMEOUT` not set on either host | proven | `systemctl show northwind-sms-otp -p Environment` |\n| 4 | 2,140 payments failed with `otp_timeout` in the window | proven | `payment-gateway` logs, `reason=otp_timeout` |\n| 5 | Contoso status page: \"degraded API latency in eu-1\" from 17:35 | probable | provider status page, read by Sam Roe |\n| 6 | 4 OOM kills of `sms-otp` on prod-pay-01 (3.2 GB) while the queue held 11,800 bodies | proven | `journalctl -k`, cgroup memory events |\n\nRuled out: the network path to the provider (TLS handshake 40 ms, no packet loss from `prod-pay-01`), the 10-22\ndeploy of `payment-gateway` (rolled back on staging, same behaviour only with a slow provider), DNS.\n\n## Timeline (UTC)\n\n- 17:35 Contoso SMS reports degraded latency.\n- 17:41 `sms-otp` p99 provider latency jumps from 0.4 s to 31 s; workers start to pile up.\n- 17:47 Kuma: `OTP delivery (synthetic)` down. QA reports \"no OTP code\" in #qa.\n- 17:59 Alertmanager `SmsOtpQueueBacklog` (critical) on `prod-pay-01`; Argus opens incident and pages.\n- 18:29 First OOM kill of `sms-otp` on `prod-pay-01`; systemd restarts it, the queue refills.\n- 20:23 Provider switched to Fabrikam by feature flag; `sms-otp` restarted on both hosts.\n- 20:35 Queue empty, OTP median 4 s. Payment failures back to the baseline (0.3 %).\n\n## Root cause\n\n`sms-otp` treats the provider as always fast. With no request timeout and a fixed worker pool, one slow dependency\nblocks the whole service; there is no circuit breaker and the failover to the secondary provider exists only as a\nmanual feature flag. The queue keeps full message bodies in memory, so a long backlog also drives the process into\nOOM kills, which drop in-flight messages."
+ },
+ "outline": [
+  {
+   "label": "Summary",
+   "value": "lazy-reading"
+  },
+  {
+   "label": "Full analysis",
+   "value": "full-analysis"
+  },
+  {
+   "label": "Summary",
+   "value": "s2"
+  },
+  {
+   "label": "Evidence",
+   "value": "s3"
+  },
+  {
+   "label": "Timeline (UTC)",
+   "value": "s4"
+  },
+  {
+   "label": "Root cause",
+   "value": "s5"
+  },
+  {
+   "label": "How to fix it",
+   "value": "how-to-fix"
+  },
+  {
+   "label": "Prompt for a write-access agent",
+   "value": "fix-prompt"
+  },
+  {
+   "label": "Fix options as tasks",
+   "value": "fix-tasks"
+  }
+ ],
+ "problem": {
+  "back": "/rca/view?id=51#problem",
+  "banner": [
+   {
+    "text": " Explains "
+   },
+   {
+    "href": "/problems/view?id=7",
+    "text": "P-7 SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+   },
+   {
+    "text": " · known error · 4 linked "
+   }
+  ],
+  "banners": [],
+  "create": null,
+  "link": null,
+  "ref": "rca:51",
+  "suggestions": []
+ },
+ "refresh": false,
+ "status": "open",
+ "statusKind": "warn",
+ "tasks": {
+  "items": [
+   {
+    "n": 1,
+    "task": {
+     "href": "/board/new?src=rca\u0026id=51-1",
+     "text": "Create task"
+    },
+    "title": "Provider timeout and automatic failover"
+   },
+   {
+    "n": 2,
+    "task": {
+     "href": "/board/new?src=rca\u0026id=51-2",
+     "text": "Create task"
+    },
+    "title": "Keep Fabrikam as primary until Contoso confirms the fix"
+   },
+   {
+    "n": 3,
+    "task": {
+     "href": "/board/task?id=15",
+     "text": "OPS-190"
+    },
+    "title": "Alert on provider latency and worker saturation"
+   }
+  ],
+  "title": "Fix options as tasks"
+ },
+ "title": "Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts"
+}

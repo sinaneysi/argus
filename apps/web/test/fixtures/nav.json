@@ -1,0 +1,164 @@
+{
+ "footer": [
+  {
+   "href": "/help",
+   "label": "Help"
+  },
+  {
+   "href": "/admin",
+   "label": "Settings"
+  }
+ ],
+ "groups": [
+  {
+   "icon": "today",
+   "key": "home",
+   "links": [
+    {
+     "count": 5,
+     "countTitle": "5 left today",
+     "href": "/today",
+     "label": "Today"
+    },
+    {
+     "count": 79,
+     "countTitle": "79 decisions waiting",
+     "href": "/review",
+     "label": "Review inbox"
+    }
+   ],
+   "name": "Home",
+   "question": "What needs me now?"
+  },
+  {
+   "icon": "incidents",
+   "key": "incidents",
+   "links": [
+    {
+     "alarm": true,
+     "count": 8,
+     "countTitle": "8 open incidents",
+     "href": "/incidents",
+     "label": "Incidents"
+    },
+    {
+     "href": "/alerts",
+     "label": "Alerts"
+    },
+    {
+     "href": "/problems",
+     "label": "Problems"
+    },
+    {
+     "href": "/rca",
+     "label": "RCA library"
+    }
+   ],
+   "name": "Incidents",
+   "question": "What is broken, and why?"
+  },
+  {
+   "icon": "inventory",
+   "key": "infrastructure",
+   "links": [
+    {
+     "href": "/inventory",
+     "label": "Inventory"
+    },
+    {
+     "href": "/capacity",
+     "label": "Capacity"
+    },
+    {
+     "href": "/certs",
+     "label": "Certificates"
+    },
+    {
+     "href": "/backups",
+     "label": "Backups"
+    },
+    {
+     "alarm": true,
+     "count": 3,
+     "countTitle": "3 checks need a look",
+     "href": "/operations",
+     "label": "Checks"
+    },
+    {
+     "href": "/hygiene",
+     "label": "Alert hygiene"
+    }
+   ],
+   "name": "Infrastructure",
+   "question": "What do we run, and is it healthy?"
+  },
+  {
+   "icon": "cicd",
+   "key": "delivery",
+   "links": [
+    {
+     "href": "/cicd",
+     "label": "CI/CD"
+    },
+    {
+     "href": "/cicd/repo",
+     "label": "Check a repo"
+    },
+    {
+     "href": "/vulns",
+     "label": "Vulnerabilities"
+    }
+   ],
+   "name": "Delivery",
+   "question": "What do we ship, and is it safe?"
+  },
+  {
+   "icon": "board",
+   "key": "work",
+   "links": [
+    {
+     "href": "/board",
+     "label": "Tasks"
+    },
+    {
+     "href": "/qa",
+     "label": "Conversations"
+    },
+    {
+     "href": "/board/new",
+     "label": "New task"
+    }
+   ],
+   "name": "Work",
+   "question": "What is being done, and by whom?"
+  },
+  {
+   "icon": "runs",
+   "key": "agent",
+   "links": [
+    {
+     "href": "/runs",
+     "label": "Runs"
+    },
+    {
+     "href": "/knowledge",
+     "label": "Knowledge"
+    },
+    {
+     "href": "/admin/fix",
+     "label": "Fix runs"
+    }
+   ],
+   "name": "Agent",
+   "question": "What is the agent doing, and is it getting better?"
+  }
+ ],
+ "search": {
+  "action": "/inventory",
+  "hidden": {
+   "go": "1"
+  },
+  "param": "q",
+  "placeholder": "VM name, IP or service"
+ }
+}

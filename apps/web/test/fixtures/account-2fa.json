@@ -1,0 +1,15 @@
+{
+"auth_ago": "just now",
+"enabled": false,
+"enabled_at": "-",
+"idp": false,
+"key_ready": false,
+"last_used": 0,
+"local": true,
+"next": "/account",
+"reauth": "",
+"recovery_left": 0,
+"recovery_total": 10,
+"required": false,
+"user": "demo.admin"
+}

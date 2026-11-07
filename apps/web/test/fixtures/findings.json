@@ -1,0 +1,541 @@
+{
+ "files": [],
+ "findings": [
+  {
+   "at": 1793731304,
+   "env": "release",
+   "href": "/incidents/problem?run=1180\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "high",
+   "suspicious": false,
+   "title": "prod-pay-01: memory pressure from the sms-otp backlog"
+  },
+  {
+   "at": 1793730044,
+   "env": "release",
+   "href": "/incidents/problem?run=1179\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "critical",
+   "suspicious": false,
+   "title": "Payment failure rate 31 % on checkout (otp_timeout)"
+  },
+  {
+   "at": 1793729504,
+   "env": "release",
+   "href": "/incidents/problem?run=1171\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "critical",
+   "suspicious": false,
+   "title": "QA: payment OTP code never arrives"
+  },
+  {
+   "at": 1793728964,
+   "env": "release",
+   "href": "/incidents/problem?run=1170\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "critical",
+   "suspicious": false,
+   "title": "sms-otp queue backlog: OTP SMS not delivered"
+  },
+  {
+   "at": 1793728244,
+   "env": "release",
+   "href": "/incidents/problem?run=1181\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "critical",
+   "suspicious": false,
+   "title": "Kuma: OTP delivery (synthetic) down"
+  },
+  {
+   "at": 1793721584,
+   "env": "release",
+   "href": "/incidents/problem?run=1182\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "high",
+   "suspicious": false,
+   "title": "502 from nginx upstream shop_front: prod-shop-02:3001 refuses connections"
+  },
+  {
+   "at": 1793678024,
+   "env": "pre-release",
+   "href": "/incidents/problem?run=1187\u0026idx=0",
+   "sevKind": "warn",
+   "severity": "medium",
+   "suspicious": false,
+   "title": "staging checkout: 500 on apply-coupon (percentage coupons)"
+  },
+  {
+   "at": 1793590904,
+   "env": "release",
+   "href": "/incidents/problem?run=1184\u0026idx=0",
+   "sevKind": "warn",
+   "severity": "medium",
+   "suspicious": false,
+   "title": "/var/lib/loki on prod-mon-01 full in 4.6 days"
+  },
+  {
+   "at": 1793489024,
+   "env": "release",
+   "href": "/incidents/problem?run=1185\u0026idx=0",
+   "sevKind": "warn",
+   "severity": "medium",
+   "suspicious": false,
+   "title": "Search latency during the catalogue re-index"
+  },
+  {
+   "at": 1793487224,
+   "env": "develop",
+   "href": "/incidents/problem?run=1188\u0026idx=0",
+   "sevKind": "ok",
+   "severity": "low",
+   "suspicious": false,
+   "title": "dev-runner-01 disk 88 %: old docker images"
+  },
+  {
+   "at": 1793357924,
+   "env": "release",
+   "href": "/incidents/problem?run=1189\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "high",
+   "suspicious": false,
+   "title": "prod-db-02 replication lag 45 s"
+  },
+  {
+   "at": 1792969124,
+   "env": "release",
+   "href": "/incidents/problem?run=1190\u0026idx=0",
+   "sevKind": "warn",
+   "severity": "medium",
+   "suspicious": false,
+   "title": "admin.northwind.example login slow (8 s)"
+  },
+  {
+   "at": 1792709924,
+   "env": "release",
+   "href": "/incidents/problem?run=1191\u0026idx=0",
+   "sevKind": "fail",
+   "severity": "high",
+   "suspicious": false,
+   "title": "RabbitMQ orders queue backlog 40,000"
+  },
+  {
+   "at": 1792450724,
+   "env": "pre-release",
+   "href": "/incidents/problem?run=1192\u0026idx=0",
+   "sevKind": "ok",
+   "severity": "low",
+   "suspicious": false,
+   "title": "staging wildcard certificate expired"
+  }
+ ],
+ "room": "QA",
+ "runs": [
+  {
+   "at": 1793745224,
+   "href": "/incidents/run?id=1194",
+   "mr": "",
+   "status": "WARN",
+   "summary": "WARN: 2 problems: sms-otp backlog draining on prod-pay-01/02; nginx 502 on www.northwind.example from prod-shop-02:3001 (dead upstream)."
+  },
+  {
+   "at": 1793738624,
+   "href": "/incidents/run?id=1015",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793717024,
+   "href": "/incidents/run?id=1016",
+   "mr": "",
+   "status": "WARN",
+   "summary": "WARN: sms-otp provider timeouts on prod-pay-01/02 (Contoso SMS p99 31 s); checkout otp_timeout errors."
+  },
+  {
+   "at": 1793695424,
+   "href": "/incidents/run?id=1017",
+   "mr": "",
+   "status": "WARN",
+   "summary": "WARN: sms-otp provider timeouts on prod-pay-01/02 (Contoso SMS p99 31 s); checkout otp_timeout errors."
+  },
+  {
+   "at": 1793673824,
+   "href": "/incidents/run?id=1018",
+   "mr": "",
+   "status": "WARN",
+   "summary": "WARN: sms-otp provider timeouts on prod-pay-01/02 (Contoso SMS p99 31 s); checkout otp_timeout errors."
+  },
+  {
+   "at": 1793652224,
+   "href": "/incidents/run?id=1019",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793630624,
+   "href": "/incidents/run?id=1020",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793609024,
+   "href": "/incidents/run?id=1021",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793587424,
+   "href": "/incidents/run?id=1022",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793565824,
+   "href": "/incidents/run?id=1023",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793544224,
+   "href": "/incidents/run?id=1024",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793522624,
+   "href": "/incidents/run?id=1025",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793501024,
+   "href": "/incidents/run?id=1026",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793489024,
+   "href": "/incidents/run?id=1185",
+   "mr": "",
+   "status": "WARN",
+   "summary": "WARN: Search latency during the catalogue re-index"
+  },
+  {
+   "at": 1793479424,
+   "href": "/incidents/run?id=1027",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793457824,
+   "href": "/incidents/run?id=1028",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793436224,
+   "href": "/incidents/run?id=1029",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793414624,
+   "href": "/incidents/run?id=1030",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793393024,
+   "href": "/incidents/run?id=1031",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793371424,
+   "href": "/incidents/run?id=1032",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793349824,
+   "href": "/incidents/run?id=1033",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793328224,
+   "href": "/incidents/run?id=1034",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793306624,
+   "href": "/incidents/run?id=1035",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793285024,
+   "href": "/incidents/run?id=1036",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793263424,
+   "href": "/incidents/run?id=1037",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793241824,
+   "href": "/incidents/run?id=1038",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793220224,
+   "href": "/incidents/run?id=1039",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1793198624,
+   "href": "/incidents/run?id=1040",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793177024,
+   "href": "/incidents/run?id=1041",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793155424,
+   "href": "/incidents/run?id=1042",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793133824,
+   "href": "/incidents/run?id=1043",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793112224,
+   "href": "/incidents/run?id=1044",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793090624,
+   "href": "/incidents/run?id=1045",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793069024,
+   "href": "/incidents/run?id=1046",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1793047424,
+   "href": "/incidents/run?id=1047",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793025824,
+   "href": "/incidents/run?id=1048",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1793004224,
+   "href": "/incidents/run?id=1049",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792982624,
+   "href": "/incidents/run?id=1050",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792961024,
+   "href": "/incidents/run?id=1051",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792939424,
+   "href": "/incidents/run?id=1052",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792917824,
+   "href": "/incidents/run?id=1053",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792896224,
+   "href": "/incidents/run?id=1054",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792874624,
+   "href": "/incidents/run?id=1055",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792853024,
+   "href": "/incidents/run?id=1056",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1792831424,
+   "href": "/incidents/run?id=1057",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792809824,
+   "href": "/incidents/run?id=1058",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1792788224,
+   "href": "/incidents/run?id=1059",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792766624,
+   "href": "/incidents/run?id=1060",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792745024,
+   "href": "/incidents/run?id=1061",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792723424,
+   "href": "/incidents/run?id=1062",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792701824,
+   "href": "/incidents/run?id=1063",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1792680224,
+   "href": "/incidents/run?id=1064",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792658624,
+   "href": "/incidents/run?id=1065",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1792637024,
+   "href": "/incidents/run?id=1066",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  },
+  {
+   "at": 1792615424,
+   "href": "/incidents/run?id=1067",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: 1 transient upstream timeout on api.northwind.example (12 requests), not recurring."
+  },
+  {
+   "at": 1792593824,
+   "href": "/incidents/run?id=1068",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792572224,
+   "href": "/incidents/run?id=1069",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: no new error pattern; 3 known noisy warnings (search slow query, cart retry, cdn 404)."
+  },
+  {
+   "at": 1792550624,
+   "href": "/incidents/run?id=1070",
+   "mr": "",
+   "status": "OK",
+   "summary": "OK: error rates at baseline on both datacenters."
+  }
+ ],
+ "word": "Findings"
+}

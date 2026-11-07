@@ -1,0 +1,295 @@
+{
+ "autoLine": "Auto-accept: off (every suggestion waits for a person)",
+ "backfill": null,
+ "banners": [],
+ "canCreate": false,
+ "facets": [
+  {
+   "any": true,
+   "key": "status",
+   "label": "Stage",
+   "options": [
+    {
+     "count": 1,
+     "label": "New",
+     "value": "new"
+    },
+    {
+     "count": 3,
+     "label": "Investigating",
+     "value": "investigating"
+    },
+    {
+     "count": 3,
+     "label": "Known error",
+     "value": "known_error"
+    },
+    {
+     "count": 1,
+     "label": "Fix in progress",
+     "value": "fix_in_progress"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "sev",
+   "label": "Severity",
+   "options": [
+    {
+     "count": 1,
+     "label": "Critical",
+     "value": "critical"
+    },
+    {
+     "count": 3,
+     "label": "High",
+     "value": "high"
+    },
+    {
+     "count": 3,
+     "label": "Medium",
+     "value": "medium"
+    },
+    {
+     "count": 1,
+     "label": "Low",
+     "value": "low"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "env",
+   "label": "Environment",
+   "options": [
+    {
+     "count": 6,
+     "label": "release",
+     "value": "release"
+    },
+    {
+     "count": 1,
+     "label": "pre-release",
+     "value": "pre-release"
+    },
+    {
+     "count": 1,
+     "label": "develop",
+     "value": "develop"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "hasAny": true,
+ "heading": "Open problems",
+ "issues": 12,
+ "list": {
+  "clearHref": "/problems",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 8,
+  "noun": "open",
+  "page": 1,
+  "pages": 1,
+  "path": "/problems",
+  "q": "",
+  "sort": "worst",
+  "sorts": [
+   {
+    "label": "Worst first",
+    "value": "worst"
+   },
+   {
+    "label": "Recently updated",
+    "value": "updated"
+   },
+   {
+    "label": "Longest open",
+    "value": "oldest"
+   },
+   {
+    "label": "Most linked",
+    "value": "linked"
+   }
+  ],
+  "to": 8,
+  "total": 8
+ },
+ "open": 8,
+ "refresh": false,
+ "resolved7": 2,
+ "rows": [
+  {
+   "age": "5h",
+   "env": "release",
+   "id": 7,
+   "label": "P-7",
+   "linked": "3 incidents · 1 QA issue · 1 RCA",
+   "owner": "alex.doe",
+   "public": true,
+   "rootCause": "sms-otp calls Contoso SMS with no timeout from a fixed pool of 64 workers; a slow provider blocks every OTP",
+   "rootLabel": "proven",
+   "severity": "critical",
+   "status": "known_error",
+   "statusKind": "warn",
+   "statusWord": "known error",
+   "title": "SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+  },
+  {
+   "age": "7h",
+   "env": "release",
+   "id": 8,
+   "label": "P-8",
+   "linked": "1 incident · 1 RCA",
+   "owner": "jamie.poe",
+   "public": true,
+   "rootCause": "the CI variable SHOP_FRONT_ENV_3001 is empty, so :3001 starts without NEXT_PUBLIC_API_BASE",
+   "rootLabel": "probable",
+   "severity": "high",
+   "status": "investigating",
+   "statusKind": "warn",
+   "statusWord": "investigating",
+   "title": "shop-front deploy writes an incomplete env file for the second instance"
+  },
+  {
+   "age": "9h",
+   "env": "release",
+   "id": 13,
+   "label": "P-13",
+   "linked": "1 incident",
+   "owner": "",
+   "public": false,
+   "rootCause": "",
+   "rootLabel": "",
+   "severity": "high",
+   "status": "new",
+   "statusKind": "",
+   "statusWord": "new",
+   "title": "Release deploys wait on stuck database migrations"
+  },
+  {
+   "age": "3d",
+   "env": "release",
+   "id": 9,
+   "label": "P-9",
+   "linked": "1 incident · 1 CVE group",
+   "owner": "robin.moe",
+   "public": false,
+   "rootCause": "21 production hosts run kernel 6.8.0-41; the fixed 6.8.0-45 is installed but needs a reboot",
+   "rootLabel": "proven",
+   "severity": "high",
+   "status": "known_error",
+   "statusKind": "warn",
+   "statusWord": "known error",
+   "title": "Kernel CVE-2026-31337 on the production fleet (reboot wave)"
+  },
+  {
+   "age": "4d",
+   "env": "release",
+   "id": 12,
+   "label": "P-12",
+   "linked": "1 incident",
+   "owner": "casey.loe",
+   "public": true,
+   "rootCause": "the certbot DNS-01 hook still uses the old token",
+   "rootLabel": "probable",
+   "severity": "medium",
+   "status": "investigating",
+   "statusKind": "warn",
+   "statusWord": "investigating",
+   "title": "Certificate renewals fail after a DNS API token rotation"
+  },
+  {
+   "age": "20h",
+   "env": "pre-release",
+   "id": 10,
+   "label": "P-10",
+   "linked": "1 incident · 1 QA issue",
+   "owner": "jamie.poe",
+   "public": false,
+   "rootCause": "coupon-service 3.9.0 reads min_order as 0 when it is null",
+   "rootLabel": "proven",
+   "severity": "medium",
+   "status": "fix_in_progress",
+   "statusKind": "warn",
+   "statusWord": "fix in progress",
+   "title": "Coupon rules divide by a null minimum order"
+  },
+  {
+   "age": "1d",
+   "env": "release",
+   "id": 14,
+   "label": "P-14",
+   "linked": "nothing linked yet",
+   "owner": "robin.moe",
+   "public": false,
+   "rootCause": "no check on LOG_LEVEL per scope",
+   "rootLabel": "probable",
+   "severity": "medium",
+   "status": "investigating",
+   "statusKind": "warn",
+   "statusWord": "investigating",
+   "title": "Debug log levels left on in production"
+  },
+  {
+   "age": "2d",
+   "env": "develop",
+   "id": 11,
+   "label": "P-11",
+   "linked": "1 incident",
+   "owner": "drew.foe",
+   "public": false,
+   "rootCause": "no prune job on the CI runners",
+   "rootLabel": "proven",
+   "severity": "low",
+   "status": "known_error",
+   "statusKind": "warn",
+   "statusWord": "known error",
+   "title": "Runner disks fill with old Docker images"
+  }
+ ],
+ "suggested": 9,
+ "tab": "open",
+ "tabs": [
+  {
+   "count": 8,
+   "href": "/problems",
+   "key": "open",
+   "label": "Open",
+   "on": true
+  },
+  {
+   "count": 9,
+   "href": "/review?kind=links",
+   "key": "suggestions",
+   "label": "Suggestions",
+   "on": false
+  },
+  {
+   "count": 2,
+   "href": "/problems?status=resolved",
+   "key": "resolved",
+   "label": "Resolved",
+   "on": false
+  },
+  {
+   "count": 2,
+   "href": "/problems?status=closed",
+   "key": "closed",
+   "label": "Closed",
+   "on": false
+  },
+  {
+   "count": 12,
+   "href": "/problems?status=all",
+   "key": "all",
+   "label": "All",
+   "on": false
+  }
+ ]
+}

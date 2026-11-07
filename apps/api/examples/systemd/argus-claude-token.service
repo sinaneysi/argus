@@ -1,0 +1,27 @@
+# argus secrets apply-claude (root): backs up ARGUS_CLAUDE_ENV_FILE (default /etc/argus/claude.env, root:argus 0640),
+# replaces CLAUDE_CODE_OAUTH_TOKEN, runs one test call as ARGUS_CLAUDE_RUN_AS after the egress-country guard, and
+# restores the backup when the test fails. The token never reaches the journal. Started by argus-claude-token.path.
+# The settings-in/out and auth paths below are the host side of the web app's mounts; adjust them to your install.
+[Unit]
+Description=Argus Settings -> Claude: replace or test the Claude token, egress check
+Documentation=https://github.com/sinaneysi/argus/blob/main/internal/app/helpdocs/settings.md
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus secrets apply-claude
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+Environment=ARGUS_AUTH_DB=/var/lib/argus/auth/auth.db
+TimeoutStartSec=300
+UMask=0022
+
+# hardening: root writes only the env file's directory, the state directory, and the run-as user's Claude login
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/argus /var/lib/argus /home/argus
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes

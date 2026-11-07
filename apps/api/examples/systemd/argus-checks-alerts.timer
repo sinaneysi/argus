@@ -1,0 +1,12 @@
+# The alerts snapshot every minute (the /alerts page calls data older than 5 minutes stale).
+[Unit]
+Description=Argus alerts snapshot every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=5s
+Unit=argus-checks@alerts.service
+
+[Install]
+WantedBy=timers.target

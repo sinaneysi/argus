@@ -1,0 +1,218 @@
+{
+"absent": [],
+"bad": [
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "2026-11-10",
+"note": "",
+"pill": {
+"kind": "fail",
+"text": "6 d"
+},
+"rotate": ""
+},
+"id": "gitlab-ro",
+"kind": "GitLab group access token",
+"last_used": 1793765295,
+"name": "GitLab read-only",
+"second": "group_40_bot · created 2025-11-10",
+"used_by": "CI/CD, Check a repo",
+"where": "/etc/argus/gitlab-ro.token"
+},
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "2026-11-28",
+"note": "",
+"pill": {
+"kind": "warn",
+"text": "24 d"
+},
+"rotate": ""
+},
+"id": "jira",
+"kind": "API token",
+"last_used": 1793765415,
+"name": "Jira bot",
+"second": "argus-bot",
+"used_by": "Board, Proposed tasks",
+"where": "/etc/argus/jira.token"
+},
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "",
+"note": "",
+"pill": {
+"kind": "neutral",
+"text": "no expiry info"
+},
+"rotate": "policy 180 d, due 2026-10-15",
+"rotate_now": true
+},
+"id": "nvd",
+"kind": "API key",
+"last_used": 0,
+"name": "NVD API key",
+"second": "set 2026-04-18",
+"used_by": "CVE feeds",
+"where": "/etc/argus/nvd-api-key"
+}
+],
+"certs": "/certs",
+"checked": true,
+"host": "argus-01",
+"howto": [
+{
+"creds": [
+{
+"name": "GitLab read-only",
+"steps": [
+"Rotate it in GitLab (group northwind, Access tokens).",
+"Store it in /etc/argus/gitlab-ro.token"
+]
+},
+{
+"name": "GitLab issues",
+"steps": [
+"Rotate it in GitLab."
+]
+}
+],
+"kind": "GitLab group access token",
+"note": "GitLab read-only, GitLab issues"
+},
+{
+"creds": [
+{
+"name": "Jira bot",
+"steps": [
+"Create a new API token for argus-bot.",
+"Store it in /etc/argus/jira.token"
+]
+}
+],
+"kind": "API token",
+"note": "Jira bot"
+},
+{
+"creds": [
+{
+"name": "NVD API key",
+"steps": [
+"Request a new key from NVD."
+]
+}
+],
+"kind": "API key",
+"note": "NVD API key"
+},
+{
+"creds": [
+{
+"name": "Matrix bot",
+"steps": [
+"Log the bot in again to rotate."
+]
+}
+],
+"kind": "access token",
+"note": "Matrix bot"
+},
+{
+"creds": [
+{
+"name": "GitLab backup plans",
+"steps": [
+"Rotate it in GitLab."
+]
+}
+],
+"kind": "GitLab project access token",
+"note": "GitLab backup plans"
+}
+],
+"next": null,
+"ok": [
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "2027-04-24",
+"note": "",
+"pill": {
+"kind": "ok",
+"text": "171 d"
+},
+"rotate": ""
+},
+"id": "gitlab-issues",
+"kind": "GitLab group access token",
+"last_used": 1793765415,
+"name": "GitLab issues",
+"second": "group_50_bot",
+"used_by": "GitLab issues board sync",
+"where": "/etc/argus/gitlab-issues.token"
+},
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "",
+"note": "",
+"pill": {
+"kind": "neutral",
+"text": "never expires"
+},
+"rotate": ""
+},
+"id": "matrix",
+"kind": "access token",
+"last_used": 1793765475,
+"name": "Matrix bot",
+"second": "@argus:chat.northwind.example",
+"used_by": "Chat triage, notifications",
+"where": "/etc/argus/matrix.token"
+},
+{
+"checked": 1793764035,
+"detail": "",
+"expires": {
+"date": "2027-01-31",
+"note": "",
+"pill": {
+"kind": "ok",
+"text": "88 d"
+},
+"rotate": ""
+},
+"id": "backup-templates",
+"kind": "GitLab project access token",
+"last_used": 1793506335,
+"name": "GitLab backup plans",
+"second": "project_88_bot",
+"used_by": "New backup",
+"where": "/etc/argus/backup-templates.token"
+}
+],
+"refresh": null,
+"scan": {
+"back": "/admin/credentials",
+"busy": false,
+"label": "Check now",
+"meta": "Checked 1h ago · daily 07:20",
+"overdue": "",
+"tasks": "cred-expiry",
+"title": "Let every credential check itself again now (about 30 s)"
+},
+"thresholds": {
+"crit": 7,
+"rotate": 180,
+"today": 14,
+"warn": 30
+}
+}

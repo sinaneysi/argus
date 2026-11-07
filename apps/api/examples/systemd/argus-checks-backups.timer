@@ -1,0 +1,12 @@
+# The backup check once a day, after the nightly backups.
+[Unit]
+Description=Argus backup check daily
+
+[Timer]
+OnCalendar=*-*-* 07:00
+RandomizedDelaySec=10min
+Persistent=yes
+Unit=argus-checks@backups.service
+
+[Install]
+WantedBy=timers.target

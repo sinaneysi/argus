@@ -1,0 +1,26 @@
+# argus sources actions (the agent's user): apply the catalogue API's requests from settings-in/source-actions/ (written
+# by the web app, uid 65534, for an admin with recent 2FA): confirm, reject or edit a route in ARGUS_DB, or run Discover
+# now for one source (at most every 5 min) and rebuild the catalogue. Each result goes to source_action_results for
+# the page. The settings-in path is the host side of the web app's mount; the user must be able to delete files there.
+[Unit]
+Description=Argus data sources catalogue: apply admin actions
+Documentation=https://github.com/sinaneysi/argus/blob/main/docs/architecture/adr/0017-data-sources.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=argus
+Group=argus
+ExecStart=/usr/local/bin/argus sources actions
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+TimeoutStartSec=10min
+UMask=0022
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/argus
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes

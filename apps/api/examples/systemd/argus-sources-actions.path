@@ -1,0 +1,11 @@
+# The Data sources catalogue API (/api/v1/sources/catalogue): confirm, reject or edit a route, or Discover now, as soon as the web app drops a
+# request.
+[Unit]
+Description=Argus data sources catalogue: admin actions
+
+[Path]
+PathExistsGlob=/var/lib/argus/settings-in/source-actions/*.json
+Unit=argus-sources-actions.service
+
+[Install]
+WantedBy=paths.target

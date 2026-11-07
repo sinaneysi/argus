@@ -1,0 +1,33 @@
+# argus sources apply (root): stores each data source credential in ARGUS_SOURCES_DIR/<type>/<name>.cred, checks the
+# login read-only (https only, no redirect, never loopback or link-local), mirrors the existing integrations without
+# touching where they live, and publishes settings-out/sources-status.json. The credential never reaches the journal.
+# Started by argus-sources.path. The settings-in/out and auth paths below are the host side of the web app's mounts;
+# adjust them to your install.
+[Unit]
+Description=Argus Settings -> Data sources: store and check data sources
+Documentation=https://github.com/sinaneysi/argus/blob/main/docs/architecture/adr/0017-data-sources.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus sources apply
+# ARGUS_DB belongs to the agent's user: the copy is made there (a failed copy keeps the status file).
+ExecStart=-/bin/systemctl start --no-block argus-sources-record.service
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+Environment=ARGUS_AUTH_DB=/var/lib/argus/auth/auth.db
+TimeoutStartSec=600
+UMask=0077
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/argus /var/lib/argus
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=yes
+LockPersonality=yes

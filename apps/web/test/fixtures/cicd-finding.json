@@ -1,0 +1,92 @@
+{
+ "detail": "deploy_production: `alembic upgrade head` waited 300 s for the advisory lock held by a stuck migration from 10-22.",
+ "evidence": "ERROR: could not obtain lock on relation \"stock_moves\"\nJob deploy_production exited with code 1",
+ "id": 701,
+ "links": [
+  {
+   "href": "/incidents/view?id=150",
+   "text": "incident #150"
+  }
+ ],
+ "problem": {
+  "back": "/cicd/finding?id=701#problem",
+  "banner": [
+   {
+    "text": " Part of "
+   },
+   {
+    "href": "/problems/view?id=13",
+    "text": "P-13 Release deploys wait on stuck database migrations"
+   },
+   {
+    "text": " · new · 1 linked (through incident #150) "
+   }
+  ],
+  "banners": [],
+  "create": null,
+  "link": null,
+  "ref": "cicd_finding:701",
+  "suggestions": []
+ },
+ "prod": true,
+ "proposals": [
+  {
+   "call": "",
+   "curl": "",
+   "needsToken": false,
+   "rule": "Operator only: migration-lock",
+   "text": "Ask the operator to end the stuck migration session (pid 48121) on prod-db-01, then retry deploy_production."
+  }
+ ],
+ "rail": [
+  {
+   "label": "Kind",
+   "value": "deploy"
+  },
+  {
+   "label": "Class",
+   "value": "lock (model)"
+  },
+  {
+   "label": "Rule",
+   "mono": true,
+   "value": "migration-lock"
+  },
+  {
+   "label": "Severity",
+   "value": "high"
+  },
+  {
+   "label": "Environment",
+   "value": "release"
+  },
+  {
+   "href": "/cicd/project?id=328",
+   "label": "Project",
+   "value": "warehouse/warehouse-api"
+  },
+  {
+   "label": "Ref / job",
+   "value": "release / deploy_production"
+  },
+  {
+   "label": "Commit",
+   "mono": true,
+   "value": "d9b2dcfbea drew.foe"
+  },
+  {
+   "label": "Seen",
+   "value": "2026-11-03 17:02 → 2026-11-03 19:02 · 1×"
+  }
+ ],
+ "status": {
+  "kind": "fail",
+  "text": "open"
+ },
+ "task": {
+  "href": "/board/task?id=11",
+  "text": "OPS-208"
+ },
+ "title": "Release deploy of warehouse-api failed: migration lock held",
+ "writes": "disabled (CICD_WRITE=0, no write token)"
+}

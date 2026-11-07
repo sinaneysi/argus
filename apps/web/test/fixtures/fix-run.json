@@ -1,0 +1,60 @@
+{
+"by": "taylor.noe",
+"env": "pre-release",
+"hosts": [
+"pre-stg-app-01-fix"
+],
+"id": "20261024103011-a1b2c3d4",
+"refresh": false,
+"report": {
+"actions": [
+[
+"backup taken",
+"backup taken",
+"backup taken"
+],
+[
+"change applied",
+"change applied",
+"change applied"
+],
+[
+"verified",
+"verified",
+"verified"
+]
+],
+"at": 1793699359,
+"backups": [
+[
+"/var/backups/argus/20261024103011-a1b2c3d4",
+"/var/backups/argus/20261024103011-a1b2c3d4"
+]
+],
+"cost": "$0.38",
+"denied": "0",
+"md": "## Report\n\nRolled coupon-service back to 3.8.2 on stg-app-01; apply-coupon answers 200; CPN-12 passes.\n",
+"outcome": "fixed",
+"problem": {
+"text": "staging checkout: 500 on apply-coupon",
+"href": "/incidents/problem?run=1187&idx=0"
+},
+"prompt": "(the reviewed prompt)",
+"promptSha": "fd7f735e48f56514",
+"rollback": "redeploy the previous tag",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "Rolled coupon-service back to 3.8.2 on stg-app-01; apply-coupon answers 200; CPN-12 passes.",
+"turns": "19",
+"verification": [
+[
+"health 200",
+"health 200",
+"health 200"
+]
+]
+},
+"wait": null
+}

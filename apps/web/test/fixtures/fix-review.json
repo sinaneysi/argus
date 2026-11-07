@@ -1,0 +1,22 @@
+{
+"back": {
+"text": "Problem",
+"href": "/incidents/problem?run=1187&idx=0"
+},
+"env": "pre-release",
+"hosts": [
+"pre-stg-app-01-fix",
+"pre-stg-app-02-fix"
+],
+"maxBytes": 16384,
+"notices": [],
+"preamble": "You are the fixer for Northwind Commerce's develop and staging hosts. Never touch production. Back up before every change.\n",
+"prompt": "# Roll coupon-service back to 3.8.2 on staging\n## Goal\napply-coupon answers 200 for percentage coupons on staging.\n## Environment and targets\n- Environment: staging (pre-release)\n- Hosts: stg-app-01 (10.20.20.21)\n## Change, step by step\n### Step 1\n- Backup: note the running tag\n- Change: redeploy `shop/coupon-service` tag 3.8.2 to staging\n- Check: `curl -s -o /dev/null -w '%{http_code}' ...` → 200\n- Rollback: redeploy 3.9.0\n## Verify\nQA test case CPN-12 passes.\n",
+"ready": true,
+"source": {
+"idx": "0",
+"run": "1187"
+},
+"steps": [],
+"title": "staging checkout: 500 on apply-coupon (percentage coupons)"
+}

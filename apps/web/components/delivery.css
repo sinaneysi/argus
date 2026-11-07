@@ -1,0 +1,55 @@
+/* The Delivery pages: finding rows, the estate matrix, environment cards, Check a repo (DESIGN.md 3.10, 3.12, 3.21). */
+
+.rows > li.fr { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.fr-b { display: grid; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.fr-e { flex: 0 0 auto; }
+.fr-m { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: var(--fs-sm); color: var(--text-muted); }
+.fr-x { font-size: var(--fs-sm); color: var(--text-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cell { display: grid; gap: 2px; min-width: 150px; }
+.cell > p:first-child { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.envs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: var(--gap); margin-top: 10px; }
+.envc { display: grid; gap: 8px; align-content: start; }
+.envc-k { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.envc-big { color: var(--text); }
+.envc-big b { font-size: var(--fs-fig-sm); font-weight: 600; }
+.envbar { display: block; width: 100%; height: 8px; border-radius: var(--r-pill); overflow: hidden; }
+.envbar .track { fill: var(--surface-2); }
+.envbar .s-success { fill: var(--data-green-soft); }
+.envbar .s-failed { fill: var(--data-red); }
+.envbar .s-waiting { fill: var(--data-sand); }
+.envbar .s-canceled { fill: var(--data-grey); }
+.envbar .s-nopipeline, .envbar .s-nobranch { fill: var(--data-1-soft); }
+.envrows { display: grid; font-size: var(--fs-sm); }
+.envrows a { display: flex; align-items: center; gap: 8px; min-height: 28px; color: var(--text-2); }
+.envrows b { margin-left: auto; font-weight: 600; }
+.envrows .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: var(--data-grey); }
+.envrows .dot.s-failed { background: var(--data-red); }
+.envrows .dot.s-waiting { background: var(--data-sand); }
+.envrows .dot.s-nopipeline, .envrows .dot.s-nobranch { background: var(--data-1-soft); }
+
+.repobox { margin-top: var(--s4); }
+.repobox-r { display: flex; align-items: flex-end; gap: 8px; }
+.repobox-r .field { flex: 1 1 auto; min-width: 0; }
+.verdict { display: grid; gap: 8px; margin-top: var(--s4); }
+.verdict > p:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.verdict ul { list-style: disc; padding-left: 20px; display: grid; gap: 2px; }
+.vfilter input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-strong); }
+.vfilter .f-host input { width: 130px; border: 0; background: none; color: inherit; font: inherit; outline: none; }
+.vrules { display: grid; gap: 8px; padding: 0 var(--card-pad) var(--card-pad); font-size: var(--fs-sm); }
+.vrules li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.stack-f { display: grid; gap: 12px; max-width: 420px; margin-top: 12px; }
+.stepup { max-width: 560px; display: grid; gap: 12px; }
+.stepup > .stack-f { margin-top: 0; }
+.h-card { margin-bottom: 10px; font-size: var(--fs-lg); line-height: var(--lh-lg); font-weight: 600; }
+
+.env-h { flex-wrap: wrap; margin-bottom: 10px; }
+.env-h .tabs { margin-bottom: 0; }
+.rows > li { overflow-wrap: anywhere; }
+.fr-e:empty { display: none; }
+.fold-c > .empty { padding: 0 var(--card-pad) 12px; }
+.l-card > p.pad:last-child { padding-top: 10px; padding-bottom: 12px; }
+.fold-c > .stack-f { padding-bottom: 12px; }
+.l-table tr[aria-current] { background: var(--accent-soft); }
+@media (max-width: 640px) { .rows > li.fr { flex-wrap: wrap; } .fr-b { flex-basis: 100%; } }
+@media (pointer: coarse) { .envrows a { min-height: var(--target-coarse); } }

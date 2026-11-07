@@ -1,0 +1,92 @@
+# Argus public demo: sample data of the fictional company Northwind Commerce. Nothing here is real.
+#   docker compose -f demo/compose.yml up --build        # then open http://127.0.0.1:3000
+#   docker compose -f demo/compose.yml down -v           # reset (the data and the demo sessions are regenerated)
+# Three services (ADR-0018): web (Next.js, every page; it proxies /api and the downloads to the API), api (the Go JSON
+# API), data (the generator). The app is read-only: every write answers "Disabled in the demo";
+# nothing makes an outbound connection.
+name: argus
+services:
+  data:
+    build: { context: .., dockerfile: demo/Dockerfile, target: data }
+    image: argus:data
+    restart: unless-stopped
+    network_mode: none          # the generator needs no network at all
+    volumes:
+      - demo-data:/data
+      - demo-auth:/auth
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+  api:
+    build: { context: .., dockerfile: demo/Dockerfile, target: api }
+    image: argus:api
+    restart: unless-stopped
+    depends_on:
+      data: { condition: service_healthy }
+    ports:
+      - "${DEMO_BIND:-127.0.0.1}:${DEMO_PORT:-8080}:8080"
+    networks:
+      argus: { ipv4_address: 172.29.240.11 }
+    environment:
+      DEMO_MODE: "1"
+      DEMO_PASSWORD: "northwind-demo-2026"   # throwaway, documented in demo/README.md
+      DEMO_VIEWER: demo.viewer
+      DEMO_ADMIN: demo.admin
+      COMPANY_NAME: "Northwind Commerce"
+      ARGUS_HOSTNAME: argus-01
+      ARGUS_SSH_ALIAS: argus-01
+      ARGUS_REPO: ops/argus
+      ARGUS_ACCESS_BROKER: teleport
+      ARGUS_TELEPORT_PROXY: "teleport.northwind.example:443"
+      ARGUS_ACCESS_SSH_USER: ops-ro
+      ARGUS_TRUSTED_PROXIES: "127.0.0.1,::1,172.29.240.1,172.29.240.10"   # the edge (via the published port) and web
+      MATRIX_QA_ROOM_LABEL: "#qa"
+      MATRIX_SERVER_NAME: chat.northwind.example
+      GITLAB_URL: https://gitlab.northwind.example
+      CICD_GROUPS: platform
+      CICD_ENGINE_PROJECT: platform/deployment
+      CICD_ENGINE_PROJECT_ID: "42"
+      BACKUP_TEMPLATES_REPO: ops/backup-templates
+      OUTLINE_URL: https://docs.northwind.example
+      PUBLIC_DOMAIN: northwind.example
+      JIRA_PROJECT: OPS
+      ARGUS_TZ_LABEL: UTC
+      OBS_SITES: east,west
+      OBS_SITE_EAST_LABEL: dc-east
+      OBS_SITE_WEST_LABEL: dc-west
+      ENV_LABELS: "release=production,pre-release=staging"
+    volumes:
+      - demo-data:/data:ro
+      - demo-auth:/auth
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    pids_limit: 64
+  web:
+    build: { context: .., dockerfile: demo/Dockerfile, target: web }
+    image: argus:web
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    ports:
+      - "${DEMO_BIND:-127.0.0.1}:${DEMO_WEB_PORT:-3000}:3000"
+    networks:
+      argus: { ipv4_address: 172.29.240.10 }
+    read_only: true
+    tmpfs: ["/tmp", "/app/apps/web/.next/cache:uid=65534,gid=65534"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    pids_limit: 128
+networks:
+  argus:
+    ipam:
+      config:
+        - subnet: 172.29.240.0/24
+volumes:
+  demo-data:
+  demo-auth:

@@ -1,0 +1,14 @@
+# Data sources discovery: 10 min after boot or enable, then every hour (a source discovered less than an hour ago is
+# skipped; GitLab sweeps all projects once a day and only the active ones in between).
+[Unit]
+Description=Argus data sources discovery every hour
+
+[Timer]
+OnActiveSec=10min
+OnBootSec=10min
+OnUnitActiveSec=1h
+RandomizedDelaySec=5min
+Unit=argus-sources-discover.service
+
+[Install]
+WantedBy=timers.target

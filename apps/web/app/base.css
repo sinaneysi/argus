@@ -1,0 +1,129 @@
+/* Base layer (after packages/design/tokens.css): reset, type, and the shared components of DESIGN.md §3:
+   fields, folds and page parts; buttons, cards, pills and banners live in tailwind.css and components/ui. Tokens only; no colour literals here. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 400 var(--fs-md)/1.5 var(--font);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+/* In a layer under Tailwind's, or these bare element rules would beat every utility on the shadcn components. */
+@layer argus-reset {
+  h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+  ul, ol { padding: 0; list-style: none; }
+  a { color: var(--accent); text-decoration: none; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+}
+/* Unlayered, so a shadcn link is left out here or this would beat its utilities. :where keeps the specificity as it was. */
+@media (hover: hover) and (pointer: fine) { a:where(:not([data-slot])):hover { text-decoration: underline; text-underline-offset: 2px; } }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num, time, .ncount, .figure { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); font-size: var(--fs-code); font-variant-numeric: slashed-zero; }
+.muted { color: var(--text-muted); }
+.small { font-size: var(--fs-sm); }
+small { font-size: var(--fs-xs); }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 8px; top: -48px; z-index: 50; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-control); }
+.skip:focus { top: 8px; }
+.icon { flex: none; }
+
+.demo-strip {
+  margin: 0; padding: 6px var(--pad); font-size: var(--fs-sm); color: var(--info-fg); background: var(--info-bg);
+  border-bottom: 1px solid var(--border);
+}
+.demo-strip strong { margin-right: 6px; }
+
+/* --- the mark and the theme switch (shared by the shell and the sign-in page) --- */
+.mark-bg { fill: var(--mark-bg); }
+.mark-lid { stroke: var(--mark-fg); }
+.mark-iris { fill: var(--mark-fg); }
+.theme { display: flex; padding: 2px; border-radius: var(--r-pill); background: var(--surface-2); }
+.theme button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 28px; padding: 0 8px;
+  border: 1px solid transparent; border-radius: var(--r-pill); background: transparent; color: var(--text-muted); font-size: var(--fs-xs);
+  font-weight: 500; cursor: pointer;
+}
+.theme button.on { background: var(--surface); color: var(--text); border-color: var(--border); }
+.theme.compact { display: inline-flex; }
+.theme.compact button { flex: none; width: 30px; padding: 0; }
+
+
+/* --- tags and counts (3.8, 3.14); .pill and .banner are in tailwind.css --- */
+.kind {
+  display: inline-flex; align-items: center; height: var(--pill); padding: 0 7px; border-radius: var(--r-chip);
+  background: var(--surface-2); color: var(--text-2); font-size: var(--fs-xs); font-weight: 500; white-space: nowrap;
+}
+.ncount {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-xs); font-weight: 600;
+}
+.ncount.alarm { background: var(--fail-bg); color: var(--fail-fg); }
+
+/* --- fields (3.16) --- */
+.field { display: grid; gap: 6px; }
+.field > span { font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.field small { color: var(--text-muted); font-weight: 400; }
+.field input, .field select, .filters select {
+  height: var(--control); padding: 0 10px; border: 1px solid var(--control-border); border-radius: var(--r-control);
+  background: var(--surface); font-size: var(--fs-md); min-width: 0;
+}
+.field input:hover, .field select:hover { border-color: var(--text-muted); }
+.check { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--text-2); }
+.check input { width: 16px; height: 16px; accent-color: var(--accent-strong); margin: 0; }
+
+/* --- cards (3.6): the card itself is PlainCard or Card in components/ui --- */
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-h h2 { display: flex; align-items: center; gap: 8px; font-size: var(--fs-lg); line-height: var(--lh-lg); font-weight: 600; }
+.card-h h2 .muted { font-weight: 400; font-size: var(--fs-md); }
+.card-sub { margin-top: 4px; color: var(--text-muted); }
+.empty { color: var(--text-2); max-width: var(--measure); }
+.empty a { font-weight: 500; }
+
+/* --- folds (3.22) --- */
+.fold > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.fold > summary::-webkit-details-marker, .fold-t > summary::-webkit-details-marker { display: none; }
+.fold > summary::before, .fold-t > summary::before {
+  content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform var(--t) var(--ease-out);
+}
+.fold[open] > summary::before, .fold-t[open] > summary::before { transform: rotate(45deg); }
+
+/* --- key/value lists --- */
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: var(--fs-sm); }
+.kv dd { min-width: 0; overflow-wrap: anywhere; }
+.kv dt { color: var(--text-muted); }
+
+/* --- page header (3.4) --- */
+.phead { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: var(--s5); }
+.phead h1 { font-size: var(--fs-2xl); line-height: var(--lh-2xl); font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+.psub { margin-top: 4px; max-width: var(--measure); color: var(--text-muted); }
+.status-line { margin-top: 8px; font-size: var(--fs-sm); color: var(--text-2); }
+.status-line b { font-weight: 600; color: var(--text); }
+.sep { margin: 0 6px; color: var(--text-muted); }
+/* the second track is flexible so a long subtitle cannot widen the first one and push the "?" away from the title */
+.phead > div:has(> .help-q) { display: grid; grid-template-columns: minmax(0, max-content) minmax(20px, 1fr); column-gap: var(--s2); align-items: start; }
+.phead > div:has(> .help-q) > :not(h1, .help-q) { grid-column: 1 / -1; }
+.help-q { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-top: 10px; border: 1px solid var(--control-border); border-radius: 50%; color: var(--text-muted); font-size: var(--fs-xs); line-height: 1; text-decoration: none; }
+@media (hover: hover) and (pointer: fine) { .help-q:hover { color: var(--text); border-color: var(--text-muted); } }
+@media (pointer: coarse) { .help-q { position: relative; } .help-q::after { content: ""; position: absolute; inset: -13px; } }
+.phead > div:first-child { flex: 1 1 320px; }
+.phead-act { flex: 0 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; min-width: 0; max-width: 100%; }
+
+/* signed-out pages and errors */
+.solo { min-height: 100vh; display: grid; place-items: center; padding: var(--pad); }
+.solo-box { display: grid; gap: 12px; max-width: 420px; }
+.solo-box h1 { font-size: var(--fs-xl); }
+
+@media (max-width: 900px) {
+  .phead h1 { font-size: 26px; line-height: 32px; }
+}
+@media (pointer: coarse) {
+  .field input, .field select, .fold > summary { min-height: var(--target-coarse); }
+  .theme button, .tabs a, .f-pill, .f-search, .fresh { min-height: var(--target-coarse); }
+  .row { grid-template-columns: var(--target-coarse) minmax(0, 1fr) auto; }
+  input, select, textarea { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation: none !important; }
+}

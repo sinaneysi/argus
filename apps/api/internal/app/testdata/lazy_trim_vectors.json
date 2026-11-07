@@ -1,0 +1,57 @@
+[
+ {
+  "in": "short line (proven).",
+  "out": "short line (proven).",
+  "how": ""
+ },
+ {
+  "in": "admin.cdn.northwind.example returns about 2 % 5xx every day: intermittent 60 s hangs (504) on `/admin_customer` (`panel_customer`, `127.0.0.1:5250`) and constant 502s from dead upstreams on `10.21.51.31` (`:4216` `/adminGetPaymentLink`, `:5032` `/discount`, `:4204` `/receipts/*`).",
+  "out": "admin.cdn.northwind.example returns about 2 % 5xx every day…",
+  "how": "clause"
+ },
+ {
+  "in": "The service is healthy; the fault is in its SMS provider layer: failover flaps between sms-gateway and Pishgam, failed sends are dropped without retry, and sms-gateway counts any HTTP 2xx as success without checking the answer, so \"sent\" does not prove delivery there (probable).",
+  "out": "The service is healthy; the fault is in its SMS provider layer: failover flaps between sms-gateway and Pishgam, failed sends are dropped without retry… (probable)",
+  "how": "clause"
+ },
+ {
+  "in": "9 failed sends were lost for good (17:40 to 18:37); sms-gateway carried about 90 % of the 18:00 hour, with delivery unproven. It is a hub service with 33 producers, and OTP rate-limit blocks rose to 220 in that hour.",
+  "out": "9 failed sends were lost for good (17:40 to 18:37); sms-gateway carried about 90 % of the 18:00 hour, with delivery unproven…",
+  "how": "sentence"
+ },
+ {
+  "in": "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twentyone twentytwo twentythree twentyfour twentyfive twentysix",
+  "out": "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twentyone twentytwo twentythree twentyfour…",
+  "how": "word"
+ },
+ {
+  "in": "the upstream pool of the checkout service on several hosts was exhausted after the deploy — the new client opened one connection per request and never closed them again",
+  "out": "the upstream pool of the checkout service on several hosts was exhausted after the deploy…",
+  "how": "clause"
+ },
+ {
+  "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+  "how": "word"
+ },
+ {
+  "in": "https://example.com/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/ is down",
+  "out": "https://example.com/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a…",
+  "how": "word"
+ },
+ {
+  "in": "Restart the unit (needs approval, see the operator note, page 3, step 2, and then the other steps, and also the rollback, and a check, and more text here, and more) now.",
+  "out": "Restart the unit (needs approval, see the operator note, page 3, step 2, and then the other steps, and also the rollback, and a check…",
+  "how": "word"
+ },
+ {
+  "in": "   spaced\n out   words   ",
+  "out": "spaced out words",
+  "how": ""
+ },
+ {
+  "in": "",
+  "out": "",
+  "how": ""
+ }
+]

@@ -1,0 +1,758 @@
+{
+ "back": "/problems/view?id=7",
+ "banners": [],
+ "controls": null,
+ "env": "release",
+ "explains": "Explains 3 incidents and 1 QA issue",
+ "facts": [
+  {
+   "label": "Status",
+   "value": "known error"
+  },
+  {
+   "label": "Root cause",
+   "value": "sms-otp calls Contoso SMS with no timeout from a fixed pool of 64 workers; a slow provider blocks every OTP proven"
+  },
+  {
+   "label": "Workaround",
+   "value": "feature flag sms.provider=fabrikam (switch the provider by hand)"
+  },
+  {
+   "label": "Owner",
+   "value": "alex.doe"
+  },
+  {
+   "label": "Severity",
+   "value": "critical"
+  },
+  {
+   "label": "Environment",
+   "value": "release customer-facing"
+  },
+  {
+   "label": "First seen",
+   "value": "2026-11-03 21:17"
+  },
+  {
+   "label": "Known error",
+   "value": "2026-11-04 00:29"
+  },
+  {
+   "label": "Fix started",
+   "value": "-"
+  },
+  {
+   "label": "Resolved",
+   "value": "-"
+  },
+  {
+   "label": "Linked",
+   "value": "3 incidents · 1 QA issue · 1 RCA"
+  },
+  {
+   "label": "Recurrences",
+   "value": "0"
+  },
+  {
+   "label": "Matrix",
+   "value": "no thread yet"
+  },
+  {
+   "label": "Created",
+   "value": "2026-11-03 22:05 by alex.doe manual"
+  }
+ ],
+ "fix": {
+  "action": null,
+  "checks": [],
+  "note": [
+   {
+    "text": "Argus's options for this problem, from RCA #51. Production: the operator approves every option."
+   }
+  ],
+  "options": [
+   {
+    "kind": "permanent fix",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "a slow provider costs at most 3 s per message and trips the breaker after 20 failures; traffic moves to Fabrikam within a minute"
+     },
+     {
+      "label": "Effort",
+      "value": "1 h"
+     },
+     {
+      "label": "Risk",
+      "value": "low: the release has run on staging for 6 days"
+     },
+     {
+      "label": "Blast radius",
+      "value": "sms-otp on both payment hosts; OTP for payment and login for about 1 minute during the rolling restart"
+     }
+    ],
+    "n": 1,
+    "recommended": true,
+    "title": "Provider timeout and automatic failover",
+    "what": "set `SMS_PROVIDER_TIMEOUT=3s` and `SMS_FAILOVER=fabrikam` in `/etc/northwind/sms-otp.env` on `prod-pay-01` and `prod-pay-02`, deploy `payments/sms-otp` 2.14.0 (circuit breaker, already on staging)"
+   },
+   {
+    "kind": "mitigation",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "the healthy provider carries the traffic; nothing else changes"
+     },
+     {
+      "label": "Effort",
+      "value": "5 min"
+     },
+     {
+      "label": "Risk",
+      "value": "medium: Fabrikam costs 40 % more per message and has a 200 msg/s cap"
+     },
+     {
+      "label": "Blast radius",
+      "value": "none now; a Fabrikam outage would repeat the incident"
+     }
+    ],
+    "n": 2,
+    "recommended": false,
+    "title": "Keep Fabrikam as primary until Contoso confirms the fix",
+    "what": "leave the feature flag `sms.provider=fabrikam`; add a calendar reminder to switch back"
+   },
+   {
+    "kind": "prevention",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "pages 5 minutes into a provider slowdown instead of after the backlog"
+     },
+     {
+      "label": "Effort",
+      "value": "30 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "monitoring only"
+     }
+    ],
+    "n": 3,
+    "recommended": false,
+    "title": "Alert on provider latency and worker saturation",
+    "what": "alert rules `SmsProviderSlow` (p99 \u003e 2 s for 3 min) and `SmsOtpWorkersSaturated` (\u003e 90 % for 2 min) in `monitoring/rules/payments.yml`"
+   }
+  ],
+  "prod": true,
+  "prompt": "PRODUCTION CHANGE — needs the operator's explicit approval before any step.\n# sms-otp: provider timeout and automatic failover on prod-pay-01 / prod-pay-02\n## Goal\n`sms-otp` gives up on a slow SMS provider after 3 s and fails over to Fabrikam Messaging automatically; OTP delivery\nsurvives a provider slowdown.\n## Environment and targets\n- Environment: production\n- Hosts: prod-pay-01 (10.20.30.41), prod-pay-02 (10.20.30.42)\n- Unit: `northwind-sms-otp.service`, env file `/etc/northwind/sms-otp.env`, port 8091\n- Repository: `payments/sms-otp`, tag `2.14.0` (circuit breaker), CI deploy job `deploy_production` (manual)\n## Background\n- Root cause (proven): no provider timeout; 64 workers blocked on Contoso SMS for 2 h 40 min; 2,140 payments failed.\n- Evidence: `sms_otp_workers_busy` 64/64; Contoso p99 31.2 s; `SMS_PROVIDER_TIMEOUT` unset.\n- Timeline (UTC): 17:41 slowdown, 20:23 manual switch to Fabrikam, 20:35 recovered.\n## Constraints and guardrails\n- Production is read-only unless the operator approved this exact change: show each command, its backup and its\n  rollback first, then wait.\n- Never write to a production database. Never run a production deploy pipeline yourself; the operator plays the job.\n- One host at a time; prod-pay-02 first.\n## Pre-checks (run first; stop on any failure)\n1. `curl -fsS http://10.20.30.42:8091/health` → `{\"status\":\"ok\"}`.\n2. `grep -c . /etc/northwind/sms-otp.env` on both hosts → the file exists.\n## Change, step by step\n### Step 1: env file on prod-pay-02\n- Backup: `cp -a /etc/northwind/sms-otp.env /etc/northwind/sms-otp.env.bak-$(date +%Y%m%d%H%M)`\n- Change: append `SMS_PROVIDER_TIMEOUT=3s` and `SMS_FAILOVER=fabrikam`\n- Check: `systemctl restart northwind-sms-otp \u0026\u0026 sleep 5 \u0026\u0026 curl -fsS localhost:8091/health`\n- Rollback: restore the backup and restart the unit.\n### Step 2: the same on prod-pay-01, then ask the operator to play `deploy_production` for 2.14.0\n## Verify\n- `sms_otp_provider_latency_seconds` p99 \u003c 3 s; a test OTP to the QA phone arrives in \u003c 10 s.\n- `SmsOtpQueueBacklog` resolved; payment failure rate at the baseline.\n## Prevention follow-up\n- Alert rules `SmsProviderSlow` and `SmsOtpWorkersSaturated` (Option 3).\n## Do not touch\n- payment-gateway, fraud-check, the database.\n## Report back\n- What you changed (diffs), the backup paths, the verification output, anything still open.\n",
+  "promptHref": "/rca/prompt.md?id=51",
+  "releaseNote": "Argus never runs a production change. Hand this prompt to a person or an agent; the operator approves each step."
+ },
+ "fixSince": null,
+ "gone": [],
+ "groups": [
+  {
+   "key": "caused_by",
+   "links": [
+    {
+     "at": 1793730944,
+     "by": "alex.doe",
+     "canEdit": false,
+     "id": 2,
+     "item": {
+      "env": "release",
+      "exists": true,
+      "href": "/incidents/view?id=141",
+      "label": "#141",
+      "status": "acknowledged",
+      "title": "sms-otp: payment OTP SMS not delivered (queue backlog 11,800)",
+      "type": "incident"
+     },
+     "secondary": false,
+     "source": "person",
+     "state": "accepted",
+     "why": ""
+    },
+    {
+     "at": 1793731124,
+     "by": "alex.doe",
+     "canEdit": false,
+     "id": 3,
+     "item": {
+      "env": "release",
+      "exists": true,
+      "href": "/incidents/view?id=142",
+      "label": "#142",
+      "status": "open",
+      "title": "checkout.northwind.example: payment failure rate 31 % (otp_timeout)",
+      "type": "incident"
+     },
+     "secondary": false,
+     "source": "person",
+     "state": "accepted",
+     "why": ""
+    },
+    {
+     "at": 1793732384,
+     "by": "alex.doe",
+     "canEdit": false,
+     "id": 4,
+     "item": {
+      "env": "release",
+      "exists": true,
+      "href": "/incidents/view?id=143",
+      "label": "#143",
+      "status": "open",
+      "title": "prod-pay-01 memory 94 %: sms-otp OOM-killed 4 times",
+      "type": "incident"
+     },
+     "secondary": false,
+     "source": "person",
+     "state": "accepted",
+     "why": ""
+    },
+    {
+     "at": 1793731304,
+     "by": "alex.doe",
+     "canEdit": false,
+     "id": 5,
+     "item": {
+      "env": "release",
+      "exists": true,
+      "href": "/qa?state=all#issue-61",
+      "label": "QA-61",
+      "status": "actionable",
+      "title": "Payment OTP code never arrives",
+      "type": "QA issue"
+     },
+     "secondary": false,
+     "source": "person",
+     "state": "accepted",
+     "why": ""
+    }
+   ],
+   "title": "Causes"
+  },
+  {
+   "key": "explains",
+   "links": [
+    {
+     "at": 1793739584,
+     "by": "alex.doe",
+     "canEdit": false,
+     "id": 1,
+     "item": {
+      "exists": true,
+      "href": "/rca/view?id=51",
+      "label": "RCA #51",
+      "status": "open",
+      "title": "Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts",
+      "type": "RCA"
+     },
+     "secondary": false,
+     "source": "person",
+     "state": "accepted",
+     "why": ""
+    }
+   ],
+   "title": "Explained by RCA reports"
+  }
+ ],
+ "id": 7,
+ "incoming": [],
+ "label": "P-7",
+ "lazy": {
+  "rows": [
+   {
+    "label": "What broke",
+    "value": "Payment and login OTP SMS were not delivered for 2 h 40 min."
+   },
+   {
+    "label": "Why",
+    "value": "Contoso SMS answered in 30 s; sms-otp has no timeout, so all 64 workers hung (proven)."
+   },
+   {
+    "label": "Impact",
+    "value": "2,140 card payments failed at 3-D Secure; about 31 % of checkouts."
+   },
+   {
+    "label": "Fix",
+    "value": "Provider timeout with automatic failover (Option 1) — the operator approves (production)."
+   }
+  ],
+  "source": "From the report.",
+  "status": "mitigated",
+  "statusKind": "ok"
+ },
+ "linkedCount": 5,
+ "mergedInto": 0,
+ "owner": "alex.doe",
+ "prod": true,
+ "refresh": false,
+ "rootCause": "sms-otp calls Contoso SMS with no timeout from a fixed pool of 64 workers; a slow provider blocks every OTP",
+ "rootLabel": "proven",
+ "status": "known_error",
+ "statusKind": "warn",
+ "statusWord": "known error",
+ "suggestions": [
+  {
+   "at": 1793741024,
+   "canDecide": false,
+   "confidence": "88 %",
+   "from": "Argus",
+   "id": 6,
+   "item": {
+    "env": "release",
+    "exists": true,
+    "href": "/incidents/view?id=144",
+    "label": "#144",
+    "status": "resolved",
+    "title": "Kuma: OTP delivery (synthetic) down",
+    "type": "incident"
+   },
+   "linkWord": "caused by",
+   "reason": "same service sms-otp; Kuma OTP check down 6 minutes before the backlog alert"
+  },
+  {
+   "at": 1793743424,
+   "canDecide": false,
+   "confidence": "63 %",
+   "from": "Argus",
+   "id": 26,
+   "item": {
+    "env": "release",
+    "exists": true,
+    "href": "/qa?state=all#issue-63",
+    "label": "QA-63",
+    "status": "needs_info",
+    "title": "Product images load slowly on mobile, sometimes",
+    "type": "QA issue"
+   },
+   "linkWord": "",
+   "reason": "mobile slowness reported during the SMS outage window"
+  }
+ ],
+ "timeline": [
+  {
+   "at": 1793743424,
+   "detail": [
+    {
+     "text": "argus · "
+    },
+    {
+     "href": "/qa?state=all#issue-63",
+     "text": "QA-63"
+    },
+    {
+     "text": " · related (0.63) mobile slowness reported during the SMS outage window "
+    }
+   ],
+   "kind": "other",
+   "source": [
+    {
+     "text": " suggest "
+    }
+   ]
+  },
+  {
+   "at": 1793741024,
+   "detail": [
+    {
+     "text": "argus · "
+    },
+    {
+     "href": "/incidents/view?id=144",
+     "text": "#144"
+    },
+    {
+     "text": " · caused by (0.88) same service sms-otp; Kuma OTP check down 6 minutes before the backlog alert "
+    }
+   ],
+   "kind": "other",
+   "source": [
+    {
+     "text": " suggest "
+    }
+   ]
+  },
+  {
+   "at": 1793739584,
+   "detail": [
+    {
+     "text": "alex.doe · investigating → known error "
+    }
+   ],
+   "kind": "status",
+   "source": [
+    {
+     "text": " status "
+    }
+   ]
+  },
+  {
+   "at": 1793739584,
+   "detail": [
+    {
+     "text": "alex.doe · "
+    },
+    {
+     "href": "/rca/view?id=51",
+     "text": "RCA #51"
+    },
+    {
+     "text": " · explains "
+    }
+   ],
+   "kind": "link",
+   "source": [
+    {
+     "text": " link "
+    }
+   ]
+  },
+  {
+   "at": 1793739224,
+   "detail": [
+    {
+     "text": "rca · RCA report #51: Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts "
+    }
+   ],
+   "kind": "rca",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793739224,
+   "detail": [
+    {
+     "text": "report written · Payment OTP SMS not delivered — sms-otp blocked on Contoso SMS timeouts "
+    }
+   ],
+   "kind": "rca",
+   "source": [
+    {
+     "href": "/rca/view?id=51",
+     "text": "RCA #51"
+    }
+   ]
+  },
+  {
+   "at": 1793737784,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (draining) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793737424,
+   "detail": [
+    {
+     "text": "other · mitigation: provider flag switched to Fabrikam, sms-otp restarted on both hosts "
+    }
+   ],
+   "kind": "other",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793736344,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (growing) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793735264,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (growing) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793733824,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (growing) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793732384,
+   "detail": [
+    {
+     "text": "alex.doe · "
+    },
+    {
+     "href": "/incidents/view?id=143",
+     "text": "#143"
+    },
+    {
+     "text": " · caused by "
+    }
+   ],
+   "kind": "link",
+   "source": [
+    {
+     "text": " link "
+    }
+   ]
+  },
+  {
+   "at": 1793732384,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (growing) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793731304,
+   "detail": [
+    {
+     "text": "alex.doe · "
+    },
+    {
+     "href": "/qa?state=all#issue-61",
+     "text": "QA-61"
+    },
+    {
+     "text": " · caused by "
+    }
+   ],
+   "kind": "link",
+   "source": [
+    {
+     "text": " link "
+    }
+   ]
+  },
+  {
+   "at": 1793731304,
+   "detail": [
+    {
+     "text": " prod-pay-01: memory pressure from the sms-otp backlog "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=143",
+     "text": "#143"
+    }
+   ]
+  },
+  {
+   "at": 1793731124,
+   "detail": [
+    {
+     "text": "alex.doe · "
+    },
+    {
+     "href": "/incidents/view?id=142",
+     "text": "#142"
+    },
+    {
+     "text": " · caused by "
+    }
+   ],
+   "kind": "link",
+   "source": [
+    {
+     "text": " link "
+    }
+   ]
+  },
+  {
+   "at": 1793730944,
+   "detail": [
+    {
+     "text": "alex.doe · "
+    },
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    },
+    {
+     "text": " · caused by "
+    }
+   ],
+   "kind": "link",
+   "source": [
+    {
+     "text": " link "
+    }
+   ]
+  },
+  {
+   "at": 1793730944,
+   "detail": [
+    {
+     "text": "alex.doe · SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover (manual) "
+    }
+   ],
+   "kind": "status",
+   "source": [
+    {
+     "text": " created "
+    }
+   ]
+  },
+  {
+   "at": 1793730944,
+   "detail": [
+    {
+     "text": "finding · SmsOtpQueueBacklog firing (growing) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793730584,
+   "detail": [
+    {
+     "text": "owner · owner: alex.doe "
+    }
+   ],
+   "kind": "other",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793730044,
+   "detail": [
+    {
+     "text": " Payment failure rate 31 % on checkout (otp_timeout) "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=142",
+     "text": "#142"
+    }
+   ]
+  },
+  {
+   "at": 1793729864,
+   "detail": [
+    {
+     "text": "ack · taking it "
+    }
+   ],
+   "kind": "ack",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793729504,
+   "detail": [
+    {
+     "text": " QA: payment OTP code never arrives "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  },
+  {
+   "at": 1793729144,
+   "detail": [
+    {
+     "text": "first seen · Payment OTP code never arrives "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/qa?state=all#issue-61",
+     "text": "QA-61"
+    }
+   ]
+  },
+  {
+   "at": 1793728964,
+   "detail": [
+    {
+     "text": " sms-otp queue backlog: OTP SMS not delivered "
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "#141"
+    }
+   ]
+  }
+ ],
+ "title": "SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover",
+ "workaround": "feature flag sms.provider=fabrikam (switch the provider by hand)"
+}

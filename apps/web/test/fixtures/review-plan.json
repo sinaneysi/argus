@@ -1,0 +1,351 @@
+{
+ "admin": true,
+ "banners": [],
+ "capped": false,
+ "estMin": 179,
+ "filtered": false,
+ "fullMode": false,
+ "items": [
+  {
+   "at": 1793642868,
+   "env": "release",
+   "envLabel": "release",
+   "id": "OPS-193",
+   "kind": "approvals",
+   "kindRow": "Action approval",
+   "prod": true,
+   "sel": "approvals:OPS-193",
+   "sevKey": "none",
+   "summary": "Add the Redis cart and rate-limit data to the nightly backup: an RDB snapshot on each production Redis node, copied to both backup hosts, kept 14 days.",
+   "targets": [
+    "prod-redis-01",
+    "prod-redis-02",
+    "prod-redis-03",
+    "prod-backup-01",
+    "prod-backup-02"
+   ],
+   "title": "OPS-193 \u00b7 Back up Redis cart and rate-limit data",
+   "waiting": "waiting 1d"
+  },
+  {
+   "at": 1793734068,
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "OPS-238",
+   "kind": "approvals",
+   "kindRow": "Action approval",
+   "prod": false,
+   "sel": "approvals:OPS-238",
+   "sevKey": "none",
+   "summary": "Point the coupon-service health check on staging at /healthz (the old /status route was removed in 3.9.0), redeploy it and confirm the edge marks it healthy.",
+   "targets": [
+    "stg-app-01"
+   ],
+   "title": "OPS-238 \u00b7 Staging: move coupon-service health check to /healthz",
+   "waiting": "waiting 41m"
+  }
+ ],
+ "kindTotal": 2,
+ "kinds": [
+  {
+   "count": 36,
+   "key": "proposals",
+   "label": "Task proposals",
+   "row": "Task proposal",
+   "verb": "Create issue"
+  },
+  {
+   "count": 2,
+   "key": "approvals",
+   "label": "Action approvals",
+   "row": "Action approval",
+   "verb": "Review execution plan"
+  },
+  {
+   "count": 4,
+   "key": "lessons",
+   "label": "Lessons",
+   "row": "Lesson",
+   "verb": "Approve lesson"
+  },
+  {
+   "count": 26,
+   "key": "ideas",
+   "label": "Ideas",
+   "row": "Idea",
+   "verb": "Generate build prompt"
+  },
+  {
+   "count": 2,
+   "key": "replies",
+   "label": "Chat requests",
+   "row": "Chat request",
+   "verb": "Create task"
+  },
+  {
+   "count": 9,
+   "key": "links",
+   "label": "Problem links",
+   "row": "Problem link",
+   "verb": "Link to problem"
+  }
+ ],
+ "matched": 2,
+ "options": {
+  "env": [
+   {
+    "label": "release (production)",
+    "value": "release"
+   },
+   {
+    "label": "pre-release (staging)",
+    "value": "pre-release"
+   },
+   {
+    "label": "develop",
+    "value": "develop"
+   },
+   {
+    "label": "No environment",
+    "value": "none"
+   }
+  ],
+  "sev": [
+   {
+    "label": "Critical",
+    "value": "critical"
+   },
+   {
+    "label": "High",
+    "value": "high"
+   },
+   {
+    "label": "Medium",
+    "value": "medium"
+   },
+   {
+    "label": "Low or info",
+    "value": "low"
+   },
+   {
+    "label": "No severity",
+    "value": "none"
+   }
+  ],
+  "sort": [
+   {
+    "label": "Urgency",
+    "value": "urgency"
+   },
+   {
+    "label": "Oldest first",
+    "value": "oldest"
+   },
+   {
+    "label": "Newest first",
+    "value": "newest"
+   },
+   {
+    "label": "Expiring first",
+    "value": "expiring"
+   }
+  ],
+  "src": [
+   {
+    "label": "QA",
+    "value": "qa"
+   },
+   {
+    "label": "Incident",
+    "value": "page"
+   },
+   {
+    "label": "CVE",
+    "value": "cve"
+   },
+   {
+    "label": "CI/CD",
+    "value": "cicd"
+   },
+   {
+    "label": "Credential",
+    "value": "cred"
+   },
+   {
+    "label": "Task chat",
+    "value": "chat"
+   }
+  ]
+ },
+ "order": "Sorted by urgency: severity (an unknown severity above low), then release (production) before pre-release (staging) and develop, then the nearest decision deadline, then the longest waiting. How Review orders decisions",
+ "page": 1,
+ "pageSize": 25,
+ "pages": 1,
+ "perKind": 200,
+ "query": {
+  "env": "",
+  "kind": "approvals",
+  "page": 1,
+  "q": "",
+  "sel": "approvals:OPS-238",
+  "sev": "",
+  "sort": "urgency",
+  "src": "",
+  "step": "plan"
+ },
+ "refresh": false,
+ "selGone": false,
+ "selected": {
+  "actions": [
+   {
+    "action": "approve",
+    "label": "Approve plan v2 & start",
+    "style": "primary"
+   },
+   {
+    "href": "/review?kind=approvals&sel=approvals:OPS-238",
+    "label": "Back to the summary",
+    "style": "secondary"
+   }
+  ],
+  "after": {
+   "text": "Spin up agent: writes on pre-release (stg-app-01). The approved plan goes to the fixer, which makes the WRITE steps. Root re-checks the plan version, the environment and the budget before anything starts; if the plan changes, the new version needs its own review."
+  },
+  "afterTitle": "If you approve",
+  "evidence": {
+   "noField": true,
+   "text": "Plans carry no evidence field. Open task OPS-238 : its description, the conversation with Argus and the run log."
+  },
+  "facts": [
+   {
+    "label": "Affected",
+    "mono": true,
+    "value": "stg-app-01"
+   },
+   {
+    "label": "Environment",
+    "value": "pre-release"
+   },
+   {
+    "label": "Kind",
+    "value": "change via the fixer"
+   },
+   {
+    "label": "Plan",
+    "value": "v2 \u00b7 4 steps, 1 WRITE"
+   },
+   {
+    "label": "Decision deadline",
+    "missing": true,
+    "value": "None: a plan waits until it is approved or changes"
+   },
+   {
+    "label": "Waiting since",
+    "value": "2026-11-03 19:27 (41m ago)"
+   },
+   {
+    "label": "For",
+    "value": "alex.doe"
+   }
+  ],
+  "more": [
+   {
+    "label": "Planned",
+    "value": "2026-11-03 19:27 (41m ago)"
+   },
+   {
+    "label": "Planning cost",
+    "value": "$0.31"
+   },
+   {
+    "label": "Spent so far",
+    "value": "$0.46"
+   },
+   {
+    "href": "/board/task?key=OPS-238#agent",
+    "label": "Task",
+    "value": "OPS-238"
+   }
+  ],
+  "note": "Spin up agent: writes on pre-release (stg-app-01)",
+  "outcome": {
+   "items": [
+    {
+     "text": "Is a 2-minute restart of coupon-service on staging fine during office hours? (optional)"
+    }
+   ],
+   "text": "Point the coupon-service health check on staging at /healthz (the old /status route was removed in 3.9.0), redeploy it and confirm the edge marks it healthy. Questions in the plan"
+  },
+  "plan": {
+   "blocked": "",
+   "estimate": "30 min, about $0.42",
+   "limits": [
+    "Spin up agent: writes on pre-release (stg-app-01)",
+    "Pinned to plan v2: a changed plan is refused and needs its own review",
+    "Root re-checks the environment and the budget before it starts"
+   ],
+   "path": "fixer",
+   "pathLabel": "Spin up agent: writes on pre-release (stg-app-01)",
+   "questions": [
+    {
+     "blocking": false,
+     "text": "Is a 2-minute restart of coupon-service on staging fine during office hours?"
+    }
+   ],
+   "spentUsd": 0.46,
+   "steps": [
+    {
+     "mode": "READ",
+     "targets": [
+      "stg-app-01"
+     ],
+     "text": "Read the compose file and the edge upstream for coupon-service"
+    },
+    {
+     "mode": "READ",
+     "targets": [
+      "stg-app-01"
+     ],
+     "text": "Confirm /healthz answers 200 on the running 3.9.0 container"
+    },
+    {
+     "mode": "WRITE",
+     "targets": [
+      "stg-app-01"
+     ],
+     "text": "Change the health check path to /healthz and redeploy coupon-service"
+    },
+    {
+     "mode": "READ",
+     "targets": [
+      "stg-app-01"
+     ],
+     "text": "Verify the edge sees the service healthy for 10 minutes"
+    }
+   ],
+   "taskHref": "/board/task?key=OPS-238#agent",
+   "version": 2,
+   "writes": 1
+  },
+  "readOnly": false,
+  "row": {
+   "at": 1793734068,
+   "env": "pre-release",
+   "envLabel": "pre-release",
+   "id": "OPS-238",
+   "kind": "approvals",
+   "kindRow": "Action approval",
+   "prod": false,
+   "sel": "approvals:OPS-238",
+   "sevKey": "none",
+   "summary": "Point the coupon-service health check on staging at /healthz (the old /status route was removed in 3.9.0), redeploy it and confirm the edge marks it healthy.",
+   "targets": [
+    "stg-app-01"
+   ],
+   "title": "OPS-238 \u00b7 Staging: move coupon-service health check to /healthz",
+   "waiting": "waiting 41m"
+  },
+  "step": "plan"
+ },
+ "total": 79
+}

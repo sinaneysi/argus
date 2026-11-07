@@ -1,0 +1,1583 @@
+{
+"admin": true,
+"advisers": [
+{
+"can": true,
+"initial": "D",
+"key": "devops",
+"meta": [
+"senior DevOps / SRE",
+"weekly on Mon, Wed, Fri",
+"no run yet",
+"13 ideas, 8 new"
+],
+"name": "Dana (DevOps)",
+"why": ""
+},
+{
+"can": true,
+"initial": "Q",
+"key": "qa",
+"meta": [
+"QA lead",
+"weekly on Tue, Thu",
+"no run yet",
+"10 ideas, 6 new"
+],
+"name": "Quinn (QA)",
+"why": ""
+},
+{
+"can": true,
+"initial": "N",
+"key": "noc",
+"meta": [
+"NOC engineer",
+"weekly on Mon, Thu",
+"no run yet",
+"10 ideas, 8 new"
+],
+"name": "Nico (NOC)",
+"why": ""
+}
+],
+"banners": [],
+"empty": "",
+"facets": [
+{
+"key": "persona",
+"label": "Adviser",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "devops",
+"label": "Dana (DevOps)",
+"count": 13
+},
+{
+"value": "qa",
+"label": "Quinn (QA)",
+"count": 10
+},
+{
+"value": "noc",
+"label": "Nico (NOC)",
+"count": 10
+}
+]
+},
+{
+"key": "area",
+"label": "Area",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "ci-cd",
+"label": "CI/CD",
+"count": 5
+},
+{
+"value": "monitoring",
+"label": "Monitoring",
+"count": 7
+},
+{
+"value": "qa",
+"label": "QA",
+"count": 7
+},
+{
+"value": "security",
+"label": "Security",
+"count": 4
+},
+{
+"value": "backup",
+"label": "Backup",
+"count": 2
+},
+{
+"value": "capacity",
+"label": "Capacity",
+"count": 4
+},
+{
+"value": "ux",
+"label": "UX",
+"count": 2
+},
+{
+"value": "other",
+"label": "Other",
+"count": 2
+}
+]
+},
+{
+"key": "effort",
+"label": "Effort",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "S",
+"label": "S",
+"count": 20
+},
+{
+"value": "M",
+"label": "M",
+"count": 10
+},
+{
+"value": "L",
+"label": "L",
+"count": 3
+}
+]
+}
+],
+"heading": "All ideas",
+"line": [
+"22 new ideas",
+"4 under review",
+"3 accepted, waiting to be built",
+"weekly: Dana (DevOps) Mon+Wed+Fri, Quinn (QA) Tue+Thu, Nico (NOC) Mon+Thu"
+],
+"list": {
+"clearHref": "/review?kind=ideas&mode=full&status=all",
+"filtered": false,
+"from": 1,
+"hidden": {
+"kind": "ideas",
+"mode": "full",
+"status": "all"
+},
+"matched": 33,
+"next": "/review?kind=ideas&mode=full&status=all&page=2",
+"noun": "ideas",
+"page": 1,
+"pages": 2,
+"path": "/review",
+"q": "",
+"sort": "priority",
+"sorts": [
+{
+"value": "priority",
+"label": "Priority"
+},
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "effort",
+"label": "Smallest effort"
+}
+],
+"to": 25,
+"total": 33
+},
+"reason": {
+"max": 300,
+"min": 3
+},
+"refresh": null,
+"rows": [
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "CI/CD",
+"at": 1793717299,
+"effort": "M",
+"evidence": [
+{
+"text": "incident #145: one shop-front instance down after deploy",
+"href": "/incidents/view?id=145"
+}
+],
+"facts": [
+{
+"value": "Deploys succeed while an instance fails to start (shop-front :3001, 10-23).",
+"label": "Problem"
+},
+{
+"value": "Add a verify step that fails the pipeline when any instance's /health is not 200 within 60 s, and roll back that host.",
+"label": "Proposal"
+},
+{
+"value": "Stops a whole class of 502 incidents at deploy time.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 1,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Gate every deploy on per-instance health",
+"value": "Stops a whole class of 502 incidents at deploy time.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "QA",
+"at": 1793587699,
+"effort": "S",
+"evidence": [
+{
+"text": "QA issues 63 and 65",
+"href": "/qa"
+}
+],
+"facts": [
+{
+"value": "Two QA issues this week waited a day for the page and device.",
+"label": "Problem"
+},
+{
+"value": "A #qa message template (pinned) with the three fields Argus always asks for.",
+"label": "Proposal"
+},
+{
+"value": "Faster triage.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 5,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Ask for the page and device in the first reply",
+"value": "Faster triage.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "QA",
+"at": 1793555299,
+"effort": "M",
+"evidence": [
+{
+"text": "incident #148",
+"href": "/incidents/view?id=148"
+}
+],
+"facts": [
+{
+"value": "Percentage coupons broke on staging (3.9.0).",
+"label": "Problem"
+},
+{
+"value": "Add CPN-1 to CPN-20 to the staging smoke run after every coupon-service deploy.",
+"label": "Proposal"
+},
+{
+"value": "Catches pricing regressions.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 6,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Regression pack for coupons on staging",
+"value": "Catches pricing regressions.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Monitoring",
+"at": 1793522899,
+"effort": "S",
+"evidence": [
+{
+"text": "RCA #51 timeline",
+"href": "/rca/view?id=51"
+}
+],
+"facts": [
+{
+"value": "The backlog alert fired 18 minutes after the provider slowed down.",
+"label": "Problem"
+},
+{
+"value": "Alert SmsProviderSlow (p99 > 2 s for 3 min) at page level; keep the backlog alert as a warning.",
+"label": "Proposal"
+},
+{
+"value": "Earlier pages.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 7,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Page on provider latency, not on queue size",
+"value": "Earlier pages.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Monitoring",
+"at": 1793490499,
+"effort": "S",
+"evidence": [
+{
+"text": "Alert hygiene",
+"href": "/hygiene"
+}
+],
+"facts": [
+{
+"value": "TestAlertDoNotPage has fired at critical for 13 days.",
+"label": "Problem"
+},
+{
+"value": "Remove the rule; add a CI check that rejects rules named Test* in production.",
+"label": "Proposal"
+},
+{
+"value": "Less noise, more trust in pages.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 8,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Delete the leftover test alert",
+"value": "Less noise, more trust in pages.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "CI/CD",
+"at": 1793486899,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "orders downloads every module on each job (3 min).",
+"label": "Problem"
+},
+{
+"value": "A shared module cache keyed on go.sum in the CI template.",
+"label": "Proposal"
+},
+{
+"value": "Faster pipelines on every Go service.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 10,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Cache Go modules between CI jobs",
+"value": "Faster pipelines on every Go service.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "CI/CD",
+"at": 1793461699,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Two coupon-service deploys raced on pre-release.",
+"label": "Problem"
+},
+{
+"value": "A resource_group per environment in the shared CI template.",
+"label": "Proposal"
+},
+{
+"value": "No more half-deployed staging.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 11,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "One deploy lock per environment",
+"value": "No more half-deployed staging.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "Security",
+"at": 1793436499,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "payments builds from a moving :latest tag.",
+"label": "Problem"
+},
+{
+"value": "Resolve and pin the builder image digest; bump it by merge request.",
+"label": "Proposal"
+},
+{
+"value": "Reproducible builds.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 12,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Pin builder images by digest",
+"value": "Reproducible builds.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "Backup",
+"at": 1793386099,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Nobody has restored opensearch-prod_snapshots this year.",
+"label": "Problem"
+},
+{
+"value": "Pick one set a week, restore it on a scratch VM, record the time and the size.",
+"label": "Proposal"
+},
+{
+"value": "Backups proven, not assumed.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 14,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Restore test for one backup set a week",
+"value": "Backups proven, not assumed.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "Capacity",
+"at": 1793335699,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Debug logs of one service fill prod-mon-01.",
+"label": "Problem"
+},
+{
+"value": "Shorter retention for level=debug streams.",
+"label": "Proposal"
+},
+{
+"value": "Disk stays flat when someone forgets a log level.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 16,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Loki retention by label",
+"value": "Disk stays flat when someone forgets a log level.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "Capacity",
+"at": 1793310499,
+"effort": "L",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Re-index competes with the API on prod-api-03.",
+"label": "Problem"
+},
+{
+"value": "Two dedicated search VMs; the API pool keeps its headroom.",
+"label": "Proposal"
+},
+{
+"value": "Stable p95 during the nightly re-index.",
+"label": "Value"
+},
+{
+"value": "medium",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 17,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Move search to its own VM pool",
+"value": "Stable p95 during the nightly re-index.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "QA",
+"at": 1793260099,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "The 3-D Secure failure was found by customers.",
+"label": "Problem"
+},
+{
+"value": "A scripted checkout with a test card right after deploy_production.",
+"label": "Proposal"
+},
+{
+"value": "Catches payment regressions in minutes.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 19,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Smoke test the checkout after every release deploy",
+"value": "Catches payment regressions in minutes.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "UX",
+"at": 1793209699,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Support asks every caller for the order number.",
+"label": "Problem"
+},
+{
+"value": "Print the order number and a support code on the error page.",
+"label": "Proposal"
+},
+{
+"value": "Shorter support calls.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 21,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Show the order number on the payment error page",
+"value": "Shorter support calls.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "UX",
+"at": 1793184499,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Three different 'nothing here' messages confuse testers.",
+"label": "Problem"
+},
+{
+"value": "One empty-state component with a next step.",
+"label": "Proposal"
+},
+{
+"value": "Clearer pages, fewer false reports.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 22,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Consistent empty states in the account area",
+"value": "Clearer pages, fewer false reports.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Monitoring",
+"at": 1793108899,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "One outage posted 31 alerts in #alerts.",
+"label": "Problem"
+},
+{
+"value": "Thread every alert under its incident's first message.",
+"label": "Proposal"
+},
+{
+"value": "A readable alerts room during an outage.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 25,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Group alerts by incident in the chat room",
+"value": "A readable alerts room during an outage.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Monitoring",
+"at": 1793083699,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Login failures in west were seen only from east.",
+"label": "Problem"
+},
+{
+"value": "Run the Kuma login check from a probe in each datacenter.",
+"label": "Proposal"
+},
+{
+"value": "Regional outages detected.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 26,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Synthetic login check from both datacenters",
+"value": "Regional outages detected.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Capacity",
+"at": 1793033299,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Disks are noticed at 85 %, not when they start growing.",
+"label": "Problem"
+},
+{
+"value": "A days-until-full panel per mount, sorted by the soonest.",
+"label": "Proposal"
+},
+{
+"value": "Weeks of warning instead of hours.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 28,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Trend disk growth on the dashboard",
+"value": "Weeks of warning instead of hours.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Other",
+"at": 1793008099,
+"effort": "M",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "The night's events are lost between shifts.",
+"label": "Problem"
+},
+{
+"value": "Argus drafts a five-line handover at 08:00 from the incident list.",
+"label": "Proposal"
+},
+{
+"value": "Nothing falls between shifts.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 29,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "On-call handover note every morning",
+"value": "Nothing falls between shifts.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Monitoring",
+"at": 1792982899,
+"effort": "L",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Sales and support ask in chat whether the shop is down.",
+"label": "Problem"
+},
+{
+"value": "An internal status page fed from open customer-facing incidents.",
+"label": "Proposal"
+},
+{
+"value": "Fewer interruptions during outages.",
+"label": "Value"
+},
+{
+"value": "medium",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 30,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Status page for internal teams",
+"value": "Fewer interruptions during outages.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "CI/CD",
+"at": 1792957699,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "scheduler releases from develop straight to release.",
+"label": "Problem"
+},
+{
+"value": "A CI check that blocks release when pre-release is missing.",
+"label": "Proposal"
+},
+{
+"value": "Every change passes staging.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 31,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Fail the pipeline on a missing pre-release branch",
+"value": "Every change passes staging.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "QA",
+"at": 1792932499,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "The 'in stock' filter showed sold-out items.",
+"label": "Problem"
+},
+{
+"value": "Ten filter combinations in the staging smoke run.",
+"label": "Proposal"
+},
+{
+"value": "Filters stay correct across releases.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 32,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Regression pack for search filters",
+"value": "Filters stay correct across releases.",
+"wait": false
+},
+{
+"actions": [
+"explore",
+"accept",
+"reject"
+],
+"adviser": "Nico (NOC)",
+"adviserRole": "NOC engineer",
+"area": "Security",
+"at": 1792907299,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "One login to prod-db-02 came from a laptop.",
+"label": "Problem"
+},
+{
+"value": "Alert when sshd accepts a login from an address outside the bastion range.",
+"label": "Proposal"
+},
+{
+"value": "Unusual access seen at once.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 33,
+"initial": "N",
+"prompt": "",
+"status": {
+"kind": "",
+"text": "new"
+},
+"title": "Alert on SSH logins outside the bastion",
+"value": "Unusual access seen at once.",
+"wait": false
+},
+{
+"actions": [
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "CI/CD",
+"at": 1793684899,
+"effort": "S",
+"evidence": [
+{
+"text": "RCA #51",
+"href": "/rca/view?id=51"
+}
+],
+"facts": [
+{
+"value": "Outbound HTTP clients without a timeout caused the OTP outage.",
+"label": "Problem"
+},
+{
+"value": "A CI check that fails when an HTTP client in payments/* has no timeout configured.",
+"label": "Proposal"
+},
+{
+"value": "Prevents the next sms-otp.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 2,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "warn",
+"text": "under review"
+},
+"title": "Provider timeouts as a CI lint",
+"value": "Prevents the next sms-otp.",
+"wait": false
+},
+{
+"actions": [
+"accept",
+"reject"
+],
+"adviser": "Dana (DevOps)",
+"adviserRole": "senior DevOps / SRE",
+"area": "Security",
+"at": 1793411299,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "PAYMENT_API_KEY was visible in job logs.",
+"label": "Problem"
+},
+{
+"value": "A nightly audit that flags unmasked or unprotected variables named *_KEY, *_TOKEN or *_SECRET.",
+"label": "Proposal"
+},
+{
+"value": "No secrets in logs.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 13,
+"initial": "D",
+"prompt": "",
+"status": {
+"kind": "warn",
+"text": "under review"
+},
+"title": "Mask and protect every *_KEY variable",
+"value": "No secrets in logs.",
+"wait": false
+},
+{
+"actions": [
+"accept",
+"reject"
+],
+"adviser": "Quinn (QA)",
+"adviserRole": "QA lead",
+"area": "QA",
+"at": 1793234899,
+"effort": "S",
+"evidence": [
+{
+"text": "Argus's own data",
+"href": "/incidents"
+}
+],
+"facts": [
+{
+"value": "Slow-page reports rarely include timings.",
+"label": "Problem"
+},
+{
+"value": "A pinned how-to for recording a HAR on mobile and desktop.",
+"label": "Proposal"
+},
+{
+"value": "Faster triage of slow pages.",
+"label": "Value"
+},
+{
+"value": "low",
+"label": "Risk"
+},
+{
+"value": "none",
+"label": "Prerequisites"
+},
+{
+"value": "fewer incidents of this kind",
+"label": "Success metric"
+}
+],
+"id": 20,
+"initial": "Q",
+"prompt": "",
+"status": {
+"kind": "warn",
+"text": "under review"
+},
+"title": "Attach a HAR file template to #qa",
+"value": "Faster triage of slow pages.",
+"wait": false
+}
+],
+"status": "all",
+"tabs": [
+{
+"count": 29,
+"current": false,
+"href": "/review?kind=ideas&mode=full",
+"label": "Open"
+},
+{
+"count": 22,
+"current": false,
+"href": "/review?kind=ideas&mode=full&status=new",
+"label": "New"
+},
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=ideas&mode=full&status=review",
+"label": "Under review"
+},
+{
+"count": 3,
+"current": false,
+"href": "/review?kind=ideas&mode=full&status=accepted",
+"label": "Accepted"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=ideas&mode=full&status=built",
+"label": "Built"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=ideas&mode=full&status=rejected",
+"label": "Rejected"
+},
+{
+"count": 33,
+"current": true,
+"href": "/review?kind=ideas&mode=full&status=all",
+"label": "All"
+}
+],
+"total": 33
+}

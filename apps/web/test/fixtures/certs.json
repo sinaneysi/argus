@@ -1,0 +1,228 @@
+{
+"at": 1793724499,
+"banners": [],
+"certificates": 7,
+"host": "argus-01",
+"hosts": null,
+"hot": [
+{
+"days": "4",
+"expires": "2026-11-07",
+"issuer": "Let's Encrypt R10",
+"label": "partners.northwind.example",
+"level": "fail",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "partners.northwind.example"
+}
+],
+"pct": 4.444444444444445,
+"status": {
+"text": "FAIL",
+"kind": "fail"
+}
+},
+{
+"days": "9",
+"expires": "2026-11-12",
+"issuer": "Let's Encrypt R11",
+"label": "sellers.northwind.example",
+"level": "warn",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "sellers.northwind.example"
+}
+],
+"pct": 10,
+"status": {
+"text": "FAIL",
+"kind": "fail"
+}
+},
+{
+"days": "22",
+"expires": "2026-11-25",
+"issuer": "Let's Encrypt R10",
+"label": "*.dev.northwind.example (wildcard)",
+"level": "warn",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "www.dev.northwind.example"
+},
+{
+"mismatch": false,
+"name": "api.dev.northwind.example"
+},
+{
+"mismatch": false,
+"name": "grafana.dev.northwind.example"
+},
+{
+"mismatch": false,
+"name": "argus.dev.northwind.example"
+}
+],
+"pct": 24.444444444444443,
+"status": {
+"text": "WARN",
+"kind": "warn"
+}
+}
+],
+"names": 23,
+"ok": [
+{
+"days": "41",
+"expires": "2026-12-14",
+"issuer": "Example Trust RSA CA 2026",
+"label": "*.northwind.example (wildcard)",
+"level": "ok",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "www.northwind.example"
+},
+{
+"mismatch": false,
+"name": "api.northwind.example"
+},
+{
+"mismatch": false,
+"name": "checkout.northwind.example"
+},
+{
+"mismatch": false,
+"name": "pay.northwind.example"
+},
+{
+"mismatch": false,
+"name": "account.northwind.example"
+},
+{
+"mismatch": false,
+"name": "img.northwind.example"
+},
+{
+"mismatch": false,
+"name": "cdn.northwind.example"
+},
+{
+"mismatch": false,
+"name": "admin.northwind.example"
+},
+{
+"mismatch": false,
+"name": "hooks.northwind.example"
+},
+{
+"mismatch": false,
+"name": "wh.northwind.example"
+}
+],
+"pct": 45.55555555555556,
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"days": "54",
+"expires": "2026-12-27",
+"issuer": "Let's Encrypt R10",
+"label": "stats.northwind.example",
+"level": "ok",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "stats.northwind.example"
+}
+],
+"pct": 60,
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"days": "63",
+"expires": "2027-01-05",
+"issuer": "Let's Encrypt R11",
+"label": "*.stg.northwind.example (wildcard)",
+"level": "ok",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "www.stg.northwind.example"
+},
+{
+"mismatch": false,
+"name": "api.stg.northwind.example"
+},
+{
+"mismatch": false,
+"name": "checkout.stg.northwind.example"
+},
+{
+"mismatch": false,
+"name": "pay.stg.northwind.example"
+}
+],
+"pct": 70,
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"days": "77",
+"expires": "2027-01-19",
+"issuer": "Let's Encrypt R11",
+"label": "status.northwind.example",
+"level": "ok",
+"mismatches": 0,
+"names": [
+{
+"mismatch": false,
+"name": "status.northwind.example"
+}
+],
+"pct": 85.55555555555556,
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+}
+],
+"ran": true,
+"refresh": false,
+"scan": {
+"back": "/certs",
+"busy": false,
+"label": "Scan now",
+"meta": "Last scan 7h ago · WARN",
+"overdue": "",
+"tasks": "cert-check",
+"title": "Run Certificates again now"
+},
+"stale": [],
+"status": {
+"text": "FAIL",
+"kind": "fail"
+},
+"summary": "FAIL: 2 certificates need a renewal now.\n\n- **partners.northwind.example** expires in 4 days (same hook).\n- **sellers.northwind.example** expires in 9 days; certbot's DNS-01 renewal fails since 10-19 (TXT record `_acme-challenge.sellers` not created: the DNS API token of the hook expired).\n- `*.dev.northwind.example` 22 days, renews automatically at 30.\n- `legacy.northwind.example` unreachable: still listed in the domains file.",
+"unreachable": [
+{
+"value": "connection refused (decommissioned 10-02?)",
+"label": "legacy.northwind.example"
+}
+]
+}

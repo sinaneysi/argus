@@ -1,0 +1,592 @@
+{
+"maxQuery": 100,
+"q": "backup",
+"results": {
+"count": 26,
+"rows": [
+{
+"href": "/help/infrastructure#backups",
+"page": "Estate and hygiene",
+"section": "Backups",
+"snippet": [
+{
+"mark": false,
+"text": "Every "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " set in object storage, checked daily at 07:00, plus the plans Argus helps you create. Where: Infrastructure → "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": "s. What you see. Failing sets stay open at the top; healthy ones fold  …"
+}
+]
+},
+{
+"href": "/help/settings#backup-targets",
+"page": "Settings",
+"section": "Backup targets",
+"snippet": [
+{
+"mark": false,
+"text": "Where: Settings → "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": " targets. See "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": " targets."
+}
+]
+},
+{
+"href": "/help#how-do-i",
+"page": "Help",
+"section": "How do I…",
+"snippet": [
+{
+"mark": false,
+"text": "…  Know which disk fills up next Capacity Add a database "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " New "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " Check if a repo can use the shared pipeline Check a repo Turn a Matrix message into a Jira task Matrix requests Approve or  …"
+}
+]
+},
+{
+"href": "/help/overview#what-is-argus",
+"page": "Getting started",
+"section": "What Argus is",
+"snippet": [
+{
+"mark": false,
+"text": "…  data centres, Uptime Kuma, the qa room, CI/CD pipelines, "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "s, certificates, disk and memory, and known vulnerabilities. Investigates. When something is wrong it collects evidence through  …"
+}
+]
+},
+{
+"href": "/help/overview#approval",
+"page": "Getting started",
+"section": "What needs a human",
+"snippet": [
+{
+"mark": false,
+"text": "…  or rejecting an idea An admin. Settings, users, Jira, "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " targets Admins; root on the server applies and logs every change."
+}
+]
+},
+{
+"href": "/help/overview#roles",
+"page": "Getting started",
+"section": "Roles",
+"snippet": [
+{
+"mark": false,
+"text": "…  Review: accept, approve or reject no yes Test and save a "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": ", Install now no yes Suppress a vulnerability, decide ideas no yes Settings no yes Moving or commenting on a Jira task also needs your  …"
+}
+]
+},
+{
+"href": "/help/overview#navigation",
+"page": "Getting started",
+"section": "Find your way",
+"snippet": [
+{
+"mark": false,
+"text": "…  run, and is it healthy? Inventory, Capacity, Certificates, "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": "s, Checks, Alert hygiene. Delivery : what do we ship, and is it safe? CI/CD, Check a repo, Vulnerabilities. Work : what is being  …"
+}
+]
+},
+{
+"href": "/help/operations#checks",
+"page": "Incidents and checks",
+"section": "Checks",
+"snippet": [
+{
+"mark": false,
+"text": "…  scheduled checks are OK, which need a look, and how many "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " sets fail. Needs attention : failing "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " sets (not marked OK) and certificates that expired or expire soon, worst first. Scheduled  …"
+}
+]
+},
+{
+"href": "/help/operations#take-action",
+"page": "Incidents and checks",
+"section": "Take action (the fixer)",
+"snippet": [
+{
+"mark": false,
+"text": "…  fix . Follow the run on its page: the final report, the "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "s it took, the verification and the rollback commands. What it will not do. Never production. A prompt that names a production host,  …"
+}
+]
+},
+{
+"href": "/help/infrastructure#faq",
+"page": "Estate and hygiene",
+"section": "FAQ",
+"snippet": [
+{
+"mark": false,
+"text": "…  centre, so Argus cannot forecast it. Why can I not test a "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " on production?. Argus does not connect to production databases. The operator's install bundle tests the connection first on the host  …"
+}
+]
+},
+{
+"href": "/help/agent#fix-runs",
+"page": "Argus",
+"section": "Fix runs",
+"snippet": [
+{
+"mark": false,
+"text": "…  the fixer got (with its checksum), the Final report , the "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": "s it took, the Verification , and the Rollback commands a person can run if the change must be undone. A run starts only from Take  …"
+}
+]
+},
+{
+"href": "/help/agent#ideas",
+"page": "Argus",
+"section": "Ideas",
+"snippet": [
+{
+"mark": false,
+"text": "…  Kai, senior DevOps CI/CD, deploys, reliability, toil, "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "s, capacity, security hygiene Monday Quinn, QA specialist QA intake and triage, release gates, smoke and regression checks Wednesday Nico,  …"
+}
+]
+},
+{
+"href": "/help/settings",
+"page": "Settings",
+"section": "",
+"snippet": [
+{
+"mark": false,
+"text": "…  General, Claude, Kubernetes, Users and access, Jira sync, "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": " targets, Integrations and Credentials. The app never applies a setting itself: it writes a request, and a root job on the server  …"
+}
+]
+},
+{
+"href": "/help/settings#general",
+"page": "Settings",
+"section": "General",
+"snippet": [
+{
+"mark": false,
+"text": "…  prints it). Schedules: how often chat triage, log RCA, the "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " check and the certificate check run, and whether each is enabled, with the next run. Thresholds: Kuma minutes down before a monitor  …"
+}
+]
+},
+{
+"href": "/help/settings#kubernetes",
+"page": "Settings",
+"section": "Kubernetes",
+"snippet": [
+{
+"mark": false,
+"text": "…  the same name again backs up the previous file to its "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "/ folder (the last 5 kept); Remove backs it up too. The audit log records who, which cluster, the server, the user and the verdict, never  …"
+}
+]
+},
+{
+"href": "/help/settings#data",
+"page": "Settings",
+"section": "Where data lives",
+"snippet": [
+{
+"mark": false,
+"text": "…  read, recovery code hashes) Accepted failures ops.db table "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "_overrides (who, why, until when), written by bin/overrides.py App requests settings-in/ (the app writes; root reads and validates)  …"
+}
+]
+},
+{
+"href": "/help/settings#rollback",
+"page": "Settings",
+"section": "Rollback basics",
+"snippet": [
+{
+"mark": false,
+"text": "…  Every change to the live server is recorded with its "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " and rollback in the operator's context files."
+}
+]
+},
+{
+"href": "/help/notifications#kinds",
+"page": "Notifications",
+"section": "Three kinds of message",
+"snippet": [
+{
+"mark": false,
+"text": "…  How it arrives Page Production is down for customers, a "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " set failed, a certificate expires within 7 days, a CI/CD failure blocks a release deploy, KEV on an internet-facing production target.  …"
+}
+]
+},
+{
+"href": "/help/notifications#brief",
+"page": "Notifications",
+"section": "The morning brief",
+"snippet": [
+{
+"mark": false,
+"text": "…  30 days left, one line per certificate, pinned ones first. "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": "s Failing "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " sets. Disks Filesystems that fill within 14 days. CI/CD Failing pipelines by environment, stuck pipelines, deploys  …"
+}
+]
+},
+{
+"href": "/help/safety#per-environment",
+"page": "Is it safe?",
+"section": "Per environment",
+"snippet": [
+{
+"mark": false,
+"text": "…  host no no no Connect to a database only to test a new "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": ", on its host only to test a new "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": ", on its host never Fix on a host admin-reviewed fixer, if allowed admin-reviewed fixer, if  …"
+}
+]
+},
+{
+"href": "/help/safety#can",
+"page": "Is it safe?",
+"section": "What Argus can change",
+"snippet": [
+{
+"mark": false,
+"text": "…  on a branch that a person merges. A merge request in the "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " templates repository when a "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " plan is saved. On develop and pre-release, through the fixer: what the reviewed prompt says, with  …"
+}
+]
+},
+{
+"href": "/help/safety#sign-in",
+"page": "Is it safe?",
+"section": "Sign-in, two-factor and sessions",
+"snippet": [
+{
+"mark": false,
+"text": "…  a task, deep RCA, accepting proposals, problem links, "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": "s, scans, settings, users, suppressions and \"Mark as OK\". Set it up: Account → Set up two-factor . Type your password (Keycloak users:  …"
+}
+]
+},
+{
+"href": "/help/whats-new#d2026-10-25",
+"page": "What's new",
+"section": "2026-10-25",
+"snippet": [
+{
+"mark": false,
+"text": "…  not (Sign-in and two-factor). Mark as OK for a failing "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " set you checked, with a reason and an end (Mark as OK). Clearer pages : Act-now lines open the exact item (the "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " set, the VM, the  …"
+}
+]
+},
+{
+"href": "/help/whats-new#d2026-10-20",
+"page": "What's new",
+"section": "2026-10-20",
+"snippet": [
+{
+"mark": false,
+"text": "…  the bot, check the preview, say yes (Matrix requests). New "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " in four fields , "
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": " targets, Coverage and Install now ("
+},
+{
+"mark": true,
+"text": "Backup"
+},
+{
+"mark": false,
+"text": "s). Deep RCA and automatic deep RCA (Deep RCA). Inventory with the  …"
+}
+]
+},
+{
+"href": "/help/whats-new#d2026-10-19",
+"page": "What's new",
+"section": "2026-10-19",
+"snippet": [
+{
+"mark": false,
+"text": "…  Argus health on the Overview, and a nightly encrypted "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " of Argus's own data."
+}
+]
+},
+{
+"href": "/help/whats-new#d2026-10-17",
+"page": "What's new",
+"section": "2026-10-17",
+"snippet": [
+{
+"mark": false,
+"text": "Argus starts: daily "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " check of 127 "
+},
+{
+"mark": true,
+"text": "backup"
+},
+{
+"mark": false,
+"text": " sets, certificate check and log RCA."
+}
+]
+}
+],
+"shown": 26
+}
+}

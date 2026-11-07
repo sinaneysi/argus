@@ -1,0 +1,35 @@
+{
+"envs": "develop, pre-release",
+"notices": [
+{
+"text": "The scope file lists release: ignored, Argus never fixes production.",
+"kind": "warn"
+}
+],
+"rows": [
+{
+"at": 1793699359,
+"by": "taylor.noe",
+"env": "pre-release",
+"id": "20261024103011-a1b2c3d4",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "Rolled coupon-service back to 3.8.2 on stg-app-01; apply-coupon answers 200; CPN-12 passes."
+},
+{
+"at": 1793497759,
+"by": "drew.foe",
+"env": "develop",
+"id": "20261021080512-0f0e0d0c",
+"status": {
+"kind": "ok",
+"text": "OK"
+},
+"summary": "Pruned 412 images (91 GB); weekly timer docker-prune.timer installed."
+}
+],
+"state": "set up",
+"steps": []
+}

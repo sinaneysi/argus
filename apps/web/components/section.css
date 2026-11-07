@@ -1,0 +1,183 @@
+/* The Incidents section's pages (DESIGN.md "Queue page", "Detail page"), on the shared tokens. */
+
+.crumb-back { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px; font-size: var(--fs-sm); color: var(--text-muted); }
+.meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; color: var(--text-muted); font-size: var(--fs-sm); }
+.actionbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: var(--s4); }
+.actionbar form { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.actionbar input { height: var(--control); padding: 0 10px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); min-width: 220px; }
+.stack { display: grid; gap: var(--gap); min-width: 0; }
+.stack > .banner { margin: 0; }
+.card-h + .md, .card-h + .empty { margin-top: 10px; }
+.stack > .l-card, .halves > .l-card { margin-top: 0; }
+.detail { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--gap); align-items: start; margin-top: var(--gap); }
+.detail > aside { display: grid; gap: var(--gap); position: sticky; top: calc(var(--topbar) + 16px); max-height: calc(100vh - var(--topbar) - 32px); overflow-y: auto; }
+.page [id] { scroll-margin-top: calc(var(--topbar) + 16px); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s3); margin-bottom: var(--s4); }
+.tile { display: grid; gap: 2px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); box-shadow: var(--shadow-card); color: var(--text); text-decoration: none; transition: background-color var(--t-fast) ease; }
+a.tile:hover { text-decoration: none; }
+@media (hover: hover) and (pointer: fine) { a.tile:hover { background: var(--hover); } }
+.tile[aria-current] { background: var(--accent-soft); border-color: transparent; }
+.t-k, .t-s { font-size: var(--fs-sm); color: var(--text-muted); }
+.t-f { font-size: var(--fs-fig-sm); line-height: var(--lh-fig-sm); font-weight: 600; }
+.t-f.hot { color: var(--fail-fg); }
+.tiles.compact .tile { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s3); align-items: center; padding: 10px 14px; }
+.tiles.compact .t-f { grid-area: 1 / 1 / 3 / 2; }
+.tiles.compact .t-k { color: var(--text); }
+.tiles.compact .t-s { font-size: var(--fs-xs); line-height: var(--lh-xs); }
+
+/* the card keeps a 6px inset so a hovered row can be rounded; 6 + 16 equals the normal card padding */
+.l-card { --card-pad: 16px; margin-top: var(--s4); padding: 6px; overflow: clip; }
+/* the edge shadows show there is more to scroll to, with no script: the covers scroll with the table, the shadows stay put */
+.tablewrap {
+  overflow-x: auto; scrollbar-color: var(--control-border) transparent;
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right / 32px 100% no-repeat local,
+    linear-gradient(to left, color-mix(in oklab, var(--text) 14%, transparent), transparent) right / 12px 100% no-repeat scroll;
+}
+/* a table wider than its card scrolls with its identity column pinned (DESIGN.md 3.12); zero specificity, so row hover and selection still win */
+:where(.tablewrap .l-table) :where(th, td):first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.tablewrap:focus-visible, .fold-c > summary:focus-visible { outline-offset: -2px; }
+.l-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); }
+.l-table th { text-align: left; font-size: var(--fs-xs); font-weight: 500; height: var(--th); color: var(--text-muted); padding: 0 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.l-table td { padding: 13px 10px; border-top: 1px solid var(--border); vertical-align: top; }
+.l-table tbody tr:first-child td { border-top: 0; }
+.l-table th:first-child, .l-table td:first-child { padding-left: var(--card-pad); }
+.l-table th:last-child, .l-table td:last-child { padding-right: var(--card-pad); }
+.l-table td.mono, .l-table .sub { overflow-wrap: anywhere; }
+.l-table tr:has(.l-pick:checked) td { background: var(--accent-soft); }
+@media (hover: hover) and (pointer: fine) { .l-table tbody tr:hover td { background: var(--hover); } }
+.l-table tbody td:first-child { border-radius: var(--r-control) 0 0 var(--r-control); }
+.l-table tbody td:last-child { border-radius: 0 var(--r-control) var(--r-control) 0; }
+.l-table .num { text-align: right; }
+.l-table.tight td { padding-block: 9px; }
+/* lower-priority columns give way so the ones people came for fit; the detail page still has them */
+@media (min-width: 641px) and (max-width: 1600px) { .l-table .lo { display: none; } }
+.l-table .nw { white-space: nowrap; }
+.l-table .t-main { min-width: 260px; }
+.l-table .t-main > a { font-weight: 600; color: var(--text); }
+.l-table .sub { display: block; margin-top: 2px; color: var(--text-muted); }
+.l-card > .empty { padding: var(--card-pad); }
+.l-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: var(--s4); }
+.l-pager .muted { margin-right: auto; font-size: var(--fs-sm); }
+.l-note { margin-top: var(--s4); font-size: var(--fs-sm); color: var(--text-muted); }
+.page p.l-note { max-width: 80ch; }
+.l-bulk { display: none; flex-wrap: wrap; align-items: center; gap: 8px; position: sticky; bottom: 0; padding: 10px var(--card-pad); border-top: 1px solid var(--border); background: var(--surface); font-size: var(--fs-sm); color: var(--text-muted); }
+.page:has(.l-pick:checked) .l-bulk { display: flex; }
+.l-bulk select, .l-bulk input[type="text"] { height: var(--control-sm); padding: 0 8px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: var(--text); max-width: 320px; }
+.l-pick { width: 16px; height: 16px; margin: 0 8px 0 0; accent-color: var(--accent-strong); }
+
+.rows { display: grid; }
+.rows > li { padding: 12px var(--card-pad); border-top: 1px solid var(--border); display: grid; gap: 4px; min-width: 0; }
+.rows > li:first-child { border-top: 0; }
+.rows .th { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rows .th a { font-weight: 600; color: var(--text); }
+
+.rail-c h2, .pbox h3 { font-size: var(--fs-md); font-weight: 600; margin-bottom: 10px; }
+.rec { display: grid; gap: 8px; font-size: var(--fs-sm); }
+.rec > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
+.rec dt { color: var(--text-muted); }
+.rec dd { min-width: 0; overflow-wrap: anywhere; }
+.rec.wide { margin-top: 10px; }
+.rec.wide > div { grid-template-columns: 120px minmax(0, 1fr); }
+.jump { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s4); font-size: var(--fs-sm); }
+.jump a { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface); color: var(--text-2); font-weight: 500; }
+
+.md { display: grid; gap: 10px; line-height: 1.55; overflow-wrap: anywhere; min-width: 0; }
+.md h2, .md h3, .md h4, .md h5 { margin-top: 10px; font-size: var(--fs-md); font-weight: 600; }
+.md h2 { font-size: var(--fs-lg); }
+.md ul { list-style: disc; padding-left: 20px; display: grid; gap: 4px; }
+.md code, .fixopts code, .lazy code { font-family: var(--mono); font-size: var(--fs-code); background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-chip); }
+.md table { border-collapse: collapse; font-size: var(--fs-sm); }
+.md th, .md td { padding: 6px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+.md th.num, .md td.num { text-align: right; }
+.code { margin: 0; padding: 12px; border-radius: var(--r-inner); background: var(--surface-2); font-family: var(--mono); font-size: var(--fs-code); line-height: 1.5; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.code code { background: none; padding: 0; }
+.code.prompt { margin-top: 10px; max-height: 420px; overflow: auto; }
+
+.fixopts { display: grid; gap: 14px; margin-top: 12px; }
+.fixopts li { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid var(--border); }
+.fixopts li:first-child { padding-top: 0; border-top: 0; }
+.fo-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.fx-act { display: grid; gap: 8px; justify-items: start; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.fx-act h3 { font-size: var(--fs-md); font-weight: 600; }
+
+.tl { display: grid; gap: 12px; margin-top: 12px; }
+.tl li { position: relative; display: grid; gap: 2px; padding-left: 20px; overflow-wrap: anywhere; }
+.tl li::before { content: ""; position: absolute; left: 0; top: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--control-border); }
+.tl li:not(:last-child)::after { content: ""; position: absolute; left: 4px; top: 19px; bottom: -8px; width: 1px; background: var(--border); }
+.tl li.ev-finding::before { background: var(--warn-fg); }
+.tl li.ev-reopen::before { background: var(--fail-fg); }
+.tl li.ev-resolve::before, .tl li.ev-auto-resolve::before { background: var(--ok-fg); }
+.tl-h { font-size: var(--fs-sm); }
+
+.pbox { display: grid; gap: 10px; }
+.pb-line { display: flex; gap: 8px; align-items: flex-start; }
+.pb-line .icon { margin-top: 3px; color: var(--text-muted); }
+.sugs { display: grid; gap: 12px; }
+.sugs li { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.row-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.ctls { display: grid; gap: 8px; }
+.ctl > summary { display: inline-flex; align-items: center; cursor: pointer; font-size: var(--fs-sm); font-weight: 500; color: var(--accent); }
+.ctl-f { display: grid; gap: 10px; margin-top: 10px; justify-items: stretch; }
+.ctl-f > [data-slot="button"] { justify-self: start; }
+.inline-f { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.inline-f .field { flex: 1 1 200px; }
+.picks { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.picks legend { padding: 0 0 4px; font-size: var(--fs-sm); color: var(--text-muted); }
+.confirm > summary { list-style: none; cursor: pointer; }
+.confirm[open] { flex-basis: 100%; }
+.confirm .inline-f { margin-top: 8px; }
+.confirm > summary::-webkit-details-marker { display: none; }
+
+.quotes { display: grid; gap: 12px; margin-top: 10px; }
+.quotes blockquote { margin: 0; padding: 10px 14px; border-radius: var(--r-inner); background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.quotes .q-meta { margin-top: 4px; font-size: var(--fs-sm); color: var(--text-muted); overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.plain { display: grid; gap: 6px; margin-top: 8px; }
+
+/* wide canvases: columns instead of stretched lines (DESIGN.md 2.3). Cards that hold a table keep the full width. */
+@media (min-width: 1500px) {
+  main.page > .stack:not(:has(.tablewrap, .l-table)) { display: block; columns: 2; column-gap: var(--gap); }
+  main.page > .stack:not(:has(.tablewrap, .l-table)) > * { break-inside: avoid; margin: 0 0 var(--gap); }
+}
+@media (min-width: 1700px) {
+  .detail > .stack:not(:has(.tablewrap, .l-table)) { display: block; columns: 2; column-gap: var(--gap); }
+  .detail > .stack:not(:has(.tablewrap, .l-table)) > * { break-inside: avoid; margin: 0 0 var(--gap); }
+  .detail > article.plain-card:not(.h-doc) > .md { display: block; columns: 2; column-gap: var(--s6); }
+  .detail > article.plain-card:not(.h-doc) > .md > * { break-inside: avoid; margin-top: 0; margin-bottom: 10px; }
+}
+
+@media (max-width: 1280px) {
+  .detail { grid-template-columns: minmax(0, 1fr); }
+  .detail > aside { position: static; max-height: none; overflow: visible; }
+}
+@media (max-width: 640px) {
+  .rec > div, .rec.wide > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .actionbar form { flex: 1 1 100%; }
+  .actionbar input { min-width: 0; width: 100%; }
+  /* a table becomes labelled lines: the title first, nothing hidden (DESIGN.md 3.12) */
+  :where(.tablewrap .l-table) :where(th, td):first-child { position: static; background: none; }
+  .l-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .l-table, .l-table tbody { display: block; }
+  .l-table tr { display: grid; gap: 4px; padding: 12px var(--card-pad); border-top: 1px solid var(--border); }
+  .l-table tbody tr:first-child { border-top: 0; }
+  .l-table td, .l-table td.num, .l-table td.nw, .l-table td:first-child, .l-table td:last-child { display: block; padding: 0; border: 0; text-align: left; white-space: normal; }
+  .l-table td.t-main { order: -1; min-width: 0; }
+  .l-table td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); }
+}
+
+.pad { padding-left: var(--card-pad); padding-right: var(--card-pad); }
+.card-h.pad { padding-top: 14px; padding-bottom: 10px; }
+.grp { padding: 10px var(--card-pad) 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); border-top: 1px solid var(--border); }
+.new-p { margin-bottom: var(--s4); }
+.new-b { margin-top: var(--s4); }
+.fold-t { margin-top: 10px; }
+.fold-t > summary { list-style: none; min-height: var(--control); display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+@media (pointer: coarse) {
+  .ctl > summary, .fold-t > summary, .check, .opt, .legend a, .jump a, .crumb-back, .actionbar input, .l-bulk select, .l-bulk input[type="text"] { min-height: var(--target-coarse); }
+  .jump a, .crumb-back { display: inline-flex; align-items: center; }
+  .l-hit { display: inline-flex; align-items: center; justify-content: center; min-width: var(--target-coarse); min-height: var(--target-coarse); vertical-align: middle; }
+  .l-hit .l-pick { margin: 0; }
+}

@@ -1,0 +1,174 @@
+{
+"matrix": {
+"bot": "@argus:chat.northwind.example",
+"linked": 0,
+"server": "chat.example.com"
+},
+"mfa": {
+"events": [
+{
+"action": "login",
+"actor": "alex.doe",
+"at": 1793731699,
+"detail": "",
+"outcome": "ok",
+"reason": "",
+"target": "alex.doe"
+},
+{
+"action": "login",
+"actor": "jamie.poe",
+"at": 1793656099,
+"detail": "wrong password",
+"outcome": "failed",
+"reason": "",
+"target": "jamie.poe"
+},
+{
+"action": "mfa.recovery.used",
+"actor": "sam.roe",
+"at": 1793576899,
+"detail": "8 codes left",
+"outcome": "ok",
+"reason": "",
+"target": "sam.roe"
+},
+{
+"action": "mfa.enrol",
+"actor": "sam.roe",
+"at": 1793490499,
+"detail": "authenticator app",
+"outcome": "ok",
+"reason": "",
+"target": "sam.roe"
+},
+{
+"action": "mfa.enrol",
+"actor": "alex.doe",
+"at": 1792712899,
+"detail": "authenticator app",
+"outcome": "ok",
+"reason": "",
+"target": "alex.doe"
+}
+],
+"fromEnv": false,
+"note": "Every change needs 2FA; reading does not. One code per sign-in covers every change of that session (MFA_STEP_UP=off). ",
+"required": false
+},
+"names": [
+"alex.doe",
+"demo.admin",
+"demo.viewer",
+"jamie.poe",
+"robin.moe",
+"sam.roe"
+],
+"rows": [
+{
+"actions": [
+"reset",
+"role-admin",
+"disable",
+"revoke-sessions",
+"reset-2fa"
+],
+"lastLogin": 1793663299,
+"matrix": "",
+"mfa": true,
+"mfaUsed": 1793731699,
+"name": "alex.doe",
+"role": "viewer",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": false
+},
+{
+"actions": [],
+"lastLogin": 1793764169,
+"matrix": "",
+"mfa": false,
+"mfaUsed": 0,
+"name": "demo.admin",
+"role": "admin",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": true
+},
+{
+"actions": [
+"reset",
+"role-admin",
+"disable",
+"revoke-sessions"
+],
+"lastLogin": 1793763150,
+"matrix": "",
+"mfa": false,
+"mfaUsed": 0,
+"name": "demo.viewer",
+"role": "viewer",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": false
+},
+{
+"actions": [
+"reset",
+"role-admin",
+"disable",
+"revoke-sessions"
+],
+"lastLogin": 1793663299,
+"matrix": "",
+"mfa": false,
+"mfaUsed": 0,
+"name": "jamie.poe",
+"role": "viewer",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": false
+},
+{
+"actions": [
+"reset",
+"role-admin",
+"disable",
+"revoke-sessions"
+],
+"lastLogin": 1793663299,
+"matrix": "",
+"mfa": false,
+"mfaUsed": 0,
+"name": "robin.moe",
+"role": "viewer",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": false
+},
+{
+"actions": [
+"reset",
+"role-admin",
+"disable",
+"revoke-sessions",
+"reset-2fa"
+],
+"lastLogin": 1793663299,
+"matrix": "",
+"mfa": true,
+"mfaUsed": 1793731699,
+"name": "sam.roe",
+"role": "viewer",
+"source": "local",
+"state": "active",
+"stateKind": "ok",
+"you": false
+}
+]
+}

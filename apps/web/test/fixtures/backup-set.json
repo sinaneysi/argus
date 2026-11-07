@@ -1,0 +1,226 @@
+{
+"accepted": null,
+"banners": [],
+"chart": {
+"from": 1792604899,
+"high": 25273109258,
+"latest": "4.1 GB",
+"low": 4445291151,
+"max": "23.5 GB",
+"min": "4.1 GB",
+"points": [
+[
+1792604899,
+24603152068
+],
+[
+1792691299,
+25231413284
+],
+[
+1792777699,
+24079812182
+],
+[
+1792864099,
+25257847639
+],
+[
+1792950499,
+25256557585
+],
+[
+1793036899,
+25250004687
+],
+[
+1793123299,
+24821072249
+],
+[
+1793209699,
+25273109258
+],
+[
+1793296099,
+24999291594
+],
+[
+1793382499,
+24064283463
+],
+[
+1793468899,
+24131711329
+],
+[
+1793555299,
+4445291151
+],
+[
+1793641699,
+4445291151
+],
+[
+1793728099,
+4445291151
+]
+],
+"to": 1793728099
+},
+"checks": 14,
+"empty": false,
+"latest": "4.1 GB",
+"name": "matomo-prod_db",
+"override": {
+"check": "SMALL",
+"maxDays": 30,
+"openDays": 30
+},
+"rows": [
+{
+"age": "7 h",
+"at": 1793728099,
+"newest": "matomo/20261103/matomo.sql.gz",
+"size": "4.1 GB",
+"status": {
+"text": "SMALL",
+"kind": "fail"
+}
+},
+{
+"age": "9 h",
+"at": 1793641699,
+"newest": "matomo/20261102/matomo.sql.gz",
+"size": "4.1 GB",
+"status": {
+"text": "SMALL",
+"kind": "fail"
+}
+},
+{
+"age": "4 h",
+"at": 1793555299,
+"newest": "matomo/20261101/matomo.sql.gz",
+"size": "4.1 GB",
+"status": {
+"text": "SMALL",
+"kind": "fail"
+}
+},
+{
+"age": "8 h",
+"at": 1793468899,
+"newest": "matomo/20261031/matomo.sql.gz",
+"size": "22.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "5 h",
+"at": 1793382499,
+"newest": "matomo/20261030/matomo.sql.gz",
+"size": "22.4 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "5 h",
+"at": 1793296099,
+"newest": "matomo/20261029/matomo.sql.gz",
+"size": "23.3 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "8 h",
+"at": 1793209699,
+"newest": "matomo/20261028/matomo.sql.gz",
+"size": "23.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "6 h",
+"at": 1793123299,
+"newest": "matomo/20261027/matomo.sql.gz",
+"size": "23.1 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "8 h",
+"at": 1793036899,
+"newest": "matomo/20261026/matomo.sql.gz",
+"size": "23.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "6 h",
+"at": 1792950499,
+"newest": "matomo/20261025/matomo.sql.gz",
+"size": "23.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "7 h",
+"at": 1792864099,
+"newest": "matomo/20261024/matomo.sql.gz",
+"size": "23.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "6 h",
+"at": 1792777699,
+"newest": "matomo/20261023/matomo.sql.gz",
+"size": "22.4 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "5 h",
+"at": 1792691299,
+"newest": "matomo/20261022/matomo.sql.gz",
+"size": "23.5 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"age": "7 h",
+"at": 1792604899,
+"newest": "matomo/20261021/matomo.sql.gz",
+"size": "22.9 GB",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+}
+],
+"status": {
+"text": "SMALL",
+"kind": "fail"
+}
+}

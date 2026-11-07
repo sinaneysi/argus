@@ -1,0 +1,62 @@
+{
+ "blocked": "",
+ "envs": [
+  {
+   "label": "not set",
+   "value": ""
+  },
+  {
+   "label": "develop",
+   "value": "develop"
+  },
+  {
+   "label": "pre-release",
+   "value": "pre-release"
+  },
+  {
+   "label": "release",
+   "value": "release"
+  }
+ ],
+ "limits": {
+  "prompt": 16384,
+  "text": 32768,
+  "title": 200
+ },
+ "priorities": [
+  "Highest",
+  "High",
+  "Medium",
+  "Low",
+  "Lowest"
+ ],
+ "return": "",
+ "sub": "A task on the board, sent to the tracker you choose",
+ "trackers": {
+  "gitlab": "Group board northwind/ops, in the project below.",
+  "jira": "Your Jira connection, else the shared one.",
+  "project": "71",
+  "projects": [
+   {
+    "label": "infra",
+    "value": "71"
+   },
+   {
+    "label": "ops-tasks",
+    "value": "72"
+   }
+  ]
+ },
+ "values": {
+  "description": "",
+  "env": "",
+  "evidence": "",
+  "fix_prompt": "",
+  "gl_project": "",
+  "host": "",
+  "labels": "",
+  "priority": "Medium",
+  "title": "",
+  "tracker": "jira"
+ }
+}

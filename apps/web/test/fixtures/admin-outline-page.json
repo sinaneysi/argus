@@ -1,0 +1,55 @@
+{
+"blocked": false,
+"body": "## Checkout\n\nOwned by the shop team. See the [runbook](https://docs.northwind.example/doc/runbook).\n\n- Tier: 1\n- Deploys through `platform/deployment`\n",
+"built": "2026-11-04 00:28",
+"changed": "2026-11-04 00:28",
+"diff": {
+"lines": [
+{
+"kind": "hunk",
+"text": "@@ -1,5 +1,6 @@"
+},
+{
+"kind": "",
+"text": " ## Checkout"
+},
+{
+"kind": "",
+"text": " "
+},
+{
+"kind": "del",
+"text": "-Owned by the web team."
+},
+{
+"kind": "add",
+"text": "+Owned by the shop team. See the [runbook](https://docs.northwind.example/doc/runbook)."
+},
+{
+"kind": "",
+"text": " "
+},
+{
+"kind": "",
+"text": " - Tier: 1"
+},
+{
+"kind": "add",
+"text": "+- Deploys through `platform/deployment`"
+}
+],
+"more": 0
+},
+"flags": [],
+"hash": "9f3cut",
+"mode": "preview",
+"name": "shop/checkout",
+"outline": {
+"label": "up to date",
+"url": "https://docs.northwind.example/doc/checkout"
+},
+"scan": "clean",
+"service": "shop/checkout",
+"title": "Checkout",
+"view": "## Checkout\n\nOwned by the shop team. See the [runbook](https://docs.northwind.example/doc/runbook).\n\n- Tier: 1\n- Deploys through `platform/deployment`\n"
+}

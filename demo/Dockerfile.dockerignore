@@ -1,0 +1,17 @@
+*
+!apps/api/go.mod
+!apps/api/go.sum
+!apps/api/vendor
+!apps/api/cmd
+!apps/api/internal
+!packages/design/static
+!package.json
+!package-lock.json
+!.npmrc
+!packages/design
+!apps/web
+apps/web/node_modules
+apps/web/.next
+apps/web/public/static
+apps/web/next-env.d.ts
+apps/web/*.tsbuildinfo

@@ -1,0 +1,226 @@
+{
+"at": 1793732779,
+"findings": [
+{
+"env": "release",
+"href": "/incidents/problem?run=1171&idx=0",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"summary": "Two QA testers and support report that the payment OTP SMS does not arrive.",
+"title": "QA: payment OTP code never arrives"
+}
+],
+"findingsWord": "Findings",
+"id": 1171,
+"incidents": [
+{
+"text": "#141",
+"href": "/incidents/view?id=141"
+}
+],
+"md": {
+"md": "WARN: QA: payment OTP code never arrives"
+},
+"messages": [
+{
+"at": 1793732419,
+"chain": [
+[
+{
+"text": "Finding",
+"href": "/incidents/problem?run=1171&idx=0"
+}
+],
+[
+{
+"text": "How to fix",
+"href": "/incidents/problem?run=1171&idx=0#how-to-fix"
+}
+],
+[
+{
+"text": "Incident #141",
+"href": "/incidents/view?id=141"
+},
+{
+"text": " acknowledged "
+}
+],
+[
+{
+"text": "RCA",
+"href": "/rca/view?id=51"
+}
+],
+[
+{
+"text": "OPS-231",
+"href": "/board/task?key=OPS-231"
+}
+],
+[
+{
+"text": "Matrix thread",
+"href": "https://matrix.to/#/!argusRoomNw01:chat.northwind.example/$evt22069d30b886?via=chat.northwind.example"
+}
+]
+],
+"disp": {
+"kind": "fail",
+"text": "Problem → incident #141"
+},
+"edited": false,
+"id": 1,
+"link": "https://matrix.to/#/!qaRoomNw01:chat.northwind.example/$3a4225d566d9nwbb1156?via=chat.northwind.example",
+"long": false,
+"mxid": "@riley.qa:chat.northwind.example",
+"reason": "payment OTP not delivered; confirmed by the sms-otp backlog alert",
+"reconstructed": false,
+"room": "#qa",
+"sender": "Riley (QA)",
+"source": "#qa",
+"text": "Payment on www: after entering the card I never get the OTP code. Tried twice with two different phones."
+},
+{
+"at": 1793732599,
+"chain": [
+[
+{
+"text": "Incident #141",
+"href": "/incidents/view?id=141"
+},
+{
+"text": " acknowledged "
+}
+],
+[
+{
+"text": "RCA",
+"href": "/rca/view?id=51"
+}
+],
+[
+{
+"text": "OPS-231",
+"href": "/board/task?key=OPS-231"
+}
+],
+[
+{
+"text": "Matrix thread",
+"href": "https://matrix.to/#/!argusRoomNw01:chat.northwind.example/$evt22069d30b886?via=chat.northwind.example"
+}
+]
+],
+"disp": {
+"kind": "warn",
+"text": "Known incident #141"
+},
+"edited": false,
+"id": 2,
+"link": "https://matrix.to/#/!qaRoomNw01:chat.northwind.example/$0e44b094c6d1nw26b4ee?via=chat.northwind.example",
+"long": false,
+"mxid": "@avery.support:chat.northwind.example",
+"reason": "same as incident #141",
+"reconstructed": false,
+"room": "#qa",
+"sender": "Avery (Support)",
+"source": "#qa",
+"text": "Support line: 14 customers in 10 minutes say the SMS code to pay never comes. Is something down?"
+},
+{
+"at": 1793733139,
+"chain": [
+[
+{
+"text": "Incident #141",
+"href": "/incidents/view?id=141"
+},
+{
+"text": " acknowledged "
+}
+],
+[
+{
+"text": "RCA",
+"href": "/rca/view?id=51"
+}
+],
+[
+{
+"text": "OPS-231",
+"href": "/board/task?key=OPS-231"
+}
+],
+[
+{
+"text": "Matrix thread",
+"href": "https://matrix.to/#/!argusRoomNw01:chat.northwind.example/$evt22069d30b886?via=chat.northwind.example"
+}
+]
+],
+"disp": {
+"kind": "warn",
+"text": "Known incident #141"
+},
+"edited": false,
+"id": 3,
+"link": "https://matrix.to/#/!qaRoomNw01:chat.northwind.example/$5d40735e96fbnw49f281?via=chat.northwind.example",
+"long": false,
+"mxid": "@riley.qa:chat.northwind.example",
+"reason": "same as incident #141",
+"reconstructed": false,
+"room": "#qa",
+"sender": "Riley (QA)",
+"source": "#qa",
+"text": "Login OTP is also slow, took about 3 minutes just now."
+}
+],
+"rail": [
+{
+"label": "Task",
+"value": "chat-triage"
+},
+{
+"label": "Started",
+"value": "2026-11-03 19:06"
+},
+{
+"label": "Status",
+"value": "WARN"
+},
+{
+"label": "Duration",
+"value": "228 s"
+},
+{
+"label": "Cost",
+"value": "$0.139"
+},
+{
+"label": "Turns",
+"value": "24"
+},
+{
+"label": "Denied",
+"value": "0"
+},
+{
+"label": "MR",
+"value": "-"
+},
+{
+"label": "Log",
+"value": "chat-triage-1171.jsonl",
+"mono": true
+}
+],
+"showMessages": true,
+"status": {
+"kind": "warn",
+"text": "WARN"
+},
+"task": "chat-triage"
+}

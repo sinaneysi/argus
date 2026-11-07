@@ -1,0 +1,10 @@
+# Settings -> Data sources: store, check or remove a data source as soon as the web app drops a request.
+[Unit]
+Description=Argus Settings -> Data sources: data source requests
+
+[Path]
+PathExistsGlob=/var/lib/argus/settings-in/sources/*.json
+Unit=argus-sources.service
+
+[Install]
+WantedBy=paths.target

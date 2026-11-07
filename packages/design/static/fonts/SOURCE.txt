@@ -1,0 +1,12 @@
+Self-hosted fonts (served by server.py from /static/fonts/, whitelisted by name).
+Both are licensed under the SIL Open Font License 1.1 (see the OFL-*.txt files).
+
+ibm-plex-sans-var-latin.woff2   IBM Plex Sans variable (wght 100-700), latin subset
+                                npm @fontsource-variable/ibm-plex-sans@5.3.0  files/ibm-plex-sans-latin-wght-normal.woff2
+                                sha256 e2291e842cf5af167122a22881a740c7f2dda7716f1e8cd76680264f4a859470
+jetbrains-mono-var-latin.woff2  JetBrains Mono variable (wght 100-800), latin subset
+                                npm @fontsource-variable/jetbrains-mono@5.1.0  files/jetbrains-mono-latin-wght-normal.woff2
+                                sha256 d8188600846f4100acc72730c0576d8abca97ae837c2dbf188362df2fa785d82
+
+vazirmatn-arabic.woff2: Vazirmatn 33.0.3 (https://github.com/rastikerdar/vazirmatn, npm vazirmatn@33.0.3, Vazirmatn[wght].woff2),
+  subset with fontTools to U+0600-06FF, U+066B-066C, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF (all layout features). SIL OFL 1.1.

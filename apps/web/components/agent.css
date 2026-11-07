@@ -1,0 +1,21 @@
+/* The Agent section: the cost chart, fix reports and the review form. Shared list and record styles are in section.css. */
+.cost { padding: 0 var(--card-pad) var(--card-pad); }
+.cost-plot { position: relative; }
+.cost-plot svg { display: block; width: 100%; height: 120px; }
+.cost-plot .grid { stroke: var(--border); stroke-width: 1px; }
+.cost-plot .base { stroke: var(--text-muted); stroke-width: 1px; }
+.cost-plot .bar-d { fill: var(--data-1); }
+.cost-top { position: absolute; top: 0; right: 0; padding-left: 6px; background: var(--surface); }
+.cost .tablewrap { margin: 8px calc(-1 * var(--card-pad)) 0; }
+.cost-x { display: flex; justify-content: space-between; margin-top: 4px; }
+.r-denied { color: var(--warn-fg); font-weight: 600; }
+.op-steps { list-style: decimal; margin: 0; padding: 0 var(--card-pad) var(--card-pad) calc(var(--card-pad) + 18px); display: grid; gap: 8px; font-size: var(--fs-sm); }
+.fx-hosts { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; border: 0; }
+.fx-hosts legend { padding: 0; margin-bottom: 6px; font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.fx-form { display: grid; gap: var(--s4); }
+.fx-form textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: var(--text); resize: vertical; }
+.fx-form textarea:hover { border-color: var(--text-muted); }
+.fx-form > .banner { margin: 0; }
+@media (pointer: coarse) { .fx-form textarea { font-size: 16px; } .k-link { display: inline-flex; align-items: center; min-height: var(--target-coarse); } }
+.fx-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.fx-lead { margin: 0; max-width: var(--measure); }

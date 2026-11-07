@@ -1,0 +1,40 @@
+{
+"any": true,
+"banners": [],
+"can": true,
+"confirm": {
+"action": "reject",
+"back": "/review?kind=links&mode=full",
+"body": [
+"Argus remembers each pair and does not suggest it again for 30 days. The problems and items are not changed."
+],
+"button": "Reject 1 suggested link",
+"gone": [],
+"head": "Reject 1 suggested link?",
+"items": [
+{
+"confidence": "91 %",
+"item": "#146",
+"linkWord": "caused by",
+"problem": "P-14",
+"title": "Debug log levels left on in production"
+}
+],
+"links": [
+23
+],
+"maxNote": 300,
+"skipped": 0
+},
+"line": [
+"9 suggested links waiting",
+"no decision yet",
+"last pass 3h ago (52 issues × 4 problems, 9 new)",
+"Auto-accept: off (every suggestion waits for a person)"
+],
+"maxNote": 300,
+"minConfidence": "60 %",
+"problem": null,
+"refresh": null,
+"rejectDays": 30
+}

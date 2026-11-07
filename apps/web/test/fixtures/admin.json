@@ -1,0 +1,297 @@
+{
+"applied": {
+"kind": "ok",
+"text": "Live since 2026-11-01 23:48 by sam.roe: no change"
+},
+"claude": {
+"on": true
+},
+"credentials": {
+"bad": [],
+"checkedAt": 0,
+"ok": []
+},
+"host": "argus-01",
+"log": [],
+"notes": {
+"qa": "on",
+"ra": "on",
+"rd": "event 2026-11-27"
+},
+"options": [
+"10m",
+"15m",
+"30m",
+"1h",
+"2h",
+"4h",
+"6h",
+"12h",
+"daily@00:00",
+"daily@00:30",
+"daily@01:00",
+"daily@01:30",
+"daily@02:00",
+"daily@02:30",
+"daily@03:00",
+"daily@03:30",
+"daily@04:00",
+"daily@04:30",
+"daily@05:00",
+"daily@05:30",
+"daily@06:00",
+"daily@06:30",
+"daily@07:00",
+"daily@07:30",
+"daily@08:00",
+"daily@08:30",
+"daily@09:00",
+"daily@09:30",
+"daily@10:00",
+"daily@10:30",
+"daily@11:00",
+"daily@11:30",
+"daily@12:00",
+"daily@12:30",
+"daily@13:00",
+"daily@13:30",
+"daily@14:00",
+"daily@14:30",
+"daily@15:00",
+"daily@15:30",
+"daily@16:00",
+"daily@16:30",
+"daily@17:00",
+"daily@17:30",
+"daily@18:00",
+"daily@18:30",
+"daily@19:00",
+"daily@19:30",
+"daily@20:00",
+"daily@20:30",
+"daily@21:00",
+"daily@21:30",
+"daily@22:00",
+"daily@22:30",
+"daily@23:00",
+"daily@23:30"
+],
+"qa": [
+{
+"label": "Ask QA follow-up questions in #qa",
+"name": "qa:enabled",
+"on": true,
+"type": "check"
+},
+{
+"label": "Dry run: show the question on Conversations, do not send it",
+"name": "qa:dry_run",
+"on": false,
+"type": "check"
+},
+{
+"label": "Read images in QA messages (screenshots go to the triage model, deleted after the run)",
+"name": "qa:read_images",
+"on": false,
+"type": "check"
+}
+],
+"qaRoom": "#qa",
+"rcaAuto": [
+{
+"label": "Automatic deep RCA",
+"name": "ra:enabled",
+"on": true,
+"type": "check"
+},
+{
+"label": "New page-level incident (production, customer-facing, critical)",
+"name": "ra:trigger_page",
+"on": true,
+"type": "check"
+},
+{
+"label": "Incident still open after N hours",
+"name": "ra:trigger_open",
+"on": true,
+"type": "check"
+},
+{
+"label": "Incident seen N times in 24 h",
+"name": "ra:trigger_repeat",
+"on": true,
+"type": "check"
+},
+{
+"label": "#qa report about production",
+"name": "ra:trigger_qa",
+"on": true,
+"type": "check"
+},
+{
+"hi": 72,
+"label": "Open hours (trigger 2)",
+"lo": 1,
+"name": "ra:open_hours",
+"type": "number",
+"value": "2"
+},
+{
+"hi": 20,
+"label": "Repeat count (trigger 3)",
+"lo": 2,
+"name": "ra:repeat_count",
+"type": "number",
+"value": "3"
+},
+{
+"hi": 6,
+"label": "Automatic runs per day",
+"lo": 0,
+"name": "ra:daily_runs",
+"type": "number",
+"value": "6"
+},
+{
+"hi": 50,
+"label": "Deep RCA cost per day, $",
+"lo": 1,
+"name": "ra:daily_usd",
+"type": "number",
+"value": "20"
+},
+{
+"hi": 23,
+"label": "Quiet hours start (UTC; only trigger 1)",
+"lo": 0,
+"name": "ra:quiet_start",
+"type": "number",
+"value": "23"
+},
+{
+"hi": 23,
+"label": "Quiet hours end (UTC)",
+"lo": 0,
+"name": "ra:quiet_end",
+"type": "number",
+"value": "8"
+}
+],
+"readiness": [
+{
+"label": "Hub services raise incident severity (tier 1: one step, never above critical)",
+"name": "rd:hub_raise",
+"on": true,
+"type": "check"
+},
+{
+"label": "Sales event name",
+"name": "rd:event_name",
+"type": "text",
+"value": "Black Friday"
+},
+{
+"label": "Sales event date (YYYY-MM-DD)",
+"name": "rd:event_date",
+"type": "date",
+"value": "2026-11-27"
+},
+{
+"hi": 30,
+"label": "Deploy freeze reminder from D-N",
+"lo": 0,
+"name": "rd:freeze_days",
+"type": "number",
+"value": "7"
+},
+{
+"hi": 90,
+"label": "Readiness brief from D-N",
+"lo": 1,
+"name": "rd:before_days",
+"type": "number",
+"value": "30"
+},
+{
+"hi": 14,
+"label": "Readiness brief until D+N",
+"lo": 0,
+"name": "rd:after_days",
+"type": "number",
+"value": "2"
+}
+],
+"schedules": [
+{
+"enabled": false,
+"label": "Chat triage (Matrix rooms)",
+"next": "-",
+"nextFull": "-",
+"schedule": "30m",
+"task": "chat-triage"
+},
+{
+"enabled": false,
+"label": "Log RCA (alerts + Loki)",
+"next": "-",
+"nextFull": "-",
+"schedule": "4h",
+"task": "log-rca"
+},
+{
+"enabled": false,
+"label": "Backup check (MinIO)",
+"next": "-",
+"nextFull": "-",
+"schedule": "daily@07:00",
+"task": "backup-check"
+},
+{
+"enabled": false,
+"label": "Certificate check",
+"next": "-",
+"nextFull": "-",
+"schedule": "daily@07:30",
+"task": "cert-check"
+}
+],
+"sso": {
+"breakGlass": "demo.admin",
+"note": "Keycloak is not configured, so SSO only has no effect until it is.",
+"on": false
+},
+"thresholds": [
+{
+"hi": 60,
+"label": "Kuma: minutes down before it counts",
+"lo": 1,
+"name": "th:kuma_min_down_minutes",
+"type": "number",
+"value": "5"
+},
+{
+"hi": 20,
+"label": "Kuma: downs in one batch that count as flapping",
+"lo": 2,
+"name": "th:kuma_flap_count",
+"type": "number",
+"value": "3"
+},
+{
+"hi": 60,
+"label": "Certificates: WARN below this many days",
+"lo": 7,
+"name": "th:cert_warn_days",
+"type": "number",
+"value": "30"
+},
+{
+"hi": 30,
+"label": "Certificates: FAIL below this many days",
+"lo": 1,
+"name": "th:cert_fail_days",
+"type": "number",
+"value": "14"
+}
+]
+}

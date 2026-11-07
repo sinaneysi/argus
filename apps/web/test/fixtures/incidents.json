@@ -1,0 +1,498 @@
+{
+ "banners": [],
+ "bulk": null,
+ "facets": [
+  {
+   "any": false,
+   "key": "status",
+   "label": "Status",
+   "options": [
+    {
+     "count": 10,
+     "label": "Active",
+     "value": "active"
+    },
+    {
+     "count": 8,
+     "label": "Open",
+     "value": "open"
+    },
+    {
+     "count": 2,
+     "label": "Acknowledged",
+     "value": "acknowledged"
+    },
+    {
+     "count": 6,
+     "label": "Resolved",
+     "value": "resolved"
+    },
+    {
+     "count": 16,
+     "label": "All",
+     "value": "all"
+    }
+   ],
+   "value": "active"
+  },
+  {
+   "any": true,
+   "key": "sev",
+   "label": "Severity",
+   "options": [
+    {
+     "count": 2,
+     "label": "Critical",
+     "value": "critical"
+    },
+    {
+     "count": 4,
+     "label": "High",
+     "value": "high"
+    },
+    {
+     "count": 3,
+     "label": "Medium",
+     "value": "medium"
+    },
+    {
+     "count": 1,
+     "label": "Low",
+     "value": "low"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "env",
+   "label": "Environment",
+   "options": [
+    {
+     "count": 8,
+     "label": "release",
+     "value": "release"
+    },
+    {
+     "count": 1,
+     "label": "pre-release",
+     "value": "pre-release"
+    },
+    {
+     "count": 1,
+     "label": "develop",
+     "value": "develop"
+    }
+   ],
+   "value": ""
+  },
+  {
+   "any": true,
+   "key": "source",
+   "label": "Source",
+   "options": [
+    {
+     "count": 2,
+     "label": "QA",
+     "value": "qa"
+    },
+    {
+     "count": 1,
+     "label": "Kuma",
+     "value": "kuma"
+    },
+    {
+     "count": 5,
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    },
+    {
+     "count": 1,
+     "label": "CI/CD",
+     "value": "cicd"
+    },
+    {
+     "count": 1,
+     "label": "Security",
+     "value": "security"
+    },
+    {
+     "count": 3,
+     "label": "Argus auto",
+     "value": "auto"
+    }
+   ],
+   "value": ""
+  }
+ ],
+ "findingsWord": "findings",
+ "list": {
+  "clearHref": "/incidents",
+  "filtered": false,
+  "from": 1,
+  "hidden": {},
+  "matched": 10,
+  "noun": "active incidents",
+  "page": 1,
+  "pages": 1,
+  "path": "/incidents",
+  "q": "",
+  "sort": "priority",
+  "sorts": [
+   {
+    "label": "Priority",
+    "value": "priority"
+   },
+   {
+    "label": "Severity",
+    "value": "severity"
+   },
+   {
+    "label": "Latest finding",
+    "value": "recent"
+   },
+   {
+    "label": "Newest",
+    "value": "newest"
+   }
+  ],
+  "to": 10,
+  "total": 10
+ },
+ "refresh": false,
+ "room": "QA",
+ "rows": [
+  {
+   "dc": "east",
+   "env": "release",
+   "family": "http-5xx",
+   "firstSeen": 1793721224,
+   "hub": "hub service: 3 callers (shop-front, tier 1)",
+   "id": 145,
+   "last": 1793745224,
+   "occurrences": 14,
+   "owner": "",
+   "problem": {
+    "id": 8,
+    "label": "P-8",
+    "title": "investigating: shop-front deploy writes an incomplete env file for the second instance"
+   },
+   "public": true,
+   "resolved": false,
+   "sevKey": "high",
+   "severity": "high",
+   "sources": [
+    {
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "www.northwind.example",
+   "title": "www.northwind.example 502 on 25 % of requests (prod-shop-02:3001 dead)"
+  },
+  {
+   "dc": "east",
+   "env": "release",
+   "family": "payment-failures",
+   "firstSeen": 1793729864,
+   "hub": "hub service: 4 callers (payment-gateway, tier 1)",
+   "id": 142,
+   "last": 1793738144,
+   "occurrences": 5,
+   "owner": "",
+   "problem": {
+    "id": 7,
+    "label": "P-7",
+    "title": "known error: SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+   },
+   "public": true,
+   "resolved": false,
+   "sevKey": "critical",
+   "severity": "critical",
+   "sources": [
+    {
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "checkout.northwind.example",
+   "title": "checkout.northwind.example: payment failure rate 31 % (otp_timeout)"
+  },
+  {
+   "dc": "east",
+   "env": "release",
+   "family": "queue-backlog",
+   "firstSeen": 1793728784,
+   "hub": "hub service: 7 callers (sms-otp, tier 1)",
+   "id": 141,
+   "last": 1793737784,
+   "occurrences": 9,
+   "owner": "alex.doe",
+   "problem": {
+    "id": 7,
+    "label": "P-7",
+    "title": "known error: SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+   },
+   "public": true,
+   "resolved": false,
+   "sevKey": "critical",
+   "severity": "critical",
+   "sources": [
+    {
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    },
+    {
+     "label": "Kuma",
+     "value": "kuma"
+    },
+    {
+     "label": "QA",
+     "value": "qa"
+    }
+   ],
+   "status": "acknowledged",
+   "statusKind": "warn",
+   "subject": "sms-otp",
+   "title": "sms-otp: payment OTP SMS not delivered (queue backlog 11,800)"
+  },
+  {
+   "dc": "",
+   "env": "release",
+   "family": "cert",
+   "firstSeen": 1793314424,
+   "hub": "",
+   "id": 152,
+   "last": 1793721224,
+   "occurrences": 6,
+   "owner": "casey.loe",
+   "problem": {
+    "id": 12,
+    "label": "P-12",
+    "title": "investigating: Certificate renewals fail after a DNS API token rotation"
+   },
+   "public": true,
+   "resolved": false,
+   "sevKey": "medium",
+   "severity": "medium",
+   "sources": [
+    {
+     "label": "Argus auto",
+     "value": "auto"
+    }
+   ],
+   "status": "acknowledged",
+   "statusKind": "warn",
+   "subject": "sellers.northwind.example",
+   "title": "TLS certificate for sellers.northwind.example expires in 9 days (renewal failing)"
+  },
+  {
+   "dc": "east",
+   "env": "release",
+   "family": "memory",
+   "firstSeen": 1793730584,
+   "hub": "",
+   "id": 143,
+   "last": 1793744924,
+   "occurrences": 6,
+   "owner": "",
+   "problem": {
+    "id": 7,
+    "label": "P-7",
+    "title": "known error: SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+   },
+   "public": false,
+   "resolved": false,
+   "sevKey": "high",
+   "severity": "high",
+   "sources": [
+    {
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    },
+    {
+     "label": "Argus auto",
+     "value": "auto"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "prod-pay-01",
+   "title": "prod-pay-01 memory 94 %: sms-otp OOM-killed 4 times"
+  },
+  {
+   "dc": "",
+   "env": "release",
+   "family": "cve",
+   "firstSeen": 1793487224,
+   "hub": "",
+   "id": 151,
+   "last": 1793739224,
+   "occurrences": 3,
+   "owner": "robin.moe",
+   "problem": {
+    "id": 9,
+    "label": "P-9",
+    "title": "known error: Kernel CVE-2026-31337 on the production fleet (reboot wave)"
+   },
+   "public": false,
+   "resolved": false,
+   "sevKey": "high",
+   "severity": "high",
+   "sources": [
+    {
+     "label": "Security",
+     "value": "security"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "linux",
+   "title": "CVE-2026-31337 (Linux kernel, KEV) on 21 production hosts: reboot wave needed"
+  },
+  {
+   "dc": "east",
+   "env": "release",
+   "family": "disk",
+   "firstSeen": 1793573624,
+   "hub": "",
+   "id": 146,
+   "last": 1793739224,
+   "occurrences": 3,
+   "owner": "sam.roe",
+   "public": false,
+   "resolved": false,
+   "sevKey": "medium",
+   "severity": "medium",
+   "sources": [
+    {
+     "label": "Argus auto",
+     "value": "auto"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "prod-mon-01",
+   "title": "prod-mon-01 /var/lib/loki full in 4.6 days (93 % used)"
+  },
+  {
+   "dc": "",
+   "env": "pre-release",
+   "family": "http-5xx",
+   "firstSeen": 1793674424,
+   "hub": "",
+   "id": 148,
+   "last": 1793735624,
+   "occurrences": 3,
+   "owner": "taylor.noe",
+   "problem": {
+    "id": 10,
+    "label": "P-10",
+    "title": "fix in progress: Coupon rules divide by a null minimum order"
+   },
+   "public": false,
+   "resolved": false,
+   "sevKey": "medium",
+   "severity": "medium",
+   "sources": [
+    {
+     "label": "QA",
+     "value": "qa"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "checkout.stg.northwind.example",
+   "title": "staging: 500 on /cart/apply-coupon for percentage coupons"
+  },
+  {
+   "dc": "west",
+   "env": "develop",
+   "family": "disk",
+   "firstSeen": 1793487224,
+   "hub": "",
+   "id": 149,
+   "last": 1793724824,
+   "occurrences": 4,
+   "owner": "",
+   "problem": {
+    "id": 11,
+    "label": "P-11",
+    "title": "known error: Runner disks fill with old Docker images"
+   },
+   "public": false,
+   "resolved": false,
+   "sevKey": "low",
+   "severity": "low",
+   "sources": [
+    {
+     "label": "Alertmanager",
+     "value": "alertmanager"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "dev-runner-01",
+   "title": "dev-runner-01 / at 88 % (docker images)"
+  },
+  {
+   "dc": "cicd",
+   "env": "release",
+   "family": "deploy",
+   "firstSeen": 1793714024,
+   "hub": "",
+   "id": 150,
+   "last": 1793714024,
+   "occurrences": 1,
+   "owner": "",
+   "problem": {
+    "id": 13,
+    "label": "P-13",
+    "title": "new: Release deploys wait on stuck database migrations"
+   },
+   "public": false,
+   "resolved": false,
+   "sevKey": "high",
+   "severity": "high",
+   "sources": [
+    {
+     "label": "CI/CD",
+     "value": "cicd"
+    }
+   ],
+   "status": "open",
+   "statusKind": "fail",
+   "subject": "warehouse/warehouse-api",
+   "title": "Release deploy of warehouse-api failed: migration lock held"
+  }
+ ],
+ "tiles": [
+  {
+   "figure": "8",
+   "hot": true,
+   "href": "/incidents?status=open",
+   "label": "Open",
+   "sub": "not acknowledged yet"
+  },
+  {
+   "figure": "2",
+   "href": "/incidents?status=acknowledged",
+   "label": "Acknowledged",
+   "sub": "someone owns it"
+  },
+  {
+   "figure": "7.3 h",
+   "label": "MTTR, 30 days",
+   "sub": "first seen → resolved · 3 resolved in 7 days"
+  },
+  {
+   "figure": "79 %",
+   "label": "Repeat findings",
+   "sub": "findings that matched a known incident"
+  }
+ ]
+}

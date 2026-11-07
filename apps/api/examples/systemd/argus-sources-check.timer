@@ -1,0 +1,13 @@
+# The data sources check: 2 min after boot or enable, then every 6 hours.
+[Unit]
+Description=Argus data sources check every 6 hours
+
+[Timer]
+OnActiveSec=2min
+OnBootSec=5min
+OnUnitActiveSec=6h
+RandomizedDelaySec=2min
+Unit=argus-sources-check.service
+
+[Install]
+WantedBy=timers.target

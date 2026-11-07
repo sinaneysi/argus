@@ -1,0 +1,866 @@
+{
+"bad": [
+"Backups",
+"Certificates",
+"Log RCA"
+],
+"banners": [],
+"checks": [
+{
+"at": 1793728099,
+"busy": false,
+"href": "/backups",
+"last": "6h ago",
+"name": "Backups",
+"state": "last run 6h ago",
+"status": {
+"text": "WARN",
+"kind": "warn"
+},
+"strip": {
+"mids": [
+"239.7",
+"479.7"
+],
+"marks": [
+{
+"x": "177.7",
+"kind": "warn",
+"title": "2026-11-02 17:48 · WARN"
+},
+{
+"x": "417.7",
+"kind": "warn",
+"title": "2026-11-03 17:48 · WARN"
+}
+],
+"label": "2 runs in 48 h, 2 not OK",
+"hours": 48
+},
+"summary": "WARN: 3 of 11 sets need a look.",
+"task": "backup-check",
+"title": "Run Backups again now"
+},
+{
+"at": 1793724499,
+"busy": false,
+"href": "/certs",
+"last": "7h ago",
+"name": "Certificates",
+"state": "last run 7h ago",
+"status": {
+"text": "WARN",
+"kind": "warn"
+},
+"strip": {
+"mids": [
+"239.7",
+"479.7"
+],
+"marks": [
+{
+"x": "167.7",
+"kind": "warn",
+"title": "2026-11-02 16:48 · WARN"
+},
+{
+"x": "407.7",
+"kind": "warn",
+"title": "2026-11-03 16:48 · WARN"
+}
+],
+"label": "2 runs in 48 h, 2 not OK",
+"hours": 48
+},
+"summary": "FAIL: 2 certificates need a renewal now.",
+"task": "cert-check",
+"title": "Run Certificates again now"
+},
+{
+"at": 1793748499,
+"busy": false,
+"href": "/incidents",
+"last": "33m ago",
+"name": "Log RCA",
+"state": "last run 33m ago",
+"status": {
+"text": "WARN",
+"kind": "warn"
+},
+"strip": {
+"mids": [
+"239.7",
+"479.7"
+],
+"marks": [
+{
+"x": "36.1",
+"kind": "ok",
+"title": "2026-11-02 03:38 · OK"
+},
+{
+"x": "96.1",
+"kind": "ok",
+"title": "2026-11-02 09:38 · OK"
+},
+{
+"x": "156.1",
+"kind": "ok",
+"title": "2026-11-02 15:38 · OK"
+},
+{
+"x": "216.1",
+"kind": "ok",
+"title": "2026-11-02 21:38 · OK"
+},
+{
+"x": "276.1",
+"kind": "warn",
+"title": "2026-11-03 03:38 · WARN"
+},
+{
+"x": "336.1",
+"kind": "warn",
+"title": "2026-11-03 09:38 · WARN"
+},
+{
+"x": "396.1",
+"kind": "warn",
+"title": "2026-11-03 15:38 · WARN"
+},
+{
+"x": "456.1",
+"kind": "ok",
+"title": "2026-11-03 21:38 · OK"
+},
+{
+"x": "474.4",
+"kind": "warn",
+"title": "2026-11-03 23:28 · WARN"
+}
+],
+"label": "9 runs in 48 h, 4 not OK",
+"hours": 48
+},
+"summary": "WARN: 2 problems: sms-otp backlog draining on prod-pay-01/02; nginx 502 on www.northwind.example from prod-shop-02:3001 (dead upstream).",
+"task": "log-rca",
+"title": "Run Log RCA again now"
+},
+{
+"at": 1793749459,
+"busy": false,
+"href": "/incidents",
+"last": "17m ago",
+"name": "Chat triage",
+"state": "last run 17m ago",
+"status": {
+"text": "OK",
+"kind": "ok"
+},
+"strip": {
+"mids": [
+"239.7",
+"479.7"
+],
+"marks": [
+{
+"x": "2.1",
+"kind": "ok",
+"title": "2026-11-02 00:14 · OK"
+},
+{
+"x": "7.1",
+"kind": "ok",
+"title": "2026-11-02 00:44 · OK"
+},
+{
+"x": "12.1",
+"kind": "ok",
+"title": "2026-11-02 01:14 · OK"
+},
+{
+"x": "17.1",
+"kind": "ok",
+"title": "2026-11-02 01:44 · OK"
+},
+{
+"x": "22.1",
+"kind": "ok",
+"title": "2026-11-02 02:14 · OK"
+},
+{
+"x": "27.1",
+"kind": "ok",
+"title": "2026-11-02 02:44 · OK"
+},
+{
+"x": "32.1",
+"kind": "ok",
+"title": "2026-11-02 03:14 · OK"
+},
+{
+"x": "37.1",
+"kind": "ok",
+"title": "2026-11-02 03:44 · OK"
+},
+{
+"x": "42.1",
+"kind": "ok",
+"title": "2026-11-02 04:14 · OK"
+},
+{
+"x": "47.1",
+"kind": "ok",
+"title": "2026-11-02 04:44 · OK"
+},
+{
+"x": "52.1",
+"kind": "ok",
+"title": "2026-11-02 05:14 · OK"
+},
+{
+"x": "57.1",
+"kind": "ok",
+"title": "2026-11-02 05:44 · OK"
+},
+{
+"x": "62.1",
+"kind": "ok",
+"title": "2026-11-02 06:14 · OK"
+},
+{
+"x": "67.1",
+"kind": "ok",
+"title": "2026-11-02 06:44 · OK"
+},
+{
+"x": "72.1",
+"kind": "ok",
+"title": "2026-11-02 07:14 · OK"
+},
+{
+"x": "77.1",
+"kind": "ok",
+"title": "2026-11-02 07:44 · OK"
+},
+{
+"x": "82.1",
+"kind": "ok",
+"title": "2026-11-02 08:14 · OK"
+},
+{
+"x": "87.1",
+"kind": "ok",
+"title": "2026-11-02 08:44 · OK"
+},
+{
+"x": "92.1",
+"kind": "ok",
+"title": "2026-11-02 09:14 · OK"
+},
+{
+"x": "97.1",
+"kind": "ok",
+"title": "2026-11-02 09:44 · OK"
+},
+{
+"x": "102.1",
+"kind": "ok",
+"title": "2026-11-02 10:14 · OK"
+},
+{
+"x": "107.1",
+"kind": "ok",
+"title": "2026-11-02 10:44 · OK"
+},
+{
+"x": "112.1",
+"kind": "ok",
+"title": "2026-11-02 11:14 · OK"
+},
+{
+"x": "117.1",
+"kind": "ok",
+"title": "2026-11-02 11:44 · OK"
+},
+{
+"x": "122.1",
+"kind": "ok",
+"title": "2026-11-02 12:14 · OK"
+},
+{
+"x": "127.1",
+"kind": "ok",
+"title": "2026-11-02 12:44 · OK"
+},
+{
+"x": "132.1",
+"kind": "ok",
+"title": "2026-11-02 13:14 · OK"
+},
+{
+"x": "137.1",
+"kind": "ok",
+"title": "2026-11-02 13:44 · OK"
+},
+{
+"x": "142.1",
+"kind": "ok",
+"title": "2026-11-02 14:14 · OK"
+},
+{
+"x": "147.1",
+"kind": "ok",
+"title": "2026-11-02 14:44 · OK"
+},
+{
+"x": "152.1",
+"kind": "ok",
+"title": "2026-11-02 15:14 · OK"
+},
+{
+"x": "157.1",
+"kind": "ok",
+"title": "2026-11-02 15:44 · OK"
+},
+{
+"x": "162.1",
+"kind": "ok",
+"title": "2026-11-02 16:14 · OK"
+},
+{
+"x": "167.1",
+"kind": "ok",
+"title": "2026-11-02 16:44 · OK"
+},
+{
+"x": "172.1",
+"kind": "ok",
+"title": "2026-11-02 17:14 · OK"
+},
+{
+"x": "177.1",
+"kind": "ok",
+"title": "2026-11-02 17:44 · OK"
+},
+{
+"x": "182.1",
+"kind": "ok",
+"title": "2026-11-02 18:14 · OK"
+},
+{
+"x": "187.1",
+"kind": "ok",
+"title": "2026-11-02 18:44 · OK"
+},
+{
+"x": "192.1",
+"kind": "ok",
+"title": "2026-11-02 19:14 · OK"
+},
+{
+"x": "197.1",
+"kind": "ok",
+"title": "2026-11-02 19:44 · OK"
+},
+{
+"x": "202.1",
+"kind": "ok",
+"title": "2026-11-02 20:14 · OK"
+},
+{
+"x": "207.1",
+"kind": "ok",
+"title": "2026-11-02 20:44 · OK"
+},
+{
+"x": "212.1",
+"kind": "ok",
+"title": "2026-11-02 21:14 · OK"
+},
+{
+"x": "217.1",
+"kind": "ok",
+"title": "2026-11-02 21:44 · OK"
+},
+{
+"x": "222.1",
+"kind": "ok",
+"title": "2026-11-02 22:14 · OK"
+},
+{
+"x": "227.1",
+"kind": "ok",
+"title": "2026-11-02 22:44 · OK"
+},
+{
+"x": "232.1",
+"kind": "ok",
+"title": "2026-11-02 23:14 · OK"
+},
+{
+"x": "237.1",
+"kind": "ok",
+"title": "2026-11-02 23:44 · OK"
+},
+{
+"x": "242.1",
+"kind": "ok",
+"title": "2026-11-03 00:14 · OK"
+},
+{
+"x": "247.1",
+"kind": "ok",
+"title": "2026-11-03 00:44 · OK"
+},
+{
+"x": "252.1",
+"kind": "ok",
+"title": "2026-11-03 01:14 · OK"
+},
+{
+"x": "257.1",
+"kind": "ok",
+"title": "2026-11-03 01:44 · OK"
+},
+{
+"x": "262.1",
+"kind": "ok",
+"title": "2026-11-03 02:14 · OK"
+},
+{
+"x": "267.1",
+"kind": "ok",
+"title": "2026-11-03 02:44 · OK"
+},
+{
+"x": "272.1",
+"kind": "ok",
+"title": "2026-11-03 03:14 · OK"
+},
+{
+"x": "277.1",
+"kind": "ok",
+"title": "2026-11-03 03:44 · OK"
+},
+{
+"x": "282.1",
+"kind": "ok",
+"title": "2026-11-03 04:14 · OK"
+},
+{
+"x": "287.1",
+"kind": "ok",
+"title": "2026-11-03 04:44 · OK"
+},
+{
+"x": "287.7",
+"kind": "warn",
+"title": "2026-11-03 04:48 · WARN"
+},
+{
+"x": "292.1",
+"kind": "ok",
+"title": "2026-11-03 05:14 · OK"
+},
+{
+"x": "297.1",
+"kind": "ok",
+"title": "2026-11-03 05:44 · OK"
+},
+{
+"x": "302.1",
+"kind": "ok",
+"title": "2026-11-03 06:14 · OK"
+},
+{
+"x": "307.1",
+"kind": "ok",
+"title": "2026-11-03 06:44 · OK"
+},
+{
+"x": "312.1",
+"kind": "ok",
+"title": "2026-11-03 07:14 · OK"
+},
+{
+"x": "317.1",
+"kind": "ok",
+"title": "2026-11-03 07:44 · OK"
+},
+{
+"x": "322.1",
+"kind": "ok",
+"title": "2026-11-03 08:14 · OK"
+},
+{
+"x": "327.1",
+"kind": "ok",
+"title": "2026-11-03 08:44 · OK"
+},
+{
+"x": "332.1",
+"kind": "ok",
+"title": "2026-11-03 09:14 · OK"
+},
+{
+"x": "337.1",
+"kind": "ok",
+"title": "2026-11-03 09:44 · OK"
+},
+{
+"x": "342.1",
+"kind": "ok",
+"title": "2026-11-03 10:14 · OK"
+},
+{
+"x": "347.1",
+"kind": "ok",
+"title": "2026-11-03 10:44 · OK"
+},
+{
+"x": "352.1",
+"kind": "ok",
+"title": "2026-11-03 11:14 · OK"
+},
+{
+"x": "357.1",
+"kind": "ok",
+"title": "2026-11-03 11:44 · OK"
+},
+{
+"x": "362.1",
+"kind": "ok",
+"title": "2026-11-03 12:14 · OK"
+},
+{
+"x": "367.1",
+"kind": "ok",
+"title": "2026-11-03 12:44 · OK"
+},
+{
+"x": "372.1",
+"kind": "ok",
+"title": "2026-11-03 13:14 · OK"
+},
+{
+"x": "377.1",
+"kind": "ok",
+"title": "2026-11-03 13:44 · OK"
+},
+{
+"x": "382.1",
+"kind": "ok",
+"title": "2026-11-03 14:14 · OK"
+},
+{
+"x": "387.1",
+"kind": "ok",
+"title": "2026-11-03 14:44 · OK"
+},
+{
+"x": "392.1",
+"kind": "ok",
+"title": "2026-11-03 15:14 · OK"
+},
+{
+"x": "397.1",
+"kind": "ok",
+"title": "2026-11-03 15:44 · OK"
+},
+{
+"x": "402.1",
+"kind": "ok",
+"title": "2026-11-03 16:14 · OK"
+},
+{
+"x": "407.1",
+"kind": "ok",
+"title": "2026-11-03 16:44 · OK"
+},
+{
+"x": "412.1",
+"kind": "ok",
+"title": "2026-11-03 17:14 · OK"
+},
+{
+"x": "417.1",
+"kind": "ok",
+"title": "2026-11-03 17:44 · OK"
+},
+{
+"x": "422.1",
+"kind": "ok",
+"title": "2026-11-03 18:14 · OK"
+},
+{
+"x": "425.2",
+"kind": "ok",
+"title": "2026-11-03 18:33 · OK"
+},
+{
+"x": "427.1",
+"kind": "ok",
+"title": "2026-11-03 18:44 · OK"
+},
+{
+"x": "430.7",
+"kind": "warn",
+"title": "2026-11-03 19:06 · WARN"
+},
+{
+"x": "432.1",
+"kind": "ok",
+"title": "2026-11-03 19:14 · OK"
+},
+{
+"x": "437.1",
+"kind": "ok",
+"title": "2026-11-03 19:44 · OK"
+},
+{
+"x": "442.1",
+"kind": "ok",
+"title": "2026-11-03 20:14 · OK"
+},
+{
+"x": "447.1",
+"kind": "ok",
+"title": "2026-11-03 20:44 · OK"
+},
+{
+"x": "452.1",
+"kind": "ok",
+"title": "2026-11-03 21:14 · OK"
+},
+{
+"x": "457.1",
+"kind": "ok",
+"title": "2026-11-03 21:44 · OK"
+},
+{
+"x": "462.1",
+"kind": "ok",
+"title": "2026-11-03 22:14 · OK"
+},
+{
+"x": "467.1",
+"kind": "ok",
+"title": "2026-11-03 22:44 · OK"
+},
+{
+"x": "472.1",
+"kind": "ok",
+"title": "2026-11-03 23:14 · OK"
+},
+{
+"x": "477.1",
+"kind": "ok",
+"title": "2026-11-03 23:44 · OK"
+}
+],
+"label": "99 runs in 48 h, 2 not OK",
+"hours": 48
+},
+"summary": "OK: 2 messages, no new problem.",
+"task": "chat-triage",
+"title": "Run Chat triage again now"
+}
+],
+"cost": "$33.94",
+"credentials": {
+"href": "/admin/credentials",
+"line": "",
+"more": 0,
+"rows": [
+{
+"detail": "expires in 6 d",
+"expires": "2026-11-10 6 d",
+"href": "/admin/credentials#cred-gitlab-ro",
+"name": "GitLab read-only"
+},
+{
+"detail": "expires in 24 d",
+"expires": "2026-11-28 24 d",
+"href": "/admin/credentials#cred-jira",
+"name": "Jira bot"
+},
+{
+"detail": "no expiry info; set 200 d ago, rotate by 2026-10-15 (overdue)",
+"expires": "no expiry info",
+"href": "/admin/credentials#cred-nvd",
+"name": "NVD API key"
+}
+],
+"title": "Credentials: 3 expiring soon"
+},
+"exceptions": {
+"rows": [
+{
+"href": "/backups/set?name=mongo-prod_reviews",
+"kind": "Backup set",
+"meta": "newest backup 100 h",
+"pill": {
+"text": "stale",
+"kind": "fail"
+},
+"title": "mongo-prod_reviews"
+},
+{
+"href": "/backups/set?name=matomo-prod_db",
+"kind": "Backup set",
+"meta": "newest backup 7 h",
+"pill": {
+"text": "small",
+"kind": "fail"
+},
+"title": "matomo-prod_db"
+},
+{
+"href": "/backups/set?name=opensearch-prod_snapshots",
+"kind": "Backup set",
+"meta": "newest backup no backup found",
+"pill": {
+"text": "missing",
+"kind": "fail"
+},
+"title": "opensearch-prod_snapshots"
+},
+{
+"href": "/certs",
+"kind": "Certificate",
+"meta": "1 names",
+"pill": {
+"text": "4 days left",
+"kind": "fail"
+},
+"title": "partners.northwind.example"
+},
+{
+"href": "/certs",
+"kind": "Certificate",
+"meta": "1 names",
+"pill": {
+"text": "9 days left",
+"kind": "warn"
+},
+"title": "sellers.northwind.example"
+},
+{
+"href": "/certs",
+"kind": "Certificate",
+"meta": "4 names",
+"pill": {
+"text": "22 days left",
+"kind": "warn"
+},
+"title": "*.dev.northwind.example (wildcard)"
+}
+],
+"total": 6
+},
+"failing": 3,
+"ok": 1,
+"readiness": {
+"date": "2026-11-27",
+"gaps": null,
+"rows": [
+{
+"check": "Deploy freeze",
+"detail": "from 2026-11-20 (D-7)",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"check": "Critical incidents",
+"detail": "2 open",
+"status": {
+"text": "FAIL",
+"kind": "fail"
+}
+}
+],
+"title": "Black Friday readiness · D-23",
+"when": "not collected yet (runs with the daily insights)"
+},
+"refresh": false,
+"runs": "216",
+"scan": {
+"back": "/operations",
+"busy": false,
+"label": "Scan all",
+"meta": "Last scan 7h ago · WARN",
+"overdue": "",
+"tasks": "all",
+"title": "Run Backups and Certificates and Log RCA and Chat triage again now"
+},
+"selfcheck": {
+"at": "16m ago",
+"bad": [],
+"kuma": "ok (pushed 3 min ago)",
+"line": "Self-check is stale: last result 16 min ago",
+"ok": [
+{
+"detail": "listening to 3 rooms",
+"group": "collectors",
+"name": "ops-watch",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"detail": "last run 2 h ago",
+"group": "model tasks",
+"name": "log-rca",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"detail": "20 s old",
+"group": "collectors",
+"name": "alerts snapshot",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"detail": "2 min ago",
+"group": "dispatchers",
+"name": "board sync",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"detail": "3 h ago",
+"group": "collectors",
+"name": "cve scan",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+},
+{
+"detail": "31 % used",
+"group": "host",
+"name": "disk /var/lib/argus",
+"status": {
+"text": "OK",
+"kind": "ok"
+}
+}
+],
+"status": {
+"text": "WARN",
+"kind": "warn"
+}
+},
+"total": 4
+}

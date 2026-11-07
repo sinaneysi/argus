@@ -1,0 +1,257 @@
+{
+"banners": [],
+"empty": "",
+"envs": [
+"",
+"develop",
+"pre-release",
+"release",
+"none"
+],
+"facets": [
+{
+"key": "env",
+"label": "Environment",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "pre-release",
+"label": "pre-release",
+"count": 1
+},
+{
+"value": "release",
+"label": "release",
+"count": 3
+}
+]
+},
+{
+"key": "lkind",
+"label": "Kind",
+"value": "",
+"any": true,
+"options": []
+}
+],
+"here": "/review?kind=lessons&mode=full&view=approved",
+"kinds": [
+"",
+"investigate",
+"documentation",
+"change",
+"production",
+"code",
+"unclear",
+"incident",
+"general"
+],
+"list": {
+"clearHref": "/review?kind=lessons&mode=full&view=approved",
+"filtered": false,
+"from": 1,
+"hidden": {
+"kind": "lessons",
+"mode": "full",
+"view": "approved"
+},
+"matched": 4,
+"noun": "approved lessons",
+"page": 1,
+"pages": 1,
+"path": "/review",
+"q": "",
+"sort": "service",
+"sorts": [
+{
+"value": "service",
+"label": "Service"
+},
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "oldest",
+"label": "Oldest"
+},
+{
+"value": "used",
+"label": "Most used"
+}
+],
+"to": 4,
+"total": 4
+},
+"max": {
+"body": 1500,
+"title": 120
+},
+"on": true,
+"refresh": null,
+"rows": [
+{
+"actions": [
+"review",
+"retire"
+],
+"body": "Staging runs a single instance per service behind the edge; restart one node, wait for the edge to mark it healthy, then the next.",
+"decided": {
+"at": 1793576899,
+"by": "sam.roe"
+},
+"editable": true,
+"env": "pre-release",
+"evidence": "Task OPS-225 run log",
+"id": 1,
+"kind": "procedure",
+"proposedAt": 1793490499,
+"review": "",
+"service": "coupon-service",
+"source": {
+"text": "OPS-225",
+"href": "/board/task?key=OPS-225"
+},
+"state": "approved",
+"stateKind": "ok",
+"tags": [
+"restart"
+],
+"title": "Restart one staging node at a time",
+"used": {
+"last": 1793728099,
+"uses": 9
+}
+},
+{
+"actions": [
+"review",
+"retire"
+],
+"body": "A debug log level on checkout fills /var/lib/loki on prod-mon-01 in about two days; change the retention first.",
+"decided": {
+"at": 1793490499,
+"by": "sam.roe"
+},
+"editable": true,
+"env": "release",
+"evidence": "Task OPS-226 run log",
+"id": 2,
+"kind": "trap",
+"proposedAt": 1793404099,
+"review": "",
+"service": "loki",
+"source": {
+"text": "OPS-226",
+"href": "/board/task?key=OPS-226"
+},
+"state": "approved",
+"stateKind": "ok",
+"tags": [
+"disk",
+"logging"
+],
+"title": "Check the Loki retention before raising log levels",
+"used": {
+"last": 1793663299,
+"uses": 4
+}
+},
+{
+"actions": [
+"review",
+"retire"
+],
+"body": "The rotation drops the role on prod-mongo-02.",
+"decided": {
+"at": 1791157699,
+"by": "sam.roe"
+},
+"editable": true,
+"env": "release",
+"evidence": "Task OPS-214 run log",
+"id": 12,
+"kind": "trap",
+"proposedAt": 1791154099,
+"review": "retire?",
+"service": "mongo",
+"source": {
+"text": "OPS-214",
+"href": "/board/task?key=OPS-214"
+},
+"state": "approved",
+"stateKind": "ok",
+"tags": [
+"backup"
+],
+"title": "Grant the backup role after rotating the Mongo password",
+"used": {
+"last": 1791157699,
+"uses": 1
+}
+},
+{
+"actions": [
+"review",
+"retire"
+],
+"body": "sms-otp switches providers with the SMS_PRIMARY flag; no redeploy is needed and the change is audited.",
+"decided": {
+"at": 1793404099,
+"by": "sam.roe"
+},
+"editable": true,
+"env": "release",
+"evidence": "Task OPS-231 run log",
+"id": 3,
+"kind": "fact",
+"proposedAt": 1793317699,
+"review": "",
+"service": "sms-otp",
+"source": {
+"text": "OPS-231",
+"href": "/board/task?key=OPS-231"
+},
+"state": "approved",
+"stateKind": "ok",
+"tags": [
+"payments"
+],
+"title": "SMS provider failover is a feature flag, not a deploy",
+"used": {
+"last": 1793490499,
+"uses": 2
+}
+}
+],
+"tabs": [
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=lessons&mode=full",
+"label": "Waiting"
+},
+{
+"count": 4,
+"current": true,
+"href": "/review?kind=lessons&mode=full&view=approved",
+"label": "Approved"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=lessons&mode=full&view=rejected",
+"label": "Rejected"
+},
+{
+"count": 2,
+"current": false,
+"href": "/review?kind=lessons&mode=full&view=retired",
+"label": "Retired"
+}
+],
+"title": "Approved",
+"view": "approved",
+"waiting": 4
+}

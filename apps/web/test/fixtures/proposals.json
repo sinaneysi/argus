@@ -1,0 +1,1737 @@
+{
+"accept": {
+"button": "Accept & create issue",
+"maxTitle": 200,
+"note": "Project applies to Jira only; in GitLab the assignee is matched by user name.",
+"noun": "Jira issue",
+"priorities": [
+"Highest",
+"High",
+"Medium",
+"Low",
+"Lowest"
+],
+"project": "OPS",
+"projects": [
+"OPS"
+],
+"tracker": "jira",
+"trackers": {
+"gitlab": "Group board northwind/ops, in the project below.",
+"jira": "Your Jira connection, else the shared one.",
+"project": "71",
+"projects": [
+{
+"value": "71",
+"label": "infra"
+},
+{
+"value": "72",
+"label": "ops-tasks"
+}
+]
+},
+"users": []
+},
+"autoOn": [
+"Page-level production incidents"
+],
+"banners": [],
+"bulk": [
+[
+"kind",
+"proposals"
+],
+[
+"mode",
+"full"
+]
+],
+"bulkNoun": "Jira issues",
+"chips": [
+{
+"label": "Severity",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full",
+"on": true,
+"count": -1
+},
+{
+"label": "Critical",
+"href": "/review?kind=proposals&mode=full&sev=critical",
+"on": false,
+"count": 4
+},
+{
+"label": "High",
+"href": "/review?kind=proposals&mode=full&sev=high",
+"on": false,
+"count": 10
+},
+{
+"label": "Medium",
+"href": "/review?kind=proposals&mode=full&sev=medium",
+"on": false,
+"count": 13
+},
+{
+"label": "Low",
+"href": "/review?kind=proposals&mode=full&sev=low",
+"on": false,
+"count": 9
+}
+]
+},
+{
+"label": "Source",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full",
+"on": true,
+"count": -1
+},
+{
+"label": "QA",
+"href": "/review?kind=proposals&mode=full&src=qa",
+"on": false,
+"count": 6
+},
+{
+"label": "Incident",
+"href": "/review?kind=proposals&mode=full&src=page",
+"on": false,
+"count": 6
+},
+{
+"label": "CVE",
+"href": "/review?kind=proposals&mode=full&src=cve",
+"on": false,
+"count": 8
+},
+{
+"label": "CI/CD",
+"href": "/review?kind=proposals&mode=full&src=cicd",
+"on": false,
+"count": 10
+},
+{
+"label": "Credential",
+"href": "/review?kind=proposals&mode=full&src=cred",
+"on": false,
+"count": 4
+},
+{
+"label": "Task chat",
+"href": "/review?kind=proposals&mode=full&src=chat",
+"on": false,
+"count": 2
+}
+]
+},
+{
+"label": "Environment",
+"chips": [
+{
+"label": "Any",
+"href": "/review?kind=proposals&mode=full",
+"on": true,
+"count": -1
+},
+{
+"label": "release",
+"href": "/review?kind=proposals&mode=full&env=release",
+"on": false,
+"count": 25
+},
+{
+"label": "pre-release",
+"href": "/review?kind=proposals&mode=full&env=pre-release",
+"on": false,
+"count": 6
+},
+{
+"label": "develop",
+"href": "/review?kind=proposals&mode=full&env=develop",
+"on": false,
+"count": 5
+}
+]
+}
+],
+"clear": "/review?kind=proposals&mode=full",
+"confirm": null,
+"decided": [],
+"expiryDays": 14,
+"filtered": false,
+"here": "/review?kind=proposals&mode=full",
+"legacy": [],
+"matched": 36,
+"maxReason": 300,
+"pager": {
+"from": 1,
+"matched": 36,
+"next": "/review?kind=proposals&mode=full&page=2",
+"page": 1,
+"pages": 2,
+"to": 25
+},
+"pending": 36,
+"picked": false,
+"q": "",
+"rejectedToday": 0,
+"rows": [
+{
+"at": 1793746699,
+"description": "Only the host on the new release fails; the other two are healthy. Roll prod-api-01 back to 4.11.3 or hold the rollout.",
+"env": "release",
+"evidence": "13:58 deploy of checkout-api 4.12.0 on prod-api-01 (pipeline 8812).\n14:05-14:20 HTTP 5xx 4.2 % of 18,400 requests (baseline 0.1 %); p95 1.9 s (baseline 0.4 s).\nLog: 312 x \"upstream prematurely closed connection\" from payments-api since 14:04.\nprod-api-02 and prod-api-03 run 4.11.3 and stay at 0.1 %.",
+"facts": [
+{
+"value": "incident 153",
+"label": "Source"
+},
+{
+"value": "Highest",
+"label": "Priority"
+},
+{
+"value": "argus page",
+"label": "Labels"
+},
+{
+"value": "matches the page intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 22:58 (3h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-17 22:58 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 60,
+"labels": "argus page",
+"meta": [
+"Incident",
+"prod-api-01",
+"expires in 13d"
+],
+"priority": "Highest",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"snooze": "ok",
+"source": {
+"text": "incident #153",
+"href": "/incidents"
+},
+"suggested": "",
+"title": "checkout-api 5xx at 4.2 % on prod-api-01 after the 13:58 deploy",
+"why": "matches the page intake rule"
+},
+{
+"at": 1793738899,
+"description": "prod-search-01 heap at 92 % after the re-index.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "incident 151",
+"label": "Source"
+},
+{
+"value": "Highest",
+"label": "Priority"
+},
+{
+"value": "argus page",
+"label": "Labels"
+},
+{
+"value": "matches the page intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 20:48 (6h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 21:36 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-17 20:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 31,
+"labels": "argus page",
+"meta": [
+"Incident",
+"prod-search-01",
+"suggested: sam.roe",
+"updated 5h ago",
+"expires in 13d"
+],
+"priority": "Highest",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"snooze": "ok",
+"source": {
+"text": "incident #151",
+"href": "/incidents"
+},
+"suggested": "sam.roe",
+"title": "prod-search-01 heap at 92 % after the re-index",
+"why": "matches the page intake rule"
+},
+{
+"at": 1793576899,
+"description": "Rebuild analytics-matomo on PHP 8.3 (CVE-2026-24410, KEV).",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve php|production",
+"label": "Source"
+},
+{
+"value": "Highest",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-01 23:48 (2d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 00:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-15 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 2,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"prod-matomo-01",
+"suggested: jamie.poe",
+"updated 2d ago",
+"expires in 11d"
+],
+"priority": "Highest",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"snooze": "ok",
+"source": {
+"text": "php|production",
+"href": "/vulns"
+},
+"suggested": "jamie.poe",
+"title": "Rebuild analytics-matomo on PHP 8.3 (CVE-2026-24410, KEV)",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1792557379,
+"description": "Disable the MVG coder on prod-media-01 (CVE-2026-25503).",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve imagemagick|production",
+"label": "Source"
+},
+{
+"value": "Highest",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-21 04:36 (13d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-10-29 10:19 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-04 04:36 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 16,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"prod-media-01",
+"suggested: taylor.noe",
+"updated 5d ago",
+"expires in 1h"
+],
+"priority": "Highest",
+"severity": {
+"kind": "fail",
+"text": "critical"
+},
+"snooze": "expiring",
+"source": {
+"text": "imagemagick|production",
+"href": "/vulns"
+},
+"suggested": "taylor.noe",
+"title": "Disable the MVG coder on prod-media-01 (CVE-2026-25503)",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1793717299,
+"description": "prod-db-02 replication lag above 30 s at the nightly batch.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "incident 148",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus page",
+"label": "Labels"
+},
+{
+"value": "matches the page intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 14:48 (12h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 19:12 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-17 14:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 28,
+"labels": "argus page",
+"meta": [
+"Incident",
+"prod-db-02",
+"suggested: taylor.noe",
+"updated 7h ago",
+"expires in 13d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "incident #148",
+"href": "/incidents"
+},
+"suggested": "taylor.noe",
+"title": "prod-db-02 replication lag above 30 s at the nightly batch",
+"why": "matches the page intake rule"
+},
+{
+"at": 1793710099,
+"description": "storefront: the release job runs without a lock.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cicd 715",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cicd",
+"label": "Labels"
+},
+{
+"value": "matches the cicd intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 12:48 (14h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 18:24 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-17 12:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 18,
+"labels": "argus cicd",
+"meta": [
+"CI/CD",
+"suggested: alex.doe",
+"updated 8h ago",
+"expires in 13d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "CI/CD #715",
+"href": "/cicd"
+},
+"suggested": "alex.doe",
+"title": "storefront: the release job runs without a lock",
+"why": "matches the cicd intake rule"
+},
+{
+"at": 1793677699,
+"description": "Coupon field accepts expired codes at checkout.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "qa 66",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus qa",
+"label": "Labels"
+},
+{
+"value": "matches the qa intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 03:48 (23h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 14:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-17 03:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 23,
+"labels": "argus qa",
+"meta": [
+"QA",
+"suggested: casey.loe",
+"updated 12h ago",
+"expires in 13d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "qa 66",
+"href": "/qa"
+},
+"suggested": "casey.loe",
+"title": "Coupon field accepts expired codes at checkout",
+"why": "matches the qa intake rule"
+},
+{
+"at": 1793656099,
+"description": "TLS certificate for shop.northwind.example expires in 9 days.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cred tls|www",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cred",
+"label": "Labels"
+},
+{
+"value": "matches the cred intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-02 21:48 (1d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 12:24 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-16 21:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 33,
+"labels": "argus cred",
+"meta": [
+"Credential",
+"prod-edge-01",
+"suggested: robin.moe",
+"updated 14h ago",
+"expires in 12d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "credential tls|www",
+"href": "/certs"
+},
+"suggested": "robin.moe",
+"title": "TLS certificate for shop.northwind.example expires in 9 days",
+"why": "matches the cred intake rule"
+},
+{
+"at": 1793641699,
+"description": "coupon-service: two deploy jobs race on pre-release.",
+"env": "pre-release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cicd 724",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cicd",
+"label": "Labels"
+},
+{
+"value": "matches the cicd intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-02 17:48 (1d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 10:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-16 17:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 21,
+"labels": "argus cicd",
+"meta": [
+"CI/CD",
+"suggested: robin.moe",
+"updated 16h ago",
+"expires in 12d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "CI/CD #724",
+"href": "/cicd"
+},
+"suggested": "robin.moe",
+"title": "coupon-service: two deploy jobs race on pre-release",
+"why": "matches the cicd intake rule"
+},
+{
+"at": 1793663299,
+"description": "Kernel reboot wave for CVE-2026-31337 on 21 production hosts.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve linux|production",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-02 23:48 (1d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 00:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-16 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 1,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"suggested: taylor.noe",
+"updated 1d ago",
+"expires in 12d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "linux|production",
+"href": "/vulns"
+},
+"suggested": "taylor.noe",
+"title": "Kernel reboot wave for CVE-2026-31337 on 21 production hosts",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1793594179,
+"description": "checkout: LOG_LEVEL=info on release.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cicd 709",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cicd",
+"label": "Labels"
+},
+{
+"value": "matches the cicd intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-02 04:36 (1d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 05:36 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-16 04:36 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 4,
+"labels": "argus cicd",
+"meta": [
+"CI/CD",
+"suggested: taylor.noe",
+"updated 1d ago",
+"expires in 12d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "CI/CD #709",
+"href": "/incidents"
+},
+"suggested": "taylor.noe",
+"title": "checkout: LOG_LEVEL=info on release",
+"why": "matches the cicd intake rule"
+},
+{
+"at": 1793231299,
+"description": "Redis 7.2.7 on prod-db-03 (CVE-2026-22950).",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve redis|production",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-28 23:48 (6d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-01 13:12 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-11 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 14,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"prod-db-03",
+"suggested: jamie.poe",
+"updated 2d ago",
+"expires in 7d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "redis|production",
+"href": "/vulns"
+},
+"suggested": "jamie.poe",
+"title": "Redis 7.2.7 on prod-db-03 (CVE-2026-22950)",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1792695619,
+"description": "Gift card balance is not refreshed after a partial refund.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "qa 70",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus qa",
+"label": "Labels"
+},
+{
+"value": "matches the qa intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-22 19:00 (12d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-10-30 01:41 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-05 19:00 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 27,
+"labels": "argus qa",
+"meta": [
+"QA",
+"prod-pay-02",
+"suggested: robin.moe",
+"updated 5d ago",
+"expires in 1d"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "ok",
+"source": {
+"text": "qa 70",
+"href": "/qa"
+},
+"suggested": "robin.moe",
+"title": "Gift card balance is not refreshed after a partial refund",
+"why": "matches the qa intake rule"
+},
+{
+"at": 1792591939,
+"description": "Patch OpenSSL 3.0.15 on the edge pool (CVE-2026-28801).",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve openssl|production",
+"label": "Source"
+},
+{
+"value": "High",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-21 14:12 (13d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-10-29 14:09 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-04 14:12 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 11,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"prod-edge-01",
+"suggested: casey.loe",
+"updated 5d ago",
+"expires in 11h"
+],
+"priority": "High",
+"severity": {
+"kind": "fail",
+"text": "high"
+},
+"snooze": "expiring",
+"source": {
+"text": "openssl|production",
+"href": "/vulns"
+},
+"suggested": "casey.loe",
+"title": "Patch OpenSSL 3.0.15 on the edge pool (CVE-2026-28801)",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1793746999,
+"description": "Production edge: probe coupon-service on /healthz.",
+"env": "release",
+"evidence": "From the task chat.",
+"facts": [
+{
+"value": "chat OPS-238.5",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus chat",
+"label": "Labels"
+},
+{
+"value": "Asked in the chat (OPS-238) by alex.doe",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 23:03 (3h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-17 23:03 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 101,
+"labels": "argus chat",
+"meta": [
+"Task chat",
+"expires in 13d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "chat OPS-238.5",
+"href": "/board/task?key=OPS-238#m5"
+},
+"suggested": "",
+"title": "Production edge: probe coupon-service on /healthz",
+"why": "Asked in the chat (OPS-238) by alex.doe"
+},
+{
+"at": 1793732779,
+"description": "Search: run the nightly re-index with 4 workers.",
+"env": "release",
+"evidence": "From the task chat.",
+"facts": [
+{
+"value": "chat new-5e1f0a2c.4",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus chat",
+"label": "Labels"
+},
+{
+"value": "Asked in the chat (Ask Argus) by sam.roe",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 19:06 (7h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-17 19:06 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 102,
+"labels": "argus chat",
+"meta": [
+"Task chat",
+"expires in 13d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "chat new-5e1f0a2c.4",
+"href": "/board/ask?key=new-5e1f0a2c#m4"
+},
+"suggested": "",
+"title": "Search: run the nightly re-index with 4 workers",
+"why": "Asked in the chat (Ask Argus) by sam.roe"
+},
+{
+"at": 1793731699,
+"description": "coupon-service: the pre-release deploy job restarts all four replicas at once, drops in-flight checkout sessions on stg-app-01 to stg-app-04 and leaves the edge health probe on the removed /status route.",
+"env": "pre-release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cicd 736",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus cicd",
+"label": "Labels"
+},
+{
+"value": "matches the cicd intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-03 18:48 (8h ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-17 18:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 61,
+"labels": "argus cicd",
+"meta": [
+"CI/CD",
+"stg-app-01",
+"expires in 13d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "CI/CD #736",
+"href": "/cicd"
+},
+"suggested": "",
+"title": "coupon-service: the pre-release deploy job restarts all four replicas at once, drops in-flight checkout sessions on stg-app-01 to stg-app-04 and leaves the edge health probe on the removed /status route",
+"why": "matches the cicd intake rule"
+},
+{
+"at": 1793620099,
+"description": "api.northwind.example p95 above 2 s for 12 minutes.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "incident 149",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus page",
+"label": "Labels"
+},
+{
+"value": "matches the page intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-02 11:48 (1d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-03 08:24 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-16 11:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 29,
+"labels": "argus page",
+"meta": [
+"Incident",
+"prod-api-03",
+"suggested: casey.loe",
+"updated 18h ago",
+"expires in 12d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "incident #149",
+"href": "/incidents"
+},
+"suggested": "casey.loe",
+"title": "api.northwind.example p95 above 2 s for 12 minutes",
+"why": "matches the page intake rule"
+},
+{
+"at": 1793533699,
+"description": "Order history page times out for accounts with 500+ orders.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "qa 67",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus qa",
+"label": "Labels"
+},
+{
+"value": "matches the qa intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-11-01 11:48 (2d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 22:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-15 11:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 24,
+"labels": "argus qa",
+"meta": [
+"QA",
+"prod-api-02",
+"suggested: alex.doe",
+"updated 1d ago",
+"expires in 11d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "qa 67",
+"href": "/qa"
+},
+"suggested": "alex.doe",
+"title": "Order history page times out for accounts with 500+ orders",
+"why": "matches the qa intake rule"
+},
+{
+"at": 1793490499,
+"description": "Node 20.18 for the storefront build image (CVE-2026-27114).",
+"env": "pre-release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve node|staging",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-31 23:48 (3d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 18:00 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-14 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 13,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"suggested: sam.roe",
+"updated 1d ago",
+"expires in 10d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "node|staging",
+"href": "/vulns"
+},
+"suggested": "sam.roe",
+"title": "Node 20.18 for the storefront build image (CVE-2026-27114)",
+"why": "matches the cve intake rule"
+},
+{
+"at": 1793447299,
+"description": "prod-backup-02 nightly dump finished 2 h late.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "incident 150",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus page",
+"label": "Labels"
+},
+{
+"value": "matches the page intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-31 11:48 (3d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 13:12 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-14 11:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 30,
+"labels": "argus page",
+"meta": [
+"Incident",
+"prod-backup-02",
+"suggested: alex.doe",
+"updated 1d ago",
+"expires in 10d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "incident #150",
+"href": "/incidents"
+},
+"suggested": "alex.doe",
+"title": "prod-backup-02 nightly dump finished 2 h late",
+"why": "matches the page intake rule"
+},
+{
+"at": 1793404099,
+"description": "payments: pin the builder image by digest.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cicd 718",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus cicd",
+"label": "Labels"
+},
+{
+"value": "matches the cicd intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-30 23:48 (4d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 08:24 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-13 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 19,
+"labels": "argus cicd",
+"meta": [
+"CI/CD",
+"suggested: sam.roe",
+"updated 1d ago",
+"expires in 9d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "CI/CD #718",
+"href": "/cicd"
+},
+"suggested": "sam.roe",
+"title": "payments: pin the builder image by digest",
+"why": "matches the cicd intake rule"
+},
+{
+"at": 1793360899,
+"description": "CI deploy token of storefront expires in 12 days.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cred token|ci",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus cred",
+"label": "Labels"
+},
+{
+"value": "matches the cred intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-30 11:48 (4d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-02 03:36 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-13 11:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 34,
+"labels": "argus cred",
+"meta": [
+"Credential",
+"suggested: taylor.noe",
+"updated 1d ago",
+"expires in 9d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "credential token|ci",
+"href": "/certs"
+},
+"suggested": "taylor.noe",
+"title": "CI deploy token of storefront expires in 12 days",
+"why": "matches the cred intake rule"
+},
+{
+"at": 1793317699,
+"description": "Search filter 'in stock' shows sold-out items.",
+"env": "pre-release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "qa 68",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus qa",
+"label": "Labels"
+},
+{
+"value": "matches the qa intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-29 23:48 (5d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-11-01 22:48 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-12 23:48 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 25,
+"labels": "argus qa",
+"meta": [
+"QA",
+"suggested: sam.roe",
+"updated 2d ago",
+"expires in 8d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "qa 68",
+"href": "/qa"
+},
+"suggested": "sam.roe",
+"title": "Search filter 'in stock' shows sold-out items",
+"why": "matches the qa intake rule"
+},
+{
+"at": 1792661059,
+"description": "Upgrade nginx 1.26.3 on prod-edge-02 and prod-edge-03.",
+"env": "release",
+"evidence": "From Argus.",
+"facts": [
+{
+"value": "cve nginx|production",
+"label": "Source"
+},
+{
+"value": "Medium",
+"label": "Priority"
+},
+{
+"value": "argus cve",
+"label": "Labels"
+},
+{
+"value": "matches the cve intake rule",
+"label": "Why proposed"
+},
+{
+"value": "2026-10-22 09:24 (12d ago)",
+"label": "Proposed"
+},
+{
+"value": "2026-10-29 21:50 (refreshed 1 ×)",
+"label": "Updated"
+},
+{
+"value": "2026-11-05 09:24 unless decided",
+"label": "Expires"
+}
+],
+"fixPrompt": "",
+"id": 12,
+"labels": "argus cve",
+"meta": [
+"CVE",
+"prod-edge-02",
+"suggested: alex.doe",
+"updated 5d ago",
+"expires in 1d"
+],
+"priority": "Medium",
+"severity": {
+"kind": "warn",
+"text": "medium"
+},
+"snooze": "ok",
+"source": {
+"text": "nginx|production",
+"href": "/vulns"
+},
+"suggested": "alex.doe",
+"title": "Upgrade nginx 1.26.3 on prod-edge-02 and prod-edge-03",
+"why": "matches the cve intake rule"
+}
+],
+"search": [
+[
+"kind",
+"proposals"
+],
+[
+"mode",
+"full"
+]
+],
+"selHref": "/review?kind=proposals&mode=full&sel=page",
+"settings": {
+"auto": [
+{
+"key": "qa",
+"label": "QA and monitoring intake",
+"on": false
+},
+{
+"key": "page",
+"label": "Page-level production incidents",
+"on": true
+},
+{
+"key": "cve",
+"label": "Security alerts (CVE)",
+"on": false
+},
+{
+"key": "cicd",
+"label": "CI/CD findings",
+"on": false
+},
+{
+"key": "cred",
+"label": "Credential expiry",
+"on": false
+}
+],
+"expiryDays": 14,
+"note": "auto-create ON for Page-level production incidents",
+"rejectDays": 7
+},
+"sort": "priority",
+"sorts": [
+{
+"value": "priority",
+"label": "Priority"
+},
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "expiring",
+"label": "Expires first"
+},
+{
+"value": "updated",
+"label": "Recently updated"
+}
+],
+"tabs": [
+{
+"count": 36,
+"current": true,
+"href": "/review?kind=proposals&mode=full",
+"label": "Waiting"
+},
+{
+"count": 4,
+"current": false,
+"href": "/review?kind=proposals&mode=full&view=snoozed",
+"label": "Snoozed"
+},
+{
+"count": 15,
+"current": false,
+"href": "/review?kind=proposals&mode=full&view=decided",
+"label": "Decided (14 d)"
+}
+],
+"tiles": [
+{
+"label": "Waiting",
+"figure": "36",
+"sub": "to accept, snooze or reject",
+"href": "/review?kind=proposals&mode=full"
+},
+{
+"label": "Critical or high",
+"figure": "14",
+"sub": "waiting, worst first",
+"href": "/review?kind=proposals&mode=full&sev=critical&sev=high"
+},
+{
+"label": "Expire within 48 h",
+"figure": "6",
+"sub": "if nobody decides",
+"href": "/review?kind=proposals&mode=full&sort=expiring"
+},
+{
+"label": "Accepted today",
+"figure": "0",
+"sub": "created as Jira issues",
+"href": "/review?kind=proposals&mode=full&view=decided"
+}
+],
+"total": 36,
+"view": "pending"
+}

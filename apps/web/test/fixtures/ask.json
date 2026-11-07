@@ -1,0 +1,25 @@
+{
+ "chat": {
+  "ask": true,
+  "canPost": true,
+  "empty": "Ask Argus anything, or ask it to define a new task: it proposes the task into Proposed tasks, where an admin accepts it into Jira or GitLab. Nothing is created without Accept.",
+  "key": "new",
+  "messages": [],
+  "note": "Read-only: a message never approves a change; Spin up agent does. Never paste a credential here.",
+  "pending": false
+ },
+ "notices": [],
+ "on": true,
+ "refresh": null,
+ "return": "/board/ask",
+ "thread": false,
+ "threads": [
+  {
+   "at": 1793740546,
+   "count": 4,
+   "first": "Why did the nightly search re-index take twice as long this week?",
+   "href": "/board/ask?key=new-5e1f0a2c",
+   "who": "sam.roe"
+  }
+ ]
+}

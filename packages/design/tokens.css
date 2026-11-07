@@ -1,0 +1,62 @@
+/* Argus design tokens, "Harbor" (packages/design/DESIGN.md §2). Framework-neutral: the one source of colour,
+   type, space, shape, density and motion values for any Argus frontend. Load it before every other stylesheet; colour
+   literals live only here. Each colour is a light-dark() pair picked by color-scheme ("light dark" = follow the
+   system); <html data-theme="light|dark"> pins the scheme. Fonts are self-hosted (static/fonts, SIL OFL 1.1); the
+   url() paths assume they are served at /static/fonts/. Contrast of every documented pair: contrast_test.go. */
+
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 100 700; font-display: swap;
+  src: url("/static/fonts/ibm-plex-sans-var-latin.woff2") format("woff2"); }
+/* Persian (Vazirmatn, SIL OFL; Arabic blocks only). size-adjust: its letters are about 10% shorter than Plex at the same
+   font-size (heh .445 against x .516, alef .672 against l .74), so mixed Persian and Latin lines read as one size. */
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; size-adjust: 110%;
+  src: url("/static/fonts/vazirmatn-arabic.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+066B-066C, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("/static/fonts/jetbrains-mono-var-latin.woff2") format("woff2"); }
+
+:root {
+  --font: "IBM Plex Sans", "Vazirmatn", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* ground and surfaces: a pale sky ground; the sidebar and the cards float on it as --surface */
+  --bg: light-dark(#dce8f6, #0b1220); --surface: light-dark(#ffffff, #131c2e); --surface-2: light-dark(#ebf2fa, #1d2840);
+  --hover: light-dark(#e6eef8, #1d2840); --border: light-dark(#dfe8f3, #2a3650); --control-border: light-dark(#66788f, #6e8099);
+  /* ink */
+  --text: light-dark(#0f1b2d, #e8eff8); --text-2: light-dark(#2f3f55, #c2cedd); --text-muted: light-dark(#4f6178, #95a6bc);
+  /* the accent (ocean blue): the one primary button, links, the selected item, focus, stepper progress, the main series, the mark */
+  --accent: light-dark(#1459c7, #7fb2ff); --accent-strong: light-dark(#1459c7, #7fb2ff); --accent-hover: light-dark(#0f49a8, #a1c7ff);
+  --accent-contrast: light-dark(#ffffff, #06182f); --accent-soft: light-dark(#dce9fc, #16304f); --accent-soft-fg: light-dark(#0f4aa6, #a9cbff);
+  --focus: light-dark(#1459c7, #7fb2ff);
+  --mark-bg: light-dark(#1459c7, #7fb2ff); --mark-fg: light-dark(#ffffff, #06182f);
+  /* status: a tint pair each; fg doubles as the glyph colour */
+  --ok-bg: light-dark(#e2f3e7, #14291c); --ok-fg: light-dark(#1f6b3a, #7ad79d);
+  --warn-bg: light-dark(#fcf0d9, #2d2410); --warn-fg: light-dark(#835000, #ecbb60);
+  --fail-bg: light-dark(#fdeaea, #331719); --fail-fg: light-dark(#b42f33, #ff9191);
+  --info-bg: light-dark(#e6eff8, #17263a); --info-fg: light-dark(#2f5a86, #9cc1ea);
+  /* data: good or bad, not up or down; soft tints only with a printed value */
+  --data-1: light-dark(#1459c7, #7fb2ff); --data-1-soft: light-dark(#9cc0f0, #2f5c99);
+  --data-teal: light-dark(#3f9a8e, #4fb3a5); --data-sand: light-dark(#a8823a, #d6ad5f); --data-slate: light-dark(#7a8fb6, #5f7499);
+  --data-red: light-dark(#d9776a, #e0786c); --data-red-soft: light-dark(#f1c4be, #6b3631);
+  --data-green-soft: light-dark(#bcdcc6, #2f5a40); --data-grey: light-dark(#e4ecf6, #3d4a66); --data-target: light-dark(#0f1b2d, #e8eff8);
+  /* type: 13 14 16 18 22 32, figures 32 / 22; 13 is the floor for anything a person reads; --fs-code sets mono (its x-height is taller) */
+  --fs-xs: 13px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 18px; --fs-xl: 22px; --fs-2xl: 32px; --fs-fig: 32px; --fs-fig-sm: 22px; --fs-code: 13px;
+  --lh-xs: 18px; --lh-sm: 20px; --lh-md: 24px; --lh-lg: 26px; --lh-xl: 30px; --lh-2xl: 40px; --lh-fig: 40px; --lh-fig-sm: 28px;
+  --measure: 62ch; /* about 74 average characters: ch is the width of "0", wider than the average letter */
+  /* space: 4px base */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --gap: 16px; --gap-block: 20px; --pad: 32px; --side: 264px; --topbar: 56px; --card-pad: 22px; --inset: 8px;
+  /* density: rows and controls */
+  --row: 48px; --row-compact: 40px; --row-queue: 60px; --row-activity: 64px; --th: 40px;
+  --control: 40px; --control-sm: 34px; --control-lg: 44px; --target-coarse: 44px; --nav-item: 38px; --pill: 24px;
+  --content-max: 2400px; /* queues, tables and boards fill the canvas; only past this the page stops growing */
+  /* shape */
+  --r-chip: 6px; --r-control: 12px; --r-inner: 14px; --r-filter: 14px; --r-overlay: 16px; --r-card: 20px; --r-pill: 999px;
+  /* motion */
+  --ease-out: cubic-bezier(.23, 1, .32, 1); --t-fast: 100ms; --t: 160ms; --t-overlay: 180ms;
+  --shadow-card: 0 1px 2px light-dark(rgba(15, 27, 45, .05), transparent), 0 8px 24px -14px light-dark(rgba(15, 27, 45, .16), transparent);
+  --shadow-overlay: 0 8px 24px light-dark(rgba(15, 27, 45, .12), rgba(0, 0, 0, .5)), 0 1px 2px light-dark(rgba(15, 27, 45, .06), transparent);
+  color-scheme: light dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+@media (max-width: 1280px) { :root { --pad: 24px; } }
+@media (max-width: 900px) { :root { --pad: 16px; --gap: 16px; --card-pad: 16px; } }

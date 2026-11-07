@@ -1,0 +1,64 @@
+{
+"age_recipients": 2,
+"envs": [
+"develop",
+"pre-release",
+"release"
+],
+"host": "argus-01",
+"notices": [],
+"refresh": null,
+"rows": [
+{
+"at": "2026-11-04 01:12",
+"badge": {
+"kind": "ok",
+"text": "per-job users"
+},
+"bucket": "backup",
+"detail": "list ok · delete denied (write-only)",
+"endpoint": "https://s3.east.northwind.example",
+"envs": "release",
+"ilm": "mc ilm rule add --expire-days 14 --noncurrent-expire-days 7 --prefix \"\" <admin alias>/backup",
+"name": "backup-east",
+"plans": 0,
+"prefix": "",
+"retention": "14",
+"type": "minio"
+},
+{
+"at": "2026-11-04 01:12",
+"badge": {
+"kind": "ok",
+"text": "write-only"
+},
+"bucket": "backup-dr",
+"detail": "list ok · delete denied (write-only)",
+"endpoint": "https://s3.west.northwind.example",
+"envs": "release",
+"ilm": "mc ilm rule add --expire-days 14 --noncurrent-expire-days 7 --prefix \"\" <admin alias>/backup-dr",
+"name": "backup-west",
+"plans": 0,
+"prefix": "",
+"retention": "14",
+"type": "minio"
+},
+{
+"at": "2026-11-03 02:12",
+"badge": {
+"kind": "warn",
+"text": "keys can delete"
+},
+"bucket": "backup-stg",
+"detail": "list ok · delete ok",
+"endpoint": "https://s3.east.northwind.example",
+"envs": "pre-release, develop",
+"ilm": "mc ilm rule add --expire-days 14 --noncurrent-expire-days 7 --prefix \"\" <admin alias>/backup-stg",
+"name": "staging",
+"plans": 0,
+"prefix": "",
+"retention": "14",
+"type": "minio"
+}
+]
+}

@@ -1,0 +1,13 @@
+.env
+*.log
+__pycache__/
+*.pyc
+/argus-api
+/dist/
+*.tar.gz
+node_modules/
+.next/
+/apps/web/public/static/
+/apps/web/next-env.d.ts
+*.tsbuildinfo
+.taste-skill/

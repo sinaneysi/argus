@@ -1,0 +1,63 @@
+{
+"user": "demo.admin",
+"busy": false,
+"egress": {
+"badge": {
+"kind": "neutral",
+"text": "Not checked"
+},
+"blocked": "IR",
+"fail": "closed",
+"guard": true,
+"line": "On. Not checked yet.",
+"summary": "On · blocks IR · stops if the lookup fails",
+"why": ""
+},
+"host": "argus-01",
+"notices": [],
+"refresh": null,
+"status": {
+"act": "",
+"badge": "Working",
+"detail": "Last run OK: chat triage, 22m ago.",
+"facts": [
+{
+"kind": "ok",
+"label": "Usage",
+"value": "On"
+},
+{
+"kind": "",
+"label": "Token",
+"value": "not known yet"
+},
+{
+"kind": "",
+"label": "Location",
+"value": "not checked"
+},
+{
+"kind": "ok",
+"label": "Last AI run",
+"value": "OK, 22m ago",
+"href": "/runs/view?id=1071"
+}
+],
+"head": "Argus's AI is working.",
+"href": "",
+"kind": "ok"
+},
+"token": {
+"badge": {
+"kind": "neutral",
+"text": "Not tested"
+},
+"line": "Not checked yet. Test it once to see whether it works.",
+"open": false,
+"warn": [],
+"why": ""
+},
+"usage": {
+"on": true
+}
+}

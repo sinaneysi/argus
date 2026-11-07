@@ -1,0 +1,1277 @@
+{
+ "admin": true,
+ "ask": true,
+ "canCreate": true,
+ "columns": [
+  {
+   "cards": [
+    {
+     "age": "16h",
+     "agent": null,
+     "at": 1793698043,
+     "auto": true,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=2",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 2
+     },
+     "open": true,
+     "owner": "Jamie Poe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-232",
+     "source": {
+      "text": "RCA 52 fix 1"
+     },
+     "tag": "Jira",
+     "title": "Restore shop-front :3001 env file on prod-shop-02",
+     "verb": "updated"
+    },
+    {
+     "age": "23h",
+     "agent": null,
+     "at": 1793672843,
+     "auto": true,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=3",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 3
+     },
+     "open": true,
+     "owner": "Robin Moe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-229",
+     "source": {
+      "href": "/incidents/view?id=151",
+      "text": "incident #151"
+     },
+     "tag": "Jira",
+     "title": "Kernel reboot wave for CVE-2026-31337 (21 hosts)",
+     "verb": "updated"
+    },
+    {
+     "age": "1d",
+     "agent": null,
+     "at": 1793597243,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=6",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 6
+     },
+     "open": true,
+     "owner": "Casey Loe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-222",
+     "source": null,
+     "tag": "Jira",
+     "title": "Rebuild analytics-matomo on PHP 8.3",
+     "verb": "updated"
+    },
+    {
+     "age": "3d",
+     "agent": null,
+     "at": 1793471243,
+     "auto": true,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=11",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 11
+     },
+     "open": true,
+     "owner": "Morgan Koe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-208",
+     "source": {
+      "text": "CI/CD #701"
+     },
+     "tag": "Jira",
+     "title": "warehouse-api: end the stuck migration and retry the release deploy",
+     "verb": "updated"
+    },
+    {
+     "age": "3d",
+     "agent": null,
+     "at": 1793420843,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=13",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 13
+     },
+     "open": true,
+     "owner": "Casey Loe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-198",
+     "source": null,
+     "tag": "Jira",
+     "title": "Renew sellers.northwind.example (DNS-01 hook token)",
+     "verb": "updated"
+    },
+    {
+     "age": "4d",
+     "agent": {
+      "kind": "ok",
+      "text": "plan ready"
+     },
+     "at": 1793395643,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=14",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 14
+     },
+     "open": true,
+     "owner": "",
+     "plan": {
+      "env": "release",
+      "kind": "production: proposal only",
+      "meta": [
+       "estimate 2 h",
+       "spent $0.38",
+       "plan v3"
+      ],
+      "summary": "Add the Redis cart and rate-limit data to the nightly backup: an RDB snapshot on each production Redis node, copied to both backup hosts, kept 14 days.",
+      "writes": [
+       {
+        "targets": [
+         "prod-redis-01",
+         "prod-redis-02",
+         "prod-redis-03",
+         "prod-backup-01",
+         "prod-backup-02"
+        ],
+        "text": "Enable a nightly BGSAVE at 02:30 and copy dump.rdb to the backup hosts"
+       }
+      ]
+     },
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "OPS-193",
+     "source": {
+      "text": "backup"
+     },
+     "tag": "Jira",
+     "title": "Back up Redis cart and rate-limit data",
+     "verb": "updated"
+    },
+    {
+     "age": "1d",
+     "agent": null,
+     "at": 1793662043,
+     "auto": false,
+     "badges": [],
+     "env": "develop",
+     "fix": null,
+     "href": "/board/task?id=17",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 17
+     },
+     "open": true,
+     "owner": "Drew Foe",
+     "plan": null,
+     "priority": "Low",
+     "priorityHigh": false,
+     "ref": "ops-tasks#12",
+     "source": null,
+     "tag": "GitLab",
+     "title": "Runner cache volume on dev-runner-01 to 100 GB",
+     "verb": "updated"
+    },
+    {
+     "age": "2d",
+     "agent": null,
+     "at": 1793572043,
+     "auto": false,
+     "badges": [],
+     "env": "",
+     "fix": null,
+     "href": "/board/task?id=7",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 7
+     },
+     "open": true,
+     "owner": "",
+     "plan": null,
+     "priority": "Low",
+     "priorityHigh": false,
+     "ref": "OPS-221",
+     "source": null,
+     "tag": "Jira",
+     "title": "Checkout button misaligned on iPhone SE",
+     "verb": "updated"
+    }
+   ],
+   "count": 8,
+   "empty": "No tasks",
+   "first": false,
+   "fixer": false,
+   "help": "",
+   "id": "todo",
+   "name": "To do"
+  },
+  {
+   "cards": [
+    {
+     "age": "9h",
+     "agent": {
+      "kind": "neutral",
+      "text": "agent planning"
+     },
+     "at": 1793723243,
+     "auto": true,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=1",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 1
+     },
+     "open": true,
+     "owner": "Alex Doe",
+     "plan": null,
+     "priority": "Highest",
+     "priorityHigh": true,
+     "ref": "OPS-231",
+     "source": {
+      "href": "/incidents/view?id=141",
+      "text": "incident #141"
+     },
+     "tag": "Jira",
+     "title": "sms-otp: provider timeout and automatic failover",
+     "verb": "updated"
+    },
+    {
+     "age": "3d",
+     "agent": {
+      "kind": "fail",
+      "text": "agent failed"
+     },
+     "at": 1793496443,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=10",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 10
+     },
+     "open": true,
+     "owner": "Sam Roe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-211",
+     "source": {
+      "text": "backup"
+     },
+     "tag": "Jira",
+     "title": "Mongo backup user lost its role after the password rotation",
+     "verb": "updated"
+    },
+    {
+     "age": "5h",
+     "agent": null,
+     "at": 1793737643,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=16",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 16
+     },
+     "open": true,
+     "owner": "Sam Roe",
+     "plan": null,
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "infra#45",
+     "source": null,
+     "tag": "GitLab",
+     "title": "Rotate the Grafana admin password into the vault",
+     "verb": "updated"
+    },
+    {
+     "age": "2d",
+     "agent": {
+      "kind": "warn",
+      "text": "paused: usage limit"
+     },
+     "at": 1793521643,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=9",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 9
+     },
+     "open": true,
+     "owner": "Jamie Poe",
+     "plan": null,
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "OPS-214",
+     "source": {
+      "text": "RCA 49 fix 1"
+     },
+     "tag": "Jira",
+     "title": "Search: blue/green re-index behind an alias",
+     "verb": "updated"
+    },
+    {
+     "age": "4d",
+     "agent": {
+      "kind": "ok",
+      "text": "plan ready"
+     },
+     "at": 1793345243,
+     "auto": false,
+     "badges": [],
+     "env": "pre-release",
+     "fix": null,
+     "href": "/board/task?id=30",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 30
+     },
+     "open": true,
+     "owner": "Alex Doe",
+     "plan": {
+      "env": "pre-release",
+      "kind": "change via the fixer",
+      "meta": [
+       "estimate 30 min",
+       "spent $0.46",
+       "plan v2"
+      ],
+      "open": 1,
+      "summary": "Point the coupon-service health check on staging at /healthz (the old /status route was removed in 3.9.0), redeploy it and confirm the edge marks it healthy.",
+      "writes": [
+       {
+        "targets": [
+         "stg-app-01"
+        ],
+        "text": "Change the health check path to /healthz and redeploy coupon-service"
+       }
+      ]
+     },
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "OPS-238",
+     "source": null,
+     "tag": "Jira",
+     "title": "Staging: move coupon-service health check to /healthz",
+     "verb": "updated"
+    }
+   ],
+   "count": 5,
+   "empty": "No tasks",
+   "first": false,
+   "fixer": false,
+   "help": "Argus plans each card here; an admin starts it with Spin up agent. Release tasks only get a proposal.",
+   "id": "progress",
+   "name": "In progress"
+  },
+  {
+   "cards": [
+    {
+     "age": "3d",
+     "agent": null,
+     "at": 1793446043,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=12",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 12
+     },
+     "open": true,
+     "owner": "Alex Doe",
+     "plan": null,
+     "priority": "Highest",
+     "priorityHigh": true,
+     "ref": "OPS-205",
+     "source": {
+      "text": "CI/CD #706"
+     },
+     "tag": "Jira",
+     "title": "payment-gateway: mask and protect PAYMENT_API_KEY",
+     "verb": "updated"
+    },
+    {
+     "age": "1d",
+     "agent": null,
+     "at": 1793647643,
+     "auto": true,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=4",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 4
+     },
+     "open": true,
+     "owner": "Sam Roe",
+     "plan": null,
+     "priority": "High",
+     "priorityHigh": true,
+     "ref": "OPS-226",
+     "source": {
+      "text": "storage"
+     },
+     "tag": "Jira",
+     "title": "Loki: checkout LOG_LEVEL=info, retention 21 days",
+     "verb": "updated"
+    },
+    {
+     "age": "3h",
+     "agent": null,
+     "at": 1793744843,
+     "auto": false,
+     "badges": [],
+     "env": "pre-release",
+     "fix": null,
+     "href": "/board/task?id=18",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 18
+     },
+     "open": true,
+     "owner": "Robin Moe",
+     "plan": null,
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "infra#47",
+     "source": null,
+     "tag": "GitLab",
+     "title": "Staging: TLS 1.3 only on stg-edge-01",
+     "verb": "updated"
+    }
+   ],
+   "count": 3,
+   "empty": "No tasks",
+   "first": true,
+   "fixer": false,
+   "help": "",
+   "id": "review",
+   "name": "Review"
+  },
+  {
+   "cards": [
+    {
+     "age": "1d",
+     "agent": {
+      "kind": "warn",
+      "text": "questions waiting"
+     },
+     "at": 1793622443,
+     "auto": true,
+     "badges": [],
+     "env": "pre-release",
+     "fix": {
+      "kind": "warn",
+      "text": "fix running",
+      "title": ""
+     },
+     "href": "/board/task?id=5",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       },
+       {
+        "label": "Done",
+        "value": "done"
+       }
+      ],
+      "task": 5
+     },
+     "open": true,
+     "owner": "Taylor Noe",
+     "plan": {
+      "meta": [
+       "spent $0.12",
+       "plan v1"
+      ],
+      "summary": "Roll staging coupon-service back to 3.8.2"
+     },
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "OPS-225",
+     "source": {
+      "href": "/incidents/view?id=148",
+      "text": "incident #148"
+     },
+     "tag": "Jira",
+     "title": "Staging: roll coupon-service back to 3.8.2",
+     "verb": "updated"
+    }
+   ],
+   "count": 1,
+   "empty": "No tasks",
+   "first": false,
+   "fixer": false,
+   "help": "Retired: move these tasks to In Progress (Admin → Task agent).",
+   "id": "fixer",
+   "name": "Ready for fixer"
+  },
+  {
+   "cards": [
+    {
+     "age": "4d",
+     "agent": null,
+     "at": 1793370443,
+     "auto": false,
+     "badges": [],
+     "env": "release",
+     "fix": null,
+     "href": "/board/task?id=15",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       }
+      ],
+      "task": 15
+     },
+     "open": false,
+     "owner": "Alex Doe",
+     "plan": null,
+     "priority": "",
+     "priorityHigh": false,
+     "ref": "OPS-190",
+     "source": {
+      "text": "RCA 51 fix 3"
+     },
+     "tag": "Jira",
+     "title": "Alert rule SmsProviderSlow and SmsOtpWorkersSaturated",
+     "verb": "updated"
+    },
+    {
+     "age": "2d",
+     "agent": null,
+     "at": 1793546843,
+     "auto": true,
+     "badges": [],
+     "env": "develop",
+     "fix": null,
+     "href": "/board/task?id=8",
+     "move": {
+      "kind": "task",
+      "options": [
+       {
+        "label": "To do",
+        "value": "todo"
+       },
+       {
+        "label": "In progress",
+        "value": "progress"
+       },
+       {
+        "label": "Review",
+        "value": "review"
+       }
+      ],
+      "task": 8
+     },
+     "open": false,
+     "owner": "Drew Foe",
+     "plan": null,
+     "priority": "Low",
+     "priorityHigh": false,
+     "ref": "OPS-219",
+     "source": {
+      "href": "/incidents/view?id=149",
+      "text": "incident #149"
+     },
+     "tag": "Jira",
+     "title": "Prune docker images on dev-runner-01 weekly",
+     "verb": "updated"
+    }
+   ],
+   "count": 2,
+   "empty": "No tasks",
+   "first": false,
+   "fixer": false,
+   "help": "Done keeps the last 14 days.",
+   "id": "done",
+   "name": "Done"
+  }
+ ],
+ "connectHref": "",
+ "filters": {
+  "active": [],
+  "advanced": 0,
+  "clear": "/board?tracker=all",
+  "main": [
+   {
+    "chips": [
+     {
+      "href": "/board?tracker=all",
+      "label": "all tasks",
+      "on": true,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026show=mine",
+      "label": "mine",
+      "on": false,
+      "title": ""
+     }
+    ],
+    "folds": [],
+    "label": "Show"
+   },
+   {
+    "chips": [
+     {
+      "href": "/board?tracker=all",
+      "label": "all",
+      "on": true,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026env=develop",
+      "label": "develop",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026env=pre-release",
+      "label": "pre-release",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026env=release",
+      "label": "release",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026env=none",
+      "label": "not set",
+      "on": false,
+      "title": ""
+     }
+    ],
+    "folds": [],
+    "label": "Environment"
+   }
+  ],
+  "more": [
+   {
+    "chips": [
+     {
+      "href": "/board?tracker=all",
+      "label": "anyone",
+      "on": true,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=nobody",
+      "label": "Unassigned",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=alex.doe",
+      "label": "Alex Doe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=sam.roe",
+      "label": "Sam Roe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=casey.loe",
+      "label": "Casey Loe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=drew.foe",
+      "label": "Drew Foe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=jamie.poe",
+      "label": "Jamie Poe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=robin.moe",
+      "label": "Robin Moe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=morgan.koe",
+      "label": "Morgan Koe",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026assignee=taylor.noe",
+      "label": "Taylor Noe",
+      "on": false,
+      "title": ""
+     }
+    ],
+    "folds": [],
+    "label": "Assignee"
+   },
+   {
+    "chips": [
+     {
+      "href": "/board?tracker=all",
+      "label": "any",
+      "on": true,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=security",
+      "label": "security",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=cicd",
+      "label": "cicd",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=backup",
+      "label": "backup",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=observability",
+      "label": "observability",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=certificates",
+      "label": "certificates",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=frontend",
+      "label": "frontend",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=network",
+      "label": "network",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026label=payments",
+      "label": "payments",
+      "on": false,
+      "title": ""
+     }
+    ],
+    "folds": [
+     {
+      "chips": [
+       {
+        "href": "/board?tracker=all\u0026label=qa-report",
+        "label": "qa-report",
+        "on": false,
+        "title": ""
+       },
+       {
+        "href": "/board?tracker=all\u0026label=search",
+        "label": "search",
+        "on": false,
+        "title": ""
+       },
+       {
+        "href": "/board?tracker=all\u0026label=staging",
+        "label": "staging",
+        "on": false,
+        "title": ""
+       },
+       {
+        "href": "/board?tracker=all\u0026label=web",
+        "label": "web",
+        "on": false,
+        "title": ""
+       }
+      ],
+      "open": false,
+      "summary": "All labels"
+     },
+     {
+      "chips": [
+       {
+        "href": "/board?tracker=all\u0026label=argus-fixer",
+        "label": "argus-fixer",
+        "on": false,
+        "title": ""
+       }
+      ],
+      "open": false,
+      "summary": "Argus labels"
+     }
+    ],
+    "label": "Label"
+   },
+   {
+    "chips": [
+     {
+      "href": "/board?tracker=all",
+      "label": "all",
+      "on": true,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=incident",
+      "label": "Incident",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=rca",
+      "label": "RCA fix",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=vm",
+      "label": "VM analysis",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=disk",
+      "label": "Storage analysis",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=backup",
+      "label": "Backup",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=cicd",
+      "label": "CI/CD",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=auto",
+      "label": "created by Argus",
+      "on": false,
+      "title": ""
+     },
+     {
+      "href": "/board?tracker=all\u0026source=other",
+      "label": "other",
+      "on": false,
+      "title": ""
+     }
+    ],
+    "folds": [],
+    "label": "Source"
+   }
+  ]
+ },
+ "local": "",
+ "matrix": [
+  {
+   "assignee": "jamie.poe",
+   "forwarded": "50m",
+   "hoursLeft": 24,
+   "options": [
+    {
+     "label": "Alex Doe",
+     "value": "alex.doe"
+    },
+    {
+     "label": "Jamie Poe",
+     "value": "jamie.poe"
+    },
+    {
+     "label": "Taylor Noe",
+     "value": "taylor.noe"
+    },
+    {
+     "label": "Unassigned",
+     "value": ""
+    }
+   ],
+   "pid": "mx-7f3a21",
+   "project": "OPS",
+   "requester": "Robin Vale",
+   "summary": "Two shoppers saw yesterday's prices on product pages. · The import finished at 09:04; the search index was not refreshed.",
+   "title": "Storefront search returns stale prices after the 09:00 import"
+  },
+  {
+   "assignee": "",
+   "forwarded": "3h",
+   "hoursLeft": 21,
+   "options": [
+    {
+     "label": "Alex Doe",
+     "value": "alex.doe"
+    },
+    {
+     "label": "Jamie Poe",
+     "value": "jamie.poe"
+    },
+    {
+     "label": "Taylor Noe",
+     "value": "taylor.noe"
+    },
+    {
+     "label": "Unassigned",
+     "value": ""
+    }
+   ],
+   "pid": "mx-91c0d4",
+   "project": "OPS",
+   "requester": "Casey Lund",
+   "summary": "Warehouse scanners in the new hall cannot reach staging. · Range from the network team: see the thread.",
+   "title": "Add the new warehouse VPN range to the staging allow list"
+  }
+ ],
+ "mode": "local",
+ "newHref": "/board/new?return=%2Fboard%3Ftracker%3Dall",
+ "notices": [],
+ "readOnly": "",
+ "refresh": null,
+ "results": "17 open tasks · 3 in review · 5 in progress · 1 ready for fixer · 8 to do",
+ "return": "/board?tracker=all",
+ "status": [
+  [
+   {
+    "text": "1 ready for fixer"
+   }
+  ],
+  [
+   {
+    "text": "Jira OPS · synced 2m ago"
+   }
+  ],
+  [
+   {
+    "text": "GitLab · waiting for the first sync"
+   }
+  ]
+ ],
+ "tabs": [
+  {
+   "current": false,
+   "href": "/board",
+   "label": "Jira board"
+  },
+  {
+   "current": false,
+   "href": "/board?tracker=gitlab",
+   "label": "GitLab issues"
+  },
+  {
+   "current": true,
+   "href": "/board?tracker=all",
+   "label": "All tasks"
+  }
+ ],
+ "tracker": "all"
+}

@@ -1,0 +1,919 @@
+{
+ "admin": true,
+ "canAct": true,
+ "done": [
+  {
+   "actualMin": 25,
+   "area": "cicd",
+   "autoDone": false,
+   "carried": 0,
+   "closeHref": "/cicd/finding?id=701",
+   "closeLabel": "Open the CI/CD finding",
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/cicd/finding?id=701",
+     "text": "Source: cicd:701"
+    }
+   ],
+   "doThis": "Ask the DBA to end the stuck migration session on prod-db-01, then retry deploy_production.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a cicd item",
+   "estMin": 20,
+   "href": "/cicd/finding?id=701",
+   "id": 6,
+   "impact": 2,
+   "linkLabel": "Open finding",
+   "n": 6,
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "cicd:701",
+   "score": 5.9,
+   "slot": "today",
+   "status": "done",
+   "title": "Unblock the warehouse-api release deploy",
+   "urgency": 2,
+   "whyNow": "The release has waited 9 hours."
+  }
+ ],
+ "later": [
+  {
+   "area": "cicd",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/cicd",
+     "text": "Source: cicd:stuck:storefront"
+    }
+   ],
+   "doThis": "Cancel the older pipeline that holds the staging lock, then retry deploy_staging.",
+   "env": "pre-release",
+   "envShort": "pre",
+   "estBasis": "typical for a cicd item",
+   "estMin": 10,
+   "href": "/cicd",
+   "id": 7,
+   "impact": 1.5,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open CI/CD",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "cicd:stuck:storefront",
+   "score": 4.4,
+   "slot": "later",
+   "status": "planned",
+   "title": "Clear the stuck storefront staging pipeline",
+   "urgency": 1.5,
+   "whyNow": "Two merge requests wait behind it."
+  },
+  {
+   "area": "capacity",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/capacity",
+     "text": "Source: capacity:prod-mon-01"
+    }
+   ],
+   "doThis": "Review OPS-226 and merge the retention change.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a capacity item",
+   "estMin": 15,
+   "href": "/capacity",
+   "id": 8,
+   "impact": 1.8,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open capacity",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "capacity:prod-mon-01",
+   "score": 5.2,
+   "slot": "later",
+   "status": "planned",
+   "title": "Loki on prod-mon-01 full in 4.6 days",
+   "urgency": 2,
+   "whyNow": "Full in under 7 days."
+  },
+  {
+   "area": "backups",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/backups",
+     "text": "Source: backups:mongo-prod_reviews"
+    }
+   ],
+   "doThis": "Restore the backup role of the mongo backup user (OPS-211).",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a backup item",
+   "estMin": 15,
+   "href": "/backups",
+   "id": 9,
+   "impact": 1.8,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open backups",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "backups:mongo-prod_reviews",
+   "score": 5,
+   "slot": "later",
+   "status": "planned",
+   "title": "mongo-prod_reviews backup 52 h old",
+   "urgency": 2,
+   "whyNow": "No fresh backup for 2 days."
+  },
+  {
+   "area": "vulns",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.85,
+   "details": [
+    {
+     "href": "/vulns",
+     "text": "Source: vulns:php"
+    }
+   ],
+   "doThis": "Start OPS-222 after the reboot wave.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a cve item",
+   "estMin": 60,
+   "href": "/vulns",
+   "id": 10,
+   "impact": 2,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open vulnerability",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "vulns:php",
+   "score": 4.9,
+   "slot": "later",
+   "status": "planned",
+   "title": "Rebuild analytics-matomo on PHP 8.3",
+   "urgency": 2,
+   "whyNow": "P1 and internet-facing."
+  },
+  {
+   "area": "qa",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.5,
+   "details": [
+    {
+     "href": "/qa",
+     "text": "Source: qa:63"
+    }
+   ],
+   "doThis": "Wait for Riley's answer.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a qa item",
+   "estMin": 10,
+   "href": "/qa",
+   "id": 11,
+   "impact": 1,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open QA",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "qa:63",
+   "score": 2.1,
+   "slot": "later",
+   "status": "planned",
+   "title": "QA: product images slow on mobile",
+   "urgency": 1,
+   "whyNow": "Needs info."
+  },
+  {
+   "area": "incidents",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/incidents/view?id=148",
+     "text": "Source: incident:148"
+    }
+   ],
+   "doThis": "The fixer run is done; ask QA to re-test CPN-12.",
+   "env": "pre-release",
+   "envShort": "pre",
+   "estBasis": "typical for a incident item",
+   "estMin": 5,
+   "href": "/incidents/view?id=148",
+   "id": 12,
+   "impact": 1.5,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open incident",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "incident:148",
+   "score": 3.4,
+   "slot": "later",
+   "status": "planned",
+   "title": "Staging coupon 500",
+   "urgency": 1.5,
+   "whyNow": "Blocks the promotion test plan."
+  },
+  {
+   "area": "hygiene",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.95,
+   "details": [
+    {
+     "href": "/hygiene",
+     "text": "Source: hygiene:test"
+    }
+   ],
+   "doThis": "Remove TestAlertDoNotPage from the rules.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a hygiene item",
+   "estMin": 5,
+   "href": "/hygiene",
+   "id": 13,
+   "impact": 1.5,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open hygiene",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "hygiene:test",
+   "score": 3,
+   "slot": "later",
+   "status": "planned",
+   "title": "Delete the leftover test alert",
+   "urgency": 1,
+   "whyNow": "It pages at critical for 13 days."
+  },
+  {
+   "area": "incidents",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/incidents/view?id=149",
+     "text": "Source: incident:149"
+    }
+   ],
+   "doThis": "Done by the fixer; check the timer runs Sunday.",
+   "env": "develop",
+   "envShort": "dev",
+   "estBasis": "typical for a incident item",
+   "estMin": 5,
+   "href": "/incidents/view?id=149",
+   "id": 14,
+   "impact": 1,
+   "laterReason": "did not fit the 4 h budget",
+   "linkLabel": "Open incident",
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "incident:149",
+   "score": 1.2,
+   "slot": "later",
+   "status": "planned",
+   "title": "dev-runner-01 disk",
+   "urgency": 0.5,
+   "whyNow": "Low."
+  }
+ ],
+ "on": true,
+ "open": [
+  {
+   "area": "incidents",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.95,
+   "details": [
+    {
+     "href": "/incidents/view?id=141",
+     "text": "Source: incident:141"
+    }
+   ],
+   "doThis": "Approve the 21:00 UTC window and watch the rolling restart of prod-pay-02, then prod-pay-01.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a incident item",
+   "estMin": 45,
+   "href": "/incidents/view?id=141",
+   "id": 1,
+   "impact": 3,
+   "linkLabel": "Open incident",
+   "n": 1,
+   "needsApproval": true,
+   "needsWindow": true,
+   "promptUrl": "/rca/prompt.md?incident=141",
+   "ref": "incident:141",
+   "score": 9.4,
+   "slot": "today",
+   "startedAt": 1793734368,
+   "status": "doing",
+   "title": "Ship the sms-otp timeout and failover (OPS-231)",
+   "urgency": 3,
+   "whyNow": "The workaround is a manual flag; the next provider slowdown repeats the outage."
+  },
+  {
+   "area": "problems",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/problems/view?id=7",
+     "text": "Source: problem:7"
+    }
+   ],
+   "doThis": "Accept the suggested link (incident #144) and set the problem's workaround to the feature flag.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a problem item",
+   "estMin": 10,
+   "href": "/problems/view?id=7",
+   "id": 2,
+   "impact": 3,
+   "linkLabel": "Open problem",
+   "n": 2,
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "problem:7",
+   "score": 7.1,
+   "slot": "today",
+   "status": "planned",
+   "title": "Confirm the root cause of P-7 and link the Kuma check",
+   "urgency": 2,
+   "whyNow": "One problem, four issues: keeping them together closes them together."
+  },
+  {
+   "area": "incidents",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.95,
+   "details": [
+    {
+     "href": "/incidents/view?id=145",
+     "text": "Source: incident:145"
+    }
+   ],
+   "doThis": "Copy NEXT_PUBLIC_API_BASE into shop-front-3001.env and start the instance (Option 1 of the RCA).",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a incident item",
+   "estMin": 15,
+   "href": "/incidents/view?id=145",
+   "id": 3,
+   "impact": 2.5,
+   "linkLabel": "Open incident",
+   "n": 3,
+   "needsApproval": true,
+   "needsWindow": false,
+   "promptUrl": "/rca/prompt.md?incident=145",
+   "ref": "incident:145",
+   "score": 8.8,
+   "slot": "today",
+   "status": "planned",
+   "title": "Restore shop-front :3001 on prod-shop-02",
+   "urgency": 3,
+   "whyNow": "A quarter of www requests answer 502 right now."
+  },
+  {
+   "area": "vulns",
+   "autoDone": false,
+   "carried": 1,
+   "confidence": 0.9,
+   "details": [
+    {
+     "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+     "text": "Source: cve:reboot:production"
+    }
+   ],
+   "doThis": "Book a window with the shop and payments owners; start with the edges.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a cve item",
+   "estMin": 30,
+   "href": "/vulns?group=Ubuntu%3A24.04%3ALTS%7Clinux%7Cproduction",
+   "id": 4,
+   "impact": 2.5,
+   "linkLabel": "Open vulnerability",
+   "n": 4,
+   "needsApproval": false,
+   "needsWindow": true,
+   "ref": "cve:reboot:production",
+   "score": 7.9,
+   "slot": "today",
+   "status": "planned",
+   "title": "Plan the kernel reboot wave (21 hosts, CVE-2026-31337 KEV)",
+   "urgency": 2.5,
+   "whyNow": "KEV with a 2-day SLA, already late."
+  },
+  {
+   "area": "certs",
+   "autoDone": false,
+   "carried": 0,
+   "confidence": 0.95,
+   "details": [
+    {
+     "href": "/certs",
+     "text": "Source: cert:sellers"
+    }
+   ],
+   "doThis": "Rotate the DNS API token in the certbot hook and run certbot renew --cert-name sellers.",
+   "env": "release",
+   "envShort": "prod",
+   "estBasis": "typical for a cert item",
+   "estMin": 20,
+   "href": "/certs",
+   "id": 5,
+   "impact": 2,
+   "linkLabel": "Open certificates",
+   "n": 5,
+   "needsApproval": false,
+   "needsWindow": false,
+   "ref": "cert:sellers",
+   "score": 6.2,
+   "slot": "today",
+   "status": "planned",
+   "title": "Fix the DNS-01 token for sellers.northwind.example",
+   "urgency": 2,
+   "whyNow": "Expires in 9 days; renewal fails daily."
+  }
+ ],
+ "plan": {
+  "actualMin": 25,
+  "budgetMin": 240,
+  "day": "2026-11-03",
+  "dayLabel": "Tue 3 Nov",
+  "doneMin": 20,
+  "id": 1,
+  "isToday": true,
+  "maxItems": 6,
+  "maxRisky": 1,
+  "plannedMin": 140,
+  "updatedAt": 1793735268
+ },
+ "planAt": "07:30",
+ "review": {
+  "estMin": 179,
+  "kinds": [
+   {
+    "count": 36,
+    "key": "proposals",
+    "label": "Task proposals",
+    "row": "Task proposal"
+   },
+   {
+    "count": 2,
+    "key": "approvals",
+    "label": "Action approvals",
+    "row": "Action approval"
+   },
+   {
+    "count": 4,
+    "key": "lessons",
+    "label": "Lessons",
+    "row": "Lesson"
+   },
+   {
+    "count": 26,
+    "key": "ideas",
+    "label": "Ideas",
+    "row": "Idea"
+   },
+   {
+    "count": 2,
+    "key": "replies",
+    "label": "Chat requests",
+    "row": "Chat request"
+   },
+   {
+    "count": 9,
+    "key": "links",
+    "label": "Problem links",
+    "row": "Problem link"
+   }
+  ],
+  "top": [
+   {
+    "at": 1792544148,
+    "due": 1793753748,
+    "dueLeft": "in 4h",
+    "dueSoon": true,
+    "dueWord": "proposal expires",
+    "env": "release",
+    "envLabel": "release",
+    "id": "16",
+    "kind": "proposals",
+    "kindRow": "Task proposal",
+    "prod": true,
+    "sel": "proposals:16",
+    "sevKey": "critical",
+    "severity": "critical",
+    "source": "cve",
+    "sourceLabel": "CVE",
+    "targets": [
+     "prod-media-01"
+    ],
+    "title": "Disable the MVG coder on prod-media-01 (CVE-2026-25503)",
+    "waiting": "waiting 13d"
+   },
+   {
+    "at": 1793563668,
+    "due": 1794773268,
+    "dueLeft": "in 11d",
+    "dueWord": "proposal expires",
+    "env": "release",
+    "envLabel": "release",
+    "id": "2",
+    "kind": "proposals",
+    "kindRow": "Task proposal",
+    "prod": true,
+    "sel": "proposals:2",
+    "sevKey": "critical",
+    "severity": "critical",
+    "source": "cve",
+    "sourceLabel": "CVE",
+    "targets": [
+     "prod-matomo-01"
+    ],
+    "title": "Rebuild analytics-matomo on PHP 8.3 (CVE-2026-24410, KEV)",
+    "waiting": "waiting 2d"
+   },
+   {
+    "at": 1793725668,
+    "due": 1794935268,
+    "dueLeft": "in 13d",
+    "dueWord": "proposal expires",
+    "env": "release",
+    "envLabel": "release",
+    "id": "31",
+    "kind": "proposals",
+    "kindRow": "Task proposal",
+    "prod": true,
+    "sel": "proposals:31",
+    "sevKey": "critical",
+    "severity": "critical",
+    "source": "page",
+    "sourceLabel": "Incident",
+    "targets": [
+     "prod-search-01"
+    ],
+    "title": "prod-search-01 heap at 92 % after the re-index",
+    "waiting": "waiting 3h"
+   },
+   {
+    "at": 1793733468,
+    "due": 1794943068,
+    "dueLeft": "in 13d",
+    "dueWord": "proposal expires",
+    "env": "release",
+    "envLabel": "release",
+    "id": "60",
+    "kind": "proposals",
+    "kindRow": "Task proposal",
+    "prod": true,
+    "sel": "proposals:60",
+    "sevKey": "critical",
+    "severity": "critical",
+    "source": "page",
+    "sourceLabel": "Incident",
+    "summary": "Only the host on the new release fails; the other two are healthy. Roll prod-api-01 back to 4.11.3 or hold the rollout.",
+    "targets": [
+     "prod-api-01"
+    ],
+    "title": "checkout-api 5xx at 4.2 % on prod-api-01 after the 13:58 deploy",
+    "waiting": "waiting 51m"
+   }
+  ],
+  "total": 79
+ },
+ "waiting": [
+  {
+   "count": 34,
+   "detail": "8 security, 4 credentials, 9 CI/CD",
+   "group": "Proposed tasks",
+   "href": "/review?kind=proposals",
+   "title": "34 proposals wait for a decision"
+  },
+  {
+   "count": 1,
+   "detail": "Kuma OTP check, confidence 88 %",
+   "group": "Problems",
+   "href": "/problems/view?id=7",
+   "title": "1 suggested link on P-7"
+  },
+  {
+   "count": 5,
+   "detail": "DevOps, QA, NOC",
+   "group": "Ideas",
+   "href": "/review?kind=ideas",
+   "title": "5 new ideas from the advisors"
+  }
+ ],
+ "incidents": {
+  "open": 8,
+  "rows": [
+   {
+    "env": "release",
+    "id": 145,
+    "last": 1793745224,
+    "sevKey": "high",
+    "status": "open",
+    "title": "www.northwind.example 502 on 25 % of requests (prod-shop-02:3001 dead)"
+   },
+   {
+    "env": "release",
+    "id": 143,
+    "last": 1793744924,
+    "sevKey": "high",
+    "status": "open",
+    "title": "prod-pay-01 memory 94 %: sms-otp OOM-killed 4 times"
+   },
+   {
+    "env": "release",
+    "id": 151,
+    "last": 1793739224,
+    "sevKey": "high",
+    "status": "open",
+    "title": "CVE-2026-31337 (Linux kernel, KEV) on 21 production hosts: reboot wave needed"
+   },
+   {
+    "env": "release",
+    "id": 150,
+    "last": 1793714024,
+    "sevKey": "high",
+    "status": "open",
+    "title": "Release deploy of warehouse-api failed: migration lock held"
+   }
+  ],
+  "top": {
+   "ackedAt": 0,
+   "ackedBy": "",
+   "env": "release",
+   "firstSeen": 1793729864,
+   "id": 142,
+   "sevKey": "critical",
+   "stageFor": "4.6 h",
+   "stageSince": 1793729864,
+   "status": "open",
+   "title": "checkout.northwind.example: payment failure rate 31 % (otp_timeout)"
+  },
+  "total": 10
+ },
+ "checks": {
+  "failed": 22,
+  "hours": [
+   {
+    "at": 1793574000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793577600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793581200,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793584800,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793588400,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793592000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793595600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793599200,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793602800,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793606400,
+    "fail": 0,
+    "ok": 4
+   },
+   {
+    "at": 1793610000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793613600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793617200,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793620800,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793624400,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793628000,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793631600,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793635200,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793638800,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793642400,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793646000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793649600,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793653200,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793656800,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793660400,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793664000,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793667600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793671200,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793674800,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793678400,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793682000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793685600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793689200,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793692800,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793696400,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793700000,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793703600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793707200,
+    "fail": 0,
+    "ok": 3
+   },
+   {
+    "at": 1793710800,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793714400,
+    "fail": 1,
+    "ok": 3
+   },
+   {
+    "at": 1793718000,
+    "fail": 2,
+    "ok": 2
+   },
+   {
+    "at": 1793721600,
+    "fail": 1,
+    "ok": 2
+   },
+   {
+    "at": 1793725200,
+    "fail": 1,
+    "ok": 4
+   },
+   {
+    "at": 1793728800,
+    "fail": 6,
+    "ok": 2
+   },
+   {
+    "at": 1793732400,
+    "fail": 2,
+    "ok": 2
+   },
+   {
+    "at": 1793736000,
+    "fail": 2,
+    "ok": 4
+   },
+   {
+    "at": 1793739600,
+    "fail": 0,
+    "ok": 2
+   },
+   {
+    "at": 1793743200,
+    "fail": 1,
+    "ok": 3
+   }
+  ],
+  "total": 133,
+  "worst": 43
+ }
+}

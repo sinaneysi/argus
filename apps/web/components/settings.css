@@ -1,0 +1,129 @@
+/* The Settings pages: one form of labelled rows with their limits, a save bar, then the status blocks. */
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); align-items: start; }
+.set-form { display: grid; gap: var(--gap); min-width: 0; }
+.set-rows { display: grid; container-type: inline-size; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px 80px; gap: 12px; align-items: center; min-height: 44px; padding: 6px 0; border-top: 1px solid var(--border); }
+.set-row:first-child { border-top: 0; }
+.set-row.job { grid-template-columns: minmax(0, 1fr) 170px auto 96px; }
+.set-row :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select) { width: 100%; min-width: 0; height: var(--control); padding: 0 10px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .set-row input:not([type="checkbox"]):hover, .set-row select:hover { border-color: var(--text-muted); } }
+.set-row input[type="checkbox"] { justify-self: start; width: 16px; height: 16px; margin: 0; accent-color: var(--accent-strong); }
+.set-l { display: grid; gap: 2px; min-width: 0; }
+.set-l small, .set-form .field small, .set-chk small { color: var(--text-muted); font-size: var(--fs-xs); font-weight: 400; }
+.set-stack { max-width: 640px; margin-top: 12px; }
+.set-stack > .fold, .set-stack > .row-act { margin: 0; }
+.set-chk { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; align-items: start; }
+.set-chk input, .set-opt input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-strong); }
+.set-form .field label { font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.set-row.wide { grid-template-columns: minmax(0, 1fr) 260px 80px; }
+.set-chk small, .set-chk .set-err { grid-column: 2; }
+.set-opts { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.set-opts legend { padding: 0; margin-bottom: 6px; font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.set-opt { display: flex; gap: 8px; align-items: flex-start; font-size: var(--fs-sm); }
+.set-opt input { margin-top: 2px; }
+.set-opt small { display: block; color: var(--text-muted); font-size: var(--fs-xs); }
+.set-opt b { font-weight: 500; }
+.set-steps { list-style: decimal; display: grid; gap: 6px; padding-left: 20px; margin: 8px 0; max-width: var(--measure); font-size: var(--fs-sm); color: var(--text-2); }
+.set-area { width: 100%; min-height: 88px; box-sizing: border-box; font-size: var(--fs-sm); padding: 8px; border: 1px solid var(--control-border); border-radius: var(--r-control); background: var(--surface); color: inherit; resize: vertical; }
+.mono-area { font-family: var(--mono); }
+.cl-now { display: grid; gap: 8px; }
+.cl-now.fail { border-color: var(--fail-fg); }
+.cl-now.warn { border-color: var(--warn-fg); }
+.cl-now-t { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cl-now-t h2 { font-size: var(--fs-lg); }
+.cl-facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 4px; font-size: var(--fs-sm); }
+.cl-facts div { display: flex; flex-wrap: wrap; gap: 0 6px; min-width: 0; }
+.cl-facts dt { font-weight: 500; color: var(--text-muted); }
+.cl-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.cl-facts .fail { color: var(--fail-fg); }
+.cl-facts .warn { color: var(--warn-fg); }
+.set-list { margin: 0 0 8px; padding-left: 20px; font-size: var(--fs-sm); color: var(--text-2); }
+.src-list { display: grid; list-style: none; margin: 0; padding: 0; }
+.src-row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-top: 1px solid var(--border); }
+.src-row:first-child { border-top: 0; }
+.src-main { flex: 1 1 320px; min-width: 0; overflow-wrap: anywhere; }
+.src-t { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.src-t b { font-weight: 500; }
+.set-range { color: var(--text-muted); font-size: var(--fs-xs); text-align: right; }
+.set-err { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 4px; color: var(--fail-fg); font-size: var(--fs-xs); }
+.set-form [aria-invalid="true"] { border-color: var(--fail-fg); }
+.set-note { color: var(--text-muted); font-size: var(--fs-sm); max-width: var(--measure); margin-bottom: 8px; }
+.set-bar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px var(--card-pad); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); }
+.u-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.u-add .field { flex: 1 1 200px; min-width: 0; }
+.u-confirm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 6px; max-width: 320px; text-align: left; }
+.u-confirm [data-slot="button"] { white-space: normal; overflow-wrap: anywhere; height: auto; min-height: var(--control-sm); padding-block: 6px; }
+html:has(.set-bar) { scroll-padding-bottom: 80px; }
+.set-form > .banner { margin: 0; }
+.set-form > .fold-t { margin-top: 0; }
+.card-h + .set-note, .fold-t > summary + .set-note { margin-top: 10px; }
+.log { display: grid; gap: 4px; font-family: var(--mono); font-size: var(--fs-code); overflow-wrap: anywhere; }
+@media (max-width: 1280px) { .set-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .set-row, .set-row.job, .set-row.wide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .set-row > span:first-child, .set-row > label:first-child, .set-row > .set-l:first-child { grid-column: 1 / -1; }
+  .set-range { text-align: left; }
+  .set-bar { position: static; }
+}
+/* A card, not the window, decides the row: a half-width card has no room for label and controls side by side. */
+@container (max-width: 560px) {
+  .set-row { grid-template-columns: minmax(0, 170px) minmax(0, 1fr); }
+  .set-row.wide { grid-template-columns: minmax(0, 1fr) auto; }
+  .set-row.job { grid-template-columns: minmax(0, 170px) auto minmax(0, 1fr); }
+  .set-row > span:first-child, .set-row > label:first-child, .set-row > .set-l:first-child { grid-column: 1 / -1; }
+  .set-row .set-err { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) { .set-row :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select) { height: var(--target-coarse); font-size: 16px; } }
+@media (pointer: coarse) { .set-area { font-size: 16px; } }
+/* Backup targets and Credentials: folds in the stack and tables in a fold; the ILM rule reads left under its right-aligned cell */
+.stack > .fold-t { margin-top: 0; }
+.fold-t.plain-card > .tablewrap { margin: 8px calc(-1 * var(--card-pad)) 0; }
+.bt-ilm .code { text-align: left; max-width: min(60ch, 70vw); margin-top: 6px; }
+.set-opts > small { color: var(--text-muted); font-size: var(--fs-xs); }
+.l-table .t-main b { font-weight: 500; }
+@media (pointer: coarse) { .set-opt, .set-chk { min-height: var(--target-coarse); } .set-opt { align-items: center; } }
+/* Integrations: facts, and the diff of a built page */
+.set-kv { display: grid; gap: 4px; margin: 8px 0; font-size: var(--fs-sm); }
+.set-kv > div { display: grid; grid-template-columns: minmax(0, 160px) minmax(0, 1fr); gap: 12px; }
+.set-kv dt { color: var(--text-muted); }
+.set-kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ol-diff { max-height: 480px; overflow: auto; }
+.ol-diff span { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ol-diff .add { color: var(--ok-fg); }
+.ol-blocked { color: var(--fail-fg); }
+@media (max-width: 640px) { .set-kv > div { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+.stack > .jump { margin-bottom: 0; }
+.plain-card > h3, .plain-card > .pad > h3, #pages > h3 { margin: 20px 0 8px; font-size: var(--fs-md); font-weight: 600; }
+.plain-card > .fold { margin-top: 12px; }
+#pages > .tablewrap, .plain-card > .fold > .tablewrap { margin: 8px calc(-1 * var(--card-pad)) 0; }
+.l-card > form.pad { padding-block: 12px; }
+.bare-top { display: flex; justify-content: flex-end; padding: 12px var(--card-pad) 0; }
+.l-card > div.pad { padding-bottom: 12px; }
+@media (pointer: coarse) { .u-confirm [data-slot="button"] { min-height: var(--target-coarse); } }
+/* Users and access: one Actions button per row opens a short menu; each risky item opens its own confirm step.
+   Both are native popovers (the popover attribute): no JavaScript, light dismiss, one open at a time. The menu sits under
+   its button where anchor positioning exists, else in the middle of the window like the confirm step. */
+.u-acts { display: flex; justify-content: flex-end; anchor-scope: --u-act; }
+.u-acts form { margin: 0; }
+.u-open { anchor-name: --u-act; }
+.u-open .u-chev { rotate: 90deg; transition: rotate var(--t) var(--ease-out); }
+.u-pop { margin: auto; padding: 6px; border: 1px solid var(--border); border-radius: var(--r-overlay); background: var(--surface); color: var(--text);
+  box-shadow: var(--shadow-overlay); transition: opacity var(--t-overlay) var(--ease-out), translate var(--t-overlay) var(--ease-out); }
+@starting-style { .u-pop:popover-open { opacity: 0; translate: 0 4px; } }
+.u-menu { width: 220px; }
+.u-menu:popover-open { display: grid; gap: 2px; }
+.u-menu form { display: grid; }
+.u-menu .u-item { width: 100%; justify-content: flex-start; text-align: left; }
+.u-sep { margin: 4px 2px; border: 0; border-top: 1px solid var(--border); }
+@supports (position-anchor: --a) {
+  .u-menu { position-anchor: --u-act; inset: auto; margin: 4px 0; position-area: block-end span-inline-start; position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline; }
+}
+.u-ask { width: min(440px, calc(100vw - 32px)); padding: 20px; }
+.u-ask::backdrop { background: rgba(15, 27, 45, .32); }
+.u-ask-f { display: grid; gap: 12px; }
+.u-ask h2 { font-size: var(--fs-lg); line-height: var(--lh-lg); font-weight: 600; overflow-wrap: anywhere; }
+.u-facts { display: grid; gap: 4px; margin: 0; padding-left: 18px; list-style: disc; font-size: var(--fs-sm); color: var(--text-2); }
+.u-ask-b { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+@media (pointer: coarse) { .u-menu .u-item, .u-ask-b [data-slot="button"] { min-height: var(--target-coarse); } }
+@media (prefers-reduced-motion: reduce) { @starting-style { .u-pop:popover-open { translate: none; } } }
+@media (max-width: 640px) { .u-acts { justify-content: flex-start; } }

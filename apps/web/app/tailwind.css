@@ -1,0 +1,215 @@
+/* Tailwind for the shadcn components (components/ui), alongside the existing CSS. Rules: DESIGN.md 3.24. Containment:
+   1. No Preflight: its element reset would restyle every page. A reset scoped to [data-slot] takes its place below.
+   2. source(none) + @source: only the shadcn files are scanned, so an old class that happens to share a utility's
+      name (.table, .hidden, .grid ...) does not start generating CSS on the old pages.
+   3. Layer order: unlayered CSS beats every layer, so base.css's element reset sits in argus-reset, under Tailwind.
+   The shadcn colour names map straight onto packages/design/tokens.css in @theme inline: no global --accent or
+   --border is redefined (both names exist in tokens.css with another meaning), no colour literal here, and
+   light-dark() in the tokens does the theming, so the components need no .dark variables. */
+@layer argus-reset, theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@source "../components/ui";
+@source "../components/Sidebar.tsx";
+@source "../app/(app)/today/page.tsx";
+@source "../app/(app)/review/page.tsx";
+@source "../app/(app)/incidents";
+@source "../app/(app)/not-found.tsx";
+@source "../components/Section.tsx";
+@source "../components/Palette.tsx";
+@source "../components/Severity.tsx";
+@source "../components/Connect.tsx";
+@source "../components/ShortcutHelp.tsx";
+
+@custom-variant dark {
+  [data-theme="dark"] & { @slot; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) & { @slot; } }
+}
+
+/* Desktop only: below 900px the sidebar is the phone sheet, whatever the cookie says. */
+@custom-variant rail {
+  @media (min-width: 901px) { [data-rail="on"] & { @slot; } }
+}
+
+@theme {
+  --text-xs: 13px; --text-xs--line-height: 18px;
+  --text-sm: 14px; --text-sm--line-height: 20px;
+  --text-base: 16px; --text-base--line-height: 24px;
+  --text-lg: 18px; --text-lg--line-height: 26px;
+  --text-xl: 22px; --text-xl--line-height: 30px;
+  --text-2xl: 32px; --text-2xl--line-height: 40px;
+}
+
+@theme inline {
+  --ease-harbor: var(--ease-out);
+  --font-sans: var(--font);
+  --font-heading: var(--font);
+  --font-mono: var(--mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--accent-strong);
+  --color-primary-foreground: var(--accent-contrast);
+  --color-primary-hover: var(--accent-hover);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--fail-fg);
+  --color-border: var(--border);
+  --color-input: var(--control-border);
+  --color-ring: var(--focus);
+  --color-sidebar: var(--surface);
+  --color-sidebar-foreground: var(--text-2);
+  --color-sidebar-primary: var(--accent-strong);
+  --color-sidebar-primary-foreground: var(--accent-contrast);
+  --color-sidebar-accent: var(--accent-soft);
+  --color-sidebar-accent-foreground: var(--accent-soft-fg);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--focus);
+  --color-link: var(--accent);
+  --color-soft: var(--accent-soft);
+  --color-soft-foreground: var(--accent-soft-fg);
+  --color-ink-2: var(--text-2);
+  --color-ok: var(--ok-bg);
+  --color-ok-foreground: var(--ok-fg);
+  --color-warn: var(--warn-bg);
+  --color-warn-foreground: var(--warn-fg);
+  --color-fail: var(--fail-bg);
+  --color-fail-foreground: var(--fail-fg);
+  --color-info: var(--info-bg);
+  --color-info-foreground: var(--info-fg);
+  --color-data-1: var(--data-1);
+  --color-data-1-soft: var(--data-1-soft);
+  --color-data-sand: var(--data-sand);
+  --color-data-red: var(--data-red);
+  --color-data-green-soft: var(--data-green-soft);
+  --color-data-grey: var(--data-grey);
+  --color-data-target: var(--data-target);
+  --radius-sm: var(--r-chip);
+  --radius-md: 10px;
+  --radius-lg: var(--r-control);
+  --radius-xl: var(--r-card);
+  --radius-2xl: var(--r-card);
+  --radius-3xl: var(--r-card);
+  --radius-4xl: var(--r-pill);
+  --radius-overlay: var(--r-overlay);
+  --shadow-card: var(--shadow-card);
+  --shadow-overlay: var(--shadow-overlay);
+}
+
+/* Preflight, for shadcn elements only. In the base layer, so the utilities win; Base UI portals carry data-slot too. */
+@layer base {
+  :where([data-slot], [data-slot] *), :where([data-slot], [data-slot] *)::before, :where([data-slot], [data-slot] *)::after {
+    box-sizing: border-box; margin: 0; padding: 0; border: 0 solid var(--border); outline-color: color-mix(in oklab, var(--focus) 50%, transparent);
+  }
+  :where([data-slot] svg, svg[data-slot]) { display: block; vertical-align: middle; }
+  :where(button[data-slot], [data-slot] button) { font: inherit; color: inherit; background: transparent; border-radius: 0; cursor: pointer; }
+  /* a plain link inside a card keeps the accent from argus-reset */
+  :where(a[data-slot]) { color: inherit; text-decoration: inherit; }
+  :where(table[data-slot], [data-slot] table) { border-collapse: collapse; text-indent: 0; }
+  :where(ul[data-slot], ol[data-slot], [data-slot] ul, [data-slot] ol) { list-style: none; }
+  :where([data-slot] :is(h1, h2, h3, h4, h5, h6)) { font-size: inherit; font-weight: inherit; }
+}
+
+@layer components {
+  .ui-btn {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-full border border-transparent text-base leading-none font-medium whitespace-nowrap transition-[background-color,border-color,color,scale] duration-100 ease-harbor select-none pointer-coarse:min-h-11 pointer-coarse:min-w-11 active:scale-[0.98] motion-reduce:active:scale-100 disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+  }
+  .ui-card {
+    @apply flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl border border-border bg-card py-(--card-spacing) text-base leading-normal text-card-foreground shadow-card [--card-spacing:22px] max-[900px]:[--card-spacing:16px] has-data-[slot=card-footer]:pb-0 data-[size=sm]:[--card-spacing:--spacing(3)];
+  }
+  .plain-card { @apply min-w-0 rounded-xl border border-border bg-card p-(--card-pad) shadow-card; }
+
+  /* Pills, count chips and banners: used on every page, so one short class each. */
+  .pill { @apply inline-flex h-(--pill) flex-none items-center gap-[5px] rounded-full px-2 text-xs leading-none font-medium whitespace-nowrap tabular-nums; }
+  .pill.neutral, .pill.env { @apply bg-secondary text-ink-2; }
+  .pill.ok { @apply bg-ok text-ok-foreground; }
+  .pill.warn { @apply bg-warn text-warn-foreground; }
+  .pill.fail { @apply bg-fail text-fail-foreground; }
+  .pill.info { @apply bg-info text-info-foreground; }
+  .pill.env.prod { @apply font-semibold text-foreground; }
+  .pill .dot { @apply size-1.5 rounded-full bg-current; }
+  .banner { @apply mb-(--s4) flex items-start gap-2.5 rounded-[var(--r-inner)] px-4 py-3 text-base; }
+  .banner .icon { @apply mt-1; }
+  .banner > span { @apply max-w-(--measure); }
+  .banner.ok { @apply bg-ok text-ok-foreground; }
+  .banner.warn { @apply bg-warn text-warn-foreground; }
+  .banner.fail { @apply bg-fail text-fail-foreground; }
+  .banner.info { @apply bg-info text-info-foreground; }
+
+  /* Severity: signal bars, see components/Severity.tsx. */
+  .sev-mark { @apply inline-grid size-7 place-items-center; }
+  .sev-pill { @apply inline-flex h-(--pill) flex-none items-center gap-1.5 text-sm font-semibold whitespace-nowrap; }
+  .sev-critical, .sev-high { @apply text-fail-foreground; }
+  .sev-medium { @apply text-warn-foreground; }
+  .sev-low, .sev-none { @apply text-muted-foreground; }
+
+  .side-link {
+    @apply relative flex h-(--nav-item) items-center gap-2.5 rounded-[8px] pr-2.5 pl-8 text-sm text-ink-2 transition-colors duration-100 pointer-coarse:min-h-11 hover:bg-accent hover:text-foreground rail:justify-center rail:px-0 [&>.icon]:text-muted-foreground;
+  }
+  .side-link-on {
+    @apply bg-soft font-semibold text-soft-foreground hover:bg-soft hover:text-soft-foreground [&>.icon]:text-soft-foreground;
+  }
+
+  /* Today: only what repeats per row. Each class ships once here, not twice per row in the HTML and the RSC payload. */
+  .plan-row {
+    @apply relative grid grid-cols-[40px_minmax(0,1fr)_auto] gap-x-4 gap-y-3 py-3.5 not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-14 not-first:before:border-t pointer-coarse:grid-cols-[44px_minmax(0,1fr)_auto] max-[900px]:grid-cols-[40px_minmax(0,1fr)] max-[900px]:pointer-coarse:grid-cols-[44px_minmax(0,1fr)];
+  }
+  .plan-end {
+    @apply grid content-start justify-items-end gap-1.5 text-sm max-[900px]:col-start-2 max-[900px]:grid-flow-col max-[900px]:justify-start max-[900px]:justify-items-start max-[900px]:gap-3;
+  }
+  .plan-form { @apply flex flex-wrap items-end gap-2; }
+  .plan-mini { @apply flex flex-wrap items-center gap-2.5 border-t py-2 text-sm first:border-t-0; }
+  .go-link { @apply inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap; }
+  /* An empty rounded box; hover fills it with the tick, to show what the click does. The ::after keeps the target at 40px or more. */
+  .check-btn {
+    @apply relative grid size-7 cursor-pointer place-items-center rounded-[8px] border-2 border-border bg-card text-transparent transition-[background-color,border-color,color,scale] duration-100 ease-harbor after:absolute after:-inset-1.5 active:scale-[0.96] hover:border-primary hover:bg-primary hover:text-primary-foreground motion-reduce:active:scale-100 pointer-coarse:after:-inset-2;
+  }
+  .check-ro {
+    @apply grid size-7 cursor-default place-items-center rounded-[8px] border-2 border-dashed border-border bg-card text-sm font-semibold text-muted-foreground;
+  }
+  .mini-q {
+    @apply -mx-2 grid grid-cols-[28px_minmax(0,1fr)] grid-rows-[auto_auto] gap-x-2.5 rounded-[var(--r-inner)] p-2 text-foreground hover:bg-accent;
+  }
+  .mini-q > .sev-mark { @apply row-span-2; }
+
+  /* Review: the queue rows and the panel's facts. q-row stays on the li: lib/shortcuts.ts and the smoke test find rows by it. */
+  .rv-link {
+    @apply relative grid min-h-(--row-queue) grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors duration-100 hover:bg-accent aria-[current=true]:bg-soft aria-[current=true]:hover:bg-soft max-[900px]:grid-cols-[28px_minmax(0,1fr)];
+  }
+  .q-row + .q-row .rv-link::before { @apply absolute top-0 right-3 left-[52px] border-t content-['']; }
+  .q-row.on .rv-link::before, .q-row.on + .q-row .rv-link::before { @apply hidden; }
+  .rv-main { @apply grid min-w-0 gap-0.5; }
+  .rv-title { @apply truncate font-semibold; }
+  .rv-meta { @apply truncate text-sm text-muted-foreground; }
+  .rv-end {
+    @apply grid justify-items-end gap-1 text-sm whitespace-nowrap max-[900px]:col-start-2 max-[900px]:grid-flow-col max-[900px]:justify-start max-[900px]:justify-items-start max-[900px]:gap-2.5;
+  }
+  .rv-facts { @apply grid grid-cols-2 gap-x-5 gap-y-3.5 text-foreground max-[900px]:grid-cols-1; }
+  .rv-facts dt { @apply text-xs font-medium text-muted-foreground; }
+  .rv-facts dd { @apply mt-0.5 text-sm wrap-anywhere; }
+  .rv-facts-one { @apply grid grid-cols-1 gap-2.5; }
+  .rv-missing { @apply text-muted-foreground; }
+  .rv-code {
+    @apply m-0 max-h-60 overflow-auto rounded-[var(--r-inner)] bg-secondary p-3 font-mono text-(length:--fs-code)/(--lh-xs) wrap-anywhere whitespace-pre-wrap;
+  }
+  .rv-steps { counter-reset: st; @apply grid gap-2.5; }
+  .rv-steps > li {
+    counter-increment: st;
+    @apply relative grid gap-1 pl-7 text-sm text-ink-2 before:absolute before:top-0 before:left-0 before:w-5 before:text-right before:text-muted-foreground before:tabular-nums before:content-[counter(st)];
+  }
+}
+
+/* What Base UI's <style> would do, now that CSPProvider turns it off: no scrollbar on a Select popup.
+   Keep a real rule last, unlayered. With no utilities yet, the minifier ends this file on "@layer components,utilities"
+   with no semicolon. Next joins the chunk's files with no separator, so that statement swallows base.css's first selector,
+   and box-sizing: border-box is lost on every page. */
+[data-slot="select-content"] { scrollbar-width: none; }
+[data-slot="select-content"]::-webkit-scrollbar { display: none; }

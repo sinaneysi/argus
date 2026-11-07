@@ -1,0 +1,113 @@
+{
+"banners": [],
+"engine": "PostgreSQL",
+"env": "pre-release",
+"files": [],
+"fixPrompt": "",
+"fixerHref": "",
+"id": 4,
+"install": null,
+"installBtn": null,
+"jobPath": "",
+"mrHref": "https://gitlab.northwind.example/ops/backup-templates/-/merge_requests/39",
+"name": "staging-all",
+"overlaps": [],
+"plan": "\nEngine postgres on stg-db-01, daily 01:00, to backup/pg/stg, age-encrypted.",
+"prod": false,
+"record": [
+{
+"label": "Plan",
+"value": "#4"
+},
+{
+"label": "State",
+"value": "merged · monitored"
+},
+{
+"label": "Merge request",
+"value": "merged"
+},
+{
+"label": "Board",
+"value": "being created"
+},
+{
+"label": "Server",
+"value": "stg-db-01",
+"mono": true
+},
+{
+"label": "Mode",
+"value": "None"
+},
+{
+"label": "Schedule",
+"value": "daily 01:00"
+},
+{
+"label": "OnCalendar",
+"value": "",
+"mono": true
+},
+{
+"label": "Destination",
+"value": "backup/pg/stg",
+"mono": true
+},
+{
+"label": "Retention",
+"value": "14 days"
+},
+{
+"label": "Encryption",
+"value": " · "
+},
+{
+"label": "Estimate",
+"value": "~0 B · ~0 min"
+},
+{
+"label": "Owner",
+"value": ""
+},
+{
+"label": "Restore tested",
+"value": "ok 2026-10-31"
+},
+{
+"label": "Templates",
+"value": "",
+"mono": true
+},
+{
+"label": "Created",
+"value": " · -"
+}
+],
+"refresh": null,
+"repo": "ops/backup-templates",
+"schedule": "daily 01:00",
+"server": "stg-db-01",
+"state": {
+"text": "merged · monitored",
+"kind": "ok"
+},
+"taskHref": "",
+"testForm": {
+"today": "2026-11-04"
+},
+"tests": [
+{
+"by": "fixer",
+"date": "2026-10-31",
+"notes": "",
+"object": "",
+"result": {
+"date": "2026-10-31",
+"kind": "ok",
+"result": "ok"
+}
+}
+],
+"warnings": []
+}

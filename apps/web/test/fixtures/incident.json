@@ -1,0 +1,297 @@
+{
+ "actions": [
+  "ack",
+  "resolve"
+ ],
+ "admin": true,
+ "banners": [],
+ "deep": {
+  "can": true,
+  "message": ""
+ },
+ "env": "release",
+ "facts": [
+  {
+   "label": "Key",
+   "mono": true,
+   "value": "EAST|www.northwind.example|http-5xx"
+  },
+  {
+   "label": "Environment",
+   "value": "release customer-facing"
+  },
+  {
+   "label": "Severity",
+   "value": "high alert: critical"
+  },
+  {
+   "label": "Hub service",
+   "value": "hub service: 3 callers (shop-front, tier 1) tier 1 raises severity one step (admin setting)"
+  },
+  {
+   "label": "First seen",
+   "value": "2026-11-03 19:23"
+  },
+  {
+   "label": "Last finding",
+   "value": "2026-11-04 02:03 (20m ago)"
+  },
+  {
+   "label": "Findings",
+   "value": "14"
+  },
+  {
+   "label": "Open for",
+   "value": "7.0 h"
+  },
+  {
+   "label": "Owner",
+   "value": "-"
+  },
+  {
+   "label": "Acknowledged",
+   "value": "-"
+  },
+  {
+   "label": "Resolved",
+   "value": "-"
+  },
+  {
+   "label": "Matrix",
+   "value": "thread in the notify room"
+  }
+ ],
+ "fix": {
+  "action": null,
+  "checks": [],
+  "note": [
+   {
+    "text": "Argus's options for this incident, from "
+   },
+   {
+    "href": "/rca/view?id=52",
+    "text": "RCA report #52"
+   },
+   {
+    "text": ". Production: the operator approves every option."
+   }
+  ],
+  "options": [
+   {
+    "kind": "mitigation",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "the instance starts and listens on :3001 again; nginx stops getting refused connections"
+     },
+     {
+      "label": "Effort",
+      "value": "10 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "shop-front on prod-shop-02 only"
+     }
+    ],
+    "n": 1,
+    "recommended": true,
+    "title": "Restore the env file and start the instance",
+    "what": "copy `NEXT_PUBLIC_API_BASE` from `shop-front-3000.env` into `shop-front-3001.env` on `prod-shop-02`, `systemctl reset-failed` and start `northwind-shop-front@3001`"
+   },
+   {
+    "kind": "permanent fix",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "the deploy no longer produces an incomplete env file"
+     },
+     {
+      "label": "Effort",
+      "value": "20 min"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "the next shop-front release"
+     }
+    ],
+    "n": 2,
+    "recommended": false,
+    "title": "Fill the CI variable and redeploy",
+    "what": "set the CI variable `SHOP_FRONT_ENV_3001` (environment scope `production`) like `SHOP_FRONT_ENV_3000`; the next release writes the file correctly"
+   },
+   {
+    "kind": "prevention",
+    "kv": [
+     {
+      "label": "Why it works",
+      "value": "a broken instance stops the rollout instead of serving 502"
+     },
+     {
+      "label": "Effort",
+      "value": "1 h"
+     },
+     {
+      "label": "Risk",
+      "value": "low"
+     },
+     {
+      "label": "Blast radius",
+      "value": "the CI pipeline"
+     }
+    ],
+    "n": 3,
+    "recommended": false,
+    "title": "Health-gate the deploy",
+    "what": "in `web/shop-front` CI, fail the deploy when any instance's `/health` is not 200 within 60 s"
+   }
+  ],
+  "prod": true,
+  "prompt": "PRODUCTION CHANGE — needs the operator's explicit approval before any step.\n# Restore shop-front instance :3001 on prod-shop-02\n## Goal\n`curl -fsS http://10.20.30.22:3001/health` answers 200 and nginx logs no more refused connections to it.\n## Environment and targets\n- Environment: production; host prod-shop-02 (10.20.30.22); unit `northwind-shop-front@3001.service`\n- Files: `/etc/northwind/shop-front-3000.env` (good), `/etc/northwind/shop-front-3001.env` (missing a key)\n## Change, step by step\n### Step 1\n- Backup: `cp -a /etc/northwind/shop-front-3001.env{,.bak-$(date +%s)}`\n- Change: add the `NEXT_PUBLIC_API_BASE=` line from the 3000 file\n- Check: `systemctl reset-failed northwind-shop-front@3001 \u0026\u0026 systemctl start northwind-shop-front@3001`\n- Rollback: restore the backup, stop the unit.\n## Verify\n- `/health` 200 on :3001; `grep -c 10.20.30.22:3001 /var/log/nginx/error.log` stops growing on prod-edge-01.\n",
+  "promptHref": "/rca/prompt.md?incident=145",
+  "releaseNote": "Argus never runs a production change. Hand this prompt to a person or an agent; the operator approves each step."
+ },
+ "id": 145,
+ "lastSeen": 1793745224,
+ "lazy": {
+  "rows": [
+   {
+    "label": "What broke",
+    "value": "About 25 % of requests to `www.northwind.example` answer 502 since 15:53 UTC."
+   },
+   {
+    "label": "Why",
+    "value": "The second shop-front instance on `prod-shop-02` (:3001) did not start after the 10-23 deploy (proven)."
+   },
+   {
+    "label": "Impact",
+    "value": "502 on roughly one page view in four for customers routed to prod-shop-02; checkout unaffected."
+   },
+   {
+    "label": "Fix",
+    "value": "Start `northwind-shop-front@3001` with the fixed env file (Option 1) — the operator approves (production)."
+   }
+  ],
+  "source": "From the report.",
+  "status": "needs operator",
+  "statusKind": "warn"
+ },
+ "occurrences": 14,
+ "owner": "",
+ "problem": {
+  "back": "/incidents/view?id=145#problem",
+  "banner": [
+   {
+    "text": " Part of "
+   },
+   {
+    "href": "/problems/view?id=8",
+    "text": "P-8 shop-front deploy writes an incomplete env file for the second instance"
+   },
+   {
+    "text": " · investigating · 1 linked "
+   }
+  ],
+  "banners": [],
+  "create": null,
+  "link": null,
+  "ref": "incident:145",
+  "suggestions": []
+ },
+ "prod": true,
+ "rca": {
+  "folded": true,
+  "md": "# RCA: www.northwind.example 502 on a quarter of requests — one shop-front instance not listening\n\n## Summary\n\nThe nginx upstream `shop_front` on `prod-edge-01` and `prod-edge-02` balances over four backends:\n`prod-shop-01:3000`, `prod-shop-01:3001`, `prod-shop-02:3000`, `prod-shop-02:3001`. Since the deploy at 15:53\nUTC, `prod-shop-02:3001` refuses connections: `northwind-shop-front@3001` exited with\n`Error: NEXT_PUBLIC_API_BASE is not set` and systemd gave up after 5 restarts. nginx marks the backend down for\n10 s after each failure and then retries it, so roughly every fourth request still lands on the dead port.\n\n## Evidence\n\n| # | finding | proven/probable | source |\n|---|---|---|---|\n| 1 | `connect() failed (111: Connection refused) while connecting to upstream 10.20.30.22:3001` 1,920 times/h | proven | nginx error log on prod-edge-01 |\n| 2 | `northwind-shop-front@3001` failed, `start-limit-hit` | proven | `systemctl status` on prod-shop-02 |\n| 3 | `/etc/northwind/shop-front-3001.env` lacks `NEXT_PUBLIC_API_BASE` (the 3000 file has it) | proven | `diff` of the two env files |\n| 4 | The deploy template writes the env file per instance from the CI variable `SHOP_FRONT_ENV_3001` (empty) | probable | `web/shop-front` `.gitlab-ci.yml` |",
+  "run": 1182,
+  "title": "502 from nginx upstream shop_front: prod-shop-02:3001 refuses connections"
+ },
+ "refresh": false,
+ "reports": [
+  {
+   "at": 1793726624,
+   "auto": true,
+   "href": "/rca/view?id=52",
+   "id": 52,
+   "source": "rca-deep",
+   "status": "open",
+   "statusKind": "warn",
+   "title": "www.northwind.example 502 — one shop-front instance not listening"
+  }
+ ],
+ "sevKey": "high",
+ "severity": "high",
+ "source": {
+  "lines": [],
+  "messages": [
+   {
+    "body": "FIRING [EAST] Nginx5xxRateHigh critical prod-edge-01 upstream=shop_front 5xx=24%",
+    "disposition": "Alert",
+    "meta": [
+     {
+      "text": " 2026-11-03 19:23 · #alerts · "
+     },
+     {
+      "href": "https://matrix.to/#/!alertsRoomNw01:chat.northwind.example/$6978e858eab2nw6d8fdc?via=chat.northwind.example",
+      "text": "Open in Matrix"
+     }
+    ],
+    "mxid": "@alertmanager:chat.northwind.example",
+    "sender": "Alertmanager"
+   }
+  ],
+  "note": "",
+  "tags": [
+   {
+    "label": "Alertmanager",
+    "value": "alertmanager"
+   }
+  ]
+ },
+ "status": "open",
+ "statusKind": "fail",
+ "task": {
+  "href": "/board/new?src=incident\u0026id=145",
+  "text": "Create task"
+ },
+ "timeline": [
+  {
+   "at": 1793726624,
+   "detail": [
+    {
+     "text": "auto · RCA report #52: www.northwind.example 502 — one shop-front instance not listening"
+    }
+   ],
+   "kind": "rca",
+   "source": [
+    {
+     "text": " rca "
+    }
+   ],
+   "title": ""
+  },
+  {
+   "at": 1793721584,
+   "detail": [
+    {
+     "text": "One of four shop-front backends is not listening since the 10-23 deploy."
+    }
+   ],
+   "kind": "finding",
+   "source": [
+    {
+     "href": "/incidents/problem?run=1182\u0026idx=0",
+     "text": "incident · run 1182"
+    }
+   ],
+   "title": "502 from nginx upstream shop_front: prod-shop-02:3001 refuses connections high"
+  }
+ ],
+ "title": "www.northwind.example 502 on 25 % of requests (prod-shop-02:3001 dead)"
+}

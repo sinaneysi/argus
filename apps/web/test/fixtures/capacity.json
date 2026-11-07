@@ -1,0 +1,1436 @@
+{
+"banners": [],
+"facets": [
+{
+"key": "env",
+"label": "Environment",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "release",
+"label": "release",
+"count": 32
+},
+{
+"value": "pre-release",
+"label": "pre-release",
+"count": 4
+},
+{
+"value": "develop",
+"label": "develop",
+"count": 5
+}
+]
+},
+{
+"key": "dc",
+"label": "DC",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "east",
+"label": "east",
+"count": 29
+},
+{
+"value": "west",
+"label": "west",
+"count": 12
+}
+]
+},
+{
+"key": "vlevel",
+"label": "Level",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "critical",
+"label": "Critical",
+"count": 2
+},
+{
+"value": "warn",
+"label": "High",
+"count": 3
+},
+{
+"value": "ok",
+"label": "OK",
+"count": 35
+},
+{
+"value": "unmonitored",
+"label": "Not monitored",
+"count": 1
+}
+]
+}
+],
+"filesystems": [
+{
+"analysis": {
+"can": true,
+"fs": "14a1378f5097",
+"msg": "",
+"note": "",
+"report": null,
+"show": true
+},
+"days": "4.7 d",
+"dc": "east",
+"env": "release",
+"free": "32.2 GB",
+"growth": "+6.8 GB",
+"host": "10.20.30.101:9100",
+"href": "/inventory/view?id=24",
+"level": {
+"text": "critical",
+"kind": "fail",
+"title": "full in under 7 days"
+},
+"mount": "/var/lib/loki",
+"name": "prod-mon-01",
+"new": true,
+"used": {
+"figure": "93 %",
+"kind": "fail",
+"pct": 93,
+"title": "460.0 GB in total"
+}
+},
+{
+"analysis": {
+"can": true,
+"fs": "e385083f5edd",
+"msg": "",
+"note": "",
+"report": null,
+"show": true
+},
+"days": "8.7 d",
+"dc": "west",
+"env": "develop",
+"free": "4.8 GB",
+"growth": "+563 MB",
+"host": "10.30.10.31:9100",
+"href": "/inventory/view?id=41",
+"level": {
+"text": "high",
+"kind": "fail",
+"title": "full in under 14 days"
+},
+"mount": "/",
+"name": "dev-runner-01",
+"new": false,
+"used": {
+"figure": "88 %",
+"kind": "fail",
+"pct": 88,
+"title": "40.0 GB in total"
+}
+},
+{
+"analysis": {
+"can": true,
+"fs": "770849b51b09",
+"msg": "",
+"note": "",
+"report": null,
+"show": true
+},
+"days": "140 d",
+"dc": "east",
+"env": "release",
+"free": "2.8 GB",
+"growth": "+20 MB",
+"host": "10.20.30.101:9100",
+"href": "/inventory/view?id=24",
+"level": {
+"text": "tight",
+"kind": "warn",
+"title": "under 10 % free"
+},
+"mount": "/",
+"name": "prod-mon-01",
+"new": true,
+"used": {
+"figure": "93 %",
+"kind": "warn",
+"pct": 93,
+"title": "40.0 GB in total"
+}
+}
+],
+"hasVMs": true,
+"hot": [
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 24 % · load 0.37/vCPU",
+"text": "39 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "+51 MB / day · full in 360 d · IO p95 12 %",
+"used": {
+"figure": "55 %",
+"kind": "ok",
+"pct": 55,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=7",
+"level": {
+"text": "critical",
+"kind": "fail"
+},
+"memory": {
+"hot": "fail",
+"sub": "avg 89 %",
+"text": "98 %"
+},
+"monitored": true,
+"name": "prod-pay-01",
+"why": ""
+},
+{
+"bits": "east · node-data",
+"cpu": {
+"hot": "",
+"sub": "avg 21 % · load 0.33/vCPU",
+"text": "34 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "shrinking",
+"mount": "/",
+"used": "41 %"
+},
+{
+"days": "122.7 d",
+"growth": "+922 MB",
+"mount": "/var/lib/data",
+"used": "31 %"
+}
+],
+"mount": "/var/lib/data",
+"sub": "+922 MB / day · full in 122.7 d · IO p95 9 %",
+"used": {
+"figure": "31 %",
+"kind": "ok",
+"pct": 31,
+"title": "160.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=12",
+"level": {
+"text": "high",
+"kind": "fail"
+},
+"memory": {
+"hot": "warn",
+"sub": "avg 83 %",
+"text": "90 %"
+},
+"monitored": true,
+"name": "prod-search-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 19 % · load 0.31/vCPU",
+"text": "32 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "— · not filling · IO p95 10 %",
+"used": {
+"figure": "49 %",
+"kind": "ok",
+"pct": 49,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=8",
+"level": {
+"text": "high",
+"kind": "fail"
+},
+"memory": {
+"hot": "warn",
+"sub": "avg 84 %",
+"text": "92 %"
+},
+"monitored": true,
+"name": "prod-pay-02",
+"why": ""
+}
+],
+"hotNote": "No VM is at 90 % CPU or memory or above at p95 over 7 days.",
+"list": {
+"clearHref": "/capacity#vms",
+"filtered": false,
+"from": 1,
+"hidden": {},
+"matched": 41,
+"next": "/capacity?page=2#vms",
+"noun": "VMs",
+"page": 1,
+"pages": 2,
+"path": "/capacity#vms",
+"q": "",
+"sort": "worst",
+"sortKey": "vsort",
+"sorts": [
+{
+"value": "worst",
+"label": "Worst first"
+},
+{
+"value": "growth",
+"label": "Fastest growing"
+}
+],
+"to": 25,
+"total": 41
+},
+"refresh": {
+"seconds": 5
+},
+"rows": [
+{
+"bits": "east · node-infra",
+"cpu": {
+"hot": "",
+"sub": "avg 7 % · load 0.11/vCPU",
+"text": "11 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "140 d",
+"growth": "+20 MB",
+"mount": "/",
+"used": "93 %"
+},
+{
+"days": "4.7 d",
+"growth": "+6.8 GB",
+"mount": "/var/lib/loki",
+"used": "93 %"
+}
+],
+"mount": "/var/lib/loki",
+"sub": "+6.8 GB / day · full in 4.7 d · IO p95 3 %",
+"used": {
+"figure": "93 %",
+"kind": "fail",
+"pct": 93,
+"title": "460.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=24",
+"level": {
+"text": "critical",
+"kind": "fail"
+},
+"memory": {
+"hot": "",
+"sub": "avg 60 %",
+"text": "66 %"
+},
+"monitored": true,
+"name": "prod-mon-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 24 % · load 0.37/vCPU",
+"text": "39 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "+51 MB / day · full in 360 d · IO p95 12 %",
+"used": {
+"figure": "55 %",
+"kind": "ok",
+"pct": 55,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=7",
+"level": {
+"text": "critical",
+"kind": "fail"
+},
+"memory": {
+"hot": "fail",
+"sub": "avg 89 %",
+"text": "98 %"
+},
+"monitored": true,
+"name": "prod-pay-01",
+"why": ""
+},
+{
+"bits": "west · node-infra",
+"cpu": {
+"hot": "",
+"sub": "avg 16 % · load 0.26/vCPU",
+"text": "27 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "8.7 d",
+"growth": "+563 MB",
+"mount": "/",
+"used": "88 %"
+},
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/data",
+"used": "88 %"
+}
+],
+"mount": "/",
+"sub": "+563 MB / day · full in 8.7 d · IO p95 14 %",
+"used": {
+"figure": "88 %",
+"kind": "fail",
+"pct": 88,
+"title": "40.0 GB in total"
+}
+},
+"env": "develop",
+"hit": "",
+"href": "/inventory/view?id=41",
+"level": {
+"text": "high",
+"kind": "fail"
+},
+"memory": {
+"hot": "",
+"sub": "avg 46 %",
+"text": "50 %"
+},
+"monitored": true,
+"name": "dev-runner-01",
+"why": ""
+},
+{
+"bits": "east · node-data",
+"cpu": {
+"hot": "",
+"sub": "avg 21 % · load 0.33/vCPU",
+"text": "34 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "shrinking",
+"mount": "/",
+"used": "41 %"
+},
+{
+"days": "122.7 d",
+"growth": "+922 MB",
+"mount": "/var/lib/data",
+"used": "31 %"
+}
+],
+"mount": "/var/lib/data",
+"sub": "+922 MB / day · full in 122.7 d · IO p95 9 %",
+"used": {
+"figure": "31 %",
+"kind": "ok",
+"pct": 31,
+"title": "160.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=12",
+"level": {
+"text": "high",
+"kind": "fail"
+},
+"memory": {
+"hot": "warn",
+"sub": "avg 83 %",
+"text": "90 %"
+},
+"monitored": true,
+"name": "prod-search-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 19 % · load 0.31/vCPU",
+"text": "32 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "— · not filling · IO p95 10 %",
+"used": {
+"figure": "49 %",
+"kind": "ok",
+"pct": 49,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=8",
+"level": {
+"text": "high",
+"kind": "fail"
+},
+"memory": {
+"hot": "warn",
+"sub": "avg 84 %",
+"text": "92 %"
+},
+"monitored": true,
+"name": "prod-pay-02",
+"why": ""
+},
+{
+"bits": "west · node-infra",
+"cpu": null,
+"disk": null,
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=32",
+"level": {
+"text": "not monitored",
+"kind": ""
+},
+"memory": null,
+"monitored": false,
+"name": "prod-backup-02",
+"why": "no node_exporter data in either DC"
+},
+{
+"bits": "east · node-infra",
+"cpu": {
+"hot": "",
+"sub": "avg 8 % · load 0.12/vCPU",
+"text": "13 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/",
+"used": "63 %"
+},
+{
+"days": "48.3 d",
+"growth": "+41.0 GB",
+"mount": "/data",
+"used": "50 %"
+}
+],
+"mount": "/data",
+"sub": "+41.0 GB / day · full in 48.3 d · IO p95 15 %",
+"used": {
+"figure": "50 %",
+"kind": "ok",
+"pct": 50,
+"title": "3,960.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=25",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 54 %",
+"text": "59 %"
+},
+"monitored": true,
+"name": "prod-backup-01",
+"why": ""
+},
+{
+"bits": "east · node-db",
+"cpu": {
+"hot": "",
+"sub": "avg 22 % · load 0.34/vCPU",
+"text": "35 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+51 MB",
+"mount": "/",
+"used": "44 %"
+},
+{
+"days": "62.7 d",
+"growth": "+2.2 GB",
+"mount": "/var/lib/mongodb",
+"used": "70 %"
+}
+],
+"mount": "/var/lib/mongodb",
+"sub": "+2.2 GB / day · full in 62.7 d · IO p95 4 %",
+"used": {
+"figure": "70 %",
+"kind": "ok",
+"pct": 70,
+"title": "460.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=16",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 63 %",
+"text": "69 %"
+},
+"monitored": true,
+"name": "prod-mongo-01",
+"why": ""
+},
+{
+"bits": "east · node-db",
+"cpu": {
+"hot": "",
+"sub": "avg 7 % · load 0.10/vCPU",
+"text": "11 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+51 MB",
+"mount": "/",
+"used": "34 %"
+},
+{
+"days": "110.8 d",
+"growth": "+3.9 GB",
+"mount": "/var/lib/postgresql",
+"used": "55 %"
+}
+],
+"mount": "/var/lib/postgresql",
+"sub": "+3.9 GB / day · full in 110.8 d · IO p95 5 %",
+"used": {
+"figure": "55 %",
+"kind": "ok",
+"pct": 55,
+"title": "960.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=14",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 41 %",
+"text": "45 %"
+},
+"monitored": true,
+"name": "prod-db-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 13 % · load 0.21/vCPU",
+"text": "22 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "31 %"
+},
+{
+"days": "216 d",
+"growth": "+1.1 GB",
+"mount": "/srv",
+"used": "34 %"
+}
+],
+"mount": "/srv",
+"sub": "+1.1 GB / day · full in 216 d · IO p95 2 %",
+"used": {
+"figure": "34 %",
+"kind": "ok",
+"pct": 34,
+"title": "360.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=20",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 33 %",
+"text": "37 %"
+},
+"monitored": true,
+"name": "prod-media-01",
+"why": ""
+},
+{
+"bits": "east · node-data",
+"cpu": {
+"hot": "",
+"sub": "avg 16 % · load 0.26/vCPU",
+"text": "27 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "shrinking",
+"mount": "/",
+"used": "24 %"
+},
+{
+"days": "248 d",
+"growth": "+51 MB",
+"mount": "/var/lib/data",
+"used": "69 %"
+}
+],
+"mount": "/var/lib/data",
+"sub": "+51 MB / day · full in 248 d · IO p95 12 %",
+"used": {
+"figure": "69 %",
+"kind": "ok",
+"pct": 69,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=19",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 36 %",
+"text": "39 %"
+},
+"monitored": true,
+"name": "prod-queue-01",
+"why": ""
+},
+{
+"bits": "east · node-edge",
+"cpu": {
+"hot": "",
+"sub": "avg 17 % · load 0.26/vCPU",
+"text": "27 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "+51 MB / day · full in 344 d · IO p95 4 %",
+"used": {
+"figure": "57 %",
+"kind": "ok",
+"pct": 57,
+"title": "40.0 GB in total"
+}
+},
+"env": "pre-release",
+"hit": "",
+"href": "/inventory/view?id=33",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 38 %",
+"text": "42 %"
+},
+"monitored": true,
+"name": "stg-edge-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 55 % · load 0.87/vCPU",
+"text": "90 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "30 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/srv",
+"used": "55 %"
+}
+],
+"mount": "/srv",
+"sub": "— · not filling · IO p95 16 %",
+"used": {
+"figure": "55 %",
+"kind": "ok",
+"pct": 55,
+"title": "80.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=22",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 62 %",
+"text": "68 %"
+},
+"monitored": true,
+"name": "prod-matomo-01",
+"why": ""
+},
+{
+"bits": "west · node-infra",
+"cpu": {
+"hot": "",
+"sub": "avg 24 % · load 0.38/vCPU",
+"text": "40 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "37 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/data",
+"used": "56 %"
+}
+],
+"mount": "/data",
+"sub": "— · not filling · IO p95 4 %",
+"used": {
+"figure": "56 %",
+"kind": "ok",
+"pct": 56,
+"title": "460.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=31",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 65 %",
+"text": "71 %"
+},
+"monitored": true,
+"name": "prod-mon-02",
+"why": ""
+},
+{
+"bits": "west · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 15 % · load 0.23/vCPU",
+"text": "24 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "42 %"
+},
+{
+"days": "—",
+"growth": "shrinking",
+"mount": "/srv",
+"used": "46 %"
+}
+],
+"mount": "/srv",
+"sub": "shrinking · not filling · IO p95 7 %",
+"used": {
+"figure": "46 %",
+"kind": "ok",
+"pct": 46,
+"title": "360.0 GB in total"
+}
+},
+"env": "develop",
+"hit": "",
+"href": "/inventory/view?id=37",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 64 %",
+"text": "70 %"
+},
+"monitored": true,
+"name": "dev-swarm-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 21 % · load 0.33/vCPU",
+"text": "35 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "shrinking · not filling · IO p95 16 %",
+"used": {
+"figure": "23 %",
+"kind": "ok",
+"pct": 23,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=11",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 63 %",
+"text": "69 %"
+},
+"monitored": true,
+"name": "prod-user-01",
+"why": ""
+},
+{
+"bits": "west · node-db",
+"cpu": {
+"hot": "",
+"sub": "avg 7 % · load 0.11/vCPU",
+"text": "11 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/",
+"used": "48 %"
+},
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/var/lib/mongodb",
+"used": "69 %"
+}
+],
+"mount": "/var/lib/mongodb",
+"sub": "+20 MB / day · not filling · IO p95 3 %",
+"used": {
+"figure": "69 %",
+"kind": "ok",
+"pct": 69,
+"title": "460.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=30",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 59 %",
+"text": "64 %"
+},
+"monitored": true,
+"name": "prod-mongo-03",
+"why": ""
+},
+{
+"bits": "east · node-db",
+"cpu": {
+"hot": "",
+"sub": "avg 24 % · load 0.39/vCPU",
+"text": "40 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "— · not filling · IO p95 7 %",
+"used": {
+"figure": "34 %",
+"kind": "ok",
+"pct": 34,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=18",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 63 %",
+"text": "69 %"
+},
+"monitored": true,
+"name": "prod-redis-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 15 % · load 0.23/vCPU",
+"text": "24 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "shrinking",
+"mount": "/",
+"used": "32 %"
+},
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/srv",
+"used": "68 %"
+}
+],
+"mount": "/srv",
+"sub": "+20 MB / day · not filling · IO p95 5 %",
+"used": {
+"figure": "68 %",
+"kind": "ok",
+"pct": 68,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=4",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 44 %",
+"text": "48 %"
+},
+"monitored": true,
+"name": "prod-shop-02",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 17 % · load 0.27/vCPU",
+"text": "28 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "35 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/srv",
+"used": "60 %"
+}
+],
+"mount": "/srv",
+"sub": "— · not filling · IO p95 10 %",
+"used": {
+"figure": "60 %",
+"kind": "ok",
+"pct": 60,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=6",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 62 %",
+"text": "68 %"
+},
+"monitored": true,
+"name": "prod-api-02",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 18 % · load 0.28/vCPU",
+"text": "29 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+20 MB",
+"mount": "/",
+"used": "48 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/srv",
+"used": "67 %"
+}
+],
+"mount": "/srv",
+"sub": "— · not filling · IO p95 17 %",
+"used": {
+"figure": "67 %",
+"kind": "ok",
+"pct": 67,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=5",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 36 %",
+"text": "40 %"
+},
+"monitored": true,
+"name": "prod-api-01",
+"why": ""
+},
+{
+"bits": "east · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 12 % · load 0.19/vCPU",
+"text": "20 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "shrinking · not filling · IO p95 2 %",
+"used": {
+"figure": "64 %",
+"kind": "ok",
+"pct": 64,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=21",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 60 %",
+"text": "66 %"
+},
+"monitored": true,
+"name": "prod-admin-01",
+"why": ""
+},
+{
+"bits": "west · node-db",
+"cpu": {
+"hot": "",
+"sub": "avg 10 % · load 0.15/vCPU",
+"text": "16 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "—",
+"mount": "/",
+"used": "27 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/var/lib/postgresql",
+"used": "65 %"
+}
+],
+"mount": "/var/lib/postgresql",
+"sub": "— · not filling · IO p95 11 %",
+"used": {
+"figure": "65 %",
+"kind": "ok",
+"pct": 65,
+"title": "360.0 GB in total"
+}
+},
+"env": "develop",
+"hit": "",
+"href": "/inventory/view?id=39",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 54 %",
+"text": "59 %"
+},
+"monitored": true,
+"name": "dev-db-01",
+"why": ""
+},
+{
+"bits": "east · node-edge",
+"cpu": {
+"hot": "",
+"sub": "avg 16 % · load 0.25/vCPU",
+"text": "26 %"
+},
+"disk": {
+"filesystems": [],
+"mount": "/",
+"sub": "shrinking · not filling · IO p95 16 %",
+"used": {
+"figure": "59 %",
+"kind": "ok",
+"pct": 59,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=1",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 59 %",
+"text": "64 %"
+},
+"monitored": true,
+"name": "prod-edge-01",
+"why": ""
+},
+{
+"bits": "west · node-app",
+"cpu": {
+"hot": "",
+"sub": "avg 11 % · load 0.18/vCPU",
+"text": "18 %"
+},
+"disk": {
+"filesystems": [
+{
+"days": "—",
+"growth": "+51 MB",
+"mount": "/",
+"used": "45 %"
+},
+{
+"days": "—",
+"growth": "—",
+"mount": "/srv",
+"used": "64 %"
+}
+],
+"mount": "/srv",
+"sub": "— · not filling · IO p95 8 %",
+"used": {
+"figure": "64 %",
+"kind": "ok",
+"pct": 64,
+"title": "40.0 GB in total"
+}
+},
+"env": "release",
+"hit": "",
+"href": "/inventory/view?id=27",
+"level": {
+"text": "ok",
+"kind": "ok"
+},
+"memory": {
+"hot": "",
+"sub": "avg 52 %",
+"text": "57 %"
+},
+"monitored": true,
+"name": "prod-shop-03",
+"why": ""
+}
+],
+"scan": {
+"back": "/capacity",
+"busy": false,
+"label": "Scan now",
+"meta": "Scan running · safe to leave, results appear here",
+"overdue": "Scan asked 1d ago, not finished",
+"tasks": "insights",
+"title": "Run Capacity and hygiene again now"
+},
+"show": {
+"all": 4,
+"allHref": "/capacity?level=all#fs",
+"level": "soon",
+"risk": 3,
+"riskHref": "/capacity#fs"
+},
+"sub": [
+"41 VMs, 69 filesystems",
+"40 of 41 Inventory VMs monitored",
+"forecast 2h ago",
+"window 7d"
+],
+"tiles": [
+{
+"label": "Critical",
+"figure": "2",
+"sub": "full < 7 d or p95 ≥ 97 %",
+"href": "/capacity?vlevel=critical#vms",
+"hot": true
+},
+{
+"label": "High",
+"figure": "3",
+"sub": "full < 14 d or p95 ≥ 90 %",
+"href": "/capacity?vlevel=warn#vms",
+"hot": true
+},
+{
+"label": "Watch",
+"figure": "0",
+"sub": "full < 30 d",
+"href": "/capacity?vlevel=watch#vms"
+},
+{
+"label": "Under 10 % free",
+"figure": "0",
+"sub": "tight, not growing",
+"href": "/capacity?vlevel=full#vms"
+},
+{
+"label": "OK",
+"figure": "35",
+"sub": "no risk within 30 d",
+"href": "/capacity?vlevel=ok#vms"
+},
+{
+"label": "Not monitored",
+"figure": "1",
+"sub": "no node_exporter data",
+"href": "/capacity?vlevel=unmonitored#vms"
+}
+],
+"vmTotal": 41
+}

@@ -1,0 +1,314 @@
+{
+"any": true,
+"banners": [],
+"bulk": [
+[
+"kind",
+"links"
+],
+[
+"mode",
+"full"
+]
+],
+"can": false,
+"confirm": null,
+"facets": [
+{
+"key": "conf",
+"label": "Confidence",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "high",
+"label": "High ≥ 90 %",
+"count": 1
+},
+{
+"value": "medium",
+"label": "Medium 75–89 %",
+"count": 1
+},
+{
+"value": "low",
+"label": "Low < 75 %",
+"count": 7
+}
+]
+},
+{
+"key": "type",
+"label": "Item",
+"value": "",
+"any": true,
+"options": [
+{
+"value": "incident",
+"label": "Incident",
+"count": 7
+},
+{
+"value": "qa_issue",
+"label": "Qa issue",
+"count": 2
+}
+]
+}
+],
+"here": "/review?kind=links&mode=full",
+"line": [
+"9 suggested links waiting",
+"no decision yet",
+"last pass 3h ago (52 issues × 4 problems, 9 new)",
+"Auto-accept: off (every suggestion waits for a person)"
+],
+"list": {
+"clearHref": "/review?kind=links&mode=full",
+"filtered": false,
+"from": 1,
+"hidden": {
+"kind": "links",
+"mode": "full"
+},
+"matched": 9,
+"noun": "waiting",
+"page": 1,
+"pages": 1,
+"path": "/review",
+"q": "",
+"sort": "confidence",
+"sorts": [
+{
+"value": "confidence",
+"label": "Confidence"
+},
+{
+"value": "newest",
+"label": "Newest"
+},
+{
+"value": "problem",
+"label": "By problem"
+}
+],
+"to": 9,
+"total": 9
+},
+"maxNote": 300,
+"minConfidence": "60 %",
+"picked": false,
+"problem": null,
+"refresh": null,
+"rejectDays": 30,
+"rows": [
+{
+"at": 1793742499,
+"canDecide": false,
+"confidence": "91 %",
+"from": "Argus",
+"id": 23,
+"item": {
+"type": "incident",
+"label": "#146",
+"href": "/incidents/view?id=146",
+"title": "prod-mon-01 /var/lib/loki full in 4.6 days (93 % used)",
+"status": "open",
+"env": "release",
+"exists": true
+},
+"linkWord": "caused by",
+"problem": {
+"id": 14,
+"label": "P-14",
+"title": "Debug log levels left on in production"
+},
+"reason": "loki disk growth starts when LOG_LEVEL=debug went live"
+},
+{
+"at": 1793744299,
+"canDecide": false,
+"confidence": "88 %",
+"from": "Argus",
+"id": 6,
+"item": {
+"type": "incident",
+"label": "#144",
+"href": "/incidents/view?id=144",
+"title": "Kuma: OTP delivery (synthetic) down",
+"status": "resolved",
+"env": "release",
+"exists": true
+},
+"linkWord": "caused by",
+"problem": {
+"id": 7,
+"label": "P-7",
+"title": "SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+},
+"reason": "same service sms-otp; Kuma OTP check down 6 minutes before the backlog alert"
+},
+{
+"at": 1793747299,
+"canDecide": false,
+"confidence": "74 %",
+"from": "Argus",
+"id": 21,
+"item": {
+"type": "incident",
+"label": "#142",
+"href": "/incidents/view?id=142",
+"title": "checkout.northwind.example: payment failure rate 31 % (otp_timeout)",
+"status": "open",
+"env": "release",
+"exists": true
+},
+"linkWord": "caused by",
+"problem": {
+"id": 8,
+"label": "P-8",
+"title": "shop-front deploy writes an incomplete env file for the second instance"
+},
+"reason": "same host prod-shop-02 within 20 minutes of the deploy"
+},
+{
+"at": 1793728099,
+"canDecide": false,
+"confidence": "69 %",
+"from": "Argus",
+"id": 25,
+"item": {
+"type": "QA issue",
+"label": "QA-64",
+"href": "/qa?state=all#issue-64",
+"title": "Order shows paid, warehouse says not received",
+"status": "actionable",
+"env": "release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 13,
+"label": "P-13",
+"title": "Release deploys wait on stuck database migrations"
+},
+"reason": "warehouse-api errors in the same hour as the report"
+},
+{
+"at": 1793738899,
+"canDecide": false,
+"confidence": "66 %",
+"from": "Argus",
+"id": 22,
+"item": {
+"type": "incident",
+"label": "#134",
+"href": "/incidents/view?id=134",
+"title": "staging wildcard certificate expired",
+"status": "resolved",
+"env": "pre-release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 12,
+"label": "P-12",
+"title": "Certificate renewals fail after a DNS API token rotation"
+},
+"reason": "same family (cert) and the same renewal hook"
+},
+{
+"at": 1793735299,
+"canDecide": false,
+"confidence": "64 %",
+"from": "Argus",
+"id": 28,
+"item": {
+"type": "incident",
+"label": "#150",
+"href": "/incidents/view?id=150",
+"title": "Release deploy of warehouse-api failed: migration lock held",
+"status": "open",
+"env": "release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 11,
+"label": "P-11",
+"title": "Runner disks fill with old Docker images"
+},
+"reason": "runner disk at 88 % when the release job started"
+},
+{
+"at": 1793746699,
+"canDecide": false,
+"confidence": "63 %",
+"from": "Argus",
+"id": 26,
+"item": {
+"type": "QA issue",
+"label": "QA-63",
+"href": "/qa?state=all#issue-63",
+"title": "Product images load slowly on mobile, sometimes",
+"status": "needs_info",
+"env": "release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 7,
+"label": "P-7",
+"title": "SMS provider slowdown blocks sms-otp: no provider timeout, no automatic failover"
+},
+"reason": "mobile slowness reported during the SMS outage window"
+},
+{
+"at": 1793731699,
+"canDecide": false,
+"confidence": "61 %",
+"from": "Argus",
+"id": 24,
+"item": {
+"type": "incident",
+"label": "#143",
+"href": "/incidents/view?id=143",
+"title": "prod-pay-01 memory 94 %: sms-otp OOM-killed 4 times",
+"status": "open",
+"env": "release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 9,
+"label": "P-9",
+"title": "Kernel CVE-2026-31337 on the production fleet (reboot wave)"
+},
+"reason": "same production fleet, reboot pending on prod-pay-01"
+},
+{
+"at": 1793717299,
+"canDecide": false,
+"confidence": "58 %",
+"from": "Argus",
+"id": 27,
+"item": {
+"type": "incident",
+"label": "#131",
+"href": "/incidents/view?id=131",
+"title": "prod-db-02 replication lag 45 s",
+"status": "resolved",
+"env": "release",
+"exists": true
+},
+"linkWord": "",
+"problem": {
+"id": 10,
+"label": "P-10",
+"title": "Coupon rules divide by a null minimum order"
+},
+"reason": "older replication lag on the coupon database host"
+}
+],
+"selHref": "/review?kind=links&mode=full&sel=page"
+}

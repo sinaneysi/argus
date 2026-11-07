@@ -1,0 +1,123 @@
+{
+ "auditedAt": 1793734371,
+ "branchFindings": 1,
+ "engine": "example/deployment",
+ "mode": "inferred",
+ "secCount": 1,
+ "secRest": [],
+ "secTop": [
+  {
+   "author": "alex.doe",
+   "detail": "The variable is visible in job logs of unprotected branches.",
+   "env": "release",
+   "firstSeen": 1793658771,
+   "id": 706,
+   "job": "",
+   "kind": "fail",
+   "klass": "security / config",
+   "lastSeen": 1793665971,
+   "mr": "",
+   "occurrences": 1,
+   "project": "payments/payment-gateway",
+   "projectId": 316,
+   "proposed": "Mark PAYMENT_API_KEY masked and protected; rotate the key.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "critical",
+   "status": "open",
+   "task": {
+    "href": "/board/task?id=12",
+    "text": "OPS-205"
+   },
+   "title": "payment-gateway: PAYMENT_API_KEY is not masked and not protected"
+  }
+ ],
+ "sections": [
+  {
+   "count": 1,
+   "lead": [],
+   "more": [
+    {
+     "author": "morgan.koe",
+     "detail": "Last release 41 days ago.",
+     "env": "release",
+     "firstSeen": 1793572371,
+     "id": 708,
+     "job": "",
+     "kind": "warn",
+     "klass": "branch",
+     "lastSeen": 1793579571,
+     "mr": "",
+     "occurrences": 3,
+     "project": "backoffice/report-builder",
+     "projectId": 319,
+     "proposed": "Release or archive it.",
+     "resolveNote": "",
+     "resolvedAt": 0,
+     "severity": "info",
+     "status": "open",
+     "task": {
+      "href": "/board/new?src=cicd\u0026id=708",
+      "text": "Create task"
+     },
+     "title": "report-builder release branch 41 days behind develop"
+    }
+   ],
+   "rule": "stale",
+   "title": "Stale env branches"
+  }
+ ],
+ "variables": [
+  {
+   "author": "jamie.poe",
+   "detail": "Debug logging in production since 10-18 (see the loki storage analysis).",
+   "env": "release",
+   "firstSeen": 1793589651,
+   "id": 709,
+   "job": "",
+   "kind": "fail",
+   "klass": "variable",
+   "lastSeen": 1793596851,
+   "mr": "",
+   "occurrences": 1,
+   "project": "shop/checkout",
+   "projectId": 306,
+   "proposed": "Set LOG_LEVEL=info for the release scope.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "high",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=709",
+    "text": "Create task"
+   },
+   "title": "checkout: LOG_LEVEL=debug on release"
+  },
+  {
+   "author": "alex.doe",
+   "detail": "notifications: SMTP_HOST empty on release.",
+   "env": "release",
+   "firstSeen": 1793601171,
+   "id": 720,
+   "job": "build",
+   "kind": "warn",
+   "klass": "variable",
+   "lastSeen": 1793608371,
+   "mr": "",
+   "occurrences": 1,
+   "project": "orders/notification",
+   "projectId": 314,
+   "proposed": "Set SMTP_HOST for the release scope.",
+   "resolveNote": "",
+   "resolvedAt": 0,
+   "severity": "medium",
+   "status": "open",
+   "task": {
+    "href": "/board/new?src=cicd\u0026id=720",
+    "text": "Create task"
+   },
+   "title": "notifications: SMTP_HOST empty on release"
+  }
+ ],
+ "varsNote": "Full variable check needs a Maintainer read token for ci-vars-meta (group access token on example, role Maintainer, scope read_api, root-only in /etc/argus/ci-vars-meta.token; Argus's agent never sees it). Until then the findings below are inferred from job logs, pushes that started no pipeline, and deploy targets."
+}

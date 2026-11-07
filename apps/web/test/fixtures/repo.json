@@ -1,0 +1,171 @@
+{
+ "banners": [],
+ "check": {
+  "busy": false,
+  "can": true,
+  "label": "Re-check",
+  "msg": ""
+ },
+ "mode": "repo",
+ "name": "feature-flags",
+ "path": "platform/feature-flags",
+ "placeholder": "https://gitlab.example.com/group/project",
+ "refresh": false,
+ "report": {
+  "blockers": 2,
+  "checkedAt": 1793719971,
+  "error": "",
+  "open": [
+   {
+    "evidence": "no include: a hand-written deploy job with ssh",
+    "fix": {
+     "file": ".gitlab-ci.yml",
+     "source": "platform/deployment README",
+     "text": "include:\n  - project: platform/deployment\n    ref: v4.2\n    file: cicd/app.gitlab-ci.yml",
+     "why": "A repo outside the shared engine has no lock, no verify and no rollback."
+    },
+    "id": "ci-include",
+    "severity": "blocker",
+    "status": {
+     "kind": "fail",
+     "text": "fail"
+    },
+    "title": "The CI file includes platform/deployment (app template)",
+    "where": ".gitlab-ci.yml:14"
+   },
+   {
+    "evidence": "only main and develop exist",
+    "fix": {
+     "file": "GitLab -\u003e Repository -\u003e Branches",
+     "source": "platform/deployment README",
+     "text": "git switch -c pre-release origin/develop \u0026\u0026 git push origin pre-release\ngit switch -c release origin/pre-release \u0026\u0026 git push origin release",
+     "why": "The workflow rules run only on these names."
+    },
+    "id": "branches-exist",
+    "severity": "blocker",
+    "status": {
+     "kind": "fail",
+     "text": "fail"
+    },
+    "title": "The env branches exist (develop, pre-release, release)",
+    "where": "branches"
+   },
+   {
+    "evidence": "cannot tell without the include",
+    "fix": null,
+    "id": "executor-var",
+    "severity": "blocker",
+    "status": {
+     "kind": "warn",
+     "text": "unknown"
+    },
+    "title": "EXECUTOR is set per environment",
+    "where": "CI variables"
+   },
+   {
+    "evidence": "no release branch",
+    "fix": null,
+    "id": "protected-release",
+    "severity": "warning",
+    "status": {
+     "kind": "fail",
+     "text": "fail"
+    },
+    "title": "The release branch is protected (Maintainers merge, nobody pushes)",
+    "where": "branches"
+   }
+  ],
+  "passed": 1,
+  "pipelines": [
+   {
+    "at": 1793579571,
+    "branch": true,
+    "devPush": true,
+    "env": "develop",
+    "extra": "",
+    "protected": false,
+    "sha": "4c4c4c4c",
+    "status": {
+     "kind": "ok",
+     "text": "success"
+    }
+   },
+   {
+    "branch": false,
+    "env": "pre-release"
+   },
+   {
+    "branch": false,
+    "env": "release"
+   }
+  ],
+  "pipelinesFrom": "read from GitLab",
+  "rail": [
+   {
+    "href": "https://gitlab.example.com/platform/feature-flags",
+    "label": "Project",
+    "mono": true,
+    "value": "platform/feature-flags"
+   },
+   {
+    "label": "Kind",
+    "value": "- · app"
+   },
+   {
+    "label": "Executors",
+    "value": "-"
+   },
+   {
+    "label": "Checked ref",
+    "mono": true,
+    "value": "develop @ a1b2c3d4e5"
+   },
+   {
+    "label": "CI variables",
+    "value": "{'mode': 'inferred'}"
+   },
+   {
+    "label": "Rules",
+    "value": "config/cicd-requirements.json v3"
+   },
+   {
+    "label": "Checked",
+    "value": "2026-11-03 19:02 (9h ago)"
+   },
+   {
+    "label": "GitLab calls",
+    "value": "11"
+   },
+   {
+    "href": "/cicd/project?id=309",
+    "label": "CI/CD",
+    "value": "project page"
+   }
+  ],
+  "rest": [
+   {
+    "evidence": "present",
+    "fix": null,
+    "id": "ci-file",
+    "severity": "blocker",
+    "status": {
+     "kind": "ok",
+     "text": "pass"
+    },
+    "title": "The repo has a .gitlab-ci.yml",
+    "where": ".gitlab-ci.yml"
+   }
+  ],
+  "summary": [
+   "Not ready: 2 blockers and 1 warning of 5 checks.",
+   "This repo deploys by hand over ssh, outside the shared pipeline.",
+   "Next: add the include and the env branches (the fixes below)."
+  ],
+  "verdict": {
+   "kind": "fail",
+   "text": "Not ready"
+  },
+  "warnings": 1
+ },
+ "target": "platform/feature-flags"
+}

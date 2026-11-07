@@ -1,0 +1,29 @@
+# argus sources check (root): migrate the existing integrations, then check every data source again (read-only calls).
+# Started by argus-sources-check.timer.
+[Unit]
+Description=Argus data sources: check every source
+Documentation=https://github.com/sinaneysi/argus/blob/main/docs/architecture/adr/0017-data-sources.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus sources check
+ExecStart=-/bin/systemctl start --no-block argus-sources-record.service
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+Environment=ARGUS_AUTH_DB=/var/lib/argus/auth/auth.db
+TimeoutStartSec=600
+UMask=0077
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/argus /var/lib/argus
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=yes
+LockPersonality=yes

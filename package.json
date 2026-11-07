@@ -1,0 +1,22 @@
+{
+  "name": "argus",
+  "private": true,
+  "description": "Argus monorepo: apps/web (Next.js), apps/api (Go, not an npm workspace), packages/design",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @argus/web",
+    "build": "npm run build -w @argus/web",
+    "lint": "npm run lint -w @argus/web",
+    "typecheck": "npm run typecheck -w @argus/web",
+    "test": "npm run test -w @argus/web"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
+  }
+}

@@ -1,0 +1,7 @@
+Argus
+Copyright 2026 The Argus Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes third-party Go modules vendored under vendor, each under its own licence
+(MIT or BSD-style); the list and the licence files are given in THIRD_PARTY_LICENSES.

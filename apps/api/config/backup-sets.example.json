@@ -1,0 +1,7 @@
+{
+  "sets": [
+    {"name": "pg-prod_orders", "path": "/srv/backups/pg/orders", "glob": "*.dump.age", "max_age_hours": 26, "min_bytes": 1048576},
+    {"name": "mongo-prod_catalog", "path": "/srv/backups/mongo/catalog", "glob": "*.archive.age"},
+    {"name": "files-prod_invoices", "path": "/srv/backups/files/invoices.tar.age", "max_age_hours": 170, "min_ratio": 0.8}
+  ]
+}

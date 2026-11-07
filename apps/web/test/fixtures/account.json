@@ -1,0 +1,99 @@
+{
+"host": "argus-01",
+"jira": {
+"allowed": "No Jira host is allowed yet. Saving a new host adds it to the list (logged).",
+"connected": false,
+"mode": "ro",
+"notices": [],
+"url": ""
+},
+"limits": {
+"idle_hours": 2,
+"remember_days": 30,
+"remember_idle": 7,
+"session_hours": 12
+},
+"matrix": {
+"id": "",
+"note": "Forward a task or a message link to @argus:chat.northwind.example in a direct message; Argus files it in Jira for you.",
+"placeholder": "@name:chat.example.com",
+"saved": false
+},
+"mfa": {
+"enabled": false,
+"kind": "warn",
+"note": "Needed for every change in Argus.",
+"state": "off"
+},
+"min_pw": 12,
+"must_change": false,
+"refresh": null,
+"role": "admin",
+"sessions": [
+{
+"created": "2026-11-04 05:50",
+"current": true,
+"device": "Unknown device",
+"id": "ca5bc06f7c1b690c",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793771457
+},
+{
+"created": "2026-11-04 05:28",
+"current": false,
+"device": "Unknown device",
+"id": "152a8423ee145eeb",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793770102
+},
+{
+"created": "2026-11-04 05:14",
+"current": false,
+"device": "Unknown device",
+"id": "c5cf3ec4d6269545",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793769252
+},
+{
+"created": "2026-11-04 04:51",
+"current": false,
+"device": "Unknown device",
+"id": "fd1026d85c8c49ea",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793767899
+},
+{
+"created": "2026-11-04 04:40",
+"current": false,
+"device": "Unknown device",
+"id": "81bf6acf5c6acdd7",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793767209
+},
+{
+"created": "2026-11-04 04:30",
+"current": false,
+"device": "Unknown device",
+"id": "1c9e0eab95571650",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793766618
+},
+{
+"created": "2026-11-04 04:12",
+"current": false,
+"device": "Unknown device",
+"id": "74dccff7c2884d01",
+"ip": "127.0.0.1",
+"kind": "this visit",
+"last_seen": 1793765538
+}
+],
+"source": "local",
+"user": "demo.admin"
+}

@@ -1,0 +1,20 @@
+# argus sources record (the agent's user): copy settings-out/sources-status.json into the data_sources table of
+# ARGUS_DB, which `argus sources list` and the routing tool read. Reads no secret. Started by argus-sources.service and
+# argus-sources-check.service.
+[Unit]
+Description=Argus data sources: copy the catalogue into ARGUS_DB
+
+[Service]
+Type=oneshot
+User=argus
+Group=argus
+ExecStart=/usr/local/bin/argus sources record
+Environment=ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+TimeoutStartSec=2min
+UMask=0022
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/argus
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateNetwork=yes

@@ -1,0 +1,376 @@
+{
+"block": "picker",
+"busy": false,
+"coming": [
+"Prometheus and Loki (direct)",
+"Jira",
+"MinIO",
+"Splunk",
+"Matrix"
+],
+"count": 10,
+"host": "argus-01",
+"notices": [],
+"panels": [
+{
+"key": "gitlab",
+"label": "GitLab",
+"managed": "",
+"rows": [
+{
+"badge": {
+"kind": "ok",
+"text": "Read-only"
+},
+"canCheck": true,
+"detail": "Read-only: scopes read_api, read_repository.",
+"editable": true,
+"env": "shared",
+"findings": [],
+"key": "gitlab/main",
+"meta": [
+"gitlab.northwind.example",
+"as argus-ro",
+"credential ends …9fQe",
+"checked 2h ago"
+],
+"name": "main",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "gitlab",
+"where": ""
+},
+{
+"badge": {
+"kind": "ok",
+"text": "OK"
+},
+"canCheck": true,
+"change": "/admin/outline",
+"detail": "Works as the issue tracker (scope api).",
+"env": "shared",
+"findings": [],
+"key": "gitlab/tracker",
+"meta": [
+"gitlab.northwind.example",
+"as group_50_bot",
+"checked 2h ago"
+],
+"name": "tracker",
+"purpose": {
+"label": "Issue tracker",
+"title": "The board's GitLab issues. Needs scope api: it changes issues."
+},
+"type": "gitlab",
+"where": "Brought in from the old settings; jobs still read it from Settings → Integrations → GitLab issues."
+}
+]
+},
+{
+"key": "grafana",
+"label": "Grafana",
+"managed": "",
+"rows": [
+{
+"badge": {
+"kind": "ok",
+"text": "Read-only"
+},
+"canCheck": true,
+"detail": "Read-only: role Viewer, 2 loki, 1 other, 3 prometheus.",
+"editable": true,
+"env": "release",
+"findings": [],
+"key": "grafana/east",
+"meta": [
+"grafana-east.northwind.example",
+"as sa-argus-viewer",
+"credential ends …Vw2x",
+"checked 2h ago"
+],
+"name": "east",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "grafana",
+"where": ""
+},
+{
+"badge": {
+"kind": "warn",
+"text": "Unreachable"
+},
+"canCheck": true,
+"detail": "No answer within 10 s.",
+"editable": true,
+"env": "develop",
+"findings": [],
+"key": "grafana/lab",
+"meta": [
+"grafana.lab.northwind.example",
+"credential ends …Lb7m",
+"checked 2h ago"
+],
+"name": "lab",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "grafana",
+"where": ""
+},
+{
+"badge": {
+"kind": "fail",
+"text": "Refused: can write"
+},
+"canCheck": true,
+"detail": "This login can write (role Editor); the agent needs a read-only one.",
+"editable": true,
+"env": "release",
+"findings": [
+"role Editor"
+],
+"key": "grafana/west",
+"meta": [
+"grafana-west.northwind.example",
+"as sa-argus",
+"credential ends …Ed4t",
+"checked 2h ago"
+],
+"name": "west",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "grafana",
+"where": ""
+}
+]
+},
+{
+"key": "kubernetes",
+"label": "Kubernetes",
+"managed": "/admin/kube",
+"rows": [
+{
+"badge": {
+"kind": "ok",
+"text": "Read-only"
+},
+"canCheck": false,
+"change": "/admin/kube",
+"detail": "Read-only: get, list and watch.",
+"env": "develop",
+"findings": [],
+"key": "kubernetes/stage",
+"meta": [
+"k8s-stage.northwind.example:6443",
+"as argus-ro",
+"checked 3h ago"
+],
+"name": "stage",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "kubernetes",
+"where": "Managed in Settings → Kubernetes."
+},
+{
+"badge": {
+"kind": "fail",
+"text": "Refused: can write"
+},
+"canCheck": false,
+"change": "/admin/kube",
+"detail": "This kubeconfig can write.",
+"env": "pre-release",
+"findings": [
+"can create/delete/patch/update deployments.apps",
+"can exec into pods"
+],
+"key": "kubernetes/tools",
+"meta": [
+"k8s-tools.northwind.example:6443",
+"as tools-admin",
+"checked 3h ago"
+],
+"name": "tools",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "kubernetes",
+"where": "Managed in Settings → Kubernetes."
+}
+]
+},
+{
+"key": "outline",
+"label": "Outline",
+"managed": "",
+"rows": [
+{
+"badge": {
+"kind": "ok",
+"text": "OK"
+},
+"canCheck": true,
+"detail": "Publishes as Argus (role member).",
+"editable": true,
+"env": "shared",
+"findings": [],
+"key": "outline/wiki",
+"meta": [
+"docs.northwind.example",
+"as Argus",
+"credential ends …Ol3p",
+"checked 2h ago"
+],
+"name": "wiki",
+"purpose": {
+"label": "Publishes docs",
+"title": "Argus writes service docs there. Needs a member login."
+},
+"type": "outline",
+"where": ""
+}
+]
+},
+{
+"key": "elasticsearch",
+"label": "Elasticsearch / OpenSearch",
+"managed": "",
+"rows": [
+{
+"badge": {
+"kind": "ok",
+"text": "Read-only"
+},
+"canCheck": true,
+"detail": "Read-only.",
+"editable": true,
+"env": "release",
+"findings": [],
+"key": "elasticsearch/logs",
+"meta": [
+"logs.northwind.example:9200",
+"as argus-reader",
+"credential ends …r8Kq",
+"checked 2h ago"
+],
+"name": "logs",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "elasticsearch",
+"where": ""
+}
+]
+},
+{
+"key": "sentry",
+"label": "Sentry",
+"managed": "",
+"rows": [
+{
+"badge": {
+"kind": "fail",
+"text": "Login failed"
+},
+"canCheck": true,
+"detail": "The login was refused (HTTP 401); replace the credential.",
+"editable": true,
+"env": "release",
+"findings": [],
+"key": "sentry/errors",
+"meta": [
+"sentry.northwind.example",
+"credential ends …Sn0w",
+"checked 2h ago"
+],
+"name": "errors",
+"purpose": {
+"label": "Agent reads",
+"title": "The agent reads through it. Must be read-only."
+},
+"type": "sentry",
+"where": ""
+}
+]
+}
+],
+"refresh": null,
+"status": {
+"act": "See grafana/lab",
+"badge": "Check",
+"detail": "A login failed, the source did not answer, or the agent's login can write. The agent uses only sources whose login works and is read-only.",
+"facts": [
+{
+"kind": "",
+"label": "Data sources",
+"value": "10"
+},
+{
+"kind": "",
+"label": "Types",
+"value": "6"
+},
+{
+"kind": "warn",
+"label": "Read-only for the agent",
+"value": "4 of 8"
+},
+{
+"kind": "fail",
+"label": "Need attention",
+"value": "4"
+},
+{
+"kind": "",
+"label": "Last check",
+"value": "2h ago"
+}
+],
+"head": "grafana/lab, grafana/west, kubernetes/tools, … need attention.",
+"href": "#src-grafana-lab",
+"kind": "warn"
+},
+"types": [
+{
+"blurb": "Code, merge requests, pipelines and job logs; or the issue tracker.",
+"href": "/admin/sources?add=gitlab#src-add",
+"label": "GitLab"
+},
+{
+"blurb": "Prometheus and Loki through Grafana: metrics, logs, alert rules.",
+"href": "/admin/sources?add=grafana#src-add",
+"label": "Grafana"
+},
+{
+"blurb": "Pods, logs and events of a cluster, read-only.",
+"href": "/admin/kube#kube-add",
+"label": "Kubernetes"
+},
+{
+"blurb": "The wiki: service docs Argus publishes, or pages the agent reads.",
+"href": "/admin/sources?add=outline#src-add",
+"label": "Outline"
+},
+{
+"blurb": "Log and event indices.",
+"href": "/admin/sources?add=elasticsearch#src-add",
+"label": "Elasticsearch / OpenSearch"
+},
+{
+"blurb": "Errors and releases per project.",
+"href": "/admin/sources?add=sentry#src-add",
+"label": "Sentry"
+}
+]
+}

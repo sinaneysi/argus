@@ -1,0 +1,160 @@
+{
+"user": "demo.admin",
+"agent": {
+"error": "",
+"fixerTasks": [],
+"rwUsers": [
+"alex.doe",
+"sam.roe"
+],
+"settings": {
+"assignees": "alex.doe, jamie.poe",
+"autoDone": false,
+"chat": true,
+"column": "In Progress",
+"enabled": true,
+"fixerTrigger": "off",
+"qaCap": 10,
+"qaEnabled": true,
+"qaOwner": "",
+"qaThreshold": "high",
+"secrets": false
+},
+"tick": "2 planned, 1 paused (usage limit)"
+},
+"autoIncidents": false,
+"connection": [
+{
+"label": "Mode",
+"value": "Jira (source of truth)"
+},
+{
+"label": "Jira",
+"value": "https://jira.northwind.example",
+"mono": true
+},
+{
+"label": "Project",
+"value": "OPS",
+"mono": true
+},
+{
+"label": "Board",
+"value": "board 12",
+"href": "https://jira.northwind.example/secure/RapidBoard.jspa?rapidView=12"
+},
+{
+"label": "Bot account",
+"value": "argus-bot"
+},
+{
+"label": "Last run",
+"value": "2026-11-04 04:10 (2m ago)"
+},
+{
+"label": "Last good sync",
+"value": "2026-11-04 04:10"
+},
+{
+"label": "Last pull",
+"value": "-"
+},
+{
+"label": "Last full reconcile",
+"value": "-"
+},
+{
+"label": "Jira calls, last run",
+"value": "0"
+},
+{
+"label": "Queued for Jira",
+"value": "0"
+},
+{
+"label": "Failed / dropped",
+"value": "0 / 0"
+},
+{
+"label": "Fixer approvers in Jira",
+"value": "sam.roe, alex.doe"
+}
+],
+"connections": [
+{
+"host": "",
+"identity": "Alex Doe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "alex.doe"
+},
+{
+"host": "",
+"identity": "Casey Loe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "casey.loe"
+},
+{
+"host": "",
+"identity": "Jamie Poe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "jamie.poe"
+},
+{
+"host": "",
+"identity": "Robin Moe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "robin.moe"
+},
+{
+"host": "",
+"identity": "Sam Roe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "sam.roe"
+},
+{
+"host": "",
+"identity": "Taylor Noe",
+"lastError": "",
+"lastSync": 0,
+"mode": "read-only",
+"projects": "",
+"user": "taylor.noe"
+}
+],
+"failed": [],
+"host": "argus-01",
+"hosts": "",
+"notices": [],
+"problems": [],
+"project": "Jira OPS",
+"queued": 0,
+"refresh": null,
+"retrying": [],
+"shared": null,
+"state": [
+{
+"text": "Connected to Jira as argus-bot; last good sync 2m ago.",
+"kind": "ok",
+"segs": [
+{
+"text": " Connected to Jira as argus-bot; last good sync 2m ago. "
+}
+]
+}
+]
+}

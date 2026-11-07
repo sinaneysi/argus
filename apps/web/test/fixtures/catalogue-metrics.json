@@ -1,0 +1,78 @@
+{
+"finds": {
+"confirmed": 0,
+"days": 7,
+"fanout": 0,
+"fanout_hits": 0,
+"fanout_searches": 0,
+"finds": 0,
+"learned": 0,
+"log": "missing",
+"none": 0,
+"proposed": 0,
+"services": 0
+},
+"routes": [
+{
+"confirmed": 6,
+"proposed": 24,
+"rejected": 0,
+"stale": 0,
+"type": "gitlab"
+},
+{
+"confirmed": 1,
+"proposed": 6,
+"rejected": 1,
+"stale": 0,
+"type": "grafana"
+},
+{
+"confirmed": 2,
+"proposed": 5,
+"rejected": 0,
+"stale": 1,
+"type": "kubernetes"
+}
+],
+"unmapped": {
+"top": [
+{
+"key": "co-pr",
+"kind": "dashboard",
+"label": "Shop / Checkout and pricing",
+"note": "ambiguous: dashboard title fits shop/checkout, shop/pricing",
+"source": "grafana/east"
+},
+{
+"key": "data/etl-nightly",
+"kind": "project",
+"label": "",
+"note": "",
+"source": "gitlab/main"
+},
+{
+"key": "platform/ci-templates",
+"kind": "project",
+"label": "",
+"note": "",
+"source": "gitlab/main"
+},
+{
+"key": "sandbox/api",
+"kind": "project",
+"label": "",
+"note": "",
+"source": "gitlab/main"
+},
+{
+"key": "web/shop-front-e2e",
+"kind": "project",
+"label": "",
+"note": "",
+"source": "gitlab/main"
+}
+],
+"total": 15
+}
+}

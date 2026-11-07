@@ -1,0 +1,20 @@
+{
+"back": {
+"text": "Problem",
+"href": "/incidents/problem?run=1171&idx=0"
+},
+"env": "release",
+"notices": [
+{
+"text": "Production problem: Argus never acts on production. Copy the prompt from the problem page; a human runs production changes.",
+"kind": "fail"
+}
+],
+"ready": false,
+"source": {
+"idx": "0",
+"run": "1171"
+},
+"steps": [],
+"title": "QA: payment OTP code never arrives"
+}

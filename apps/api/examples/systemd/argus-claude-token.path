@@ -1,0 +1,15 @@
+# Settings -> Claude: run argus secrets apply-claude as soon as the web app drops a request (replace or test the
+# Claude token, check the egress country, egress guard settings).
+#
+#   install -d -o root -g 65534 -m 2730 /var/lib/argus/settings-in/claude-token   # the app writes, root reads
+#   install -m 0644 argus-claude-token.path argus-claude-token.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now argus-claude-token.path
+[Unit]
+Description=Argus Settings -> Claude requests
+
+[Path]
+PathExistsGlob=/var/lib/argus/settings-in/claude-token/*.json
+Unit=argus-claude-token.service
+
+[Install]
+WantedBy=paths.target
