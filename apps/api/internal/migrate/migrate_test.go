@@ -12,6 +12,7 @@ import (
 
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/board"
+	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/sources/catalogue"
 	"github.com/sinaneysi/argus/internal/sources/discover"
 )
@@ -213,5 +214,22 @@ func TestSplit(t *testing.T) {
 	got := Split("-- c; x\nCREATE TABLE a (v TEXT DEFAULT ';');\n\nCREATE INDEX i ON a(v);")
 	if len(got) != 2 || got[0] != "CREATE TABLE a (v TEXT DEFAULT ';')" || got[1] != "CREATE INDEX i ON a(v)" {
 		t.Fatalf("%q", got)
+	}
+}
+
+func TestEnsureDirsVolumeOnly(t *testing.T) {
+	dir := t.TempDir()
+	env := []string{"COMPANY_NAME=A", "ARGUS_PUBLIC_URL=https://a.example", "ARGUS_STATE_DIR=" + dir, "ARGUS_LAYOUT=volume"}
+	c, err := config.Load(config.Options{File: filepath.Join(dir, "none.env"), Environ: env})
+	if err == nil || c == nil { // the explicit file is missing: Load reports it, the values are still filled
+		t.Fatalf("want a missing-file error, got %v", err)
+	}
+	if err := EnsureDirs(c); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range []string{"settings/in", "settings/out", "secrets/in", "etc/sources", "auth", "board", "keys", "reports/rca"} {
+		if fi, err := os.Stat(filepath.Join(dir, d)); err != nil || !fi.IsDir() {
+			t.Errorf("%s not created: %v", d, err)
+		}
 	}
 }

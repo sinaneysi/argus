@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/sinaneysi/argus/internal/config"
 )
@@ -42,9 +44,34 @@ func All(ctx context.Context, c *config.Config, logf func(string, ...any)) ([]Re
 // OnStart is the step argus-api and argus worker run before they open a database: nothing in demo mode (the
 // generator owns the data) or with ARGUS_MIGRATE=off, else All.
 func OnStart(ctx context.Context, c *config.Config, logf func(string, ...any)) error {
-	if c.DemoMode || c.Values["ARGUS_MIGRATE"].Raw == "off" {
+	if c.DemoMode {
+		return nil
+	}
+	if err := EnsureDirs(c); err != nil {
+		return err
+	}
+	if c.Values["ARGUS_MIGRATE"].Raw == "off" {
 		return nil
 	}
 	_, err := All(ctx, c, logf)
 	return err
+}
+
+// EnsureDirs creates the folders of the one-volume layout (ARGUS_LAYOUT=volume) that the API and the worker write
+// into; nothing in the legacy layout, where the host owns the folders.
+func EnsureDirs(c *config.Config) error {
+	if c.Values["ARGUS_LAYOUT"].Raw != "volume" {
+		return nil
+	}
+	v := func(k string) string { return c.Values[k].Raw }
+	for _, d := range []string{c.StateDir, c.SettingsIn, c.SettingsOut, c.SecretIn, c.SecretsDir, c.EtcDir, c.ReportsDir,
+		filepath.Dir(c.AuthDB), filepath.Dir(c.BoardDB), filepath.Dir(v("TOTP_KEY_FILE")), v("ARGUS_SOURCES_DIR")} {
+		if d == "" || d == "." {
+			continue
+		}
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			return fmt.Errorf("layout: %w", err)
+		}
+	}
+	return nil
 }
