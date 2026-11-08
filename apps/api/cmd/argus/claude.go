@@ -109,15 +109,18 @@ func splitList(s string) []string {
 
 func runClaude(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || isHelp(args[:1]) {
-		fmt.Fprint(stdout, claudeHelp)
+		fmt.Fprint(stdout, claudeHelp+claudeRunHelp)
 		if len(args) == 0 {
 			return 2
 		}
 		return 0
 	}
 	sub := args[0]
+	if sub == "run" {
+		return runClaudeRun(args[1:], stdout, stderr)
+	}
 	if sub != "check" && sub != "egress" {
-		fmt.Fprintf(stderr, "argus claude: unknown subcommand %q (check, egress)\n", sub)
+		fmt.Fprintf(stderr, "argus claude: unknown subcommand %q (check, egress, run)\n", sub)
 		return 2
 	}
 	fs := flag.NewFlagSet("claude "+sub, flag.ContinueOnError)

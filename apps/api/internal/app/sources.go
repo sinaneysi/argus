@@ -66,6 +66,9 @@ var (
 		{Key: "matrix", Label: "Matrix", Blurb: "Chat: notices to one room, and the conversations Argus reads.",
 			Purposes: []string{"notify"}, CredLabel: "Access token",
 			CredHint: "The access token of the bot account (in the chat client's settings)."},
+		{Key: "anthropic", Label: "Anthropic API", Blurb: "The model for planning, reports and chat when ARGUS_MODEL_PROVIDER=api.",
+			Purposes: []string{"model"}, CredLabel: "API key",
+			CredHint: "An API key from the Anthropic Console (sk-ant-api..). Address: https://api.anthropic.com. A Claude subscription token goes to Settings → Claude."},
 	}
 	// srcComing are the types ADR-0017 plans for P2; listed so nobody looks for them in vain.
 	srcComing       = []string{"Loki (direct)", "MinIO", "Splunk"}
@@ -75,6 +78,7 @@ var (
 		"alerts":  {"Alerts", "Argus reads the firing alerts every minute."},
 		"notify":  {"Notices", "Argus sends notices to the configured room."},
 		"docs":    {"Publishes docs", "Argus writes service docs there. Needs a member login."},
+		"model":   {"Model", "Argus's model calls use it (ARGUS_MODEL_PROVIDER=api)."},
 	}
 )
 

@@ -193,6 +193,17 @@ gets a note in that thread (notify room only). Site names come from `OBS_SITES`,
 chat hosts are never subjects. A log-RCA finding attaches only to the primary alert's host; hosts named as covered by a
 known incident ("Known incident #N") are never candidates. Not ported: hub service tiers, the prompt history.
 
+As built (P3/P4, the model runtime): `internal/model` is the one way a job calls a model. `ARGUS_MODEL_PROVIDER=cli`
+(the default) runs the Claude CLI that the `argus` image now holds (`/usr/local/bin/claude`, the pinned native musl
+build; `--build-arg CLAUDE_CODE_VERSION=` leaves it out) with the token of Settings -> Claude, a clean environment, a
+throwaway HOME and config folder in `/tmp` and no saved session; `api` sends one Messages API request with the key of
+a Settings -> Data sources entry of type `anthropic` (its check looks at the key's shape only and never calls the API,
+so no call leaves a blocked egress country). Every call: `style.Prepend`, the Claude usage switch and the egress
+guard (a skip, not a failure), a budget, turn and time cap (`ARGUS_MODEL_MAX_BUDGET_USD`, `ARGUS_MODEL_MAX_MINUTES`;
+exit 124 at the time limit), the secret scan over the error, the record and the log, a `runs` row in `ops.db` and a
+log file in `ARGUS_MODEL_LOG_DIR`. `argus claude run` makes one call to check the provider. The clean-install test
+uses the api provider against the stub's `/anthropic/v1/messages`; the unit tests use a fake CLI.
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings
