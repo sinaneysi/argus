@@ -658,6 +658,52 @@
       "help": "seconds per TLS probe"
     },
     {
+      "key": "ARGUS_CERT_PAGE_DAYS",
+      "aliases": [
+        "CERT_PAGE_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 365,
+      "help": "fewer days left (or expired): the certificate notice pings"
+    },
+    {
+      "key": "ARGUS_CERT_STALE_DAYS",
+      "aliases": [
+        "CERT_STALE_EXPIRED_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 1,
+      "max": 3650,
+      "help": "expired longer ago than this: a stale name, a warning, not a page"
+    },
+    {
+      "key": "ARGUS_CERT_DOMAINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/domains.txt",
+      "help": "names to probe: one host[:port] per line, # comments"
+    },
+    {
+      "key": "ARGUS_CERT_FROM_SERVICE_MAP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: also probe every public TLS name of ARGUS_SERVICE_MAP_FILE that resolves in DNS"
+    },
+    {
+      "key": "ARGUS_CERT_PINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-pins.tsv",
+      "help": "pinned names (host, pinned expiry, label, note; TSV): a notice line until renewed"
+    },
+    {
+      "key": "ARGUS_CERT_EXPECT_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-expect.tsv",
+      "help": "expected name mismatches (host, san-mismatch, reason; TSV)"
+    },
+    {
       "key": "ARGUS_COLLECT_BACKUPS",
       "type": "bool",
       "default": "0",
@@ -702,7 +748,7 @@
       "key": "ARGUS_SERVICE_MAP_FILE",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/service-map.json",
-      "help": "the service map (domains, edges, backends) the inventory and VM state read"
+      "help": "the service map (domains, edges, backends) the inventory, the VM state and the certificate check read"
     },
     {
       "key": "ARGUS_INCIDENT_AUTORESOLVE_HOURS",

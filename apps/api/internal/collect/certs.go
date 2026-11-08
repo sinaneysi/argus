@@ -2,18 +2,13 @@ package collect
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/hex"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"math"
 	"net"
 	"os"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,25 +16,21 @@ import (
 
 // CertsOptions configure the certificate check.
 type CertsOptions struct {
-	Targets  []string // host or host:port (443 when no port); probed with a TLS handshake, nothing else is sent
-	Files    []string // PEM files: the first certificate is the leaf, the rest its chain
-	DB       string   // ARGUS_DB
-	CAFile   string   // optional extra roots for the chain check
-	WarnDays int      // below: WARN (default 30)
-	FailDays int      // below: FAIL (default 14)
-	Timeout  time.Duration
-	Now      func() time.Time
+	Targets    []string // host or host:port (443 when no port); probed with a TLS handshake, nothing else is sent
+	Files      []string // PEM files: the first certificate is the leaf, the rest its chain
+	DB         string   // ARGUS_DB
+	CAFile     string   // optional extra roots for the chain check
+	WarnDays   int      // below: WARN (default 30)
+	FailDays   int      // below: FAIL (default 14)
+	PageDays   int      // below: the notice pings (default 7)
+	StaleDays  int      // expired longer ago: a warning, not a page (default 14)
+	PinsFile   string   // pinned names: host, pinned expiry, label, note (TSV)
+	ExpectFile string   // expected name mismatches: host, san-mismatch, reason (TSV)
+	// Notify is called after a run that is not OK, with the grouped notice
+	Notify  func(level string, n CertNotice, untrusted bool)
+	Timeout time.Duration
+	Now     func() time.Time
 }
-
-// one probed certificate and the names that served it
-type certSeen struct {
-	leaf     *x509.Certificate
-	chainErr error
-	names    []string
-	mismatch []string
-}
-
-type unreachable struct{ name, err string }
 
 // Certs probes every target and file and records one "cert-check" run, grouped by certificate.
 func Certs(ctx context.Context, o CertsOptions) (Result, error) {
@@ -63,30 +54,6 @@ func Certs(ctx context.Context, o CertsOptions) (Result, error) {
 	if err != nil {
 		return Result{Status: "ERROR"}, fmt.Errorf("certs: CA file: %w", err)
 	}
-	groups := map[string]*certSeen{}
-	var order []string
-	var down []unreachable
-	add := func(name string, chain []*x509.Certificate, mismatch bool) {
-		leaf := chain[0]
-		sum := sha256.Sum256(leaf.Raw)
-		gid := hex.EncodeToString(sum[:])[:12]
-		g := groups[gid]
-		if g == nil {
-			inter := x509.NewCertPool()
-			for _, c := range chain[1:] {
-				inter.AddCert(c)
-			}
-			_, verr := leaf.Verify(x509.VerifyOptions{Roots: roots, Intermediates: inter, CurrentTime: o.Now()})
-			g = &certSeen{leaf: leaf, chainErr: verr}
-			groups[gid] = g
-			order = append(order, gid)
-		}
-		g.names = append(g.names, name)
-		if mismatch {
-			g.mismatch = append(g.mismatch, name)
-		}
-	}
-
 	// TLS probes, at most 8 at a time
 	type probe struct {
 		name  string
@@ -107,106 +74,61 @@ func Certs(ctx context.Context, o CertsOptions) (Result, error) {
 		}(i, t)
 	}
 	wg.Wait()
+	now := o.Now()
+	var probes []CertProbe
+	untrusted := map[string]string{} // gid -> why the chain is not trusted (Argus's own check, in the run summary)
+	check := func(chain []*x509.Certificate) *CertInfo {
+		info := certInfo(chain[0])
+		inter := x509.NewCertPool()
+		for _, c := range chain[1:] {
+			inter.AddCert(c)
+		}
+		if _, err := chain[0].Verify(x509.VerifyOptions{Roots: roots, Intermediates: inter, CurrentTime: now}); err != nil && !isExpiryErr(err) {
+			untrusted[certGID(info)] = shortErr(err)
+		}
+		return info
+	}
 	for _, p := range res {
-		host := hostOf(p.name)
+		host, port := hostOf(p.name), 443
+		if _, ps, err := net.SplitHostPort(p.name); err == nil {
+			fmt.Sscan(ps, &port)
+		}
 		if p.err != nil {
-			down = append(down, unreachable{host, shortErr(p.err)})
+			probes = append(probes, CertProbe{Host: host, Port: port, Error: probeErr(p.err)})
 			Logger.Warn("probe failed", "collector", "certs", "target", p.name, "err", p.err)
 			continue
 		}
-		add(host, p.chain, p.chain[0].VerifyHostname(host) != nil)
+		probes = append(probes, CertProbe{Host: host, Port: port, Cert: check(p.chain)})
 		Logger.Info("probed", "collector", "certs", "target", p.name, "not_after", p.chain[0].NotAfter.UTC().Format(time.RFC3339))
 	}
 	for _, f := range o.Files {
 		chain, err := readPEMChain(f)
 		if err != nil {
-			down = append(down, unreachable{f, err.Error()})
+			probes = append(probes, CertProbe{Host: f, Port: 443, Error: certCut(err.Error(), 160), File: true})
 			Logger.Warn("file failed", "collector", "certs", "file", f, "err", err)
 			continue
 		}
-		add(f, chain, false)
+		probes = append(probes, CertProbe{Host: f, Port: 443, Cert: check(chain), File: true})
 	}
-
-	type row struct {
-		gid, label, status, sev, notAfter, issuer, note string
-		days                                            int64
-		names, sans, mism                               []string
-	}
-	var rows []row
-	now := o.Now()
-	for _, gid := range order {
-		g := groups[gid]
-		days := int64(math.Floor(g.leaf.NotAfter.Sub(now).Hours() / 24))
-		status := "OK"
-		switch {
-		case days < -30:
-			status = "EXPIRED"
-		case days < int64(o.FailDays):
-			status = "FAIL"
-		case days < int64(o.WarnDays):
-			status = "WARN"
-		}
-		var notes []string
-		if g.chainErr != nil && !isExpiryErr(g.chainErr) {
-			notes = append(notes, "chain not trusted: "+shortErr(g.chainErr))
-			if status == "OK" {
-				status = "WARN"
-			}
-		}
-		if len(g.mismatch) > 0 && status == "OK" {
-			status = "WARN"
-		}
-		sev := "warn"
-		if status == "OK" {
-			sev = "ok"
-		}
-		sort.Strings(g.names)
-		sort.Strings(g.mismatch)
-		rows = append(rows, row{gid: gid, label: certLabel(g.leaf), status: status, sev: sev, days: days,
-			notAfter: g.leaf.NotAfter.UTC().Format("2006-01-02 15:04:05"), issuer: issuerName(g.leaf),
-			names: g.names, sans: sansOf(g.leaf), mism: g.mismatch, note: strings.Join(notes, "; ")})
-	}
-	sort.SliceStable(rows, func(i, j int) bool { return rows[i].days < rows[j].days })
-
-	// run status and the summary shown under "Agent summary"
-	worst := "OK"
+	rep := GroupCerts(probes, now, LoadCertPins(o.PinsFile), LoadCertExpect(o.ExpectFile),
+		CertLimits{Warn: o.WarnDays, Fail: o.FailDays, Page: o.PageDays, Stale: o.StaleDays})
+	n := rep.Notice()
+	worst := n.Level
 	var bullets []string
-	for _, r := range rows {
-		if r.status == "FAIL" {
-			worst = "FAIL"
-		} else if r.status == "WARN" && worst == "OK" {
-			worst = "WARN"
-		}
-		switch {
-		case r.status == "OK":
-		case r.days < 0:
-			bullets = append(bullets, fmt.Sprintf("- **%s** expired %d days ago.", r.label, -r.days))
-		default:
-			b := fmt.Sprintf("- **%s** expires in %d days.", r.label, r.days)
-			if r.note != "" {
-				b += " " + r.note + "."
+	for _, f := range n.Facts {
+		bullets = append(bullets, "- **"+f[0]+"**: "+f[1])
+	}
+	for _, g := range rep.Groups {
+		if why, ok := untrusted[g.gid]; ok {
+			bullets = append(bullets, "- **"+g.label+"**: chain not trusted: "+why)
+			if worst == "OK" {
+				worst = "WARN"
 			}
-			if len(r.mism) > 0 {
-				b += " Name mismatch: " + strings.Join(r.mism, ", ") + "."
-			}
-			bullets = append(bullets, b)
 		}
 	}
-	for _, d := range down {
-		if worst == "OK" {
-			worst = "WARN"
-		}
-		bullets = append(bullets, fmt.Sprintf("- `%s` unreachable: %s.", d.name, d.err))
-	}
-	summary := fmt.Sprintf("OK: %d certificates, all valid for at least %d days.", len(rows), o.WarnDays)
-	if worst != "OK" {
-		need := 0
-		for _, r := range rows {
-			if r.status != "OK" && r.status != "EXPIRED" {
-				need++
-			}
-		}
-		summary = fmt.Sprintf("%s: %d certificates need a look, %d targets unreachable.\n\n%s", worst, need, len(down), strings.Join(bullets, "\n"))
+	summary := worst + ": " + n.What + "."
+	if len(bullets) > 0 {
+		summary += "\n\n" + strings.Join(bullets, "\n")
 	}
 
 	db, err := openDB(o.DB)
@@ -223,46 +145,26 @@ func Certs(ctx context.Context, o CertsOptions) (Result, error) {
 	if err != nil {
 		return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
 	}
-	js := func(l []string) string {
-		if l == nil {
-			l = []string{}
-		}
-		b, _ := json.Marshal(l)
-		return string(b)
-	}
-	for _, r := range rows {
-		var note any
-		if r.note != "" {
-			note = r.note
-		}
+	for _, r := range rep.groupRows() {
+		args := append([]any{rid}, r[:]...)
 		if _, err := tx.ExecContext(ctx, `INSERT INTO cert_groups (run_id, kind, gid, label, status, sev, days_left, not_after, issuer,
-		  n_names, names, sans, san_mismatch, note) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, rid, "cert", r.gid, r.label, r.status, r.sev,
-			r.days, r.notAfter, r.issuer, len(r.names), js(r.names), js(r.sans), js(r.mism), note); err != nil {
+		  n_names, names, sans, san_mismatch, note) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, args...); err != nil {
 			return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
 		}
-		for _, n := range r.names {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO cert_results (run_id, host, status, days_left, not_after, issuer) VALUES (?,?,?,?,?,?)`,
-				rid, n, r.status, r.days, r.notAfter, r.issuer); err != nil {
-				return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
-			}
-		}
 	}
-	for _, d := range down {
-		sum := sha256.Sum256([]byte(d.name))
-		if _, err := tx.ExecContext(ctx, `INSERT INTO cert_groups (run_id, kind, gid, label, status, sev, days_left, not_after, issuer,
-		  n_names, names, sans, san_mismatch, note) VALUES (?,?,?,?,?,?,NULL,NULL,NULL,1,?,'[]','[]',?)`, rid, "unreachable",
-			hex.EncodeToString(sum[:])[:12], d.name, "FAIL", "warn", js([]string{d.name}), d.err); err != nil {
-			return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
-		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO cert_results (run_id, host, status, days_left, not_after, issuer) VALUES (?,?,?,NULL,NULL,NULL)`,
-			rid, d.name, "UNREACHABLE"); err != nil {
+	for _, h := range rep.hostRows() {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO cert_results (run_id, host, status, days_left, not_after, issuer) VALUES (?,?,?,?,?,?)`,
+			rid, h[1], h[0], h[2], h[3], h[4]); err != nil {
 			return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {
 		return Result{Status: "ERROR"}, fmt.Errorf("certs: %w", err)
 	}
-	return Result{Status: worst, Summary: strings.SplitN(summary, "\n", 2)[0], Items: len(o.Targets) + len(o.Files)}, nil
+	if o.Notify != nil && worst != "OK" {
+		o.Notify(worst, n, len(untrusted) > 0)
+	}
+	return Result{Status: worst, Summary: worst + ": " + n.What + ".", Items: len(o.Targets) + len(o.Files)}, nil
 }
 
 // hostOf is the name part of host[:port] (IPv6 in brackets allowed).
@@ -325,35 +227,6 @@ func readPEMChain(path string) ([]*x509.Certificate, error) {
 		return nil, errors.New("no PEM certificate in the file")
 	}
 	return chain, nil
-}
-
-func certLabel(c *x509.Certificate) string {
-	name := c.Subject.CommonName
-	if name == "" && len(c.DNSNames) > 0 {
-		name = c.DNSNames[0]
-	}
-	if name == "" {
-		name = c.Subject.String()
-	}
-	if strings.HasPrefix(name, "*.") {
-		name += " (wildcard)"
-	}
-	return name
-}
-
-func issuerName(c *x509.Certificate) string {
-	if c.Issuer.CommonName != "" {
-		return c.Issuer.CommonName
-	}
-	return c.Issuer.String()
-}
-
-func sansOf(c *x509.Certificate) []string {
-	out := append([]string{}, c.DNSNames...)
-	for _, ip := range c.IPAddresses {
-		out = append(out, ip.String())
-	}
-	return out
 }
 
 func isExpiryErr(err error) bool {

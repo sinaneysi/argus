@@ -167,6 +167,12 @@ var Fields = []Field{
 	{Key: "ARGUS_CERT_WARN_DAYS", Aliases: []string{"CERT_WARN_DAYS"}, Kind: Int, Default: "30", Min: 1, Max: 365, Help: "fewer days left: WARN"},
 	{Key: "ARGUS_CERT_FAIL_DAYS", Aliases: []string{"CERT_FAIL_DAYS"}, Kind: Int, Default: "14", Min: 0, Max: 365, Help: "fewer days left: FAIL"},
 	{Key: "ARGUS_CERT_TIMEOUT", Kind: Int, Default: "10", Min: 1, Max: 120, Help: "seconds per TLS probe"},
+	{Key: "ARGUS_CERT_PAGE_DAYS", Aliases: []string{"CERT_PAGE_DAYS"}, Kind: Int, Default: "7", Min: 0, Max: 365, Help: "fewer days left (or expired): the certificate notice pings"},
+	{Key: "ARGUS_CERT_STALE_DAYS", Aliases: []string{"CERT_STALE_EXPIRED_DAYS"}, Kind: Int, Default: "14", Min: 1, Max: 3650, Help: "expired longer ago than this: a stale name, a warning, not a page"},
+	{Key: "ARGUS_CERT_DOMAINS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/domains.txt", Help: "names to probe: one host[:port] per line, # comments"},
+	{Key: "ARGUS_CERT_FROM_SERVICE_MAP", Kind: Bool, Default: "0", Help: "1: also probe every public TLS name of ARGUS_SERVICE_MAP_FILE that resolves in DNS"},
+	{Key: "ARGUS_CERT_PINS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/cert-pins.tsv", Help: "pinned names (host, pinned expiry, label, note; TSV): a notice line until renewed"},
+	{Key: "ARGUS_CERT_EXPECT_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/cert-expect.tsv", Help: "expected name mismatches (host, san-mismatch, reason; TSV)"},
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
 	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
 	// the host estate (argus estate; worker jobs inventory and vm-pulse): Prometheus through Settings -> Data sources
@@ -175,7 +181,7 @@ var Fields = []Field{
 	{Key: "ARGUS_PROM_TIMEOUT", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "seconds per Prometheus query of the inventory and VM state"},
 	{Key: "ARGUS_INVENTORY_ENV_PREFIXES", Kind: List, Help: "env=address prefix, ...: the environment of a VM without an env label, by its address (first match wins), e.g. develop=10.0.9.,release=10.0."},
 	{Key: "ARGUS_VM_APP_UNITS", Kind: List, Default: "app-", Help: "name prefixes of the application systemd units (letters, digits, - and _)"},
-	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory and VM state read"},
+	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory, the VM state and the certificate check read"},
 	// notifications (argus notify; every job that posts a notice): Matrix, else Telegram, else a webhook, else none
 	{Key: "ARGUS_INCIDENT_AUTORESOLVE_HOURS", Aliases: []string{"INCIDENT_AUTORESOLVE_HOURS"}, Kind: Int, Default: "6", Min: 1, Max: 720, Help: "an alert-backed incident resolves after this many hours with no matching alert firing"},
 	{Key: "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", Aliases: []string{"INCIDENT_CHAT_RESOLVE_HOURS"}, Kind: Int, Default: "24", Min: 1, Max: 720, Help: "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"},
@@ -753,8 +759,9 @@ func (c *Config) fill() Errors {
 			}
 		}
 	}
-	if s("ARGUS_COLLECT_CERTS") == "1" && len(list("ARGUS_CERT_TARGETS")) == 0 && len(list("ARGUS_CERT_FILES")) == 0 {
-		bad(field["ARGUS_CERT_TARGETS"], "ARGUS_CERT_TARGETS or ARGUS_CERT_FILES is required when ARGUS_COLLECT_CERTS=1")
+	if s("ARGUS_COLLECT_CERTS") == "1" && len(list("ARGUS_CERT_TARGETS")) == 0 && len(list("ARGUS_CERT_FILES")) == 0 &&
+		s("ARGUS_CERT_FROM_SERVICE_MAP") != "1" && !fileExists(s("ARGUS_CERT_DOMAINS_FILE")) {
+		bad(field["ARGUS_CERT_TARGETS"], "ARGUS_CERT_TARGETS, ARGUS_CERT_FILES, ARGUS_CERT_DOMAINS_FILE or ARGUS_CERT_FROM_SERVICE_MAP=1 is required when ARGUS_COLLECT_CERTS=1")
 	}
 	for _, p := range list("ARGUS_CERT_FILES") {
 		if !filepath.IsAbs(p) {
@@ -986,4 +993,12 @@ func contains(xs []string, x string) bool {
 		}
 	}
 	return false
+}
+
+func fileExists(p string) bool {
+	if p == "" {
+		return false
+	}
+	_, err := os.Stat(p)
+	return err == nil
 }
