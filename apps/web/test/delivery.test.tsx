@@ -20,6 +20,7 @@ const posted: { path: string; body: Record<string, unknown>; csrf: string }[] = 
 let answer: { status: number; data: unknown } = { status: 200, data: { ok: true, redirect: "/done" } };
 const flashes: string[] = [];
 
+vi.mock("@/components/NotConfigured", () => ({ notConfigured: async () => null }));
 vi.mock("@/lib/server", () => ({
   back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => { asked.push(path); return { ...(answers[path.split("?")[0]!] ?? { status: 404, data: { error: "no fixture" } }), setCookies: [] }; }),

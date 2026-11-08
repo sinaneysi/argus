@@ -10,10 +10,13 @@ import { day } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Incidents } from "@/lib/types";
 import { problemAct } from "./actions";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Incidents" };
 
 export default async function IncidentsPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/incidents", "Incidents");
+  if (nc) return nc;
   const params = await pick(searchParams, ["q", "status", "sev", "env", "source", "sort", "page", "sent", "preq"]);
   const [r, csrf, flash] = await Promise.all([apiGet<Incidents>("/api/v1/incidents" + qs(params)), csrfToken(), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/incidents answered ${r.status}`);

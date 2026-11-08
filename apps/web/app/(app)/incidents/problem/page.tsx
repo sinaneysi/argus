@@ -9,10 +9,13 @@ import { qs } from "@/lib/api";
 import { full } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Finding } from "@/lib/types";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Finding" };
 
 export default async function FindingPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/incidents/problem", "Finding");
+  if (nc) return nc;
   const params = await pick(searchParams, ["run", "idx", "sent", "preq", "pq"]);
   const [r, csrf, flash] = await Promise.all([apiGet<Finding>("/api/v1/incidents/finding" + qs(params)), csrfToken(), readFlash()]);
   if (r.status === 404) notFound();

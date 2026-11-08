@@ -6,10 +6,13 @@ import { Banners, tone, When } from "@/components/Section";
 import { apiGet } from "@/lib/server";
 import type { FixList } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Fix runs" };
 
 export default async function FixRunsPage() {
+  const nc = await notConfigured("/admin/fix", "Fix runs");
+  if (nc) return nc;
   const r = await apiGet<FixList>("/api/v1/fix");
   if (r.status === 403) return <><header className="phead"><div><h1>Fix runs</h1><HelpQ p="/admin/fix" /></div></header><AdminsOnly /></>;
   if (r.status !== 200) throw new Error(`/api/v1/fix answered ${r.status}`);

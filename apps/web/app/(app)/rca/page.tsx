@@ -7,10 +7,13 @@ import { day } from "@/lib/format";
 import { apiGet } from "@/lib/server";
 import type { RcaList } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "RCA library" };
 
 export default async function RcaPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/rca", "RCA library");
+  if (nc) return nc;
   const params = await pick(searchParams, ["q", "status", "source", "sort", "page"]);
   const r = await apiGet<RcaList>("/api/v1/rca" + qs(params));
   if (r.status !== 200) throw new Error(`/api/v1/rca answered ${r.status}`);

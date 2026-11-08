@@ -19,6 +19,7 @@ import (
 
 	"github.com/sinaneysi/argus/internal/claudetoken"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/needs"
 	"github.com/sinaneysi/argus/internal/settingsapply"
 	"github.com/sinaneysi/argus/internal/worker"
 )
@@ -28,10 +29,15 @@ const applyEvery = 3 * time.Second
 
 func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writer) []worker.Job {
 	var jobs []worker.Job
+	det := needs.FromConfig(func(k string) config.Value { return c.Values[k] }, false)
+	det.Active = true // the worker runs in the volume layout only
 	for _, n := range collectorNames {
 		n := n
-		jobs = append(jobs, worker.Job{Name: "collect-" + n, Every: every[n], Sources: collectorSources[n],
+		jobs = append(jobs, worker.Job{Name: "collect-" + n, Every: every[n], Sources: needs.Jobs["collect-"+n],
 			Ready: func() (bool, string) {
+				if miss := det.Now().Missing(needs.Jobs["collect-"+n]); len(miss) > 0 {
+					return false, needs.Reason(miss)
+				}
 				if !enabled(c, n) {
 					return false, "ARGUS_COLLECT_" + upper(n) + "=1 is not set"
 				}
@@ -43,8 +49,6 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
-
-var collectorSources = map[string][]string{"alerts": {"alertmanager"}, "certs": nil, "backups": nil}
 
 func upper(s string) string {
 	b := []byte(s)

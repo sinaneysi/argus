@@ -8,10 +8,13 @@ import { qs } from "@/lib/api";
 import { full } from "@/lib/format";
 import { apiGet } from "@/lib/server";
 import type { IncidentRun } from "@/lib/types";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Incident run" };
 
 export default async function RunPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/incidents/run", "Incident run");
+  if (nc) return nc;
   const r = await apiGet<IncidentRun>("/api/v1/incidents/run" + qs(await pick(searchParams, ["id"])));
   if (r.status === 404) notFound();
   if (r.status !== 200) throw new Error(`/api/v1/incidents/run answered ${r.status}`);

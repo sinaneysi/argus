@@ -9,10 +9,13 @@ import { qs } from "@/lib/api";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { CicdItem } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "CI/CD finding" };
 
 export default async function FindingPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/cicd/finding", "CI/CD finding");
+  if (nc) return nc;
   const params = await pick(searchParams, ["id", "sent", "preq", "pq", "all"]);
   const [r, csrf, flash] = await Promise.all([apiGet<CicdItem>("/api/v1/cicd/finding" + qs(params)), csrfToken(), readFlash()]);
   if (r.status === 404) notFound();

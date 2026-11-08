@@ -9,10 +9,13 @@ import { apiGet, readFlash } from "@/lib/server";
 import type { Cicd } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
 import { SoftLink } from "@/components/Soft";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "CI/CD" };
 
 export default async function CicdPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/cicd", "CI/CD");
+  if (nc) return nc;
   const params = await pick(searchParams, ["view", "group", "kind", "env", "state", "page"]);
   const [r, flash] = await Promise.all([apiGet<Cicd>("/api/v1/cicd" + qs(params)), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/cicd answered ${r.status}`);

@@ -811,3 +811,10 @@ export type Seo = {
   suggestions: { empty: boolean; day?: string; summary?: string[]; groups?: { key: string; title: string; rows: SeoSuggestion[] }[] };
   gsc: { empty: boolean; clicks?: SeoChart; impressions?: SeoChart; position?: SeoChart; urls?: { level: PillData; url: string; coverage: string; lastCrawl: string; crawledAs: string }[] };
 };
+
+/** GET /api/v1/needs (ADR-0021 D5): the data-source kinds and whether the asked page is not configured. */
+export type NeedSource = { key: string; label: string; settings: string; hint: string };
+export type Needs = {
+  kinds: { key: string; label: string; settings: string; configured: boolean }[];
+  notConfigured?: { sources: NeedSource[] };
+};

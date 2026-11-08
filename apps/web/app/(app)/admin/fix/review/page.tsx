@@ -9,10 +9,13 @@ import { Banners, Crumb, pick, type Search } from "@/components/Section";
 import { qs } from "@/lib/api";
 import { apiGet, csrfToken } from "@/lib/server";
 import type { FixReview } from "@/lib/types";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Take action" };
 
 export default async function FixReviewPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/admin/fix/review", "Take action");
+  if (nc) return nc;
   const [r, csrf] = await Promise.all([apiGet<FixReview>("/api/v1/fix/review" + qs(await pick(searchParams, ["run", "idx", "rca"]))), csrfToken()]);
   if (r.status === 403) return <><header className="phead"><div><h1>Take action</h1><HelpQ p="/admin/fix" /></div></header><AdminsOnly /></>;
   if (r.status === 404) notFound();

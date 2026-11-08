@@ -8,6 +8,7 @@ import { qs } from "@/lib/api";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Banner, RepoCheckRow, RepoIndex, RepoPage } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Check a repo" };
 
@@ -104,6 +105,8 @@ function Repo({ d, csrf, flash }: { d: RepoPage; csrf: string; flash: Banner | n
 }
 
 export default async function RepoCheckPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/cicd/repo", "Check a repo");
+  if (nc) return nc;
   const params = await pick(searchParams, ["project", "sent", "q", "verdict", "sort", "page"]);
   const [r, csrf, flash] = await Promise.all([apiGet<RepoIndex | RepoPage>("/api/v1/cicd/repo" + qs(params)), csrfToken(), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/cicd/repo answered ${r.status}`);

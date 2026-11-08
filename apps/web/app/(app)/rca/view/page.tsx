@@ -9,10 +9,13 @@ import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { RcaItem } from "@/lib/types";
 import { buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "RCA report" };
 
 export default async function RcaView({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/rca/view", "RCA report");
+  if (nc) return nc;
   const params = await pick(searchParams, ["id", "sent", "preq", "pq"]);
   const [r, csrf, flash] = await Promise.all([apiGet<RcaItem>("/api/v1/rca/item" + qs(params)), csrfToken(), readFlash()]);
   if (r.status === 404) notFound();

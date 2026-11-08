@@ -13,6 +13,7 @@ import type { Qa, QaIssue } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
 import { SoftLink } from "@/components/Soft";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Conversations" };
 
@@ -50,6 +51,8 @@ function Issue({ i, bulk }: { i: QaIssue; bulk: boolean }) {
 }
 
 export default async function QaPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/qa", "Conversations");
+  if (nc) return nc;
   const sp = await searchParams;
   const u = new URLSearchParams();
   for (const k of ["view", "q", "state", "env", "disp", "sender", "has", "from", "to", "page"]) if (one(sp[k])) u.set(k, one(sp[k]));

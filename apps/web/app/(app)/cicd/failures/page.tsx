@@ -8,6 +8,7 @@ import { apiGet, readFlash } from "@/lib/server";
 import type { CicdFailures, CicdFinding } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
 import { SoftLink } from "@/components/Soft";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "CI/CD failures" };
 
@@ -36,6 +37,8 @@ function Row({ f }: { f: CicdFinding }) {
 }
 
 export default async function FailuresPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/cicd/failures", "CI/CD failures");
+  if (nc) return nc;
   const params = await pick(searchParams, ["view", "q", "env", "class", "sort", "page"]);
   const [r, flash] = await Promise.all([apiGet<CicdFailures>("/api/v1/cicd/failures" + qs(params)), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/cicd/failures answered ${r.status}`);
