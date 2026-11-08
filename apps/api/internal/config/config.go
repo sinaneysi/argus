@@ -232,6 +232,8 @@ var Fields = []Field{
 	{Key: "ARGUS_TASK_RUN_BUDGET_USD", Aliases: []string{"TASK_RUN_BUDGET_USD"}, Kind: Str, Default: "5", Help: "one run of an approved plan spends at most this (USD)"},
 	{Key: "ARGUS_TASK_INTAKE_MINUTES", Kind: Int, Default: "10", Min: 1, Max: 60, Help: "one planning run takes at most this long"},
 	{Key: "ARGUS_TASK_RUN_MINUTES", Kind: Int, Default: "60", Min: 1, Max: 180, Help: "one run of an approved plan takes at most this long"},
+	{Key: "ARGUS_TASK_CHAT_BUDGET_USD", Aliases: []string{"TASK_CHAT_BUDGET_USD"}, Kind: Str, Default: "0.15", Help: "one task-chat reply spends at most this (USD)"},
+	{Key: "ARGUS_TASK_CHAT_MINUTES", Kind: Int, Default: "5", Min: 1, Max: 30, Help: "one task-chat reply takes at most this long"},
 	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
 	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool

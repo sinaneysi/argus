@@ -784,6 +784,9 @@ func (r *run) main() error {
 	}
 	r.glProcessRequests()
 	r.processRequests()
+	if r.o.Agent != nil && r.o.Agent.ChatReqDir != "" && !o.DryRun {
+		r.chatProcess()
+	}
 	if o.Full {
 		r.setState("want_full", "1")
 	}
@@ -871,6 +874,9 @@ func (r *run) main() error {
 	if r.o.Agent != nil && !o.DryRun {
 		r.o.Agent.defaults()
 		r.agentTick = r.agentRunTick()
+		if r.o.Agent.ChatReqDir != "" {
+			r.chatTickS = r.chatTick()
+		}
 	}
 	r.kickNotice()
 	r.commit()
