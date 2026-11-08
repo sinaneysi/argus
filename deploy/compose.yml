@@ -31,6 +31,8 @@ services:
       api: { condition: service_healthy }   # the api creates and migrates the databases first
     env_file: ${ARGUS_ENV_FILE:-argus.env}
     entrypoint: ["/app/argus", "worker"]
+    environment:
+      ARGUS_SELFCHECK_API_URL: http://api:8080/healthz   # the self-check job checks the api
     healthcheck: { disable: true }
     networks: [argus]
     volumes:

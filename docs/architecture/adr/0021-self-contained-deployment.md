@@ -204,6 +204,18 @@ exit 124 at the time limit), the secret scan over the error, the record and the 
 log file in `ARGUS_MODEL_LOG_DIR`. `argus claude run` makes one call to check the provider. The clean-install test
 uses the api provider against the stub's `/anthropic/v1/messages`; the unit tests use a fake CLI.
 
+As built (P2): `internal/selfcheck` ports the self-check job: the worker job `selfcheck` (every 5 minutes, always on)
+checks every worker job against its interval (a job without its source is "not configured", never a failure), the
+API's health address (`ARGUS_SELFCHECK_API_URL`), the alerts snapshot while its collector runs, the credential
+status and expiry files once they are written, the volume's free space, the databases' integrity (`PRAGMA
+quick_check`, hourly), the master key (present, opens every sealed secret; plaintext secrets are a warning), the
+data sources whose last check failed, the state backup (when `backup-status.json` exists), own failures of the last
+24 h and the Claude usage switch. It writes `selfcheck.json`. After `ARGUS_SELFCHECK_PAGE_AFTER` (default 1 h) of
+FAIL it sends one notice through `internal/notify` and one at recovery; while not failing it pings
+`ARGUS_DEADMAN_PUSH_URL` (an external push monitor, the dead-man switch). Differences from the earlier job: worker
+jobs replace systemd timers; the chat bridge, Matrix proxy and incident queue checks are gone (not Argus parts); the database,
+key and data-source checks are new; a missing backup status is not a failure (no backup job yet).
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings

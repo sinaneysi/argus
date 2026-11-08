@@ -129,6 +129,31 @@
       "default": "${ARGUS_STATE_DIR}/selfcheck.json"
     },
     {
+      "key": "ARGUS_SELFCHECK_PAGE_AFTER",
+      "aliases": [
+        "SELF_PAGE_AFTER"
+      ],
+      "type": "int",
+      "default": "3600",
+      "min": 300,
+      "max": 604800,
+      "help": "worker job selfcheck: seconds Argus must be failing before one notice is sent"
+    },
+    {
+      "key": "ARGUS_SELFCHECK_API_URL",
+      "type": "str",
+      "help": "worker job selfcheck: the API's health address it checks (empty: not checked; deploy/compose.yml sets it)"
+    },
+    {
+      "key": "ARGUS_DEADMAN_PUSH_URL",
+      "aliases": [
+        "KUMA_PUSH_URL"
+      ],
+      "type": "url",
+      "secret": true,
+      "help": "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"
+    },
+    {
       "key": "ARGUS_READINESS_FILE",
       "aliases": [
         "OPS_READINESS_DATA"
