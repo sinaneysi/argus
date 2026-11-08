@@ -168,7 +168,8 @@ var Fields = []Field{
 	{Key: "ARGUS_CERT_FAIL_DAYS", Aliases: []string{"CERT_FAIL_DAYS"}, Kind: Int, Default: "14", Min: 0, Max: 365, Help: "fewer days left: FAIL"},
 	{Key: "ARGUS_CERT_TIMEOUT", Kind: Int, Default: "10", Min: 1, Max: 120, Help: "seconds per TLS probe"},
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
-	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
+	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON; a .tsv file: name, <S3 source>/<bucket>/<prefix>, max age in hours, min size)"},
+	{Key: "ARGUS_BACKUP_S3_REGION", Kind: Str, Default: "us-east-1", Help: "the signing region of the S3 data sources of the backup check (an entry's region fact wins)"},
 	// the host estate (argus estate; worker jobs inventory and vm-pulse): Prometheus through Settings -> Data sources
 	{Key: "ARGUS_PROM_SOURCES", Kind: List, Help: "name=url, ...: Prometheus base URLs for the inventory and VM state, besides the Grafana and Prometheus entries of Settings -> Data sources"},
 	{Key: "ARGUS_PROM_CA_FILE", Kind: Path, Help: "extra CA certificates for the Prometheus and Grafana sites of the inventory"},

@@ -667,7 +667,13 @@
       "key": "ARGUS_BACKUP_SETS_FILE",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/backup-sets.json",
-      "help": "the backup sets to check (JSON)"
+      "help": "the backup sets to check (JSON; a .tsv file: name, <S3 source>/<bucket>/<prefix>, max age in hours, min size)"
+    },
+    {
+      "key": "ARGUS_BACKUP_S3_REGION",
+      "type": "str",
+      "default": "us-east-1",
+      "help": "the signing region of the S3 data sources of the backup check (an entry's region fact wins)"
     },
     {
       "key": "ARGUS_PROM_SOURCES",
