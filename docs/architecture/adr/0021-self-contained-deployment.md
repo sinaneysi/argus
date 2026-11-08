@@ -40,13 +40,15 @@ services: `api`, `worker` (the same `argus` image) and `web`. All state lives in
 | `ops.db` | evidence database (runs, findings, inventory, CI/CD, ...) |
 | `board/board.db` | decisions and tasks |
 | `auth/auth.db` | users, sessions, 2FA |
-| `state/` | JSON state files the jobs write and the API reads |
-| `settings/` | saved settings (no secret) |
+| `*.json` | state files the jobs write and the API reads (same names as before) |
+| `settings/` | saved settings (no secret); `settings/in`, `settings/out` while the request-file flow remains |
 | `secrets/` | secrets, each encrypted with the master key (D4) |
+| `etc/` | data files and data-source registry (`etc/sources`, `etc/kube`) |
 | `reports/` | merged reports |
 | `keys/` | the 2FA key and the master key file, when not given from outside |
 
-`ARGUS_LAYOUT=volume` selects these defaults (every path key still overrides). `ARGUS_LAYOUT=legacy` (the default
+`ARGUS_LAYOUT=volume` selects these defaults (`internal/config` `VolumeDefaults`; every path key still overrides).
+`deploy/Dockerfile` (targets `argus`, `web`) and `deploy/compose.yml` are the reference build and compose file. `ARGUS_LAYOUT=legacy` (the default
 until cut-over) keeps today's paths so that existing installations do not change.
 
 **D2. One schema, owned by Argus.** The table structure is embedded in the binaries as numbered migrations per

@@ -1,0 +1,61 @@
+# Argus, self-contained (ADR-0021): two images, three services, ONE volume. Nothing on the host but Docker.
+#   cp deploy/argus.example.env deploy/argus.env   # set COMPANY_NAME, ARGUS_PUBLIC_URL, the first admin password
+#   docker compose -f deploy/compose.yml up -d --build
+# Then open the web port behind your TLS proxy, sign in as ARGUS_ADMIN_USER and connect the data sources in Settings.
+# Back up the volume (and ARGUS_MASTER_KEY when you set it from outside): it holds every database, setting and secret.
+name: argus
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+services:
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: argus }
+    image: ${ARGUS_IMAGE:-argus:latest}
+    restart: unless-stopped
+    env_file: ${ARGUS_ENV_FILE:-argus.env}
+    environment:
+      ARGUS_TRUSTED_PROXIES: "127.0.0.1,::1,172.30.240.10"   # web (and a proxy on the host through the published port)
+    networks:
+      argus: { ipv4_address: 172.30.240.11 }
+    ports:
+      - "${ARGUS_API_BIND:-127.0.0.1}:${ARGUS_API_PORT:-8080}:8080"
+    volumes:
+      - argus-data:/var/lib/argus
+    <<: *hardening
+  worker:
+    image: ${ARGUS_IMAGE:-argus:latest}
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }   # the api creates and migrates the databases first
+    env_file: ${ARGUS_ENV_FILE:-argus.env}
+    entrypoint: ["/app/argus", "worker"]
+    healthcheck: { disable: true }
+    networks: [argus]
+    volumes:
+      - argus-data:/var/lib/argus
+    <<: *hardening
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    image: ${ARGUS_WEB_IMAGE:-argus-web:latest}
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      API_URL: http://api:8080
+    networks:
+      argus: { ipv4_address: 172.30.240.10 }
+    ports:
+      - "${ARGUS_WEB_BIND:-127.0.0.1}:${ARGUS_WEB_PORT:-3000}:3000"
+    read_only: true
+    tmpfs: ["/tmp", "/app/apps/web/.next/cache:uid=65534,gid=65534"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+networks:
+  argus:
+    ipam:
+      config:
+        - subnet: 172.30.240.0/24
+volumes:
+  argus-data:

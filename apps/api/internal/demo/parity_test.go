@@ -187,7 +187,7 @@ func compareDB(a, b, rel string) []string {
 	defer db.Close()
 	schema := func(d *sql.DB) map[string]string {
 		m := map[string]string{}
-		rows, err := d.Query("SELECT name, sql FROM sqlite_master WHERE type IN ('table','index') AND sql IS NOT NULL")
+		rows, err := d.Query("SELECT name, sql FROM sqlite_master WHERE type IN ('table','index') AND sql IS NOT NULL AND name <> 'argus_schema_migrations'")
 		if err != nil {
 			return m
 		}

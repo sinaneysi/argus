@@ -13,6 +13,7 @@ import (
 
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/migrate"
 )
 
 const checksHelp = `usage: argus checks <alerts|certs|backups|all> [-file PATH]
@@ -210,6 +211,10 @@ func runWorker(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if err := migrate.OnStart(ctx, c, func(f string, a ...any) { fmt.Fprintf(stderr, f+"\n", a...) }); err != nil {
+		fmt.Fprintln(stderr, "argus worker:", err)
+		return 1
+	}
 	code := 0
 	next := map[string]time.Time{}
 	for _, n := range collectorNames {
@@ -224,6 +229,11 @@ func runWorker(args []string, stdout, stderr io.Writer) int {
 	any := false
 	for _, n := range collectorNames {
 		any = any || enabled(c, n)
+	}
+	if !any && c.Values["ARGUS_LAYOUT"].Raw == "volume" { // a compose service: stay up, nothing to run yet
+		fmt.Fprintln(stderr, "argus worker: no collector is enabled (ARGUS_COLLECT_*=1); idle")
+		<-ctx.Done()
+		return 0
 	}
 	if !any {
 		fmt.Fprintln(stderr, "argus worker: no collector is enabled (ARGUS_COLLECT_*=1); exiting")

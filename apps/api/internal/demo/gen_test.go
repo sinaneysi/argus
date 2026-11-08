@@ -95,7 +95,7 @@ func TestAuthDBSurvivesRegeneration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec("INSERT INTO sessions VALUES ('h', 'demo.viewer', 1, 1, 'c', NULL)"); err != nil {
+	if _, err := db.Exec("INSERT INTO sessions (token_hash, username, created, last_seen, csrf) VALUES ('h', 'demo.viewer', 1, 1, 'c')"); err != nil {
 		t.Fatal(err)
 	}
 	db.Close()

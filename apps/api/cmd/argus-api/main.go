@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -27,6 +28,7 @@ import (
 	"github.com/sinaneysi/argus/internal/app"
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/oidc"
 )
 
@@ -48,6 +50,10 @@ func main() {
 	}
 	cfg, ok := loadConfig(os.Stderr)
 	if !ok {
+		os.Exit(1)
+	}
+	if err := migrate.OnStart(context.Background(), cfg, func(f string, a ...any) { fmt.Printf(f+"\n", a...) }); err != nil {
+		fmt.Fprintln(os.Stderr, "argus-api:", err)
 		os.Exit(1)
 	}
 	if err := auth.Init(app.IMPORT_HTPASSWD, app.ADMINS); err != nil {

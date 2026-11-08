@@ -36,6 +36,26 @@
       "help": "time zone of timers, quiet hours and day caps"
     },
     {
+      "key": "ARGUS_LAYOUT",
+      "type": "str",
+      "default": "legacy",
+      "enum": [
+        "legacy",
+        "volume"
+      ],
+      "help": "legacy: today's paths; volume: every path default under ARGUS_STATE_DIR (one volume, ADR-0021 D1)"
+    },
+    {
+      "key": "ARGUS_MIGRATE",
+      "type": "str",
+      "default": "auto",
+      "enum": [
+        "auto",
+        "off"
+      ],
+      "help": "auto: argus-api and argus worker apply the schema migrations at start (a read-only database is skipped); off: only argus migrate does"
+    },
+    {
       "key": "ARGUS_ETC_DIR",
       "type": "path",
       "default": "/etc/argus",

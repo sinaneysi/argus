@@ -190,3 +190,27 @@ func TestExampleFileIsValid(t *testing.T) {
 		t.Fatalf("the example must pass config check: %v", err)
 	}
 }
+
+func TestVolumeLayout(t *testing.T) {
+	c, err := load(t, minimal+"ARGUS_LAYOUT=volume\nARGUS_STATE_DIR=/vol\nARGUS_SETTINGS_OUT=/elsewhere/out\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"ARGUS_AUTH_DB": "/vol/auth/auth.db", "ARGUS_SETTINGS_IN": "/vol/settings/in",
+		"ARGUS_SETTINGS_OUT": "/elsewhere/out", "ARGUS_SOURCES_DIR": "/vol/etc/sources", "ARGUS_KUBE_DIR": "/vol/etc/kube",
+		"TOTP_KEY_FILE": "/vol/keys/totp.key", "ARGUS_DB": "/vol/ops.db", "ARGUS_BOARD_DB": "/vol/board/board.db",
+		"ARGUS_IMPORT_HTPASSWD": ""}
+	for k, v := range want {
+		if got := c.Values[k].Raw; got != v {
+			t.Errorf("%s = %q, want %q", k, got, v)
+		}
+	}
+	// the legacy layout keeps today's paths
+	c, err = load(t, minimal)
+	if err != nil || c.AuthDB != "/auth/auth.db" || c.SettingsIn != "/settings-in" {
+		t.Fatalf("legacy: %q %q %v", c.AuthDB, c.SettingsIn, err)
+	}
+	if _, err := load(t, minimal+"ARGUS_LAYOUT=cloud\n"); err == nil || !strings.Contains(err.Error(), "must be one of legacy, volume") {
+		t.Fatalf("bad layout: %v", err)
+	}
+}
