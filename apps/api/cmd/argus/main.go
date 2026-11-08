@@ -47,6 +47,7 @@ var commands = []command{
 	{"demo", "the public demo: generate sample data, readiness check", runDemo},
 	{"checks", "run collectors once: alerts snapshot, certificates, backups", runChecks},
 	{"worker", "run the enabled collectors on their intervals", runWorker},
+	{"notify", "send a notice (Matrix, Telegram or a webhook) or print a formatted one", func(a []string, o, e io.Writer) int { return runNotify(a, os.Stdin, o, e) }},
 	{"claude", "the egress-country guard in front of every Claude run (check, egress)", runClaude},
 	{"settings", "root: apply Settings -> General (apply), switch Claude usage (claude) or QA questions (qa)", runSettings},
 	{"secrets", "root: apply Settings -> Claude and -> Kubernetes requests (apply-claude, apply-kube, install-kubectl)", runSecrets},

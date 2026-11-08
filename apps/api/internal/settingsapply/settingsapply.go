@@ -100,6 +100,8 @@ type Options struct {
 	Now         func() time.Time
 	Log         io.Writer // stdout
 	Err         io.Writer // stderr
+	// Notify posts the settings-change notice when a save changed something (nil: no notice).
+	Notify func(by string, changes []string)
 }
 
 func (o *Options) fill() {
@@ -872,6 +874,9 @@ func (o *Options) apply(p *plan) error {
 	}
 	o.audit(p.user + ": " + summary + "; " + strings.Join(p.env, " "))
 	fmt.Fprintln(o.Log, "applied:", summary)
+	if len(changes) > 0 && o.Notify != nil {
+		o.Notify(p.user, changes)
+	}
 	return nil
 }
 

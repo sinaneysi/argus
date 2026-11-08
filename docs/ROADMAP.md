@@ -83,6 +83,15 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
    Catalogue page of PR #25 was removed: its UI belongs to the Next.js frontend, Next item 5); the agent reads `argus sources
    routes <service>` and `argus sources unmapped`. The Outline two-way table waits for the publisher port (below).
 
+8. **Notifier and alerts parity** (2026-11-08). `internal/notify` + `argus notify [-json] <source>` and `argus notify
+   format text|settings|ratelimit`: the reference formatter's card (level emoji, title, one sentence, five facts, link,
+   grey meta), its cleaning of untrusted text and its secret scan, byte-identical on synthetic fixtures; sent to Matrix
+   (`ARGUS_NOTIFY_MATRIX=1`, only to `MATRIX_NOTIFY_ROOM`, refused for watched/alert rooms, `m.mentions` empty), else
+   Telegram, else a webhook. `argus settings apply` posts the settings-change notice through it. The alerts snapshot
+   now matches the reference job: severity "none" and instance = instance, else job, else "-" when the label is
+   missing, activeAt as the source gave it, the source's order, the same field order and indentation. Not ported yet:
+   the notice styles A/B/C (threads, edited cards, digest) and the run notices that read a recorded run.
+
 ## Next
 
 1. More collectors: credential expiry, capacity, inventory; S3 listing for backups.

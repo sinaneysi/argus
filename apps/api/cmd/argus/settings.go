@@ -65,6 +65,7 @@ func runSettings(args []string, stdout, stderr io.Writer) int {
 	}
 	o := settingsOptions(c)
 	o.Log, o.Err = stdout, stderr
+	o.Notify = settingsNotice(c, stderr)
 	switch sub {
 	case "claude":
 		return settingsapply.ClaudeCLI(o, words)

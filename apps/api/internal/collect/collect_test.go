@@ -76,14 +76,14 @@ func TestAlertsSnapshot(t *testing.T) {
 		t.Fatalf("snapshot %s", data)
 	}
 	a := snap.DCs[0].Alerts[0]
-	if a.Alertname != "DiskFull" || a.State != "firing" || a.ActiveAt != "2026-10-30T10:00:00Z" || a.Summary != "/ above 95 %" || a.Labels["instance"] != "db-01.example:9100" {
+	if a.Alertname == nil || *a.Alertname != "DiskFull" || a.State != "firing" || a.ActiveAt[:19] != "2026-10-30T10:00:00" || a.Summary != "/ above 95 %" || a.Labels["instance"] != "db-01.example:9100" {
 		t.Fatalf("alertmanager item %+v", a)
 	}
 	if snap.DCs[0].Alerts[1].State != "suppressed" || snap.DCs[0].Alerts[1].Summary != "silenced" {
 		t.Fatalf("suppressed %+v", snap.DCs[0].Alerts[1])
 	}
 	p := snap.DCs[1].Alerts[0]
-	if p.State != "pending" || p.Value != "1.4e+00" || p.ActiveAt != "2026-10-30T11:58:00Z" {
+	if p.State != "pending" || p.Value == nil || *p.Value != "1.4e+00" || p.ActiveAt[:19] != "2026-10-30T11:58:00" {
 		t.Fatalf("prometheus item %+v", p)
 	}
 	// one failing source: still written, marked, and an error
