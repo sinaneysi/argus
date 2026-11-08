@@ -195,7 +195,7 @@ known incident ("Known incident #N") are never candidates. Not ported: hub servi
 
 As built (P6, marketing): `internal/marketing/googlebot` and `argus marketing googlebot` port the crawler traffic job
 (parity with the earlier job on synthetic fixtures: `internal/marketing/googlebot/testdata/golden.json`). The worker runs
-`googlebot-watch` every minute, `googlebot-sitemaps` once a day and `seo-check` every 5 minutes, only while the module
+`googlebot-watch` every minute, `googlebot-sitemaps` once a day and `seo-check` every minute, only while the module
 is on; "not configured" names what is missing (the module, a Grafana data source, the edge groups file
 `etc/googlebot-edges.tsv`, `ARGUS_GOOGLEBOT_SITEMAP`). The job reads the edge access lines with a Google crawler user
 agent from Loki through the Grafana data source (`ARGUS_GOOGLEBOT_GRAFANA`, GET only, the address guard of the data

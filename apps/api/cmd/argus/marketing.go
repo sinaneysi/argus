@@ -7,7 +7,7 @@ package main
 //	googlebot-watch     every minute: the crawler log buckets from Loki (a Grafana data source) into googlebot.db,
 //	                    then the detector (notices to the notify room)
 //	googlebot-sitemaps  once a day: the site's sitemaps into googlebot.db (ARGUS_GOOGLEBOT_SITEMAP)
-//	seo-check           every 5 minutes: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
+//	seo-check           every minute: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
 
 import (
 	"context"
@@ -314,7 +314,7 @@ func marketingJobs(c *config.Config, det needs.Detector, stderr io.Writer) []wor
 			_, _, err := o.Sitemaps(ctx)
 			return err
 		})},
-		{Name: "seo-check", Every: 5 * time.Minute, Ready: off("seo-check", func() string {
+		{Name: "seo-check", Every: time.Minute, Ready: off("seo-check", func() string {
 			if _, err := os.Stat(c.Values["ARGUS_GOOGLEBOT_DB"].Raw); err != nil {
 				return "no crawler database yet (googlebot-watch writes it)"
 			}
