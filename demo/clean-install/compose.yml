@@ -7,10 +7,7 @@ services:
       argus: { ipv4_address: 172.30.241.11 }
     environment: &sources
       ARGUS_TRUSTED_PROXIES: "127.0.0.1,::1,172.30.241.10"
-      ARGUS_COLLECT_ALERTS: "1"
-      ARGUS_ALERTS_SOURCES: "stub=http://stubs:8099/alertmanager/api/v2/alerts"
-      GITLAB_URL: "http://stubs:8099/gitlab"
-      MATRIX_HOMESERVER: "http://stubs:8099/matrix"
+      ARGUS_SOURCES_ALLOW_HTTP: "1"   # the stubs speak plain http; the sources themselves are connected in Settings
       MATRIX_NOTIFY_ROOM: "!notices:chat.example.test"
     depends_on:
       stubs: { condition: service_healthy }
