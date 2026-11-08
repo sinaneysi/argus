@@ -23,7 +23,7 @@ import (
 // Jira is a small Jira Server / Data Center REST v2 client. The token is a personal access token sent as
 // "Authorization: Bearer"; it is never logged and never in an error. HTTPS is verified (system roots, or CAFile);
 // plain http only to a loopback address (local test servers). Only /rest/api/2/* and /rest/agile/1.0/* paths are
-// called; redirects are never followed. At most Budget calls per run, MinGap between calls, 429 honours
+// called; redirects are never followed. With User set the token is sent as the basic-auth password instead. At most Budget calls per run, MinGap between calls, 429 honours
 // Retry-After, 5xx and network errors are retried with backoff, 401 (and 403 on /myself) fail at once.
 type Jira struct {
 	Base    string
@@ -37,7 +37,8 @@ type Jira struct {
 	Sleep   func(time.Duration)
 	Calls   int
 	last    time.Time
-	DryRun  bool // log writes (POST/PUT) instead of sending them; reads still go out
+	DryRun  bool   // log writes (POST/PUT) instead of sending them; reads still go out
+	User    string // basic auth: user name with the token as password (a Jira data source with a user name)
 	Log     *slog.Logger
 	dryN    int
 }
@@ -214,7 +215,11 @@ func (j *Jira) Request(ctx context.Context, method, path string, body any, query
 		if err != nil {
 			return nil, jerr(0, "", "bad request")
 		}
-		req.Header.Set("Authorization", "Bearer "+j.token)
+		if j.User != "" {
+			req.SetBasicAuth(j.User, j.token)
+		} else {
+			req.Header.Set("Authorization", "Bearer "+j.token)
+		}
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "argus-board-sync")
 		if data != nil {

@@ -333,7 +333,15 @@ func (o *Options) credential(e *Entry) string {
 	case "secret":
 		return readSecretFile(filepath.Join(o.Legacy.SecretsDir, filepath.Base(ref)), MaxCred)
 	case "etc":
-		return readSecretFile(filepath.Join(o.Legacy.EtcDir, filepath.Base(ref)), MaxCred)
+		v := readSecretFile(filepath.Join(o.Legacy.EtcDir, filepath.Base(ref)), 2*MaxCred)
+		if secret.Sealed(v) {
+			plain, err := o.Key.Open("etc/"+filepath.Base(ref), v)
+			if err != nil {
+				return ""
+			}
+			return plain
+		}
+		return v
 	case "kube":
 		return ""
 	}

@@ -745,7 +745,7 @@ func Run(ctx context.Context, o Options) error {
 	if !o.DryRun {
 		os.Chmod(o.DB, 0o644)
 	}
-	r := &run{o: &o, ctx: ctx, db: db, results: map[string]object{},
+	r := &run{o: &o, ctx: ctx, db: db, results: map[string]object{}, glResults: map[string]object{},
 		stats: map[string]int{"pushed": 0, "failed": 0, "conflicts": 0, "new": 0, "updated": 0, "gone": 0}}
 	defer func() {
 		if x := recover(); x != nil {
@@ -783,10 +783,11 @@ func (r *run) main() error {
 			problems = append(problems, "JIRA_URL: "+err.Error())
 			r.conf = false
 		} else {
-			j.DryRun, j.Log = o.DryRun, o.Log
+			j.DryRun, j.Log, j.User = o.DryRun, o.Log, o.JiraUser
 			r.jira = j
 		}
 	}
+	r.glProcessRequests()
 	r.processRequests()
 	if o.Full {
 		r.setState("want_full", "1")
@@ -871,9 +872,13 @@ func (r *run) main() error {
 		// board-move requests without Jira: answered on the next run that has Jira (as the reference job does)
 		r.commit()
 	}
+	glRun := r.glSync()
 	r.kickNotice()
 	r.commit()
 	if err := r.publish(problems, calls); err != nil {
+		return err
+	}
+	if err := r.glPublish(glRun); err != nil {
 		return err
 	}
 	mode := "local"

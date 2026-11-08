@@ -778,6 +778,22 @@
       "help": "colon-separated root-owned files with the JIRA_* settings; the first that sets a key wins (empty: ARGUS_ETC_DIR/jira.env)"
     },
     {
+      "key": "ARGUS_GITLAB_ISSUES_REQ_DIR",
+      "aliases": [
+        "GITLAB_ISSUES_REQ_DIR"
+      ],
+      "type": "path",
+      "help": "GitLab issues connection requests from Settings -> Integrations (empty: ARGUS_SETTINGS_IN/gitlab-issues)"
+    },
+    {
+      "key": "ARGUS_GITLAB_ISSUES_ENV_FILE",
+      "aliases": [
+        "GITLAB_ISSUES_ENV_FILE"
+      ],
+      "type": "path",
+      "help": "a KEY=value file whose GITLAB_URL gives the default GitLab URL and allowed host (empty: ARGUS_ETC_DIR/env)"
+    },
+    {
       "key": "ARGUS_BOARD_PAT_FILE",
       "aliases": [
         "BOARD_PAT_FILE"

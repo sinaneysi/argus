@@ -184,6 +184,8 @@ var Fields = []Field{
 	{Key: "ARGUS_BOARD_OUT", Aliases: []string{"BOARD_OUT"}, Kind: Path, Help: "where board-status.json is written (empty: ARGUS_SETTINGS_OUT)"},
 	{Key: "ARGUS_BOARD_AUTH_DB", Aliases: []string{"BOARD_AUTH_DB"}, Kind: Path, Help: "users and roles the board sync checks, read only (empty: ARGUS_AUTH_DB)"},
 	{Key: "ARGUS_BOARD_ENV_FILES", Aliases: []string{"BOARD_ENV_FILES"}, Kind: Str, Help: "colon-separated root-owned files with the JIRA_* settings; the first that sets a key wins (empty: ARGUS_ETC_DIR/jira.env)"},
+	{Key: "ARGUS_GITLAB_ISSUES_REQ_DIR", Aliases: []string{"GITLAB_ISSUES_REQ_DIR"}, Kind: Path, Help: "GitLab issues connection requests from Settings -> Integrations (empty: ARGUS_SETTINGS_IN/gitlab-issues)"},
+	{Key: "ARGUS_GITLAB_ISSUES_ENV_FILE", Aliases: []string{"GITLAB_ISSUES_ENV_FILE"}, Kind: Path, Help: "a KEY=value file whose GITLAB_URL gives the default GitLab URL and allowed host (empty: ARGUS_ETC_DIR/env)"},
 	{Key: "ARGUS_BOARD_PAT_FILE", Aliases: []string{"BOARD_PAT_FILE"}, Kind: Path, Help: "the Jira personal access token, root-owned 0600 (empty: ARGUS_ETC_DIR/jira.pat)"},
 	{Key: "ARGUS_BOARD_OWNER_UID", Aliases: []string{"BOARD_OWNER_UID"}, Kind: Int, Default: "0", Min: 0, Max: 2147483647, Help: "the owner the Jira settings and token files must have"},
 	{Key: "ARGUS_BOARD_LABEL", Kind: Str, Default: "argus", Help: "label prefix of the Jira issues the board creates (<label>, <label>-src-<kind>-<id>, <label>-fixer)"},

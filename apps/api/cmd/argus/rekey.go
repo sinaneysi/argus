@@ -18,7 +18,7 @@ import (
 
 const rekeyHelp = `
 rekey         ARGUS_LAYOUT=volume: seal every secret in the volume (data-source credentials, the Claude token and
-              its backups, the Matrix token file) with the current master key (ARGUS_MASTER_KEY, else
+              its backups, the Matrix token file, the GitLab issues token) with the current master key (ARGUS_MASTER_KEY, else
               ARGUS_MASTER_KEY_FILE). Values sealed with ARGUS_MASTER_KEY_OLD are opened with it; plaintext values
               are sealed. -dry-run reports only. To change the key: stop the api and the worker, set
               ARGUS_MASTER_KEY_OLD to the old key and the new key in ARGUS_MASTER_KEY (or its file; argus secrets
@@ -139,6 +139,11 @@ func rekeyFiles(f secret.Files, key, old secret.Key, dry bool) rekeyResult {
 	}
 	if b, err := os.ReadFile(f.MatrixFile); err == nil {
 		one(f.MatrixFile, secret.MatrixName, string(b), func(s string) []byte { return []byte(s + "\n") })
+	}
+	for path, name := range f.EtcFiles() {
+		if b, err := os.ReadFile(path); err == nil {
+			one(path, name, string(b), func(s string) []byte { return []byte(s) })
+		}
 	}
 	return r
 }

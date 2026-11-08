@@ -179,6 +179,12 @@ func validateCreate(req map[string]any) created {
 }
 
 func (r *run) insertTask(v created, by, createdBy string) (int64, bool) {
+	return r.insertTaskIn(v, by, createdBy, "jira", 0)
+}
+
+// insertTaskIn is a new task and its queued create in its tracker (Jira, or GitLab issues; glProject: the project of
+// a group board's issue). It returns (task id, existed?): a task with the same source exists already.
+func (r *run) insertTaskIn(v created, by, createdBy, tracker string, glProject int64) (int64, bool) {
 	if v.kind != nil {
 		if old := r.one(`SELECT id FROM tasks WHERE source_kind=? AND source_id=?`, v.kind, v.sid); old != nil {
 			return old.i("id"), true
@@ -202,15 +208,22 @@ func (r *run) insertTask(v created, by, createdBy string) (int64, bool) {
 	ts := r.now()
 	res := r.must(`INSERT INTO tasks (tracker, title, description, evidence, fix_prompt, status, priority, labels, env, host, source_kind, `+
 		`source_id, source_url, created_by, requested_by, created_at, updated_at) VALUES (?,?,?,?,?,'todo',?,?,?,?,?,?,?,?,?,?,?)`,
-		"jira", v.title, v.desc, v.evidence, v.fixText, v.prio, string(pyDumps(listAny(labels))), orNil(v.env), orNil(v.host),
+		tracker, v.title, v.desc, v.evidence, v.fixText, v.prio, string(pyDumps(listAny(labels))), orNil(v.env), orNil(v.host),
 		v.kind, v.sid, v.url, createdBy, by, ts, ts)
 	tid, _ := res.LastInsertId()
+	if tracker == "gitlab" && glProject != 0 {
+		r.must(`UPDATE tasks SET gl_project=? WHERE id=?`, glProject, tid)
+	}
 	r.queue(tid, "create", object{{"as", by}})
 	src := ""
 	if v.kind != nil {
 		src = " from " + v.kind.(string) + " " + v.sid.(string)
 	}
-	r.event(tid, "created", by, "Created"+src+" ("+createdBy+")")
+	gl := ""
+	if tracker == "gitlab" {
+		gl = " · GitLab issue"
+	}
+	r.event(tid, "created", by, "Created"+src+" ("+createdBy+")"+gl)
 	r.notice("created", tid, by, v.title)
 	return tid, false
 }
@@ -272,8 +285,11 @@ func (r *run) handle(req map[string]any, rid string) (string, any) {
 	case "move", "comment", "assign":
 		tracker = r.task(req).s("tracker")
 	}
+	var gm *glMeta
 	if tracker == "gitlab" && (kind == "create" || kind == "move" || kind == "comment" || kind == "assign") {
-		panic(refused("GitLab issue tasks are not handled by this board sync yet"))
+		if gm = r.o.glMetaRead(); !r.o.glConnected(gm) {
+			panic(refused("GitLab issues is not connected (Settings → Integrations → GitLab issues)"))
+		}
 	} else if kind == "create" || kind == "move" || kind == "comment" || kind == "assign" || kind == "board-move" {
 		if ok, why := r.canWrite(); !ok {
 			panic(refused(why))
@@ -282,7 +298,11 @@ func (r *run) handle(req map[string]any, rid string) (string, any) {
 	switch kind {
 	case "create":
 		v := validateCreate(req)
-		tid, existed := r.insertTask(v, by, "human")
+		var glp int64
+		if tracker == "gitlab" {
+			glp = glCheckProject(req["gl_project"], gm)
+		}
+		tid, existed := r.insertTaskIn(v, by, "human", tracker, glp)
 		if existed {
 			return "exists", tid
 		}
@@ -307,13 +327,23 @@ func (r *run) handle(req map[string]any, rid string) (string, any) {
 		}
 		res := r.must(`INSERT INTO comments (task_id, author, body, created_at, pending) VALUES (?,?,?,?,1)`, t.i("id"), by, body, r.now())
 		lid, _ := res.LastInsertId()
-		r.queue(t.i("id"), "comment", object{{"body", "[" + r.o.Name + " · " + by + "] " + body}, {"local", lid}, {"as", by}})
+		text := "[" + r.o.Name + " · " + by + "] " + body
+		if t.s("tracker") == "gitlab" {
+			text = body // the GitLab push names the author
+		}
+		r.queue(t.i("id"), "comment", object{{"body", text}, {"local", lid}, {"as", by}})
 		r.event(t.i("id"), "comment", by, "Commented")
 		return "commented", t.i("id")
 	case "assign":
 		t := r.task(req)
-		r.must(`UPDATE tasks SET assignee=?, assignee_name=?, updated_at=? WHERE id=?`, by, by, r.now(), t.i("id"))
-		r.queue(t.i("id"), "assign", object{{"user", by}, {"jira_name", nil}, {"as", by}})
+		var jname any
+		name := by
+		if t.s("tracker") == "gitlab" {
+			name = r.glUser(gm, by)
+			jname = name
+		}
+		r.must(`UPDATE tasks SET assignee=?, assignee_name=?, updated_at=? WHERE id=?`, name, by, r.now(), t.i("id"))
+		r.queue(t.i("id"), "assign", object{{"user", by}, {"jira_name", jname}, {"as", by}})
 		r.event(t.i("id"), "assigned", by, "Assigned to "+by)
 		return "assigned", t.i("id")
 	case "board-move":

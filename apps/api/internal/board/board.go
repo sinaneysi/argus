@@ -20,7 +20,9 @@
 // Jira configuration is read from root-owned, not group/world-writable env files (JIRA_*, BOARD_*, FIXER_TRIGGER
 // lines; the first file that sets a key wins) and the token from a root-owned 0600 file.
 //
-// Not handled here (requests of these kinds are refused with a reason): GitLab issue tasks, per-user Jira
+// GitLab issue tasks are pushed and pulled in gitlab_issues.go (ADR-0009, ADR-0010).
+//
+// Not handled here (requests of these kinds are refused with a reason): per-user Jira
 // connections, the Jira agile board mirror, the fixer column and its bridge, approval proposals, lessons, the task
 // agent and its chat, Matrix requests.
 package board
@@ -33,6 +35,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -45,6 +48,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/sinaneysi/argus/internal/notify"
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
 // Options say where the job reads and writes, and how it names things.
@@ -69,6 +73,19 @@ type Options struct {
 	Allow    notify.Allowlist
 	// NewJira builds the client (tests); nil: NewJira.
 	NewJira func(base, token, caFile string) (*Jira, error)
+	// JiraUser: basic auth (user name + token or password) instead of a bearer token (a Jira data source with a user).
+	JiraUser string
+
+	// GitLab issues (gitlab_issues.go)
+	GitLabReqDir     string     // Settings -> Integrations requests (settings-in/gitlab-issues)
+	EtcDir           string     // gitlab-issues.json, gitlab-issues.token, gitlab-issues-allowed-hosts
+	GitLabEnvFile    string     // a KEY=value file whose GITLAB_URL gives the default URL and host
+	GitLabDefaultURL string     // the configured GITLAB_URL
+	GitLabURL        string     // Settings -> Data sources: the GitLab entry with purpose tracker
+	GitLabToken      string     // its credential (never logged)
+	Key              secret.Key // the master key: the stored token is sealed with it (one-volume layout)
+	Resolve          func(host string) ([]net.IP, error)
+	NewGitLab        func(base, token, pin string) (*GitLab, error) // tests; nil: NewGitLab
 }
 
 // Columns of the board, in order.
@@ -171,6 +188,8 @@ type run struct {
 	botDown string // the bot cannot be used this run
 	results map[string]object
 	stats   map[string]int
+
+	glResults map[string]object // Settings -> Integrations (GitLab issues) results, by request id
 }
 
 func (r *run) now() int64 { return r.o.Now().Unix() }

@@ -145,10 +145,11 @@ func sortedKeys(m map[string]map[string]any) []string {
 }
 
 type env struct {
-	d  string
-	o  Options
-	fj *fakeJira
-	n  int
+	glURL string
+	d     string
+	o     Options
+	fj    *fakeJira
+	n     int
 }
 
 func newEnv(t *testing.T, jira bool) *env {
@@ -229,18 +230,18 @@ func TestRequestsLocalMode(t *testing.T) {
 	ok := e.req(t, map[string]any{"kind": "create", "title": "  disk  full ", "env": "develop", "source_kind": "incident", "source_id": "8"})
 	dup := e.req(t, map[string]any{"kind": "create", "title": "again", "source_kind": "incident", "source_id": "8"})
 	bad := map[string]map[string]any{
-		"refused: title must be 1 to 200 characters":                         {"kind": "create", "title": " "},
-		"refused: unknown environment":                                       {"kind": "create", "title": "x", "env": "moon"},
-		"refused: bad source":                                                {"kind": "create", "title": "x", "source_id": "8"},
-		"refused: bad source link":                                           {"kind": "create", "title": "x", "source_kind": "rca", "source_id": "1", "source_url": "https://evil.example/"},
-		"refused: unknown or disabled user":                                  {"kind": "create", "title": "x", "by": "old.user"},
-		"refused: bad user":                                                  {"kind": "create", "title": "x", "by": "../etc"},
-		"refused: only admins can change board settings":                     {"kind": "settings", "auto_incidents": true, "by": "sam.viewer"},
-		"refused: unknown request kind":                                      {"kind": "launch"},
-		"refused: no such task":                                              {"kind": "move", "task": 99, "to": "done"},
-		"refused: unknown column":                                            {"kind": "move", "task": 1, "to": "sideways"},
-		"refused: GitLab issue tasks are not handled by this board sync yet": {"kind": "create", "title": "x", "tracker": "gitlab"},
-		"refused: lessons requests are not handled by this board sync yet":   {"kind": "lesson"},
+		"refused: title must be 1 to 200 characters":     {"kind": "create", "title": " "},
+		"refused: unknown environment":                   {"kind": "create", "title": "x", "env": "moon"},
+		"refused: bad source":                            {"kind": "create", "title": "x", "source_id": "8"},
+		"refused: bad source link":                       {"kind": "create", "title": "x", "source_kind": "rca", "source_id": "1", "source_url": "https://evil.example/"},
+		"refused: unknown or disabled user":              {"kind": "create", "title": "x", "by": "old.user"},
+		"refused: bad user":                              {"kind": "create", "title": "x", "by": "../etc"},
+		"refused: only admins can change board settings": {"kind": "settings", "auto_incidents": true, "by": "sam.viewer"},
+		"refused: unknown request kind":                  {"kind": "launch"},
+		"refused: no such task":                          {"kind": "move", "task": 99, "to": "done"},
+		"refused: unknown column":                        {"kind": "move", "task": 1, "to": "sideways"},
+		"refused: GitLab issues is not connected (Settings → Integrations → GitLab issues)": {"kind": "create", "title": "x", "tracker": "gitlab"},
+		"refused: lessons requests are not handled by this board sync yet":                  {"kind": "lesson"},
 	}
 	rids := map[string]string{}
 	for want, r := range bad {
