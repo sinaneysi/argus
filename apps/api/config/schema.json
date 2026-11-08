@@ -627,6 +627,76 @@
       "help": "the backup sets to check (JSON)"
     },
     {
+      "key": "ARGUS_NOTIFY_MATRIX",
+      "aliases": [
+        "MATRIX_NOTIFY_ENABLED"
+      ],
+      "type": "bool",
+      "default": "0",
+      "help": "1: notices go to MATRIX_NOTIFY_ROOM"
+    },
+    {
+      "key": "MATRIX_HOMESERVER",
+      "type": "str",
+      "help": "the Matrix homeserver URL notices are sent to"
+    },
+    {
+      "key": "ARGUS_MATRIX_TOKEN_FILE",
+      "type": "path",
+      "help": "file holding the Matrix access token (empty: ARGUS_SECRETS_DIR/matrix-token; missing file: MATRIX_ACCESS_TOKEN)"
+    },
+    {
+      "key": "MATRIX_ACCESS_TOKEN",
+      "type": "str",
+      "secret": true,
+      "help": "the Matrix access token, when there is no token file"
+    },
+    {
+      "key": "MATRIX_NOTIFY_ROOM",
+      "type": "str",
+      "help": "the one room notices go to"
+    },
+    {
+      "key": "MATRIX_WATCH_ROOMS",
+      "type": "list",
+      "help": "rooms that are read (evidence): never sent to"
+    },
+    {
+      "key": "MATRIX_ALERT_ROOMS",
+      "type": "list",
+      "help": "alert rooms: never sent to"
+    },
+    {
+      "key": "MATRIX_KUMA_ROOMS",
+      "type": "list",
+      "help": "uptime monitor rooms: never sent to"
+    },
+    {
+      "key": "TELEGRAM_BOT_TOKEN",
+      "type": "str",
+      "secret": true,
+      "help": "Telegram bot token (used when Matrix is off)"
+    },
+    {
+      "key": "TELEGRAM_CHAT_ID",
+      "type": "str",
+      "help": "Telegram chat the bot posts to"
+    },
+    {
+      "key": "NOTIFY_WEBHOOK",
+      "type": "str",
+      "secret": true,
+      "help": "URL a JSON {\"text\": ...} is posted to (used when Matrix and Telegram are off)"
+    },
+    {
+      "key": "ARGUS_SECRET_ALLOWLIST",
+      "aliases": [
+        "OPS_SECRET_ALLOWLIST"
+      ],
+      "type": "path",
+      "help": "exact substrings the secret scan never redacts (reviewed fixtures)"
+    },
+    {
       "key": "ARGUS_CLAUDE_ENV_FILE",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/claude.env",

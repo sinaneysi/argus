@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
 	"encoding/json"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -96,16 +96,18 @@ func isLoopback(host string) bool {
 
 const maxAlertBody = 8 << 20
 
-// alertItem is one alert as alerts-firing.json carries it (the /alerts page and the demo generator agree on it).
+// alertItem is one alert as alerts-firing.json carries it (the /alerts page, the incidents job and the demo
+// generator agree on it). Field order, defaults and activeAt are those of the reference snapshot job: severity
+// "none" and instance = instance, else job, else "-" when the label is missing; activeAt as the source gave it.
 type alertItem struct {
-	Alertname string            `json:"alertname"`
-	Severity  string            `json:"severity"`
 	State     string            `json:"state"`
 	ActiveAt  string            `json:"activeAt"`
+	Value     *string           `json:"value"`
+	Severity  string            `json:"severity"`
+	Alertname *string           `json:"alertname"`
 	Instance  string            `json:"instance"`
-	Value     string            `json:"value"`
-	Summary   string            `json:"summary"`
 	Labels    map[string]string `json:"labels"`
+	Summary   string            `json:"summary"`
 }
 
 type alertDC struct {
@@ -177,11 +179,14 @@ func Alerts(ctx context.Context, o AlertsOptions) (Result, error) {
 		snap.DCs = append(snap.DCs, d)
 	}
 	snap.FetchedAt = o.Now().Unix()
-	data, err := json.MarshalIndent(snap, "", " ")
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(snap); err != nil {
 		return Result{Status: "ERROR"}, err
 	}
-	if err := writeFileAtomic(o.Out, append(data, '\n')); err != nil {
+	if err := writeFileAtomic(o.Out, buf.Bytes()); err != nil {
 		return Result{Status: "ERROR"}, fmt.Errorf("alerts: write %s: %w", o.Out, err)
 	}
 	r := Result{Status: "OK", Items: len(o.Sources), Summary: fmt.Sprintf("%d firing from %d sources", firing, len(o.Sources))}
@@ -231,25 +236,25 @@ func fetchAlerts(ctx context.Context, client *http.Client, s AlertSource, token 
 	return parsePrometheus(body)
 }
 
-// isoTime normalises an RFC 3339 time to 2006-01-02T15:04:05Z (UTC, seconds), as the snapshot always carried it.
-func isoTime(s string) string {
-	t, err := time.Parse(time.RFC3339Nano, s)
-	if err != nil {
-		return s
-	}
-	return t.UTC().Format("2006-01-02T15:04:05Z")
-}
-
-func newItem(labels, annotations map[string]string, state, activeAt, value string) alertItem {
-	summary := annotations["summary"]
-	if summary == "" {
-		summary = annotations["description"]
-	}
+func newItem(labels, annotations map[string]string, state, activeAt string, value *string) alertItem {
 	if labels == nil {
 		labels = map[string]string{}
 	}
-	return alertItem{Alertname: labels["alertname"], Severity: labels["severity"], State: state, ActiveAt: isoTime(activeAt),
-		Instance: labels["instance"], Value: value, Summary: summary, Labels: labels}
+	pick := func(m map[string]string, def string, keys ...string) string {
+		for _, k := range keys {
+			if v, ok := m[k]; ok {
+				return v
+			}
+		}
+		return def
+	}
+	var name *string
+	if v, ok := labels["alertname"]; ok {
+		name = &v
+	}
+	return alertItem{State: state, ActiveAt: activeAt, Value: value, Severity: pick(labels, "none", "severity"),
+		Alertname: name, Instance: pick(labels, "-", "instance", "job"), Labels: labels,
+		Summary: pick(annotations, "", "summary", "description")}
 }
 
 // parseAlertmanager reads GET /api/v2/alerts: active → firing, unprocessed → pending, suppressed → suppressed.
@@ -274,9 +279,8 @@ func parseAlertmanager(body []byte) ([]alertItem, error) {
 		case "unprocessed":
 			state = "pending"
 		}
-		out = append(out, newItem(a.Labels, a.Annotations, state, a.StartsAt, ""))
+		out = append(out, newItem(a.Labels, a.Annotations, state, a.StartsAt, nil))
 	}
-	sortAlerts(out)
 	return out, nil
 }
 
@@ -291,7 +295,7 @@ func parsePrometheus(body []byte) ([]alertItem, error) {
 				Annotations map[string]string `json:"annotations"`
 				State       string            `json:"state"`
 				ActiveAt    string            `json:"activeAt"`
-				Value       string            `json:"value"`
+				Value       *string           `json:"value"`
 			} `json:"alerts"`
 		} `json:"data"`
 	}
@@ -305,19 +309,5 @@ func parsePrometheus(body []byte) ([]alertItem, error) {
 	for _, a := range in.Data.Alerts {
 		out = append(out, newItem(a.Labels, a.Annotations, a.State, a.ActiveAt, a.Value))
 	}
-	sortAlerts(out)
 	return out, nil
-}
-
-// sortAlerts gives a stable file: by name, then instance, then start.
-func sortAlerts(a []alertItem) {
-	sort.SliceStable(a, func(i, j int) bool {
-		if a[i].Alertname != a[j].Alertname {
-			return a[i].Alertname < a[j].Alertname
-		}
-		if a[i].Instance != a[j].Instance {
-			return a[i].Instance < a[j].Instance
-		}
-		return a[i].ActiveAt < a[j].ActiveAt
-	})
 }

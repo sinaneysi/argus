@@ -92,6 +92,13 @@ func read(t *testing.T, path string) string {
 func TestValidSaveApplied(t *testing.T) {
 	e := newEnv(t)
 	e.save(t, valid())
+	notices := 0
+	e.o.Notify = func(by string, changes []string) {
+		notices++
+		if by != "sam.roe" || len(changes) == 0 {
+			t.Fatalf("notice %q %v", by, changes)
+		}
+	}
 	if err := Apply(e.o); err != nil {
 		t.Fatal(err)
 	}
@@ -140,6 +147,9 @@ func TestValidSaveApplied(t *testing.T) {
 	}
 	if a := readJSON(t, filepath.Join(e.o.OutDir, "applied.json")); len(a["changes"].([]any)) != 0 {
 		t.Fatalf("second apply changes = %v", a["changes"])
+	}
+	if notices != 1 {
+		t.Fatalf("want one settings notice (none for a save without changes), got %d", notices)
 	}
 }
 
