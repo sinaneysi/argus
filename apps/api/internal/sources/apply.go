@@ -40,6 +40,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sinaneysi/argus/internal/secret"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -64,6 +66,7 @@ type Options struct {
 	Legacy     Legacy
 	Now        func() time.Time
 	Log        io.Writer
+	Key        secret.Key // the volume's master key: credentials are sealed with it (nil: plaintext, the legacy layout)
 }
 
 func (o *Options) now() int64 {
@@ -188,7 +191,10 @@ func (o *Options) writeCred(typ, name, value string) error {
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(value + "\n")
+	sealed, err := o.Key.Seal(secret.CredName(typ, name), value)
+	if err == nil {
+		_, err = f.WriteString(sealed + "\n")
+	}
 	if err == nil {
 		err = f.Sync()
 	}
@@ -331,7 +337,17 @@ func (o *Options) credential(e *Entry) string {
 	case "kube":
 		return ""
 	}
-	return readSecretFile(o.credPath(e.Type, e.Name), MaxCred)
+	return ReadCred(o.credPath(e.Type, e.Name), e.Type, e.Name, o.Key)
+}
+
+// ReadCred is a registry credential file's value, opened with the master key when it is sealed ("" when missing or
+// when it does not open: a check then says "no credential stored").
+func ReadCred(path, typ, name string, key secret.Key) string {
+	v, err := key.Open(secret.CredName(typ, name), readSecretFile(path, 2*MaxCred))
+	if err != nil {
+		return ""
+	}
+	return v
 }
 
 // RunCheck checks one source; network trouble is a status, never an error.

@@ -12,9 +12,10 @@ import (
 	"github.com/sinaneysi/argus/internal/claudegate"
 	"github.com/sinaneysi/argus/internal/claudetoken"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
-const secretsHelp = `usage: argus secrets apply-claude|apply-kube|install-kubectl [-file PATH]
+const secretsHelp = `usage: argus secrets apply-claude|apply-kube|install-kubectl|rekey|new-key [-file PATH]
 
 apply-claude  root, run by argus-claude-token.path (examples/systemd): processes the requests Settings -> Claude
               writes into ARGUS_SETTINGS_IN/claude-token/: replace the Claude token in ARGUS_CLAUDE_ENV_FILE (backup
@@ -43,7 +44,7 @@ func loadQuiet(file string, stderr io.Writer) (*config.Config, bool) {
 
 func runSecrets(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || isHelp(args[:1]) {
-		fmt.Fprint(stdout, secretsHelp+kubeSecretsHelp)
+		fmt.Fprint(stdout, secretsHelp+kubeSecretsHelp+rekeyHelp)
 		if len(args) == 0 {
 			return 2
 		}
@@ -52,8 +53,15 @@ func runSecrets(args []string, stdout, stderr io.Writer) int {
 	if args[0] == "apply-kube" || args[0] == "install-kubectl" {
 		return runSecretsKube(args[0], args[1:], stdout, stderr)
 	}
+	switch args[0] {
+	case "rekey":
+		return runRekey(args[1:], stdout, stderr)
+	case "new-key":
+		fmt.Fprintln(stdout, secret.NewKeyText())
+		return 0
+	}
 	if args[0] != "apply-claude" {
-		fmt.Fprintf(stderr, "argus secrets: unknown subcommand %q (apply-claude, apply-kube, install-kubectl)\n", args[0])
+		fmt.Fprintf(stderr, "argus secrets: unknown subcommand %q (apply-claude, apply-kube, install-kubectl, rekey, new-key)\n", args[0])
 		return 2
 	}
 	fs := flag.NewFlagSet("secrets apply-claude", flag.ContinueOnError)
@@ -85,7 +93,7 @@ func claudeOptions(c *config.Config) claudetoken.Options {
 		ReqDir: filepath.Join(c.SettingsIn, "claude-token"), OutDir: c.SettingsOut, EnvFile: v("ARGUS_CLAUDE_ENV_FILE"),
 		AuthDB: c.AuthDB, RunAs: v("ARGUS_CLAUDE_RUN_AS"), ClaudeBin: v("ARGUS_CLAUDE_BIN"),
 		EgressFile: v("ARGUS_CLAUDE_EGRESS_FILE"), EgressCheck: v("ARGUS_CLAUDE_EGRESS_CHECK"),
-		EgressURLs: splitList(v("ARGUS_CLAUDE_EGRESS_URLS")), AppUID: 65534,
+		EgressURLs: splitList(v("ARGUS_CLAUDE_EGRESS_URLS")), AppUID: 65534, Key: volumeKey(c),
 	}
 }
 

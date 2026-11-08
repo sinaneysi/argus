@@ -82,7 +82,7 @@ func discoverOptions(c *config.Config) *discover.Options {
 	v := func(k string) string { return c.Values[k].Raw }
 	host, _ := os.Hostname()
 	return &discover.Options{DB: c.DB, Sources: sources.LoadStatus(filepath.Join(c.SettingsOut, "sources-status.json")),
-		SourcesDir: v("ARGUS_SOURCES_DIR"), SecretsDir: c.SecretsDir,
+		SourcesDir: v("ARGUS_SOURCES_DIR"), SecretsDir: c.SecretsDir, Key: volumeKey(c),
 		Kube: &kube.Tool{KubeDir: v("ARGUS_KUBE_DIR"), Kubectl: v("ARGUS_KUBECTL"), AuditLog: v("ARGUS_KUBE_AUDIT_LOG"),
 			CacheDir: v("ARGUS_KUBE_CACHE_DIR"), OwnerUID: 0, Host: host}}
 }
