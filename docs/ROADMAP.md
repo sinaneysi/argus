@@ -117,6 +117,14 @@ Goal: the images work at another company after the data sources are set; nothing
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
 | P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | planned |
 
+P0 built so far: ADR-0021 (PR #11); `internal/migrate`, `argus migrate`, `ARGUS_LAYOUT=volume`, `deploy/` (PR #12);
+the clean-install test and backlog `docs/CLEAN-INSTALL.md` (PR #13); `argus worker` as the scheduler in the volume
+layout (`internal/worker`): the collectors, Settings -> General (`settingsapply`) and Settings -> Claude requests
+(`claudetoken`) applied by the worker within 3 s, job states in `worker-status.json`. Still open in P0: secrets
+encrypted with `ARGUS_MASTER_KEY` (the Claude env file is a 0600 file in the volume today), the other request kinds
+(Kubernetes, data sources, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, the data-source
+registry with "Connect X" states, the marketing module switch.
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
 ## Next
