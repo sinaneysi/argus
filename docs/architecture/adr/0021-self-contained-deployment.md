@@ -216,6 +216,20 @@ FAIL it sends one notice through `internal/notify` and one at recovery; while no
 jobs replace systemd timers; the chat bridge, Matrix proxy and incident queue checks are gone (not Argus parts); the database,
 key and data-source checks are new; a missing backup status is not a failure (no backup job yet).
 
+As built (P2): `internal/credexpiry` ports the credential expiry job. Worker jobs: `cred-expiry` (daily) and
+`cred-requests` ("Check now" of Settings -> Credentials, `settings-in/requests/cred-expiry.req`, state in
+`settings-out/run-requests.json`) check every Settings -> Data sources entry with a credential and Argus's own
+credentials (the Claude token, the Matrix token file, the GitLab issues token, the sign-in client secret, the push
+monitor address) with one read-only call where the service can tell (GitLab, Grafana, Jira, Matrix, Outline). Only
+metadata goes to `credentials.json` (scrubbed for every value read); expired, rejected and close (`ARGUS_CRED_CRIT_DAYS`)
+credentials get an incident (`CRED|<id>|cred-expiry`, table `credential_alerts`, migration ops 0003) and one notice
+per band; the incident resolves when the credential is OK again. Thresholds: `ARGUS_CRED_WARN_DAYS`, `_CRIT_DAYS`,
+`_ROTATE_DAYS`, `_TODAY_DAYS`. `credcheck` (hourly) writes `cred-status.json` from the data sources' last checks, the
+Claude login and the notify switch. Differences from the earlier jobs: the list comes from the data sources, not from
+a hand-kept file; a credential's set date is its file's change time (no env-file backups); neutral how-to steps; no
+`credentials` snapshot table, rotation proposals or Today items yet; credcheck makes no calls of its own (the
+`sources-check` job does).
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings
