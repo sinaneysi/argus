@@ -1,0 +1,39 @@
+# The clean-install test (ADR-0021 D8): deploy/compose.yml with an EMPTY volume plus fake data sources.
+#   python3 -I demo/clean-install/run.py           # builds, starts, crawls, compares with docs/CLEAN-INSTALL.md, stops
+# Used as an override of deploy/compose.yml (project argus-clean; the volume is removed before and after).
+services:
+  api:
+    networks: !override
+      argus: { ipv4_address: 172.30.241.11 }
+    environment: &sources
+      ARGUS_TRUSTED_PROXIES: "127.0.0.1,::1,172.30.241.10"
+      ARGUS_COLLECT_ALERTS: "1"
+      ARGUS_ALERTS_SOURCES: "stub=http://stubs:8099/alertmanager/api/v2/alerts"
+      GITLAB_URL: "http://stubs:8099/gitlab"
+      MATRIX_HOMESERVER: "http://stubs:8099/matrix"
+      MATRIX_NOTIFY_ROOM: "!notices:chat.example.test"
+    depends_on:
+      stubs: { condition: service_healthy }
+  worker:
+    environment: *sources
+  web:
+    networks: !override
+      argus: { ipv4_address: 172.30.241.10 }
+  stubs:
+    image: ${STUBS_IMAGE:-python:3.12-alpine}
+    command: ["python3", "-I", "/stubs/stubs.py", "8099"]
+    volumes:
+      - ../demo/clean-install/stubs.py:/stubs/stubs.py:ro   # paths resolve from deploy/ (the first compose file)
+    networks: [argus]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8099/healthz')"]
+      interval: 2s
+      retries: 30
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+networks:
+  argus:
+    ipam:
+      config: !override
+        - subnet: 172.30.241.0/24

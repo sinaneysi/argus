@@ -64,3 +64,11 @@ One small VM is enough: 1 vCPU, 1 GB RAM, 10 GB disk (the app uses about 30 MB R
 reverse proxy with TLS in front (Caddy or nginx) that sets `X-Real-IP` (the sign-in lockout is per user and IP) and
 forwards to `127.0.0.1:8080`; the session cookie is `Secure`, so the demo must be served over HTTPS. Keep the
 containers as in `compose.yml` (read-only, no capabilities). The public instance: [docs/DEPLOY-DEMO.md](../docs/DEPLOY-DEMO.md).
+
+## Clean-install test (ADR-0021 D8)
+
+`python3 -I demo/clean-install/run.py` builds `deploy/compose.yml`, starts it with an EMPTY volume and fake GitLab,
+Jira, Alertmanager and Matrix (`demo/clean-install/stubs.py`, synthetic data), signs in as the first admin, crawls
+every page and API GET endpoint, submits every safe action and classifies each as works / not-configured / broken.
+It fails only on a regression against `docs/CLEAN-INSTALL.md` (the backlog); `--write` updates that file after a fix.
+Needs Docker and about three minutes; the project `argus-clean` and its volume are removed at the end.
