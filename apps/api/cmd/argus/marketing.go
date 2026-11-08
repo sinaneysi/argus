@@ -198,29 +198,14 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 	if !googlebot.HostLabelRe.MatchString(hl) {
 		return nil, fmt.Errorf("ARGUS_GOOGLEBOT_HOST_LABEL is not a label name")
 	}
-	e := googlebotGrafana(c)
-	if e == nil {
-		return nil, errors.New("no Grafana data source: connect Grafana in Settings -> Data sources")
-	}
-	so := sourcesOptions(c)
-	cred := so.Credential(e)
-	base := e.URL
-	get := func(ctx context.Context, path string) (int, []byte, error) {
-		hdr := map[string]string{}
-		if cred != "" {
-			hdr["Authorization"] = "Bearer " + cred
-		}
-		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
-		if err != nil {
-			return 0, nil, errors.New(sources.NetError(err))
-		}
-		return st, b, nil
+	var loki *googlebot.Loki
+	if e := googlebotGrafana(c); e != nil { // the sitemap read needs no Grafana
+		loki = &googlebot.Loki{Get: grafanaGetter(c, e), UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}
 	}
 	rng := &googlebot.Ranges{Path: c.StateDir + "/googlebot-ranges.json", URLs: list(c, "ARGUS_GOOGLE_RANGES_URLS"), Fetch: publicGet,
 		Log: func(f string, a ...any) { fmt.Fprintf(log, f+"\n", a...) }}
 	sitemap := v("ARGUS_GOOGLEBOT_SITEMAP")
-	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes,
-		Loki: &googlebot.Loki{Get: get, UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}, Ranges: rng.Load, Loc: loc,
+	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes, Loki: loki, Ranges: rng.Load, Loc: loc,
 		TZLabel: v("ARGUS_TZ_LABEL"), Width: intVal(c, "ARGUS_GOOGLEBOT_INTERVAL"), StoreLimit: intVal(c, "ARGUS_GOOGLEBOT_STORE_LIMIT_MB") << 20,
 		Sitemap: sitemap, SiteHost: googlebot.SiteHost(sitemap), Fetch: publicGet, Log: log}
 	o.Notify = func(ctx context.Context, text string) error {
@@ -232,6 +217,24 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 		return err
 	}
 	return o, nil
+}
+
+// grafanaGetter is one guarded GET to a Grafana data source with its token.
+func grafanaGetter(c *config.Config, e *sources.Entry) googlebot.Getter {
+	so := sourcesOptions(c)
+	cred := so.Credential(e)
+	base := e.URL
+	return func(ctx context.Context, path string) (int, []byte, error) {
+		hdr := map[string]string{}
+		if cred != "" {
+			hdr["Authorization"] = "Bearer " + cred
+		}
+		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
+		if err != nil {
+			return 0, nil, errors.New(sources.NetError(err))
+		}
+		return st, b, nil
+	}
 }
 
 // seoCheck writes the SEO page's Googlebot table from googlebot.db.
