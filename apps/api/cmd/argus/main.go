@@ -52,6 +52,7 @@ var commands = []command{
 	{"settings", "root: apply Settings -> General (apply), switch Claude usage (claude) or QA questions (qa)", runSettings},
 	{"secrets", "root: apply Settings -> Claude and -> Kubernetes requests (apply-claude, apply-kube, install-kubectl)", runSecrets},
 	{"tools", "the agent's read-only tools (kube)", runTools},
+	{"board", "root: the task board sync with Jira (sync)", runBoard},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
 	{"ingest", "read alerts and chat messages", nil},
 	{"dispatch", "act on request files written by the web app", nil},

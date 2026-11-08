@@ -69,7 +69,8 @@
     {
       "key": "ARGUS_BOARD_DB",
       "aliases": [
-        "OPS_BOARD_DB"
+        "OPS_BOARD_DB",
+        "BOARD_DB"
       ],
       "type": "path",
       "help": "decisions database (empty: board/board.db next to ARGUS_DB)"
@@ -695,6 +696,75 @@
       ],
       "type": "path",
       "help": "exact substrings the secret scan never redacts (reviewed fixtures)"
+    },
+    {
+      "key": "ARGUS_BOARD_SYNC",
+      "type": "bool",
+      "default": "0",
+      "help": "1: argus board sync runs (else it logs \"disabled\" and exits 0)"
+    },
+    {
+      "key": "ARGUS_BOARD_REQ_DIR",
+      "aliases": [
+        "BOARD_REQ_DIR"
+      ],
+      "type": "path",
+      "help": "board request files from the app (empty: ARGUS_SETTINGS_IN/board-requests)"
+    },
+    {
+      "key": "ARGUS_BOARD_OUT",
+      "aliases": [
+        "BOARD_OUT"
+      ],
+      "type": "path",
+      "help": "where board-status.json is written (empty: ARGUS_SETTINGS_OUT)"
+    },
+    {
+      "key": "ARGUS_BOARD_AUTH_DB",
+      "aliases": [
+        "BOARD_AUTH_DB"
+      ],
+      "type": "path",
+      "help": "users and roles the board sync checks, read only (empty: ARGUS_AUTH_DB)"
+    },
+    {
+      "key": "ARGUS_BOARD_ENV_FILES",
+      "aliases": [
+        "BOARD_ENV_FILES"
+      ],
+      "type": "str",
+      "help": "colon-separated root-owned files with the JIRA_* settings; the first that sets a key wins (empty: ARGUS_ETC_DIR/jira.env)"
+    },
+    {
+      "key": "ARGUS_BOARD_PAT_FILE",
+      "aliases": [
+        "BOARD_PAT_FILE"
+      ],
+      "type": "path",
+      "help": "the Jira personal access token, root-owned 0600 (empty: ARGUS_ETC_DIR/jira.pat)"
+    },
+    {
+      "key": "ARGUS_BOARD_OWNER_UID",
+      "aliases": [
+        "BOARD_OWNER_UID"
+      ],
+      "type": "int",
+      "default": "0",
+      "min": 0,
+      "max": 2147483647,
+      "help": "the owner the Jira settings and token files must have"
+    },
+    {
+      "key": "ARGUS_BOARD_LABEL",
+      "type": "str",
+      "default": "argus",
+      "help": "label prefix of the Jira issues the board creates (<label>, <label>-src-<kind>-<id>, <label>-fixer)"
+    },
+    {
+      "key": "ARGUS_BOARD_REF",
+      "type": "str",
+      "default": "ARG",
+      "help": "reference of a task that has no issue key yet (<ref>-<id>)"
     },
     {
       "key": "ARGUS_CLAUDE_ENV_FILE",

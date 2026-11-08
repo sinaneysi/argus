@@ -1,0 +1,11 @@
+# The task board sync every 2 minutes (a full reconcile nightly, decided by the job). See argus-board-sync.service.
+[Unit]
+Description=Argus task board sync every 2 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

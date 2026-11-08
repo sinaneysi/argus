@@ -1,0 +1,13 @@
+# Run the task board sync as soon as the web app drops a request, or the Jira settings or token change.
+# See argus-board-sync.service.
+[Unit]
+Description=Argus task board requests
+
+[Path]
+PathExistsGlob=/var/lib/argus/settings-in/board-requests/*.json
+PathChanged=/etc/argus/jira.env
+PathChanged=/etc/argus/jira.pat
+Unit=argus-board-sync.service
+
+[Install]
+WantedBy=paths.target

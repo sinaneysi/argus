@@ -92,6 +92,17 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
    missing, activeAt as the source gave it, the source's order, the same field order and indentation. Not ported yet:
    the notice styles A/B/C (threads, edited cards, digest) and the run notices that read a recorded run.
 
+9. **Task board sync with Jira** (2026-11-08). `internal/board` + `argus board sync [-full] [-dry-run]` (root;
+   `examples/systemd/argus-board-sync.{service,timer,path}`, off until `ARGUS_BOARD_SYNC=1`): consumes the board
+   request files (create, move, comment, assign, sync, settings, board-move), pushes the outbox to Jira (create,
+   transition by workflow name, label, comment, assign; Jira wins a conflict), pulls changed issues and a nightly
+   full reconcile, writes `board-status.json`. Same request files, `board.db` rows, Jira calls and status file as
+   the reference job on a synthetic scenario against its fake Jira (four runs: creates, refusals, moves, comments,
+   assignment, a rejected priority, a rate limit, a deleted issue, a refused token). `-dry-run` logs the writes and
+   changes nothing. The paths and the label prefix are configurable. Not ported yet (their requests are refused with
+   a reason): GitLab issue tasks, per-user Jira connections, the Jira agile board mirror and its moves, the fixer
+   column, approval proposals, lessons, the task agent and its chat, Matrix requests, the board notices job.
+
 ## Next
 
 1. More collectors: credential expiry, capacity, inventory; S3 listing for backups.
