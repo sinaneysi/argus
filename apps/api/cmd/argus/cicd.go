@@ -24,19 +24,25 @@ import (
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
-const cicdHelp = `usage: argus cicd scan|watch [-budget N] [-file PATH]
+const cicdHelp = `usage: argus cicd scan|watch|audit|daily|seed|vars-meta [-budget N] [-file PATH]
 
 scan    the estate: projects of CICD_GROUPS (all the token's projects when it is not set) with a .gitlab-ci.yml, or
         with an include of CICD_ENGINE_PROJECT when that is set; their develop/pre-release/release branches, the
         include ref and file, branch protection. Projects whose activity changed, or older than a day.
 watch   the pipelines on the environment branches: failures are triaged by rules into findings (production ones
         also open an incident), stuck pipelines get the deploy-lock plan, successful deploys are recorded.
+audit   the branch audit (missing, drift, stale, pushes without a pipeline, release deploys, default branch,
+        include ref, protection) and the variable audit (full when ci-vars-meta wrote its metadata in 3 days).
+daily   scan, then audit (the worker's cicd-daily).
+seed    record the newest pipeline that ran on each env branch that has none recorded (history only).
+vars-meta  CI variable metadata (keys, scopes, flags, production-marker classes; never a value) with the token
+        of CICD_VARS_SOURCE, to ARGUS_STATE_DIR/ci-meta/meta.json.
 
 GitLab: the Settings -> Data sources entry of type gitlab with purpose agent (read-only). Argus never writes to
 GitLab: every fix is a proposal. Status: ARGUS_STATE_DIR/cicd-status.json.
 `
 
-var cicdBudgets = map[string]int{"scan": 600, "watch": 80}
+var cicdBudgets = map[string]int{"scan": 600, "watch": 80, "audit": 400, "daily": 1000, "seed": 500, "vars-meta": 600}
 
 func runCicd(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || isHelp(args) {
@@ -119,6 +125,33 @@ func cicdOptions(c *config.Config, budget int, log io.Writer) (cicd.Options, err
 	if id := explicit("CICD_ENGINE_PROJECT_ID"); id != "" {
 		o.EngineID, _ = strconv.ParseInt(id, 10, 64)
 	}
+	if rx := strings.TrimSpace(c.Values["CICD_DRIFT_ALLOW"].Raw); rx != "" {
+		re, err := regexp.Compile(rx)
+		if err != nil {
+			return o, fmt.Errorf("CICD_DRIFT_ALLOW: %v", err)
+		}
+		o.DriftAllow = re
+	}
+	if rx := strings.TrimSpace(c.Values["CICD_VAR_SCOPES"].Raw); rx != "" {
+		re, err := regexp.Compile(rx)
+		if err != nil {
+			return o, fmt.Errorf("CICD_VAR_SCOPES: %v", err)
+		}
+		o.VarScopes = re
+	}
+	o.TargetPrefixes = map[string][]string{}
+	for _, kv := range list(c, "CICD_TARGET_PREFIXES") {
+		env, ps, ok := strings.Cut(kv, "=")
+		if !ok || cicd.EnvOf(strings.TrimSpace(env)) == "" {
+			return o, fmt.Errorf("CICD_TARGET_PREFIXES: %q is not env=prefix|prefix", kv)
+		}
+		for _, p := range strings.Split(ps, "|") {
+			if p = strings.ToLower(strings.TrimSpace(p)); p != "" {
+				o.TargetPrefixes[strings.TrimSpace(env)] = append(o.TargetPrefixes[strings.TrimSpace(env)], p)
+			}
+		}
+	}
+	o.GroupSecretKeys = list(c, "CICD_GROUP_SECRET_KEYS")
 	for _, kv := range list(c, "CICD_HOST_ENVS") {
 		env, rx, ok := strings.Cut(kv, "=")
 		re, err := regexp.Compile(strings.TrimSpace(rx))
@@ -138,6 +171,9 @@ func cicdOptions(c *config.Config, budget int, log io.Writer) (cicd.Options, err
 }
 
 func cicdRun(ctx context.Context, c *config.Config, task string, budget int, stdout io.Writer) error {
+	if task == "vars-meta" {
+		return cicdVarsMeta(ctx, c, budget, stdout)
+	}
 	o, err := cicdOptions(c, budget, stdout)
 	if err != nil {
 		return err
@@ -159,6 +195,17 @@ func cicdRun(ctx context.Context, c *config.Config, task string, budget int, std
 		if err = w.Watch(0); err == nil {
 			_, err = w.NotifyFindings(w.New, true)
 		}
+	case "audit":
+		err = w.Audit()
+	case "daily":
+		if _, err = w.Scan(false); err == nil || errors.Is(err, cicd.ErrBudget) {
+			err = w.Audit()
+		}
+	case "seed":
+		err = w.Seed()
+	}
+	if err == nil && (task == "audit" || task == "daily") {
+		_, err = w.NotifyFindings(w.New, c.Values["CICD_NOTIFY_AUDIT"].Raw == "1")
 	}
 	note, ok := "", err == nil
 	if errors.Is(err, cicd.ErrBudget) {
@@ -175,4 +222,69 @@ func cicdRun(ctx context.Context, c *config.Config, task string, budget int, std
 	fmt.Fprintf(stdout, "cicd %s: %d/%d calls, %d errors, %v, %d new findings\n", task, o.GitLab.Calls, o.GitLab.Budget,
 		o.GitLab.Errors, w.Counts, len(w.New))
 	return err
+}
+
+// cicdVarsSource is the entry of CICD_VARS_SOURCE (nil when it is not set or not usable).
+func cicdVarsSource(c *config.Config) *sources.Entry {
+	k := strings.TrimSpace(c.Values["CICD_VARS_SOURCE"].Raw)
+	if k == "" {
+		return nil
+	}
+	so := sourcesOptions(c)
+	e := so.Registry()[k]
+	if e == nil || e.Type != "gitlab" || !e.Enabled || e.URL == "" {
+		return nil
+	}
+	return e
+}
+
+func cicdMarkers(c *config.Config) ([]cicd.Marker, error) {
+	var ms []cicd.Marker
+	for _, kv := range list(c, "CICD_PROD_MARKERS") {
+		name, rx, ok := strings.Cut(kv, "=")
+		re, err := regexp.Compile(strings.TrimSpace(rx))
+		if !ok || err != nil || strings.TrimSpace(name) == "" {
+			return nil, fmt.Errorf("CICD_PROD_MARKERS: %q is not name=regex", kv)
+		}
+		ms = append(ms, cicd.Marker{Name: strings.TrimSpace(name), Re: re})
+	}
+	return ms, nil
+}
+
+// cicdVarsMeta is ci-vars-meta: the CI variable metadata with the token of CICD_VARS_SOURCE. The values are read
+// once in memory and dropped; the file holds keys, scopes, flags and marker classes only.
+func cicdVarsMeta(ctx context.Context, c *config.Config, budget int, stdout io.Writer) error {
+	e := cicdVarsSource(c)
+	if e == nil {
+		return errors.New("not configured: set CICD_VARS_SOURCE to a GitLab data source whose token reads CI variables")
+	}
+	so := sourcesOptions(c)
+	tok := so.Credential(e)
+	if tok == "" {
+		return errors.New("the CI variables data source has no readable credential")
+	}
+	ms, err := cicdMarkers(c)
+	if err != nil {
+		return err
+	}
+	db, err := openOpsDB(c)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	gl := &cicd.GitLab{Base: e.URL, Token: tok, Budget: budget}
+	w, err := cicd.New(ctx, cicd.Options{DB: db, GitLab: gl, Log: stdout})
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	meta, err := w.CollectMeta(ms)
+	if err != nil {
+		return fmt.Errorf("%w; meta.json not replaced", err)
+	}
+	if err := cicd.WriteMeta(filepath.Join(c.StateDir, "ci-meta", "meta.json"), meta); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "ci-vars-meta: %d projects, %d groups, %d calls, %d errors\n", len(meta.Projects), len(meta.Groups), gl.Calls, len(meta.Errors))
+	return nil
 }

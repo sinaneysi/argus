@@ -33,20 +33,24 @@ type Options struct {
 	EnginePath string   // the shared CI engine project (path); empty: a project with a .gitlab-ci.yml is watched
 	EngineID   int64    // its id (its deploy pipelines and failed jobs)
 	// DeployBridge is the bridge job that triggers the deploy pipeline; DeployJobNames the deploy jobs in it.
-	DeployBridge   string
-	DeployJobNames []string
-	InventoryFile  string // the Ansible inventory in the engine project ("" none)
-	InventoryRef   string
-	HostEnvs       []HostEnv
-	StuckMinutes   int
-	RoundRobin     int    // projects polled per cycle besides the hot ones
-	StateDir       string // cicd-status.json, heartbeat-cicd-<task>
-	PublicURL      string // links in messages
-	MetaFile       string // the CI variables metadata (ci-vars-meta); "" none
-	Incidents      *incidents.Options
-	Notify         func(notify.Message) error // nil: no messages
-	Now            func() time.Time
-	Log            io.Writer
+	DeployBridge    string
+	DeployJobNames  []string
+	InventoryFile   string // the Ansible inventory in the engine project ("" none)
+	InventoryRef    string
+	HostEnvs        []HostEnv
+	StuckMinutes    int
+	RoundRobin      int                 // projects polled per cycle besides the hot ones
+	StateDir        string              // cicd-status.json, heartbeat-cicd-<task>
+	PublicURL       string              // links in messages
+	MetaFile        string              // the CI variables metadata (ci-vars-meta); "" none
+	DriftAllow      *regexp.Regexp      // release-only commits that are sanctioned (title); nil none
+	TargetPrefixes  map[string][]string // env -> inventory group prefixes TARGET_HOSTS@env must start with
+	GroupSecretKeys []string            // group variables that must be protected (NAME or PREFIX*)
+	VarScopes       *regexp.Regexp      // known environment scopes (nil: the env branches, main, master, review)
+	Incidents       *incidents.Options
+	Notify          func(notify.Message) error // nil: no messages
+	Now             func() time.Time
+	Log             io.Writer
 }
 
 // Watcher is one run of scan, watch or audit.

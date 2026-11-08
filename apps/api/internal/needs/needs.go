@@ -91,7 +91,7 @@ var Jobs = map[string][]string{
 	"inventory":      {"grafana", "alertmanager"},
 	"vm-pulse":       {"grafana", "alertmanager"},
 	"cicd-watch":     {"gitlab"},
-	"cicd-scan":      {"gitlab"},
+	"cicd-daily":     {"gitlab"},
 }
 
 // Match is the need of the longest entry that covers path; ok false when none does.

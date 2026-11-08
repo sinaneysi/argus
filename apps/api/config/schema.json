@@ -559,6 +559,43 @@
       "help": "env=regex, ...: environment of a deploy host by its name or address, first match wins (release=^prod-,develop=^stage-); a develop or pre-release deploy that reaches a release host is a finding"
     },
     {
+      "key": "CICD_DRIFT_ALLOW",
+      "type": "str",
+      "help": "regex of commit titles that may land on a higher branch only (not reported as drift)"
+    },
+    {
+      "key": "CICD_TARGET_PREFIXES",
+      "type": "list",
+      "help": "env=prefix|prefix, ...: inventory group prefixes TARGET_HOSTS@env must start with (release=prod-,pre-release=pre-,develop=stage-); empty: not checked"
+    },
+    {
+      "key": "CICD_GROUP_SECRET_KEYS",
+      "type": "list",
+      "default": "SSH_PRIVATE_KEY*",
+      "help": "group CI variables that must be protected: NAME or PREFIX*"
+    },
+    {
+      "key": "CICD_VAR_SCOPES",
+      "type": "str",
+      "help": "regex of the known environment scopes (empty: *, the env branches, main, master, review/*)"
+    },
+    {
+      "key": "CICD_PROD_MARKERS",
+      "type": "list",
+      "help": "name=regex, ...: a CI variable value that matches names production (the value is never kept); no commas in a regex"
+    },
+    {
+      "key": "CICD_NOTIFY_AUDIT",
+      "type": "bool",
+      "default": "0",
+      "help": "1: the daily audit posts its new findings to chat (default: shown on /cicd only)"
+    },
+    {
+      "key": "CICD_VARS_SOURCE",
+      "type": "str",
+      "help": "Settings -> Data sources key (gitlab/<name>) of a token that may read CI variables (role Maintainer, scope read_api) for ci-vars-meta; empty: the variable audit stays inferred"
+    },
+    {
       "key": "CICD_RR_PER_CYCLE",
       "type": "int",
       "default": "15",
