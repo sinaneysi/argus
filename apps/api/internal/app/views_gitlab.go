@@ -287,7 +287,7 @@ func GitLabPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		if py.Len(board) > 400 || strings.ContainsAny(board, " \t\n<>\"") {
 			return bad("gitlab-connect", "board", "The board is a number or a board URL.")
 		}
-		if !gitlabTokenRe.MatchString(token) {
+		if token != "" && !gitlabTokenRe.MatchString(token) { // empty: the GitLab data source with purpose tracker
 			return bad("gitlab-connect", "token", "That does not look like a GitLab access token.")
 		}
 		rid, err = gitlabDrop(sess, py.NewOMap("kind", "connect", "url", url, "project", project, "board", board, "token", token))

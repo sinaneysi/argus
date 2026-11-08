@@ -11,6 +11,7 @@ type Files struct {
 	SourcesDir string // ARGUS_SOURCES_DIR: <type>/<name>.cred
 	ClaudeEnv  string // ARGUS_CLAUDE_ENV_FILE: CLAUDE_CODE_OAUTH_TOKEN=<sealed>, and its .bak-*-claude copies
 	MatrixFile string // the Matrix token file
+	EtcDir     string // ARGUS_ETC_DIR: the GitLab issues token (gitlab-issues.token)
 }
 
 // FilesOf are the secret files of a configuration (get is the configured value of a key).
@@ -19,7 +20,19 @@ func FilesOf(get func(string) string) Files {
 	if m == "" {
 		m = filepath.Join(get("ARGUS_SECRETS_DIR"), "matrix-token")
 	}
-	return Files{SourcesDir: get("ARGUS_SOURCES_DIR"), ClaudeEnv: get("ARGUS_CLAUDE_ENV_FILE"), MatrixFile: m}
+	return Files{SourcesDir: get("ARGUS_SOURCES_DIR"), ClaudeEnv: get("ARGUS_CLAUDE_ENV_FILE"), MatrixFile: m, EtcDir: get("ARGUS_ETC_DIR")}
+}
+
+// EtcFiles are the token files in ARGUS_ETC_DIR: path -> sealed name ("etc/<file>").
+func (f Files) EtcFiles() map[string]string {
+	out := map[string]string{}
+	if f.EtcDir == "" {
+		return out
+	}
+	for _, n := range []string{"gitlab-issues.token"} {
+		out[filepath.Join(f.EtcDir, n)] = "etc/" + n
+	}
+	return out
 }
 
 // CredName is the name a data-source credential is sealed under.
@@ -74,6 +87,11 @@ func (f Files) Present() []string {
 	}
 	if nonEmpty(f.MatrixFile) {
 		out = append(out, f.MatrixFile)
+	}
+	for p := range f.EtcFiles() {
+		if nonEmpty(p) {
+			out = append(out, p)
+		}
 	}
 	return out
 }

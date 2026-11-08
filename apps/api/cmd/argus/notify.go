@@ -186,3 +186,20 @@ func firstSource(c *config.Config, typ string) *sources.Entry {
 	sort.Strings(names)
 	return reg[names[0]]
 }
+
+// trackerSource is the first Settings -> Data sources entry of typ with purpose tracker (by key), or nil.
+func trackerSource(c *config.Config, typ string) *sources.Entry {
+	o := sourcesOptions(c)
+	var names []string
+	reg := o.Registry()
+	for k, e := range reg {
+		if e.Type == typ && e.Purpose == "tracker" && e.Managed != "legacy" {
+			names = append(names, k)
+		}
+	}
+	if len(names) == 0 {
+		return nil
+	}
+	sort.Strings(names)
+	return reg[names[0]]
+}

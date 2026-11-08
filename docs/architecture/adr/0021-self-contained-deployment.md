@@ -76,8 +76,15 @@ As built (P0): a job that is not ready is looked at again after 15 s, not after 
 in Settings is used at once. Request consumers in the volume layout: Settings → General, Claude, Data sources,
 Kubernetes (`kube-requests`), catalogue actions (`source-actions`), board requests and the board sync (Jira from the
 Data sources entry; the board works locally without one), and hourly discovery (`sources-discover`) once a source is
-enabled for the agent. No Go consumer yet for the per-user Jira connections, the Outline publisher and the GitLab
-issues tracker; their requests wait and their pages say so.
+enabled for the agent. No Go consumer yet for the per-user Jira connections and the Outline publisher; their
+requests wait and their pages say so.
+
+As built (P1): the board sync also runs the GitLab issues tracker (ADR-0009, ADR-0010): the Settings -> Integrations
+requests (`gitlab-issues`, consumed by the worker within seconds), and push and pull of GitLab tasks (create, move by
+list labels, comment, assign by the user map, the issues pull with a nightly reconcile). The token is either pasted
+on the card (stored in `etc/gitlab-issues.token`, sealed with the master key) or, when the card's token is left
+empty, the credential of the Settings -> Data sources GitLab entry with purpose `tracker`. A Jira data source with a
+user name signs in with basic auth.
 
 **D4. Settings and secrets are saved and applied inside the volume.** In `ARGUS_LAYOUT=volume`:
 

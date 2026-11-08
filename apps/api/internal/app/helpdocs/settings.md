@@ -197,7 +197,9 @@ Each user can also connect their own Jira in Account; Argus uses that token for 
 5. Optional: **New tasks go to** Jira (the default) or GitLab issues; a **list map** such as `QA=review; Blocked=progress`;
    a **user map** such as `alex=alex.doe` for assignees.
 
-The token is stored on {{host}} for root only (`/etc/argus/gitlab-issues.token`) and never shown again.
+The token is stored on {{host}} for the board sync only (`gitlab-issues.token` in the configuration folder; sealed
+with the master key in the one-volume layout) and never shown again. Leave the token empty to use the GitLab data
+source with purpose **tracker** (Settings → Data sources).
 **Disconnect** deletes it; revoke it in GitLab too. Argus calls only the allowed GitLab hosts (by default the host of
 `GITLAB_URL`), over https, without following redirects.
 

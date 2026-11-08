@@ -79,6 +79,9 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "board-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "board-requests"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
+	jobs = append(jobs, worker.Job{Name: "gitlab-issues-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "gitlab-issues"), func() error {
+		return boardSyncJob(context.Background(), c)
+	})})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
@@ -140,13 +143,18 @@ func exitErr(what string, rc int) error {
 }
 
 // boardSyncJob is argus board sync inside the worker: the board's requests always; Jira when Settings -> Data
-// sources has a Jira entry (its address and token) or the Jira settings files are configured.
+// sources has a Jira entry (its address and token, basic auth when it has a user name) or the Jira settings files
+// are configured; GitLab issues with the connection of Settings -> Integrations, whose token may be the GitLab
+// entry of Settings -> Data sources with purpose tracker.
 func boardSyncJob(ctx context.Context, c *config.Config) error {
 	o := boardOptions(c, false, false)
+	so := sourcesOptions(c)
 	if e := firstSource(c, "jira"); e != nil {
-		so := sourcesOptions(c)
 		o.Config = map[string]string{"JIRA_URL": e.URL, "JIRA_PROJECT": c.Values["JIRA_PROJECT"].Raw}
-		o.Token = so.Credential(e)
+		o.Token, o.JiraUser = so.Credential(e), e.Username
+	}
+	if e := trackerSource(c, "gitlab"); e != nil {
+		o.GitLabURL, o.GitLabToken = e.URL, so.Credential(e)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()

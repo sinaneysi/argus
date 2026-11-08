@@ -72,7 +72,7 @@ function GitlabConnect({ d, g, csrf, fold }: { d: AdminOutline; g: Gitlab; csrf:
         { name: "url", label: "GitLab URL", type: "url", value: g.url, maxLength: 300, placeholder: "https://gitlab.example.com", hint: `Allowed GitLab hosts: ${g.hosts.length ? g.hosts.join(", ") : "none yet (set GITLAB_URL in /etc/argus/env, or add one under Allowed GitLab hosts)"}.` },
         { name: "project", label: "Issue board", value: g.project, maxLength: 400, required: true, placeholder: "paste the board URL (group or project), or group/project" },
         { name: "board", label: "Board (optional)", maxLength: 400, placeholder: "board number or URL; empty: the only board, or choose after saving" },
-        { name: "token", label: "Access token (group or project)", type: "password", maxLength: 200, required: true, hint: `Role Reporter, scope api. Sent once to ${d.host} and stored there for root only; Argus never shows it again, not even after a rejected save.` },
+        { name: "token", label: "Access token (group or project)", type: "password", maxLength: 200, hint: `Role Reporter, scope api. Sent once to ${d.host} and kept there for the board sync only; Argus never shows it again, not even after a rejected save. Leave it empty to use the GitLab data source with purpose “tracker” (Settings → Data sources).` },
       ]} />
   );
 }

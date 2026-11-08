@@ -27,7 +27,10 @@ sync  root, run by argus-board-sync.timer every 2 minutes and by argus-board-syn
       to Jira, pulls the changed issues (a full reconcile nightly, with -full, or when an admin asked for one) and
       writes ARGUS_BOARD_OUT/board-status.json. The board database is ARGUS_BOARD_DB. Jira settings (JIRA_URL,
       JIRA_PROJECT, ...) come from the root-owned ARGUS_BOARD_ENV_FILES, the token from ARGUS_BOARD_PAT_FILE;
-      without them the board works locally and changes wait in the outbox.
+      without them the board works locally and changes wait in the outbox. GitLab issue tasks: the
+      Settings -> Integrations requests in ARGUS_SETTINGS_IN/gitlab-issues (connect, board, project, settings,
+      sync, disconnect, hosts; ARGUS_ETC_DIR/gitlab-issues.json and .token), then push and pull of the GitLab tasks
+      (status: ARGUS_SETTINGS_OUT/gitlab-issues-status.json).
       -dry-run: reads Jira, logs every write it would send, leaves the request files, the database and the status
       file as they are. Off unless ARGUS_BOARD_SYNC=1 (exit 0 with a log line).
 
@@ -92,6 +95,9 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		}
 	}
 	uid, _ := strconv.Atoi(v("ARGUS_BOARD_OWNER_UID"))
+	if v("ARGUS_BOARD_OWNER_UID") == "" && v("ARGUS_LAYOUT") == "volume" {
+		uid = os.Geteuid() // the volume's files belong to the user the api and the worker run as
+	}
 	board.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"
 	return board.Options{
 		DB: c.BoardDB, ReqDir: or("ARGUS_BOARD_REQ_DIR", filepath.Join(c.SettingsIn, "board-requests")),
@@ -99,5 +105,16 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		PATFile: or("ARGUS_BOARD_PAT_FILE", filepath.Join(c.EtcDir, "jira.pat")), OwnerUID: uid,
 		AppURL: strings.TrimRight(c.PublicURL, "/"), Name: c.DisplayName, Label: v("ARGUS_BOARD_LABEL"), Ref: v("ARGUS_BOARD_REF"),
 		DryRun: dry, Full: full, Log: collect.Logger, Allow: notify.LoadAllowlist(v("ARGUS_SECRET_ALLOWLIST")),
+		GitLabReqDir: or("ARGUS_GITLAB_ISSUES_REQ_DIR", filepath.Join(c.SettingsIn, "gitlab-issues")), EtcDir: c.EtcDir,
+		GitLabEnvFile: or("ARGUS_GITLAB_ISSUES_ENV_FILE", filepath.Join(c.EtcDir, "env")), GitLabDefaultURL: gitlabURL(c),
+		Key: volumeKey(c),
 	}
+}
+
+// gitlabURL is GITLAB_URL when it is configured (not the compiled-in example).
+func gitlabURL(c *config.Config) string {
+	if x := c.Values["GITLAB_URL"]; x.Source != "default" {
+		return x.Raw
+	}
+	return ""
 }
