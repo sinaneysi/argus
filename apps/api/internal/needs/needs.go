@@ -87,6 +87,7 @@ var APIs = []Need{
 // Jobs are the worker jobs that need a data source, by job name.
 var Jobs = map[string][]string{
 	"collect-alerts": {"alertmanager"},
+	"incidents":      {"alertmanager"},
 }
 
 // Match is the need of the longest entry that covers path; ok false when none does.

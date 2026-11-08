@@ -1,0 +1,4 @@
+{"fetched_at": 1800025200, "dcs": [
+ {"dc": "east", "ok": true, "alerts": [{"state": "firing", "alertname": "HTTP503High", "instance": "shop.example.com:443", "severity": "critical", "labels": {"host": "shop.example.com"}}]},
+ {"dc": "west", "ok": true, "alerts": [{"state": "pending", "alertname": "HighLatency", "instance": "api.example.com", "severity": "warning", "labels": {}}]}
+]}
