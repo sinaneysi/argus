@@ -12,7 +12,7 @@ An action counts as `works` when it answers below 500 (an empty form is usually 
 
 | kind | works | not-configured | broken |
 |---|---|---|---|
-| page | 50 | 6 | 3 |
+| page | 52 | 6 | 1 |
 | api | 68 | 6 | 0 |
 | action | 62 | 0 | 0 |
 
@@ -20,8 +20,6 @@ An action counts as `works` when it answers below 500 (an empty form is usually 
 
 | kind | item | state | detail |
 |---|---|---|---|
-| page | `/admin/sources/catalogue` | broken | no stub data (shop/checkout missing) |
-| page | `/board` | broken | no stub data (OPS-1 missing) |
 | page | `/cicd` | broken | no stub data (shop/checkout missing) |
 
 ## Not configured

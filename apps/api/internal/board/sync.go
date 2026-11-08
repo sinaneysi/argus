@@ -763,8 +763,16 @@ func Run(ctx context.Context, o Options) error {
 func (r *run) main() error {
 	o := r.o
 	cfg, problems := LoadConfig(o.EnvFiles, o.OwnerUID)
+	for k, v := range o.Config {
+		if v != "" {
+			cfg[k] = v
+		}
+	}
 	r.cfg, r.mp = cfg, newMapping(cfg)
 	token, tproblem := LoadToken(o.PATFile, o.OwnerUID)
+	if o.Token != "" {
+		token, tproblem = o.Token, ""
+	}
 	r.conf = cfg["JIRA_URL"] != "" && cfg["JIRA_PROJECT"] != "" && token != ""
 	if cfg["JIRA_URL"] != "" && cfg["JIRA_PROJECT"] != "" && token == "" {
 		problems = append(problems, "token: "+tproblem)

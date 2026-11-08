@@ -17,11 +17,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sinaneysi/argus/internal/board"
 	"github.com/sinaneysi/argus/internal/claudetoken"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/kube"
 	"github.com/sinaneysi/argus/internal/needs"
 	"github.com/sinaneysi/argus/internal/settingsapply"
 	"github.com/sinaneysi/argus/internal/sources"
+	"github.com/sinaneysi/argus/internal/sources/discover"
 	"github.com/sinaneysi/argus/internal/worker"
 )
 
@@ -53,6 +56,29 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 		o.Log = stderr
 		return sources.CheckAll(o)
 	}})
+	// the request kinds root's path units consume in the legacy layout
+	jobs = append(jobs, worker.Job{Name: "kube-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "kube"), func() error {
+		o := kubeOptions(c)
+		o.Log = stderr
+		return kube.Apply(o)
+	})})
+	jobs = append(jobs, worker.Job{Name: "source-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "source-actions"), func() error {
+		return exitErr("source actions", runSourcesAgent(c, "actions", false, "", "manual", stderr, stderr))
+	})})
+	jobs = append(jobs, worker.Job{Name: "sources-discover", Every: time.Hour, Sources: []string{"gitlab", "kubernetes", "grafana", "sentry", "elasticsearch"},
+		Ready: func() (bool, string) {
+			if len(discover.Eligible(sources.LoadStatus(filepath.Join(c.SettingsOut, "sources-status.json")))) == 0 {
+				return false, "not configured: no data source is enabled for the agent (purpose agent, read-only verified)"
+			}
+			return true, ""
+		},
+		Run: func(context.Context) error {
+			return exitErr("discovery", runSourcesAgent(c, "discover", false, "", "timer", io.Discard, stderr))
+		}})
+	jobs = append(jobs, worker.Job{Name: "board-sync", Every: 2 * time.Minute, Run: func(ctx context.Context) error { return boardSyncJob(ctx, c) }})
+	jobs = append(jobs, worker.Job{Name: "board-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "board-requests"), func() error {
+		return boardSyncJob(context.Background(), c)
+	})})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
@@ -91,6 +117,40 @@ func settingsApplyJob(c *config.Config, stderr io.Writer) func(context.Context) 
 		}
 		return nil
 	}
+}
+
+// pendingJob runs fn when dir holds a request file (*.json).
+func pendingJob(dir string, fn func() error) func(context.Context) error {
+	return func(context.Context) error {
+		names, _ := os.ReadDir(dir)
+		for _, n := range names {
+			if filepath.Ext(n.Name()) == ".json" {
+				return fn()
+			}
+		}
+		return nil
+	}
+}
+
+func exitErr(what string, rc int) error {
+	if rc != 0 {
+		return fmt.Errorf("%s: exit %d", what, rc)
+	}
+	return nil
+}
+
+// boardSyncJob is argus board sync inside the worker: the board's requests always; Jira when Settings -> Data
+// sources has a Jira entry (its address and token) or the Jira settings files are configured.
+func boardSyncJob(ctx context.Context, c *config.Config) error {
+	o := boardOptions(c, false, false)
+	if e := firstSource(c, "jira"); e != nil {
+		so := sourcesOptions(c)
+		o.Config = map[string]string{"JIRA_URL": e.URL, "JIRA_PROJECT": c.Values["JIRA_PROJECT"].Raw}
+		o.Token = so.Credential(e)
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	return board.Run(ctx, o)
 }
 
 // sourcesRequestsJob applies the Settings -> Data sources requests (save, test, remove, check-all) when there are

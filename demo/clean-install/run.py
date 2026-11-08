@@ -46,7 +46,7 @@ EXPECT = {
     "/admin/sources": "argus-reader",
     "/cicd": "shop/checkout",
     "/admin/sources/catalogue": "shop/checkout",
-    "/board": "OPS-1",
+    "/board": "synced",  # "Jira OPS, synced ...": the board talks to the fake Jira (it imports only its own issues)
 }
 # actions never submitted: they end the test's own session or account
 UNSAFE_POSTS = {"/api/v1/auth/logout", "/api/v1/account", "/api/v1/account/sessions", "/api/v1/admin/users/act",
@@ -200,9 +200,9 @@ def run(c):
     return rows
 
 
-def connect(c, seconds=150):
-    """Connect the stubs through Settings -> Data sources, wait for the worker to apply them and for the first alerts
-    snapshot (the pages read what the worker's jobs wrote)."""
+def connect(c, seconds=200):
+    """Connect the stubs through Settings -> Data sources, wait for the worker to apply them, for the first alerts
+    snapshot and for a board sync with the fake Jira (the pages read what the worker's jobs wrote)."""
     for src in CONNECT:
         code, d = c.json("POST", "/api/v1/admin/sources", dict(src, action="save", mode="add", csrf=c.csrf))
         if code != 200:
@@ -212,7 +212,8 @@ def connect(c, seconds=150):
         code, d = c.json("GET", "/api/v1/admin/sources")
         kinds = {k["key"]: k["state"] for k in d.get("kinds", [])} if code == 200 else {}
         code, a = c.json("GET", "/api/v1/alerts")
-        if all(kinds.get(k) == "ok" for k in ("gitlab", "jira", "alertmanager", "matrix")) and a.get("loaded"):
+        _, board, _ = c.req("GET", c.web + "/board", accept="text/html")  # the board sync runs every 2 minutes
+        if all(kinds.get(k) == "ok" for k in ("gitlab", "jira", "alertmanager", "matrix")) and a.get("loaded") and "synced" in board:
             return
         time.sleep(3)
     print("warning: sources or the first alerts snapshot not ready:", kinds)

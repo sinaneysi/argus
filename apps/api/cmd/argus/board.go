@@ -92,6 +92,7 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		}
 	}
 	uid, _ := strconv.Atoi(v("ARGUS_BOARD_OWNER_UID"))
+	board.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"
 	return board.Options{
 		DB: c.BoardDB, ReqDir: or("ARGUS_BOARD_REQ_DIR", filepath.Join(c.SettingsIn, "board-requests")),
 		Out: or("ARGUS_BOARD_OUT", c.SettingsOut), AuthDB: or("ARGUS_BOARD_AUTH_DB", c.AuthDB), EnvFiles: envFiles,

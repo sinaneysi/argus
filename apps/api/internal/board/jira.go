@@ -68,6 +68,9 @@ var (
 )
 
 // NewJira checks the URL and token and builds the client.
+// AllowHTTP lets a plain http:// Jira through (ARGUS_SOURCES_ALLOW_HTTP=1: test installations with a fake Jira).
+var AllowHTTP = false
+
 func NewJira(base, token, caFile string) (*Jira, error) {
 	base = strings.TrimRight(base, "/")
 	u, err := url.Parse(base)
@@ -78,7 +81,7 @@ func NewJira(base, token, caFile string) (*Jira, error) {
 	if ip := net.ParseIP(u.Hostname()); ip != nil && ip.IsLoopback() {
 		loop = true
 	}
-	if u.Scheme != "https" && !(u.Scheme == "http" && loop) {
+	if u.Scheme != "https" && !(u.Scheme == "http" && (loop || AllowHTTP)) {
 		return nil, jerr(0, "", "JIRA_URL must be https://")
 	}
 	if u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
