@@ -460,8 +460,8 @@
       "aliases": [
         "GW_SITEMAP"
       ],
-      "type": "url",
-      "help": "the site's sitemap index (https://www.example.com/sitemap.xml); its host is the site host of crawl waste"
+      "type": "str",
+      "help": "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"
     },
     {
       "key": "ARGUS_GOOGLEBOT_INTERVAL",

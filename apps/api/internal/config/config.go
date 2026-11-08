@@ -132,7 +132,7 @@ var Fields = []Field{
 	{Key: "ARGUS_GOOGLEBOT_DB", Aliases: []string{"GW_DB"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/googlebot.db", Help: "crawler traffic database of the marketing module (its own file: several GB)"},
 	{Key: "ARGUS_GOOGLEBOT_EDGES_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/googlebot-edges.tsv", Help: "edge groups to read from Loki: label<TAB>json|cache<TAB>{stream selector}[<TAB>site host of a cache group]; the first is the primary group"},
 	{Key: "ARGUS_GOOGLEBOT_PATHS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/googlebot-paths.tsv", Help: "path classes: class<TAB>regex, first match wins (missing: a built-in generic list)"},
-	{Key: "ARGUS_GOOGLEBOT_SITEMAP", Aliases: []string{"GW_SITEMAP"}, Kind: URL, Help: "the site's sitemap index (https://www.example.com/sitemap.xml); its host is the site host of crawl waste"},
+	{Key: "ARGUS_GOOGLEBOT_SITEMAP", Aliases: []string{"GW_SITEMAP"}, Kind: Str, Help: "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"},
 	{Key: "ARGUS_GOOGLEBOT_INTERVAL", Aliases: []string{"GW_INTERVAL"}, Kind: Int, Default: "300", Min: 60, Max: 600, Help: "bucket width of a new crawler database, seconds (60, 300 or 600; it adapts itself afterwards)"},
 	{Key: "ARGUS_GOOGLEBOT_STORE_LIMIT_MB", Kind: Int, Default: "6144", Min: 0, Max: 10000000, Help: "above this size of the crawler database the per-URL rows stop and an alert opens (0: no limit)"},
 	{Key: "ARGUS_GOOGLEBOT_GRAFANA", Kind: Str, Help: "the Grafana data source (its name in Settings -> Data sources) whose Loki holds the edge logs (empty: the first Grafana)"},
