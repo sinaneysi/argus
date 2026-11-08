@@ -1,0 +1,5 @@
+{"trees": {"edge-a": {"edges": [{"host": "edge-01", "ip": "10.0.1.11"}]}, "edge-b": {"edges": [{"host": "edge-02", "ip": "10.0.7.1"}]}},
+ "domains": {"shop.example.com": {"trees": ["edge-a"]}, "api.example.com": {"trees": ["edge-a"]}, "blog.example.com": {"trees": ["edge-b"]}},
+ "backends": {"10.0.9.31:8080": [{"domain": "shop.example.com", "location": "/", "upstream": "shop", "tree": "edge-a"}],
+              "10.0.1.11:3000": [{"domain": "api.example.com", "location": "/api", "upstream": "api", "tree": "edge-a"}],
+              "10.0.2.21:8081": [{"domain": "blog.example.com", "location": "/", "upstream": "blog", "tree": "edge-b"}]}}
