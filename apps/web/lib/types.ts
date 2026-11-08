@@ -734,8 +734,9 @@ export type AdminKube = {
 export type AdminSources = {
   host: string; notices: Banner[]; refresh: { seconds: number } | null; busy: boolean; status: StatusVerdict; count: number; block: "" | "picker" | "add" | "edit";
   panels: { key: string; label: string; managed: string; rows: { key: string; type: string; name: string; env: string; badge: Badge | null; purpose?: { label: string; title: string }; meta: string[]; detail: string; where: string; findings: string[]; canCheck: boolean; change?: string; operator?: boolean; editable?: boolean }[] }[];
+  kinds: { key: string; label: string; state: "ok" | "failing" | "config" | "missing"; detail: string; count: number; pages: { label: string; href: string }[]; add: string; hint: string }[];
   types?: { label: string; blurb: string; href: string }[]; coming?: string[];
-  form?: { type: string; label: string; blurb: string; mode: string; credLabel: string; credHint: string; username: boolean; purposes: { value: string; label: string; sub: string }[]; override: boolean; name: string; env: string; url: string; user: string; purpose: string; last4: string; overrideOn: boolean };
+  form?: { type: string; label: string; blurb: string; mode: string; credLabel: string; credHint: string; username: boolean; credOptional?: boolean; purposes: { value: string; label: string; sub: string }[]; override: boolean; name: string; env: string; url: string; user: string; purpose: string; last4: string; overrideOn: boolean };
 };
 
 export type AdminTargets = {

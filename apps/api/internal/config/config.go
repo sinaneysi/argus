@@ -203,6 +203,7 @@ var Fields = []Field{
 	{Key: "ARGUS_KUBE_CACHE_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/kube-cache", Help: "kubectl discovery cache of the agent's tool"},
 	// Settings -> Data sources (ADR-0017): every system Argus reads, many per type (argus sources apply/check, root)
 	{Key: "ARGUS_SOURCES_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/sources", Help: "data sources: registry.json (no secret) and <type>/<name>.cred (0600; 0640 root:<agent group> only while enabled for the agent)"},
+	{Key: "ARGUS_SOURCES_ALLOW_HTTP", Kind: Bool, Default: "0", Help: "1: data sources may use plain http:// (test installations with fake services only)"},
 	{Key: "ARGUS_SOURCES_AGENT_GROUP", Kind: Str, Default: "argus", Help: "the group the agent runs in: it may read the credential of a source enabled for the agent"},
 	{Key: "ARGUS_SOURCES_LEGACY_ENV", Kind: Path, Default: "${ARGUS_ETC_DIR}/env", Help: "legacy KEY=value file the migration reads (GITLAB_URL, GITLAB_RO_TOKEN, GRAFANA_<ID>_URL/_TOKEN); never written"},
 	{Key: "ARGUS_SOURCES_SERVICES", Kind: Path, Default: "${ARGUS_ETC_DIR}/services.json", Help: "the services the Data sources catalogue maps to ({\"prefixes\": [...], \"services\": {\"group/repo\": {\"gitlab\": path, \"domains\": [...]}}}); missing: the application projects of the CI/CD estate in ARGUS_DB"},

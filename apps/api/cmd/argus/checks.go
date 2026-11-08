@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -14,6 +15,8 @@ import (
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/migrate"
+	"github.com/sinaneysi/argus/internal/needs"
+	"github.com/sinaneysi/argus/internal/sources"
 )
 
 const checksHelp = `usage: argus checks <alerts|certs|backups|all> [-file PATH]
@@ -59,7 +62,33 @@ func loadForChecks(file string, stderr io.Writer) (*config.Config, bool) {
 	return c, true
 }
 
+// registryAlertSources are the Alertmanager / Prometheus entries of Settings -> Data sources, each with its own token
+// (names that ARGUS_ALERTS_SOURCES already uses are skipped).
+func registryAlertSources(c *config.Config, have []collect.AlertSource) []collect.AlertSource {
+	used := map[string]bool{}
+	for _, s := range have {
+		used[s.Name] = true
+	}
+	o := sourcesOptions(c)
+	var out []collect.AlertSource
+	for _, e := range o.Registry() {
+		if e.Type != "alertmanager" || used[e.Name] {
+			continue
+		}
+		u, err := sources.CleanURL(e.URL)
+		if err != nil {
+			continue
+		}
+		out = append(out, collect.AlertSource{Name: e.Name, URL: u + sources.AlertsPath(e), Token: o.Credential(e)})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
 func enabled(c *config.Config, name string) bool {
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && len(needs.Jobs["collect-"+name]) > 0 {
+		return true // the volume layout runs a collector when its data source is connected (the worker's Ready)
+	}
 	return c.Values["ARGUS_COLLECT_"+strings.ToUpper(name)].Raw == "1"
 }
 
@@ -94,6 +123,10 @@ func runCollector(ctx context.Context, c *config.Config, name string) error {
 		srcs, perrs := collect.ParseAlertSources(list(c, "ARGUS_ALERTS_SOURCES"))
 		if len(perrs) > 0 {
 			return fmt.Errorf("ARGUS_ALERTS_SOURCES: %s", strings.Join(perrs, "; "))
+		}
+		srcs = append(srcs, registryAlertSources(c, srcs)...)
+		if len(srcs) == 0 {
+			return fmt.Errorf("no alert source: connect Alertmanager or Prometheus in Settings -> Data sources, or set ARGUS_ALERTS_SOURCES")
 		}
 		timeout := time.Duration(num(c, "ARGUS_ALERTS_TIMEOUT")) * time.Second
 		cctx, cancel := context.WithTimeout(ctx, timeout*time.Duration(len(srcs))+10*time.Second)

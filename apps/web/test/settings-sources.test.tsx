@@ -48,6 +48,19 @@ describe("Data sources", () => {
       expect(out).toContain(w);
     expect(out).not.toContain('id="src-add"');
   });
+  it("lists every kind with its state, what it enables and a Connect link", async () => {
+    const kinds = [
+      { key: "gitlab", label: "GitLab", state: "ok", detail: "Tested OK.", count: 1, pages: [{ label: "CI/CD", href: "/cicd" }], add: "/admin/sources?add=gitlab#src-add", hint: "" },
+      { key: "jira", label: "Jira", state: "failing", detail: "the login was refused (HTTP 401); replace the credential", count: 1, pages: [], add: "/admin/sources?add=jira#src-add", hint: "" },
+      { key: "matrix", label: "Matrix", state: "missing", detail: "Not connected.", count: 0, pages: [{ label: "Conversations", href: "/qa" }], add: "/admin/sources?add=matrix#src-add", hint: "or set MATRIX_HOMESERVER" },
+      { key: "teleport", label: "Teleport", state: "config", detail: "Set in the configuration.", count: 0, pages: [], add: "", hint: "" },
+    ];
+    const out = await render({ ...sources, kinds });
+    for (const w of ['id="src-kinds"', "Tested OK", "Failing", "Not connected", "Configured", 'href="/cicd"', "Connect it here, or set MATRIX_HOMESERVER.", 'aria-label="Connect Matrix"', 'aria-label="Connect Jira"'])
+      expect(out).toContain(w);
+    expect(out).not.toContain('aria-label="Connect GitLab"');
+    expect(out).not.toContain('aria-label="Connect Teleport"');
+  });
   it("offers no form for a managed row, and shows the operator's and the legacy ones", async () => {
     const p = sources.panels.find((x) => x.key === "kubernetes")!;
     expect(p.rows.every((r) => !r.canCheck)).toBe(true);

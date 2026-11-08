@@ -87,7 +87,7 @@ func TestAlertsSnapshot(t *testing.T) {
 		t.Fatalf("prometheus item %+v", p)
 	}
 	// one failing source: still written, marked, and an error
-	srcs = append(srcs, AlertSource{"south", down.URL + "/api/v2/alerts"})
+	srcs = append(srcs, AlertSource{Name: "south", URL: down.URL + "/api/v2/alerts"})
 	res, err = Alerts(context.Background(), AlertsOptions{Sources: srcs, Out: out, Verify: true})
 	data, _ = os.ReadFile(out)
 	if err == nil || res.Status != "ERROR" || !strings.Contains(string(data), `"error": "HTTP 503"`) {
@@ -103,14 +103,14 @@ func TestAlertsSafety(t *testing.T) {
 		t.Fatalf("want 5 problems, got %v", errs)
 	}
 	// a bearer token never goes over plain http to a non-loopback host
-	if _, err := fetchAlerts(context.Background(), http.DefaultClient, AlertSource{"x", "http://am.example.invalid/api/v2/alerts"}, "t"); err == nil || !strings.Contains(err.Error(), "refusing") {
+	if _, err := fetchAlerts(context.Background(), http.DefaultClient, AlertSource{Name: "x", URL: "http://am.example.invalid/api/v2/alerts"}, "t"); err == nil || !strings.Contains(err.Error(), "refusing") {
 		t.Fatalf("token over http: %v", err)
 	}
 	// TLS verification is on: a self-signed server fails unless its CA is given
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, amBody) }))
 	defer ts.Close()
 	out := filepath.Join(t.TempDir(), "a.json")
-	src := []AlertSource{{"tls", ts.URL + "/api/v2/alerts"}}
+	src := []AlertSource{{Name: "tls", URL: ts.URL + "/api/v2/alerts"}}
 	if _, err := Alerts(context.Background(), AlertsOptions{Sources: src, Out: out, Verify: true}); err == nil {
 		t.Fatal("an untrusted certificate must fail")
 	}
@@ -122,7 +122,7 @@ func TestAlertsSafety(t *testing.T) {
 	// redirects are not followed (a token must not travel to another host)
 	rd := httptest.NewServer(http.RedirectHandler("https://elsewhere.invalid/api/v2/alerts", http.StatusFound))
 	defer rd.Close()
-	if _, err := Alerts(context.Background(), AlertsOptions{Sources: []AlertSource{{"rd", rd.URL + "/api/v2/alerts"}}, Out: out, Verify: true}); err == nil || !strings.Contains(err.Error(), "rd") {
+	if _, err := Alerts(context.Background(), AlertsOptions{Sources: []AlertSource{{Name: "rd", URL: rd.URL + "/api/v2/alerts"}}, Out: out, Verify: true}); err == nil || !strings.Contains(err.Error(), "rd") {
 		t.Fatalf("redirect: %v", err)
 	}
 }

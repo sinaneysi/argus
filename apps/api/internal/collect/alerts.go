@@ -18,8 +18,9 @@ import (
 // AlertSource is one monitoring site: a name shown on /alerts (the "dc") and the URL of its alert list.
 // The API follows from the path: .../api/v2/alerts is Alertmanager, .../api/v1/alerts is Prometheus.
 type AlertSource struct {
-	Name string
-	URL  string
+	Name  string
+	URL   string
+	Token string // this source's own bearer token (Settings -> Data sources); wins over TokenFile
 }
 
 // AlertsOptions configure the alerts snapshot.
@@ -159,7 +160,11 @@ func Alerts(ctx context.Context, o AlertsOptions) (Result, error) {
 	firing := 0
 	for _, s := range o.Sources {
 		start := time.Now()
-		items, err := fetchAlerts(ctx, client, s, token)
+		tok := token
+		if s.Token != "" {
+			tok = s.Token
+		}
+		items, err := fetchAlerts(ctx, client, s, tok)
 		d := alertDC{DC: s.Name, OK: err == nil, Alerts: items}
 		if d.Alerts == nil {
 			d.Alerts = []alertItem{}

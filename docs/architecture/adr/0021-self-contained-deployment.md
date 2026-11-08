@@ -101,6 +101,14 @@ pattern (DESIGN.md §10): never an error and never a blank page. The API answers
   and a test keeps the page list and the frontend in step. The gate is active only in `ARGUS_LAYOUT=volume` outside
   the demo: a legacy installation keeps its host jobs and host configuration, so its pages stay as they are.
 
+  Settings → Data sources in the volume (P0): the worker applies the page's requests (`sources-requests`, every 3 s,
+  the same `internal/sources` code as root's `argus sources apply`) and re-checks every source every 6 hours
+  (`sources-check`). The page lists every kind with its state (tested OK, failing with the check's reason,
+  configured outside the page, not connected) and the pages it enables. New types for Argus's own jobs:
+  `alertmanager` (Alertmanager `/api/v2/alerts` or Prometheus `/api/v1/alerts`, login optional; the alerts collector
+  reads every entry with its own token, so `ARGUS_ALERTS_SOURCES` is optional), `jira` (purpose tracker) and `matrix`
+  (purpose notify). `ARGUS_SOURCES_ALLOW_HTTP=1` lets plain http through, for test installations with fake services.
+
 **D6. Optional modules.** A module groups pages, API routes, jobs and a sidebar group. `marketing` (search health,
 crawler traffic, search console, CDN) is the first one and is off by default. `ARGUS_MODULES` (comma-separated)
 switches modules on; an admin may switch a module on or off in Settings → General (stored in `auth.db`

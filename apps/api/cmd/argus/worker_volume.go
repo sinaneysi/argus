@@ -21,6 +21,7 @@ import (
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/needs"
 	"github.com/sinaneysi/argus/internal/settingsapply"
+	"github.com/sinaneysi/argus/internal/sources"
 	"github.com/sinaneysi/argus/internal/worker"
 )
 
@@ -46,6 +47,12 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			Run: func(ctx context.Context) error { return runCollector(ctx, c, n) }})
 	}
 	jobs = append(jobs, worker.Job{Name: "settings-apply", Every: applyEvery, Run: settingsApplyJob(c, stderr)})
+	jobs = append(jobs, worker.Job{Name: "sources-requests", Every: applyEvery, Run: sourcesRequestsJob(c, stderr)})
+	jobs = append(jobs, worker.Job{Name: "sources-check", Every: 6 * time.Hour, Run: func(context.Context) error {
+		o := sourcesOptions(c)
+		o.Log = stderr
+		return sources.CheckAll(o)
+	}})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
@@ -81,6 +88,22 @@ func settingsApplyJob(c *config.Config, stderr io.Writer) func(context.Context) 
 		o.Notify = settingsNotice(c, stderr)
 		if err := settingsapply.Apply(o); err != nil && !settingsapply.IsRejected(err) {
 			return fmt.Errorf("settings apply: %w", err)
+		}
+		return nil
+	}
+}
+
+// sourcesRequestsJob applies the Settings -> Data sources requests (save, test, remove, check-all) when there are
+// any: the same internal/sources code root's argus-sources.path runs in the legacy layout.
+func sourcesRequestsJob(c *config.Config, stderr io.Writer) func(context.Context) error {
+	return func(context.Context) error {
+		o := sourcesOptions(c)
+		o.Log = stderr
+		names, _ := os.ReadDir(o.ReqDir)
+		for _, n := range names {
+			if filepath.Ext(n.Name()) == ".json" {
+				return sources.Apply(o)
+			}
 		}
 		return nil
 	}
