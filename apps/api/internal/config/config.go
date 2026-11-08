@@ -85,6 +85,7 @@ var Fields = []Field{
 	{Key: "ARGUS_REPORTS_DIR", Aliases: []string{"OPS_REPORTS_DIR"}, Kind: Path, Default: "/opt/argus/reports/rca", Help: "merged RCA reports"},
 	{Key: "ARGUS_SETTINGS_IN", Aliases: []string{"OPS_SETTINGS_IN"}, Kind: Path, Default: "/settings-in", Help: "request files the app writes for root"},
 	{Key: "ARGUS_SETTINGS_OUT", Aliases: []string{"OPS_SETTINGS_OUT"}, Kind: Path, Default: "/settings-out", Help: "status files root writes for the app"},
+	{Key: "ARGUS_SETTINGS_TIMER_PREFIX", Kind: Str, Default: "", Help: "argus settings apply: systemd timers <prefix><task>.timer get the saved schedules (empty: no timer changes, only the settings files)"},
 	{Key: "ARGUS_SECRET_IN", Aliases: []string{"OPS_SECRET_IN"}, Kind: Path, Default: "/secret-in", Help: "tmpfs for write-once task secrets"},
 	{Key: "ARGUS_STATIC_DIR", Aliases: []string{"OPS_STATIC"}, Kind: Path, Help: "static files (empty: ./static next to the binary)"},
 	{Key: "ARGUS_BIND", Aliases: []string{"OPS_REPORT_BIND"}, Kind: Addr, Default: "127.0.0.1:8088", Help: "address the web app listens on"},

@@ -9,8 +9,8 @@ import (
 
 // Claude usage switch (Settings > General > Claude usage). Argus's headless `claude -p` runs share the operator's
 // Claude subscription; off stops every model call (bin/claude_gate.py). The app saves the choice in
-// settings.json ("claude": {"enabled": bool}); root applies it to /etc/argus/claude.json and writes the live copy
-// settings-out/claude.json, which `argus-apply-settings claude on|off` on the Argus host also changes.
+// settings.json ("claude": {"enabled": bool}); root (`argus settings apply`) applies it to /etc/argus/claude.json and
+// writes the live copy settings-out/claude.json, which `argus settings claude on|off` on the Argus host also changes.
 
 // ClaudeOn is the switch as Argus sees it: the live copy root wrote, else the saved choice, else on.
 func ClaudeOn(cfg any) bool {

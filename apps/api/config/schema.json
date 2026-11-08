@@ -167,6 +167,11 @@
       "help": "status files root writes for the app"
     },
     {
+      "key": "ARGUS_SETTINGS_TIMER_PREFIX",
+      "type": "str",
+      "help": "argus settings apply: systemd timers <prefix><task>.timer get the saved schedules (empty: no timer changes, only the settings files)"
+    },
+    {
       "key": "ARGUS_SECRET_IN",
       "aliases": [
         "OPS_SECRET_IN"

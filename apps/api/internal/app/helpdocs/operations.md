@@ -212,7 +212,7 @@ Conversations and not sent), and **Read images in QA messages** (off by default)
 triage model, which reads the error text and page from them. They are deleted when the run ends.
 
 Root on {{host}} can change the same settings without the browser:
-`sudo argus-apply-settings qa off` (or `on`, `dry-run`, `send`, `images-on`, `images-off`; no word prints them).
+`sudo argus settings qa off` (or `on`, `dry-run`, `send`, `images-on`, `images-off`; no word prints them).
 The change is logged and posted to Matrix, and this page shows it.
 :::
 
