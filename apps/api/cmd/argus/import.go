@@ -842,8 +842,17 @@ func (im *importer) otherDBs(ctx context.Context) error {
 			continue
 		}
 		if name == "googlebot.db" && im.gbot {
-			if err := im.copyDB(ctx, p, filepath.Join(im.c.StateDir, name), "crawler log database"); err != nil {
+			to := im.c.Values["ARGUS_GOOGLEBOT_DB"].Raw
+			if to == "" {
+				to = filepath.Join(im.c.StateDir, name)
+			}
+			if err := im.copyDB(ctx, p, to, "crawler log database"); err != nil {
 				return err
+			}
+			if !im.dry { // adopt it into the module's schema now (gw_errors is new), as the job would at its first run
+				if _, err := migrate.ApplyFile(ctx, to, migrate.Googlebot); err != nil {
+					return fmt.Errorf("crawler log database: migrate: %w", err)
+				}
 			}
 			continue
 		}

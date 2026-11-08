@@ -115,7 +115,7 @@ Goal: the images work at another company after the data sources are set; nothing
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
-| P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | planned |
+| P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | in progress: crawler traffic |
 
 P0 built so far: ADR-0021 (PR #11); `internal/migrate`, `argus migrate`, `ARGUS_LAYOUT=volume`, `deploy/` (PR #12);
 the clean-install test and backlog `docs/CLEAN-INSTALL.md` (PR #13); `argus worker` as the scheduler in the volume
@@ -138,6 +138,13 @@ ideas, chat): build the prompt with `style.Prepend(prompt)` (`style.Current()` i
 Tasks the board creates from incidents, RCA and CI/CD findings already start with a goal line, facts and checkbox steps.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
+Its jobs (P6) run in the worker only while the module is on. Built: the crawler traffic job (`googlebot-watch`, every
+minute: Loki through a Grafana data source into `googlebot.db`, the detector and its notices), the daily sitemap read
+(`googlebot-sitemaps`) and the SEO page's Googlebot table (`seo-check`, derived from `googlebot.db`); CLI
+`argus marketing googlebot collect|backfill|detect|sitemaps|seo`. Not yet: Search Console, the SEO suggestions (their
+model summary waits for the shared model runtime), the CDN log job. The CDN log sampling job of the earlier
+installation (it switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN) is not
+ported: Argus data sources only read.
 
 ## Next
 
