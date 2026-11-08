@@ -55,7 +55,10 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "sources-check", Every: 6 * time.Hour, Run: func(context.Context) error {
 		o := sourcesOptions(c)
 		o.Log = stderr
-		return sources.CheckAll(o)
+		if err := sources.CheckAll(o); err != nil {
+			return err
+		}
+		return recordSources(c)
 	}})
 	// the request kinds root's path units consume in the legacy layout
 	jobs = append(jobs, worker.Job{Name: "kube-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "kube"), func() error {
@@ -233,11 +236,21 @@ func sourcesRequestsJob(c *config.Config, stderr io.Writer) func(context.Context
 		names, _ := os.ReadDir(o.ReqDir)
 		for _, n := range names {
 			if filepath.Ext(n.Name()) == ".json" {
-				return sources.Apply(o)
+				if err := sources.Apply(o); err != nil {
+					return err
+				}
+				return recordSources(c)
 			}
 		}
 		return nil
 	}
+}
+
+// recordSources copies the Data sources status into ARGUS_DB data_sources (what argus sources list and find, and
+// the agent, read), as the legacy layout's sources-record unit does after every apply and check.
+func recordSources(c *config.Config) error {
+	_, err := sources.Record(filepath.Join(c.SettingsOut, "sources-status.json"), c.DB)
+	return err
 }
 
 // claudeRequestsJob runs the Settings -> Claude requests (replace, test, egress, egress-settings) when there are any.
