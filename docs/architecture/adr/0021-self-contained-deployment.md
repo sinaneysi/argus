@@ -193,6 +193,30 @@ gets a note in that thread (notify room only). Site names come from `OBS_SITES`,
 chat hosts are never subjects. A log-RCA finding attaches only to the primary alert's host; hosts named as covered by a
 known incident ("Known incident #N") are never candidates. Not ported: hub service tiers, the prompt history.
 
+As built (P3/P4, the model runtime): `internal/model` is the one way a job calls a model. `ARGUS_MODEL_PROVIDER=cli`
+(the default) runs the Claude CLI that the `argus` image now holds (`/usr/local/bin/claude`, the pinned native musl
+build; `--build-arg CLAUDE_CODE_VERSION=` leaves it out) with the token of Settings -> Claude, a clean environment, a
+throwaway HOME and config folder in `/tmp` and no saved session; `api` sends one Messages API request with the key of
+a Settings -> Data sources entry of type `anthropic` (its check looks at the key's shape only and never calls the API,
+so no call leaves a blocked egress country). Every call: `style.Prepend`, the Claude usage switch and the egress
+guard (a skip, not a failure), a budget, turn and time cap (`ARGUS_MODEL_MAX_BUDGET_USD`, `ARGUS_MODEL_MAX_MINUTES`;
+exit 124 at the time limit), the secret scan over the error, the record and the log, a `runs` row in `ops.db` and a
+log file in `ARGUS_MODEL_LOG_DIR`. `argus claude run` makes one call to check the provider. The clean-install test
+uses the api provider against the stub's `/anthropic/v1/messages`; the unit tests use a fake CLI.
+
+As built (P2, host estate): `internal/estate` and `argus estate inventory|vmstate|pulse|all|sites` port the VM
+inventory, the VM state and the 5-minute pulse from Prometheus only (parity with the earlier jobs on synthetic
+fixtures, two rounds: `internal/estate/testdata/parity`, the same files byte for byte and the same `vms`,
+`vm_changes` and `vm_state` rows). A site is a Grafana entry of Settings -> Data sources enabled for the agent (its
+first Prometheus data source, through Grafana's proxy), a Prometheus entry of type Alertmanager / Prometheus, or
+`ARGUS_PROM_SOURCES`; the site's name is the VM's "dc". In the volume the worker runs `inventory` (inventory, then VM
+state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a site. Company specifics are keys:
+`ARGUS_INVENTORY_ENV_PREFIXES` (environment by address), `ARGUS_VM_APP_UNITS` (application unit prefixes),
+`ARGUS_SERVICE_MAP_FILE`. Not ported, waiting for the access broker (P5): the read-only host facts and snapshots
+(services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
+(kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
+evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+
 As built (P6, marketing): `internal/marketing/googlebot` and `argus marketing googlebot` port the crawler traffic job
 (parity with the earlier job on synthetic fixtures: `internal/marketing/googlebot/testdata/golden.json`). The worker runs
 `googlebot-watch` every minute, `googlebot-sitemaps` once a day and `seo-check` every minute, only while the module
@@ -205,7 +229,7 @@ start). Google's crawler ranges are fetched daily into `googlebot-ranges.json` (
 SEO page's Googlebot table (`seo_snapshots`, `seo_errors`) is derived from `googlebot.db`, so Loki is read once.
 Company specifics are configuration: the edge groups and their log formats, the path classes
 (`etc/googlebot-paths.tsv`, a generic built-in list without it), the site's sitemap, the hosts on the page
-(`ARGUS_SEO_HOSTS`), the Loki host label, the service map that names a backend. Listed differences from the earlier job:
+(`ARGUS_SEO_HOSTS`), the Loki host label; the service map (`ARGUS_SERVICE_MAP_FILE`) names a backend. Listed differences from the earlier job:
 upstream kinds have neutral names (origin, edge, local, external, cache); the primary edge group is the first line of the
 groups file; days are in `ARGUS_TZ`; the page's verified share uses the full range lists and its p50/p95 the histogram.
 

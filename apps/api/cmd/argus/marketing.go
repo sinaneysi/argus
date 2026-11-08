@@ -259,7 +259,7 @@ func seoCheck(c *config.Config) (int64, error) {
 	}
 	sitemap := c.Values["ARGUS_GOOGLEBOT_SITEMAP"].Raw
 	return googlebot.SEOSnapshot(g, ops, googlebot.SEOOptions{Primary: primary, Hosts: list(c, "ARGUS_SEO_HOSTS"),
-		ServiceMap: c.Values["ARGUS_SEO_SERVICE_MAP"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
+		ServiceMap: c.Values["ARGUS_SERVICE_MAP_FILE"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
 }
 
 // marketingJobs are the module's worker jobs.

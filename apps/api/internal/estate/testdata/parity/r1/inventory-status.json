@@ -1,0 +1,1 @@
+{"at": 1767000000, "status": "OK", "vms": 4, "counts": {"release|site-a+site-b": 1, "release|site-a": 1, "unknown|site-a": 1, "develop|site-b": 1}, "flags": {"prom-only": 4, "os-eol": 1, "down": 1, "disk-85": 1}, "db_hosts_skipped": [], "seconds": 0}
