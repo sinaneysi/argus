@@ -531,6 +531,40 @@
       "default": "100"
     },
     {
+      "key": "CICD_DEPLOY_BRIDGE",
+      "type": "str",
+      "default": "trigger_deploy",
+      "help": "the CI bridge job that triggers the deploy pipeline in the engine project (the deploy lock)"
+    },
+    {
+      "key": "CICD_DEPLOY_JOBS",
+      "type": "list",
+      "default": "deploy_systemd,deploy",
+      "help": "deploy job names in the engine's deploy pipeline (their PLAY RECAP gives the hosts)"
+    },
+    {
+      "key": "CICD_INVENTORY_FILE",
+      "type": "str",
+      "help": "path of the Ansible inventory inside the engine project (empty: deploy target groups are not named)"
+    },
+    {
+      "key": "CICD_INVENTORY_REF",
+      "type": "str",
+      "default": "main",
+      "help": "branch of the engine project the inventory is read from"
+    },
+    {
+      "key": "CICD_HOST_ENVS",
+      "type": "list",
+      "help": "env=regex, ...: environment of a deploy host by its name or address, first match wins (release=^prod-,develop=^stage-); a develop or pre-release deploy that reaches a release host is a finding"
+    },
+    {
+      "key": "CICD_RR_PER_CYCLE",
+      "type": "int",
+      "default": "15",
+      "help": "projects the CI/CD watcher polls per run besides the active ones"
+    },
+    {
       "key": "BACKUP_TEMPLATES_REPO",
       "type": "str",
       "default": "ops/backup-templates",
