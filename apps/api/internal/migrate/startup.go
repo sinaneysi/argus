@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
 // Paths is the file of each database in a configuration.
@@ -49,6 +50,12 @@ func OnStart(ctx context.Context, c *config.Config, logf func(string, ...any)) e
 	}
 	if err := EnsureDirs(c); err != nil {
 		return err
+	}
+	// the master key of the volume's secrets: created at the first start, refused when secrets exist without it
+	if _, from, err := secret.ForVolume(func(k string) string { return c.Values[k].Raw }, true); err != nil {
+		return err
+	} else if from != "" {
+		logf("secrets: master key from %s", from)
 	}
 	if c.Values["ARGUS_MIGRATE"].Raw == "off" {
 		return nil

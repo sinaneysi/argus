@@ -3,6 +3,8 @@ package sources
 import (
 	"strings"
 	"testing"
+
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
 func TestOpsTypes(t *testing.T) {
@@ -59,5 +61,25 @@ func TestAllowHTTP(t *testing.T) {
 	defer func() { AllowHTTP = false }()
 	if u, err := CleanURL("http://stubs:8099/x/"); err != nil || u != "http://stubs:8099/x" {
 		t.Fatal(u, err)
+	}
+}
+
+// with a master key the stored credential is sealed, and the check still sends the real one
+func TestCredentialSealed(t *testing.T) {
+	e := setup(t)
+	k, _ := secret.ParseKey(secret.NewKeyText())
+	e.o.Key = k
+	f := serve(t, map[string]route{"GET /_matrix/client/v3/account/whoami": {200, M{"user_id": "@nw:chat.example.test"}}})
+	rid := e.request("admin", M{"kind": "save", "mode": "add", "type": "matrix", "name": "main", "env": "shared", "url": f.url, "purpose": "notify", "credential": cred})
+	e.apply()
+	if r := e.result(rid); !strings.HasPrefix(r, "saved matrix/main: ok") {
+		t.Fatal(r)
+	}
+	raw := read(t, e.o.credPath("matrix", "main"))
+	if !secret.Sealed(raw) || strings.Contains(raw, cred) || f.seen[0] != "Bearer "+cred {
+		t.Fatalf("stored %q, sent %q", raw, f.seen[0])
+	}
+	if strings.Contains(e.everything(), cred) {
+		t.Fatal("credential leaked into a status or log")
 	}
 }

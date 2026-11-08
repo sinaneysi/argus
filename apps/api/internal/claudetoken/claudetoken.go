@@ -40,6 +40,7 @@ import (
 	"time"
 
 	"github.com/sinaneysi/argus/internal/claudegate"
+	"github.com/sinaneysi/argus/internal/secret"
 
 	_ "modernc.org/sqlite"
 )
@@ -80,6 +81,20 @@ type Options struct {
 	Now         func() time.Time
 	LookupFn    func(env map[string]string, urls []string) claudegate.Found // tests
 	Log         io.Writer
+	Key         secret.Key // the volume's master key: the token is stored sealed (nil: plaintext, the legacy layout)
+}
+
+// envMap is the env file's values with the token opened (an unreadable sealed token is "").
+func (o *Options) envMap(data []byte) map[string]string {
+	env := ParseEnv(string(data))
+	if v, ok := env[Var]; ok {
+		plain, err := o.Key.Open(secret.ClaudeName, v)
+		if err != nil {
+			plain = ""
+		}
+		env[Var] = plain
+	}
+	return env
 }
 
 type refused string
@@ -277,7 +292,7 @@ func (o *Options) testCall() TestResult {
 			cred = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid), Groups: []uint32{}}
 		}
 	}
-	env := cleanEnv(ParseEnv(string(data)), home)
+	env := cleanEnv(o.envMap(data), home)
 	if ok, reason, _ := o.gate(env).Guard(true); !ok {
 		return TestResult{Result: "stopped", Message: reason}
 	}
@@ -400,7 +415,7 @@ func (o *Options) handle(req map[string]any, usr string, st *Status) (string, er
 	switch kind {
 	case "egress":
 		data, _ := os.ReadFile(o.EnvFile)
-		ok, reason, c := o.gate(cleanEnv(ParseEnv(string(data)), "")).Guard(true)
+		ok, reason, c := o.gate(cleanEnv(o.envMap(data), "")).Guard(true)
 		st.Egress = map[string]any{"at": now, "by": usr}
 		if !c.Guard {
 			return "egress guard is off", nil
@@ -443,7 +458,7 @@ func (o *Options) handle(req map[string]any, usr string, st *Status) (string, er
 		t.At, t.By = now, usr
 		st.Test = &t
 		data, _ := os.ReadFile(o.EnvFile)
-		o.audit(fmt.Sprintf("%s: Claude token test (%s …%s): %s", usr, Var, last4(ParseEnv(string(data))[Var]), t.Result))
+		o.audit(fmt.Sprintf("%s: Claude token test (%s …%s): %s", usr, Var, last4(o.envMap(data)[Var]), t.Result))
 		return "test " + t.Result + ": " + t.Message, nil
 	case "replace":
 	default:
@@ -462,7 +477,11 @@ func (o *Options) handle(req map[string]any, usr string, st *Status) (string, er
 	if err != nil {
 		return "", err
 	}
-	if err := o.replaceVar(Var, token); err != nil {
+	stored, err := o.Key.Seal(secret.ClaudeName, token)
+	if err != nil {
+		return "", err
+	}
+	if err := o.replaceVar(Var, stored); err != nil {
 		return "", err
 	}
 	token, req["token"] = "", nil
@@ -590,7 +609,7 @@ func Apply(o Options) error {
 	}
 	st.Token = map[string]map[string]any{}
 	if data, err := os.ReadFile(o.EnvFile); err == nil {
-		env := ParseEnv(string(data))
+		env := o.envMap(data)
 		for _, k := range []string{Var, "ANTHROPIC_API_KEY"} {
 			st.Token[k] = map[string]any{"set": env[k] != "", "last4": last4(env[k])}
 		}

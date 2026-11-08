@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"regexp"
 
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/secret"
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
@@ -65,7 +67,7 @@ func sourcesOptions(c *config.Config) sources.Options {
 		}
 	}
 	sources.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"
-	return sources.Options{ReqDir: filepath.Join(c.SettingsIn, "sources"), OutDir: c.SettingsOut, AuthDB: c.AuthDB,
+	return sources.Options{ReqDir: filepath.Join(c.SettingsIn, "sources"), OutDir: c.SettingsOut, AuthDB: c.AuthDB, Key: volumeKey(c),
 		Dir: v("ARGUS_SOURCES_DIR"), AgentGroup: v("ARGUS_SOURCES_AGENT_GROUP"), AppUID: 65534,
 		Legacy: sources.Legacy{EtcDir: c.EtcDir, SecretsDir: c.SecretsDir, EnvFile: v("ARGUS_SOURCES_LEGACY_ENV"),
 			KubeDir: v("ARGUS_KUBE_DIR"), GitLabURL: gl, GrafanaURLs: graf}}
@@ -151,4 +153,15 @@ func runSources(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// volumeKey is the master key of the volume's secrets (nil outside ARGUS_LAYOUT=volume). argus-api and the worker
+// create it at their start (migrate.OnStart); a command that finds none reads and writes no sealed value.
+func volumeKey(c *config.Config) secret.Key {
+	k, _, err := secret.ForVolume(func(key string) string { return c.Values[key].Raw }, false)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "secrets:", err)
+		return nil
+	}
+	return k
 }

@@ -81,6 +81,15 @@ the pages already read.
 - The worker sees the change (a change counter in `ops.db` plus a scan every few seconds) and applies it within
   seconds: the Go `settingsapply` and the Claude secret apply run inside the worker. The result goes to
   `state/settings-status.json`, the file the Settings pages already read.
+- As built: `internal/secret` seals each value with AES-256-GCM under the master key, bound to its name (additional
+  data), stored as `argus-enc:v1:<base64>`: data-source credentials (`etc/sources/<type>/<name>.cred`), the Claude
+  token's value in the Claude env file (and its backups) and the Matrix token file. Key: `ARGUS_MASTER_KEY`, else
+  `ARGUS_MASTER_KEY_FILE` (volume default `keys/master.key`, created 0600 at the first start of the api or the worker
+  when the volume holds no secret yet). With secrets present and no key, the api and the worker refuse to start
+  (`migrate.OnStart`) and say which key to set; a value is never in that message. `argus secrets rekey` seals
+  plaintext values and moves values sealed with `ARGUS_MASTER_KEY_OLD` to the current key; `argus secrets new-key`
+  prints a fresh key. A request file still carries a pasted secret for the seconds until the worker consumes it
+  (0600, deleted on read), as in the legacy flow.
 - No host root job and no `settings-in/` / `settings-out/` hand-off in this mode. The file mode stays available
   behind `ARGUS_LAYOUT=legacy` until the pilot is cut over.
 

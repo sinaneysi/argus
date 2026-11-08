@@ -397,6 +397,23 @@
       "max": 1440
     },
     {
+      "key": "ARGUS_MASTER_KEY",
+      "type": "str",
+      "secret": true,
+      "help": "32 bytes, base64: encrypts the secrets in the volume (ARGUS_LAYOUT=volume); wins over ARGUS_MASTER_KEY_FILE"
+    },
+    {
+      "key": "ARGUS_MASTER_KEY_FILE",
+      "type": "path",
+      "help": "file holding the master key (volume default: ARGUS_STATE_DIR/keys/master.key, created at the first start)"
+    },
+    {
+      "key": "ARGUS_MASTER_KEY_OLD",
+      "type": "str",
+      "secret": true,
+      "help": "argus secrets rekey: the key the secrets were written with, when it is not the current one"
+    },
+    {
       "key": "TOTP_KEY_FILE",
       "type": "path",
       "default": "/keys/totp.key",

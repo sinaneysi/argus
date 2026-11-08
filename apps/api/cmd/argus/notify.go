@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/notify"
+	"github.com/sinaneysi/argus/internal/secret"
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
@@ -129,17 +131,27 @@ func senderFrom(c *config.Config) *notify.Sender {
 	if p == "" {
 		p = filepath.Join(v("ARGUS_SECRETS_DIR"), "matrix-token")
 	}
+	key := volumeKey(c)
 	if _, err := os.Lstat(p); err == nil {
-		tok = sources.ReadSecret(p)
+		if t, err := key.Open(secret.MatrixName, sources.ReadSecret(p)); err == nil {
+			tok = t
+		}
 	}
 	if tok == "" {
 		tok = strings.TrimSpace(v("MATRIX_ACCESS_TOKEN"))
+	}
+	hs := v("MATRIX_HOMESERVER")
+	if e := matrixSource(c); e != nil { // Settings -> Data sources wins (ADR-0021 D5)
+		o := sourcesOptions(c)
+		if t := o.Credential(e); t != "" {
+			tok, hs = t, e.URL
+		}
 	}
 	var nosend []string
 	for _, k := range []string{"MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS"} {
 		nosend = append(nosend, list(c, k)...)
 	}
-	return &notify.Sender{Matrix: v("ARGUS_NOTIFY_MATRIX") == "1", Homeserver: v("MATRIX_HOMESERVER"), Token: tok,
+	return &notify.Sender{Matrix: v("ARGUS_NOTIFY_MATRIX") == "1", Homeserver: hs, Token: tok,
 		Room: v("MATRIX_NOTIFY_ROOM"), NoSend: nosend, Telegram: v("TELEGRAM_BOT_TOKEN"), ChatID: v("TELEGRAM_CHAT_ID"),
 		Webhook: v("NOTIFY_WEBHOOK"), Allow: notify.LoadAllowlist(v("ARGUS_SECRET_ALLOWLIST")), Log: collect.Logger}
 }
@@ -156,4 +168,21 @@ func settingsNotice(c *config.Config, stderr io.Writer) func(by string, changes 
 			fmt.Fprintln(stderr, "warning: settings notice not sent:", err)
 		}
 	}
+}
+
+// matrixSource is the first Matrix entry of Settings -> Data sources (nil when there is none).
+func matrixSource(c *config.Config) *sources.Entry {
+	o := sourcesOptions(c)
+	var names []string
+	reg := o.Registry()
+	for k, e := range reg {
+		if e.Type == "matrix" {
+			names = append(names, k)
+		}
+	}
+	if len(names) == 0 {
+		return nil
+	}
+	sort.Strings(names)
+	return reg[names[0]]
 }

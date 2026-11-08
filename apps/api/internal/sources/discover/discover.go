@@ -37,6 +37,7 @@ import (
 	"time"
 
 	"github.com/sinaneysi/argus/internal/kube"
+	"github.com/sinaneysi/argus/internal/secret"
 	"github.com/sinaneysi/argus/internal/sources"
 	_ "modernc.org/sqlite"
 )
@@ -78,6 +79,7 @@ type Options struct {
 	Sources    map[string]*sources.Entry // the registry as root published it (sources-status.json)
 	SourcesDir string                    // ARGUS_SOURCES_DIR: <type>/<name>.cred
 	SecretsDir string                    // ARGUS_SECRETS_DIR: legacy secret: references
+	Key        secret.Key                // the volume's master key (nil: plaintext credentials)
 	Kube       *kube.Tool                // the agent's read-only kube tool (nil: Kubernetes sources are an error)
 	Get        Getter                    // nil: sources.Get
 	Now        func() time.Time
@@ -763,7 +765,7 @@ func (o *Options) credential(e *sources.Entry) string {
 	if o.SourcesDir == "" || !sources.NameRe.MatchString(e.Name) {
 		return ""
 	}
-	return sources.ReadSecret(filepath.Join(o.SourcesDir, e.Type, e.Name+".cred"))
+	return sources.ReadCred(filepath.Join(o.SourcesDir, e.Type, e.Name+".cred"), e.Type, e.Name, o.Key)
 }
 
 // --- storage -----------------------------------------------------------------------------------------------------
