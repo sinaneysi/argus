@@ -169,7 +169,14 @@ earlier label (`TOTP_LEGACY_LABEL` is not needed afterwards); turns the integrat
 folder (GitLab read-only token, the GitLab issues connection, Jira, Outline, Matrix, Alertmanager / Prometheus,
 Grafana sites, Kubernetes clusters, the Claude token) into Settings -> Data sources entries and volume files sealed
 with the master key (created when missing), then seals every secret of the volume. It prints names only, refuses a
-volume that already holds data unless `-force`, and a second forced run gives the same result.
+volume that already holds data unless `-force`, and a second forced run gives the same result. The non-secret site and
+integration keys of the env files (and `JIRA_PROJECT` of `jira.env`, a time zone from a `TZ`-like key) go to
+`etc/imported.env`, which the volume layout reads below `argus.env` and the environment; a GitLab issues connection
+on another host than `GITLAB_URL` gets `etc/gitlab-issues-allowed-hosts` with both. Other databases of the state
+folder are reported as skipped with their size; `-with-googlebot` copies the crawler log database. `-settings-only`
+writes only the carried settings, for a volume imported by an earlier version. With a Jira data source the board sync
+takes only the address and the credential from it: the Jira settings come from `etc/jira.env` (owned by the user the
+worker runs as), and the configured `JIRA_PROJECT` wins only when it is set explicitly.
 
 ## Consequences
 

@@ -13,11 +13,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/board"
+	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/secret"
 )
 
@@ -98,13 +100,16 @@ INSERT INTO users VALUES ('alex.admin', 'x', 'admin', 0, 0, 0);`)
 	write(t, filepath.Join(src, "settings-out", "board-status.json"), `{"requests": {}}`, 0o644)
 	write(t, filepath.Join(etc, "gitlab-issues.json"), `{"url": "https://gitlab.example.com", "mode": "project", "project_id": 7}`, 0o600)
 	write(t, filepath.Join(etc, "gitlab-issues.token"), fxTracker+"\n", 0o600)
-	write(t, filepath.Join(etc, "jira.env"), "JIRA_URL=https://jira.example.com\nJIRA_PROJECT=OPS\nOTHER_SECRET=nope\n", 0o644)
+	write(t, filepath.Join(etc, "jira.env"), "JIRA_URL=https://jira.example.com\nJIRA_PROJECT=DEV\nJIRA_JQL=project = DEV\nOTHER_SECRET=nope\n", 0o644)
 	write(t, filepath.Join(etc, "jira.pat"), fxJira+"\n", 0o600)
 	write(t, filepath.Join(etc, "outline.json"), `{"url": "https://wiki.example.com"}`, 0o600)
 	write(t, filepath.Join(etc, "outline.token"), fxOutline+"\n", 0o600)
 	write(t, envFile, strings.Join([]string{"GITLAB_URL=https://gitlab.example.com", "GITLAB_RO_TOKEN=" + fxGitLabRO,
 		"MATRIX_HOMESERVER=https://matrix.example.com", "MATRIX_ACCESS_TOKEN=" + fxMatrix, "PROM_URL=https://prometheus.example.com",
-		"GRAFANA_SITE1_URL=https://grafana.example.com", "GRAFANA_SITE1_TOKEN=" + fxGrafana, "CLAUDE_CODE_OAUTH_TOKEN=" + fxClaude}, "\n")+"\n", 0o600)
+		"GRAFANA_SITE1_URL=https://grafana.example.com", "GRAFANA_SITE1_TOKEN=" + fxGrafana, "CLAUDE_CODE_OAUTH_TOKEN=" + fxClaude,
+		"MATRIX_NOTIFY_ROOM=!notices:example.com", "MATRIX_NOTIFY_ENABLED=1", "MATRIX_WATCH_ROOMS=!watch:example.com",
+		"APP_TZ=Europe/Berlin", "OPS_ADMIN_USER=root.admin", "OPS_DB=/srv/old/ops.db", "OIDC_ISSUER=https://sso.example.com"}, "\n")+"\n", 0o600)
+	write(t, filepath.Join(src, "googlebot.db"), strings.Repeat("x", 3000), 0o640)
 	write(t, filepath.Join(root, "reports", "rca", "r1.md"), "# report\n", 0o644)
 	return
 }
@@ -216,12 +221,19 @@ func TestImport(t *testing.T) {
 	} else if v, err := k.Open(board.GitLabTokenName, string(gt)); err != nil || v != fxTracker {
 		t.Fatal("tracker token")
 	}
-	if b, _ := os.ReadFile(filepath.Join(c.EtcDir, "jira.env")); strings.Contains(string(b), "OTHER_SECRET") || !strings.Contains(string(b), "JIRA_PROJECT=OPS") {
+	if b, _ := os.ReadFile(filepath.Join(c.EtcDir, "jira.env")); strings.Contains(string(b), "OTHER_SECRET") || !strings.Contains(string(b), "JIRA_PROJECT=DEV") {
 		t.Fatalf("jira.env: %s", b)
 	}
 	if v := secret.EnvValue(c.Values["ARGUS_CLAUDE_ENV_FILE"].Raw, "CLAUDE_CODE_OAUTH_TOKEN"); !secret.Sealed(v) {
 		t.Fatal("claude token not sealed")
 	}
+	if !strings.Contains(out.String(), "googlebot.db: 2.9 KiB, not used by this version; -with-googlebot copies it") {
+		t.Fatalf("googlebot.db not reported as skipped:\n%s", out.String())
+	}
+	if _, err := os.Stat(filepath.Join(vol, "googlebot.db")); err == nil {
+		t.Fatal("googlebot.db copied without -with-googlebot")
+	}
+	importCarried(t, cfg)
 	// a second run refuses a volume with data; -force imports again with the same result
 	out.Reset()
 	errb.Reset()
@@ -233,5 +245,97 @@ func TestImport(t *testing.T) {
 	}
 	if n := countRows(c.BoardDB, "tasks"); n != 1 || func() bool { o := sourcesOptions(c); return len(o.Registry()) != len(reg) }() {
 		t.Fatal("not idempotent")
+	}
+}
+
+// importCarried: what a real earlier installation needs beyond its databases. The GitLab issues guard allows the
+// GITLAB_URL host of the env files (it said "Allowed GitLab hosts: none"), and the board sync with the Jira data source
+// uses the project of jira.env, not the compiled-in example (it searched project OPS). Matrix rooms, the time zone and
+// the notices switch are carried; secrets, paths and sign-in settings are not.
+func importCarried(t *testing.T, cfg string) {
+	t.Helper()
+	c, err := config.Load(config.Options{File: cfg, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	o := volumeBoardOptions(c)
+	if h := o.AllowedGitLabHosts(); !slices.Contains(h, "gitlab.example.com") {
+		t.Fatalf("allowed GitLab hosts: %v", h)
+	}
+	merged, _ := board.LoadConfig(o.EnvFiles, o.OwnerUID)
+	for k, v := range o.Config {
+		if v != "" {
+			merged[k] = v
+		}
+	}
+	if merged["JIRA_PROJECT"] != "DEV" || merged["JIRA_JQL"] != "project = DEV" || o.Token != fxJira {
+		t.Fatalf("Jira settings: project %q jql %q", merged["JIRA_PROJECT"], merged["JIRA_JQL"])
+	}
+	for k, want := range map[string]string{"GITLAB_URL": "https://gitlab.example.com", "MATRIX_NOTIFY_ROOM": "!notices:example.com",
+		"ARGUS_NOTIFY_MATRIX": "1", "MATRIX_WATCH_ROOMS": "!watch:example.com", "ARGUS_TZ": "Europe/Berlin", "JIRA_PROJECT": "DEV",
+		"MATRIX_HOMESERVER": "https://matrix.example.com"} {
+		if v := c.Values[k]; v.Raw != want || v.Source != "imported" {
+			t.Fatalf("%s = %q (%s), want %q imported", k, v.Raw, v.Source, want)
+		}
+	}
+	for _, k := range []string{"ARGUS_ADMIN_USER", "ARGUS_DB", "OIDC_ISSUER"} {
+		if c.Values[k].Source == "imported" {
+			t.Fatalf("%s was carried", k)
+		}
+	}
+	b, _ := os.ReadFile(filepath.Join(c.EtcDir, config.ImportedFile))
+	noSecrets(t, config.ImportedFile, string(b))
+	// argus.env still wins over the carried value
+	env, _ := os.ReadFile(cfg)
+	write(t, cfg, string(env)+"JIRA_PROJECT=OTHER\n", 0o600)
+	defer os.WriteFile(cfg, env, 0o600)
+	c2, _ := config.Load(config.Options{File: cfg, Environ: []string{}})
+	if c2.Values["JIRA_PROJECT"].Raw != "OTHER" || volumeBoardOptions(c2).Config["JIRA_PROJECT"] != "OTHER" {
+		t.Fatal("argus.env must win over imported.env")
+	}
+}
+
+// A volume imported by an earlier version: -settings-only adds the carried settings and nothing else; a second
+// GitLab host gets the allowed-hosts file; -with-googlebot copies the crawler log database.
+func TestImportSettingsOnlyAndGooglebot(t *testing.T) {
+	src, etc, envFile, _ := predecessor(t)
+	write(t, filepath.Join(etc, "gitlab-issues.json"), `{"url": "https://issues.example.test", "mode": "project", "project_id": 7}`, 0o600)
+	os.Remove(filepath.Join(src, "googlebot.db"))
+	g, err := sql.Open("sqlite", filepath.Join(src, "googlebot.db"))
+	must(t, err)
+	_, err = g.Exec(`CREATE TABLE hits (ts INTEGER); INSERT INTO hits VALUES (1), (2), (3)`)
+	must(t, err)
+	g.Close()
+	vol := t.TempDir()
+	c, cfg := volumeConfig(t, vol, "TOTP_KEY_FILE="+vol+"/keys/totp.key\n")
+	var out, errb bytes.Buffer
+	if rc := runImport([]string{"-file", cfg, "-etc", etc, "-env", envFile, "-with-googlebot", "-totp-legacy-label", fxLabel, src}, &out, &errb); rc != 0 {
+		t.Fatalf("rc %d: %s", rc, errb.String())
+	}
+	if n := countRows(filepath.Join(vol, "googlebot.db"), "hits"); n != 3 {
+		t.Fatalf("googlebot.db: %d rows", n)
+	}
+	// the earlier version's import: no imported.env, no allowed hosts
+	os.Remove(filepath.Join(c.EtcDir, config.ImportedFile))
+	os.Remove(filepath.Join(c.EtcDir, "gitlab-issues-allowed-hosts"))
+	before := countRows(c.BoardDB, "tasks")
+	must(t, os.WriteFile(filepath.Join(vol, "alerts.json"), []byte(`{"alerts": ["kept"]}`), 0o644))
+	out.Reset()
+	if rc := runImport([]string{"-file", cfg, "-etc", etc, "-env", envFile, "-settings-only", src}, &out, &errb); rc != 0 {
+		t.Fatalf("settings-only rc %d: %s", rc, errb.String())
+	}
+	if b, _ := os.ReadFile(filepath.Join(vol, "alerts.json")); !strings.Contains(string(b), "kept") || countRows(c.BoardDB, "tasks") != before {
+		t.Fatal("-settings-only replaced data")
+	}
+	h, _ := os.ReadFile(filepath.Join(c.EtcDir, "gitlab-issues-allowed-hosts"))
+	if string(h) != "gitlab.example.com\nissues.example.test\n" {
+		t.Fatalf("allowed hosts: %q", h)
+	}
+	c2, _ := config.Load(config.Options{File: cfg, Environ: []string{}})
+	if c2.Values["MATRIX_NOTIFY_ROOM"].Raw != "!notices:example.com" {
+		t.Fatalf("settings-only did not carry the rooms:\n%s", out.String())
+	}
+	if hosts := volumeBoardOptions(c2); !slices.Contains(hosts.AllowedGitLabHosts(), "issues.example.test") {
+		t.Fatal("the connection's host is not allowed")
 	}
 }

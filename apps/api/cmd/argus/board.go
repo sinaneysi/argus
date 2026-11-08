@@ -95,7 +95,7 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		}
 	}
 	uid, _ := strconv.Atoi(v("ARGUS_BOARD_OWNER_UID"))
-	if v("ARGUS_BOARD_OWNER_UID") == "" && v("ARGUS_LAYOUT") == "volume" {
+	if c.Values["ARGUS_BOARD_OWNER_UID"].Source == "default" && v("ARGUS_LAYOUT") == "volume" {
 		uid = os.Geteuid() // the volume's files belong to the user the api and the worker run as
 	}
 	board.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"

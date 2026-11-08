@@ -18,7 +18,11 @@ still the target design.
   by `-file` or `ARGUS_CONFIG` may not.
 - **Precedence.** Built-in default, then the file, then the process environment. This differs from §2 on purpose:
   containers and systemd `Environment=` lines configure Argus through the environment today, so the environment
-  must win. Admin runtime settings (§2 step 3) are not read yet.
+  must win. Admin runtime settings (§2 step 3) are not read yet. In `ARGUS_LAYOUT=volume` one more layer sits
+  between the default and the file: `ARGUS_ETC_DIR/imported.env`, the site and integration settings `argus import`
+  carried from an earlier installation (`config.Importable`: names, time zone, `GITLAB_URL`, Matrix homeserver and
+  rooms, `JIRA_PROJECT`, ...). Only those keys are read from it, never a secret, a path, a listen address or a sign-in
+  setting; a value's source shows as `imported`.
 - **Old names.** Each key has one canonical name. An old name is read when the canonical one is not set, with a
   one-line warning `OPS_DB is deprecated, rename it to ARGUS_DB`. When both are set, the old one is ignored with a
   warning. Aliases today: `ORG_NAME` → `COMPANY_NAME`; `OPS_PUBLIC_URL` → `ARGUS_PUBLIC_URL`;

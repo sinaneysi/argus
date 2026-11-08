@@ -326,6 +326,10 @@ func glRefOf(m *glMeta, pid, iid int64, full string) string {
 
 // --- the SSRF guard ---------------------------------------------------------------------------------------------------
 
+// AllowedGitLabHosts are the hosts the GitLab issues guard allows: the allowed-hosts file, else the hosts of the
+// configured GitLab URLs (GitLabEnvFile, GitLabDefaultURL, GitLabURL).
+func (o *Options) AllowedGitLabHosts() []string { return o.glAllowedHosts(nil) }
+
 func (o *Options) glAllowedHosts(m *glMeta) []string {
 	if b, err := os.ReadFile(o.glPath(glHostsFile)); err == nil {
 		out := []string{}
