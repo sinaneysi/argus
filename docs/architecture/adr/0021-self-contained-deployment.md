@@ -222,6 +222,17 @@ requests (consumed before the send; one notice for all of them). `argus import` 
 `GSC_KEY`) into the `google/main` data source and copies `seo-urls.txt`. Not yet: the model's daily summary
 (`seo_summary`) waits for the shared model runtime (P3/P4) and will be built with `style.Prepend`.
 
+As built (P6, marketing CDN): `internal/marketing/cdn` ports the CDN log job (parity of the search body and the rows
+with the earlier job: `internal/marketing/cdn/testdata`). Job `cdn-watch` every 5 minutes, only while the module is on,
+with an Elasticsearch / OpenSearch data source (`ARGUS_CDN_SOURCE`, else the first; the search is a guarded POST that
+only reads) and `ARGUS_CDN_INDEX`: the counts of the finished 5-minute buckets of the last 55 minutes into `cdn_gbot`
+and `cdn_buckets` (ops migration 0003; the same tables as before, so an imported `ops.db` is adopted). The index's
+documents need the keyword fields `remote_addr`, `http_user_agent`, `is_known_bot`, `request_host`, `status`,
+`fw_rule_name`, `fw_rule_action`, `fw_blocked`, `upstream_status`, `cache_status`. Not ported: the earlier CDN log
+sampling job. It switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN, and
+Argus data sources only read. Without it, a bucket with no documents is a gap (`ok=0`); rows stored as "off by plan"
+(`ok=2`) by the earlier installation are kept and not read again.
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings

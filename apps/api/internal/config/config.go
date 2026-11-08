@@ -251,6 +251,9 @@ var Fields = []Field{
 	{Key: "ARGUS_GSC_URLS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/seo-urls.txt", Help: "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"},
 	{Key: "ARGUS_SEO_BRAND", Aliases: []string{"SEO_BRAND"}, Kind: Str, Help: "brand words, | separated: a brand query gets no low-CTR suggestion"},
 	{Key: "ARGUS_GA_PROPERTY", Aliases: []string{"GA_PROPERTY"}, Kind: Str, Help: "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"},
+	// the marketing module's CDN log job (internal/marketing/cdn)
+	{Key: "ARGUS_CDN_INDEX", Kind: Str, Help: "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"},
+	{Key: "ARGUS_CDN_SOURCE", Kind: Str, Help: "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"},
 	{Key: "DEMO_MODE", Kind: Bool, Default: "0", Help: "1: sample data, every write refused"},
 	{Key: "DEMO_PASSWORD", Kind: Str, Secret: true, Help: "the demo users' throwaway password"},
 	{Key: "DEMO_VIEWER", Kind: Str, Default: "demo.viewer"},
@@ -504,7 +507,7 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
 	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS",
 	"ARGUS_MODULES", "ARGUS_GOOGLEBOT_SITEMAP", "ARGUS_GOOGLEBOT_INTERVAL", "ARGUS_GOOGLEBOT_HOST_LABEL", "ARGUS_GOOGLEBOT_LOKI_UID", "ARGUS_SEO_HOSTS",
-	"ARGUS_GSC_SITE", "ARGUS_SEO_BRAND", "ARGUS_GA_PROPERTY"}
+	"ARGUS_GSC_SITE", "ARGUS_SEO_BRAND", "ARGUS_GA_PROPERTY", "ARGUS_CDN_INDEX", "ARGUS_CDN_SOURCE"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {

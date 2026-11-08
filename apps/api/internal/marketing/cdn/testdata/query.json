@@ -1,0 +1,104 @@
+{
+"size": 0,
+"track_total_hits": true,
+"query": {
+"range": {
+"@timestamp": {
+"gte": 1761730000000,
+"lt": 1761730300000,
+"format": "epoch_millis"
+}
+}
+},
+"aggs": {
+"known": {
+"filter": {
+"term": {
+"is_known_bot.keyword": "Google"
+}
+}
+},
+"g": {
+"filter": {
+"bool": {
+"should": [
+{
+"wildcard": {
+"http_user_agent.keyword": {
+"value": "*Googlebot*"
+}
+}
+},
+{
+"term": {
+"is_known_bot.keyword": "Google"
+}
+}
+],
+"minimum_should_match": 1
+}
+},
+"aggs": {
+"ua": {
+"filter": {
+"wildcard": {
+"http_user_agent.keyword": {
+"value": "*Googlebot*"
+}
+}
+}
+},
+"ip": {
+"terms": {
+"field": "remote_addr.keyword",
+"size": 5000
+},
+"aggs": {
+"kb": {
+"terms": {
+"field": "is_known_bot.keyword",
+"size": 3,
+"missing": "-"
+}
+},
+"k": {
+"multi_terms": {
+"size": 200,
+"terms": [
+{
+"field": "request_host.keyword",
+"missing": "-"
+},
+{
+"field": "status.keyword",
+"missing": "-"
+},
+{
+"field": "fw_rule_name.keyword",
+"missing": "-"
+},
+{
+"field": "fw_rule_action.keyword",
+"missing": "-"
+},
+{
+"field": "fw_blocked.keyword",
+"missing": "-"
+},
+{
+"field": "upstream_status.keyword",
+"missing": "-"
+},
+{
+"field": "cache_status.keyword",
+"missing": "-"
+}
+]
+}
+}
+}
+}
+}
+}
+}
+}

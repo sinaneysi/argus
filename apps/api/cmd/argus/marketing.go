@@ -31,7 +31,7 @@ import (
 
 const marketingHelp = `usage: argus marketing googlebot collect|detect|sitemaps|seo [-file PATH]
        argus marketing googlebot backfill [-file PATH] FROM TO
-       argus marketing gsc|suggest|send [-file PATH]
+       argus marketing gsc|suggest|send|cdn [-file PATH]
 
 The jobs of the marketing module (the worker runs them when the module is on):
 collect   read the finished crawler log buckets of the last 2 hours from Loki (ARGUS_GOOGLEBOT_EDGES_FILE, through
@@ -44,10 +44,11 @@ gsc       read Search Console (the Google data source, property ARGUS_GSC_SITE):
           ARGUS_GSC_URLS_FILE, the sitemaps
 suggest   store today's SEO suggestions again (Search Console, and GA4 when ARGUS_GA_PROPERTY is set)
 send      post the newest suggestions to the notify room for the SEO page's Send requests
+cdn       save the counts of the CDN log index ARGUS_CDN_INDEX (the Elasticsearch data source ARGUS_CDN_SOURCE)
 `
 
 func runMarketing(args []string, stdout, stderr io.Writer) int {
-	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "send") && !isHelp(args) {
+	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "send" || args[0] == "cdn") && !isHelp(args) {
 		return runSearchJob(args, stdout, stderr)
 	}
 	if len(args) < 2 || isHelp(args) || args[0] != "googlebot" {
@@ -356,6 +357,8 @@ func runSearchJob(args []string, stdout, stderr io.Writer) int {
 		err = suggestRun(ctx, c, true, stdout)
 	case "send":
 		err = seoSendRun(ctx, c, stdout)
+	case "cdn":
+		err = cdnRun(ctx, c, stdout)
 	}
 	if err != nil {
 		fmt.Fprintln(stderr, "argus marketing:", sources.Mask(err.Error()))
