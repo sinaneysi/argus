@@ -172,6 +172,13 @@ var Fields = []Field{
 	{Key: "ARGUS_CERT_TIMEOUT", Kind: Int, Default: "10", Min: 1, Max: 120, Help: "seconds per TLS probe"},
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
 	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
+	// the host estate (argus estate; worker jobs inventory and vm-pulse): Prometheus through Settings -> Data sources
+	{Key: "ARGUS_PROM_SOURCES", Kind: List, Help: "name=url, ...: Prometheus base URLs for the inventory and VM state, besides the Grafana and Prometheus entries of Settings -> Data sources"},
+	{Key: "ARGUS_PROM_CA_FILE", Kind: Path, Help: "extra CA certificates for the Prometheus and Grafana sites of the inventory"},
+	{Key: "ARGUS_PROM_TIMEOUT", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "seconds per Prometheus query of the inventory and VM state"},
+	{Key: "ARGUS_INVENTORY_ENV_PREFIXES", Kind: List, Help: "env=address prefix, ...: the environment of a VM without an env label, by its address (first match wins), e.g. develop=10.0.9.,release=10.0."},
+	{Key: "ARGUS_VM_APP_UNITS", Kind: List, Default: "app-", Help: "name prefixes of the application systemd units (letters, digits, - and _)"},
+	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory and VM state read"},
 	// notifications (argus notify; every job that posts a notice): Matrix, else Telegram, else a webhook, else none
 	{Key: "ARGUS_INCIDENT_AUTORESOLVE_HOURS", Aliases: []string{"INCIDENT_AUTORESOLVE_HOURS"}, Kind: Int, Default: "6", Min: 1, Max: 720, Help: "an alert-backed incident resolves after this many hours with no matching alert firing"},
 	{Key: "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", Aliases: []string{"INCIDENT_CHAT_RESOLVE_HOURS"}, Kind: Int, Default: "24", Min: 1, Max: 720, Help: "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"},
