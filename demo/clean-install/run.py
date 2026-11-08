@@ -39,6 +39,9 @@ CONNECT = [
     {"type": "jira", "name": "main", "env": "shared", "purpose": "tracker", "url": STUB + "/jira", "credential": "fake-jira-token-0001"},
     {"type": "alertmanager", "name": "main", "env": "shared", "purpose": "alerts", "url": STUB + "/alertmanager"},
     {"type": "matrix", "name": "main", "env": "shared", "purpose": "notify", "url": STUB + "/matrix", "credential": "fake-matrix-token-0001"},
+    # the model of the api provider (ARGUS_MODEL_PROVIDER=api in compose.yml): the stub answers /v1/messages offline
+    {"type": "anthropic", "name": "main", "env": "shared", "purpose": "model", "url": STUB + "/anthropic",
+     "credential": "sk-ant-api03-" + "fake" * 8},
 ]
 # pages fed by those sources: each must show this stub value, else it is "broken" (an empty page that should not be)
 EXPECT = {

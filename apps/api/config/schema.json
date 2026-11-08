@@ -920,6 +920,42 @@
       "help": "egress country sources, in order (https)"
     },
     {
+      "key": "ARGUS_MODEL_PROVIDER",
+      "type": "str",
+      "default": "cli",
+      "help": "cli: the Claude CLI with the token of Settings -> Claude; api: the Anthropic Messages API with the key of a Settings -> Data sources entry of type anthropic"
+    },
+    {
+      "key": "ARGUS_MODEL",
+      "type": "str",
+      "help": "the model of every call (empty: the CLI's own default; the api provider: claude-opus-5-5)"
+    },
+    {
+      "key": "ARGUS_MODEL_API_URL",
+      "type": "str",
+      "help": "the Messages API address when no anthropic data source gives one (empty: https://api.anthropic.com)"
+    },
+    {
+      "key": "ARGUS_MODEL_MAX_BUDGET_USD",
+      "type": "str",
+      "default": "5",
+      "help": "one call never spends more than this (USD; the CLI's --max-budget-usd)"
+    },
+    {
+      "key": "ARGUS_MODEL_MAX_MINUTES",
+      "type": "int",
+      "default": "65",
+      "min": 1,
+      "max": 240,
+      "help": "one call never runs longer than this"
+    },
+    {
+      "key": "ARGUS_MODEL_LOG_DIR",
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/model-runs",
+      "help": "the final result of each model call as JSON (redacted), one file per call"
+    },
+    {
       "key": "ARGUS_KUBE_DIR",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/kube",

@@ -7,6 +7,7 @@ package sources
 import (
 	"encoding/base64"
 	"fmt"
+	"regexp"
 )
 
 // AllowHTTP lets plain http:// addresses through CleanURL (ARGUS_SOURCES_ALLOW_HTTP=1: test installations with fake
@@ -97,6 +98,20 @@ func checkMatrix(base, cred string, _ *Entry) (Check, error) {
 	return result("ok", "works for notices", str(m["user_id"]), nil, nil), nil
 }
 
+// anthropicKeyRe is the shape of an Anthropic API key.
+var anthropicKeyRe = regexp.MustCompile(`^sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{20,300}$`)
+
+// checkAnthropic checks the key's shape only. It never calls the API: a call from a blocked egress country can get
+// the account disabled, and only the model runtime applies the egress guard (argus claude run tests a real call).
+func checkAnthropic(base, cred string, _ *Entry) (Check, error) {
+	if !anthropicKeyRe.MatchString(cred) {
+		return result("failed", "this is not an Anthropic API key (sk-ant-api..); a Claude subscription token goes to Settings -> Claude", "", nil, nil), nil
+	}
+	return result("ok", "the key has the right shape; it is used when ARGUS_MODEL_PROVIDER=api (not called here: the egress guard decides each call; argus claude run makes one)",
+		"key …"+cred[len(cred)-4:], nil, map[string]any{"api": "messages"}), nil
+}
+
 func init() {
+	checks["anthropic"] = checkAnthropic
 	checks["alertmanager"], checks["jira"], checks["matrix"] = checkAlertmanager, checkJira, checkMatrix
 }

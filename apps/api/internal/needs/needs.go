@@ -41,7 +41,7 @@ var Kinds = []Kind{
 	{Key: "elasticsearch", Label: "Elasticsearch / OpenSearch", Settings: "/admin/sources", Registry: "elasticsearch"},
 	{Key: "sentry", Label: "Sentry", Settings: "/admin/sources", Registry: "sentry"},
 	{Key: "matrix", Label: "Matrix", Settings: "/admin/sources", Keys: []string{"MATRIX_HOMESERVER"}, Registry: "matrix", Hint: "or set MATRIX_HOMESERVER"},
-	{Key: "claude", Label: "Claude", Settings: "/admin/claude"},
+	{Key: "claude", Label: "Claude", Settings: "/admin/claude", Registry: "anthropic"},
 	{Key: "teleport", Label: "Teleport", Settings: "/admin/sources", Keys: []string{"ARGUS_TELEPORT_PROXY"}, Registry: "teleport", Hint: "or set ARGUS_TELEPORT_PROXY"},
 }
 

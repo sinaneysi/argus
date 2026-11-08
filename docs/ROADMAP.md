@@ -137,6 +137,11 @@ root's `argus settings apply`). **REQUIRED for every model run** that P3 and P4 
 ideas, chat): build the prompt with `style.Prepend(prompt)` (`style.Current()` is the custom text, else the default).
 Tasks the board creates from incidents, RCA and CI/CD findings already start with a goal line, facts and checkbox steps.
 
+Model runtime (2026-11-08, P3/P4): `internal/model` with the providers `cli` (the Claude CLI in the `argus` image,
+the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MODEL_PROVIDER`; every call through
+`style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
+Every ported model job calls it (ADR-0021 "As built (P3/P4)").
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
 ## Next

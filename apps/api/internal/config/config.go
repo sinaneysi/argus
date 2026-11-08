@@ -209,6 +209,13 @@ var Fields = []Field{
 	{Key: "ARGUS_CLAUDE_EGRESS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/claude-egress.json", Help: "egress guard settings (written by root from Settings -> Claude)"},
 	{Key: "ARGUS_CLAUDE_EGRESS_CHECK", Kind: Path, Default: "${ARGUS_STATE_DIR}/claude-egress-check.json", Help: "the egress guard's last check (shown on Settings -> Claude)"},
 	{Key: "ARGUS_CLAUDE_EGRESS_URLS", Kind: List, Default: "https://www.cloudflare.com/cdn-cgi/trace,https://api.country.is/", Help: "egress country sources, in order (https)"},
+	// the model runtime (internal/model): every model call of the worker's jobs
+	{Key: "ARGUS_MODEL_PROVIDER", Kind: Str, Default: "cli", Help: "cli: the Claude CLI with the token of Settings -> Claude; api: the Anthropic Messages API with the key of a Settings -> Data sources entry of type anthropic"},
+	{Key: "ARGUS_MODEL", Kind: Str, Help: "the model of every call (empty: the CLI's own default; the api provider: claude-opus-5-5)"},
+	{Key: "ARGUS_MODEL_API_URL", Kind: Str, Help: "the Messages API address when no anthropic data source gives one (empty: https://api.anthropic.com)"},
+	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
+	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
+	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},
