@@ -100,6 +100,14 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	// Outline: the Settings -> Integrations requests within seconds (each run publishes in publish mode), and the
+	// publish once a day; preview mode sends nothing
+	jobs = append(jobs, worker.Job{Name: "outline-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "outline-requests"), func() error {
+		return outlineRun(c, "requests", io.Discard)
+	})})
+	jobs = append(jobs, worker.Job{Name: "outline-publish", Every: 24 * time.Hour, Run: func(context.Context) error {
+		return outlineRun(c, "publish", io.Discard)
+	}})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
