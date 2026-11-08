@@ -103,6 +103,22 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
    a reason): GitLab issue tasks, per-user Jira connections, the Jira agile board mirror and its moves, the fixer
    column, approval proposals, lessons, the task agent and its chat, Matrix requests, the board notices job.
 
+## Self-contained deployment (ADR-0021, operator decision 2026-11-08)
+
+Goal: the images work at another company after the data sources are set; nothing on the host is needed. Phases:
+
+| phase | what | state |
+|---|---|---|
+| **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
+| P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | planned |
+| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake) | planned |
+| P4 | the model runner inside the worker (no host user) | planned |
+| P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
+| P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | planned |
+
+Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
+
 ## Next
 
 1. More collectors: credential expiry, capacity, inventory; S3 listing for backups.
