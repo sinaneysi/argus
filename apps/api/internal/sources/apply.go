@@ -315,6 +315,9 @@ func (o *Options) envFile() map[string]string {
 	return ParseEnv(readSecretFile(o.Legacy.EnvFile, 256*1024))
 }
 
+// Credential is the entry's credential (for the worker's jobs that read through a source; never logged).
+func (o *Options) Credential(e *Entry) string { return o.credential(e) }
+
 // credential reads the entry's credential where it lives (registry file, or the legacy location it points at).
 func (o *Options) credential(e *Entry) string {
 	kind, ref, _ := strings.Cut(e.CredRef, ":")
@@ -338,7 +341,7 @@ func (o *Options) RunCheck(e *Entry) Check {
 		return result("unchecked", "this type is checked on its own page", "", nil, nil)
 	}
 	cred := o.credential(e)
-	if cred == "" {
+	if cred == "" && !Types[e.Type].NoCred {
 		d := "no credential stored"
 		if e.CredWhere != "" {
 			d += " (" + e.CredWhere + ")"
@@ -762,7 +765,7 @@ func (o *Options) handle(req map[string]any, usr string, sources map[string]*Ent
 	if len(cred) > MaxCred || strings.IndexFunc(cred, func(r rune) bool { return r < 32 }) >= 0 {
 		return "", refusal("the credential is too long or has line breaks")
 	}
-	if cred == "" && cur == nil {
+	if cred == "" && cur == nil && !t.NoCred {
 		return "", refusal("paste the token or key")
 	}
 	e := &Entry{}

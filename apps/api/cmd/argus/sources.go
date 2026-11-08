@@ -64,6 +64,7 @@ func sourcesOptions(c *config.Config) sources.Options {
 			graf[k] = x.Raw
 		}
 	}
+	sources.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"
 	return sources.Options{ReqDir: filepath.Join(c.SettingsIn, "sources"), OutDir: c.SettingsOut, AuthDB: c.AuthDB,
 		Dir: v("ARGUS_SOURCES_DIR"), AgentGroup: v("ARGUS_SOURCES_AGENT_GROUP"), AppUID: 65534,
 		Legacy: sources.Legacy{EtcDir: c.EtcDir, SecretsDir: c.SecretsDir, EnvFile: v("ARGUS_SOURCES_LEGACY_ENV"),

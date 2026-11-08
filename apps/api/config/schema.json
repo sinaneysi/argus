@@ -882,6 +882,12 @@
       "help": "data sources: registry.json (no secret) and <type>/<name>.cred (0600; 0640 root:<agent group> only while enabled for the agent)"
     },
     {
+      "key": "ARGUS_SOURCES_ALLOW_HTTP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: data sources may use plain http:// (test installations with fake services only)"
+    },
+    {
       "key": "ARGUS_SOURCES_AGENT_GROUP",
       "type": "str",
       "default": "argus",

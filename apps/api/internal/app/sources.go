@@ -29,6 +29,7 @@ type srcType struct {
 	Purposes          []string
 	Username          bool   // Elasticsearch: basic auth (username + password) or an API key
 	Managed           string // added on another page (Kubernetes)
+	NoCred            bool   // the credential is optional (an Alertmanager without a login)
 	CredLabel         string
 	CredHint          string
 }
@@ -56,12 +57,23 @@ var (
 		{Key: "sentry", Label: "Sentry", Blurb: "Errors and releases per project.",
 			Purposes: []string{"agent"}, CredLabel: "Auth token",
 			CredHint: "An internal integration or user auth token with read scopes only (project:read, org:read, event:read)."},
+		{Key: "alertmanager", Label: "Alertmanager / Prometheus", Blurb: "Firing alerts for the Alerts and Incidents pages.",
+			Purposes: []string{"alerts"}, NoCred: true, CredLabel: "Bearer token (optional)",
+			CredHint: "Only when the server asks for a login. Argus reads /api/v2/alerts (Alertmanager) or /api/v1/alerts (Prometheus)."},
+		{Key: "jira", Label: "Jira", Blurb: "The board's issue tracker: tasks become Jira issues.",
+			Purposes: []string{"tracker"}, Username: true, CredLabel: "API token or password",
+			CredHint: "With a username: that user's API token or password (basic auth). Without: a personal access token."},
+		{Key: "matrix", Label: "Matrix", Blurb: "Chat: notices to one room, and the conversations Argus reads.",
+			Purposes: []string{"notify"}, CredLabel: "Access token",
+			CredHint: "The access token of the bot account (in the chat client's settings)."},
 	}
 	// srcComing are the types ADR-0017 plans for P2; listed so nobody looks for them in vain.
-	srcComing       = []string{"Prometheus and Loki (direct)", "Jira", "MinIO", "Splunk", "Matrix"}
+	srcComing       = []string{"Loki (direct)", "MinIO", "Splunk"}
 	srcPurposeWords = map[string][2]string{
 		"agent":   {"Agent reads", "The agent reads through it. Must be read-only."},
-		"tracker": {"Issue tracker", "The board's GitLab issues. Needs scope api: it changes issues."},
+		"tracker": {"Issue tracker", "The board's issues. Needs a login that changes issues (GitLab: scope api)."},
+		"alerts":  {"Alerts", "Argus reads the firing alerts every minute."},
+		"notify":  {"Notices", "Argus sends notices to the configured room."},
 		"docs":    {"Publishes docs", "Argus writes service docs there. Needs a member login."},
 	}
 )
@@ -88,7 +100,7 @@ func srcCleanURL(raw string) (string, string) {
 		return "", "The address is too long or has spaces."
 	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Scheme != "https" {
+	if err != nil || (u.Scheme != "https" && !(u.Scheme == "http" && env("ARGUS_SOURCES_ALLOW_HTTP", "0") == "1")) {
 		return "", "The address must start with https://."
 	}
 	if u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || strings.Contains(raw, "?") || strings.Contains(raw, "#") {
@@ -179,7 +191,7 @@ func SourcesPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return rej("username", "A username uses letters, digits and . _ @ - only.")
 	}
 	cred := strings.TrimSpace(form.Get("credential"))
-	if cred == "" && mode == "add" {
+	if cred == "" && mode == "add" && !t.NoCred {
 		return rej("credential", "Paste the "+strings.ToLower(t.CredLabel)+".")
 	}
 	if len(cred) > srcMaxCred || strings.ContainsAny(cred, "\r\n\t\x00") {

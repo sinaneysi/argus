@@ -5,6 +5,7 @@ package app
 // and the last 4 characters, and only the fields of srcFactsNow reach this answer.
 
 import (
+	"github.com/sinaneysi/argus/internal/needs"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
@@ -34,7 +35,7 @@ func apiSrcForm(t srcType, mode string, cur srcEntry) map[string]any {
 	for _, p := range t.Purposes {
 		purposes = append(purposes, map[string]string{"value": p, "label": srcPurposeWords[p][0], "sub": srcPurposeWords[p][1]})
 	}
-	return map[string]any{"type": t.Key, "label": t.Label, "blurb": t.Blurb, "mode": mode, "credLabel": t.CredLabel, "credHint": t.CredHint, "username": t.Username,
+	return map[string]any{"type": t.Key, "label": t.Label, "blurb": t.Blurb, "mode": mode, "credLabel": t.CredLabel, "credHint": t.CredHint, "username": t.Username, "credOptional": t.NoCred,
 		"purposes": purposes, "override": In("agent", t.Purposes...), "name": cur.Name, "env": cur.Env, "url": cur.URL, "user": cur.Username,
 		"purpose": py.OrS(cur.Purpose, t.Purposes[0]), "last4": cur.Last4, "overrideOn": cur.OverrideReq}
 }
@@ -62,6 +63,7 @@ func apiAdminSourcesJSON(qs py.QS, sess *Session) (any, *apiErr) {
 	}
 	out := map[string]any{"host": ARGUS_HOSTNAME, "notices": notices, "refresh": apiRefresh(c), "busy": busy, "panels": panels, "count": len(f.Entries),
 		"status": map[string]any{"kind": v.Kind, "badge": v.Badge, "head": Text(v.Head), "detail": apiClaudeText(v.Detail), "act": v.Act, "href": v.Href, "facts": srcFactList(f)}}
+	out["kinds"] = apiSrcKinds(f)
 	mode, t, cur := srcBlockOf(f, qs, busy)
 	out["block"] = mode
 	switch mode {
@@ -79,4 +81,58 @@ func apiAdminSourcesJSON(qs py.QS, sess *Session) (any, *apiErr) {
 		out["form"] = apiSrcForm(t, mode, cur)
 	}
 	return out, nil
+}
+
+// apiSrcKinds is every data-source kind (ADR-0021 D5) with its state: "ok" (a source tested OK), "failing" (sources,
+// none works: the first one's reason), "config" (set in the configuration or on its own page), "missing"; and the
+// pages it enables.
+func apiSrcKinds(f srcFacts) []map[string]any {
+	st := needsNow()
+	out := []map[string]any{}
+	for _, k := range needs.Kinds {
+		state, detail, n := "missing", "Not connected.", 0
+		for _, e := range f.Entries {
+			if k.Registry == "" || e.Type != k.Registry {
+				continue
+			}
+			n++
+			if e.Status == "readonly" || e.Status == "ok" {
+				state, detail = "ok", "Tested OK."
+			} else if state != "ok" {
+				state, detail = "failing", py.OrS(e.Detail, "Not checked yet.")
+			}
+		}
+		if n == 0 && st[k.Key] {
+			state, detail = "config", If(k.Settings == "/admin/sources", "Set in the configuration.", "Connected on its own settings page.")
+		}
+		pages := []map[string]string{}
+		seen := map[string]bool{}
+		for _, p := range needs.Pages {
+			if l := navLabel(p.Path); In(k.Key, p.AnyOf...) && l != "" && !seen[l] {
+				seen[l] = true
+				pages = append(pages, map[string]string{"label": l, "href": p.Path})
+			}
+		}
+		add := k.Settings
+		if t, ok := srcTypeOf(k.Registry); ok && t.Managed == "" && k.Settings == "/admin/sources" {
+			add = "/admin/sources?add=" + k.Registry + "#src-add"
+		} else if k.Settings == "/admin/sources" {
+			add = "" // no form yet: only the configuration sets it
+		}
+		out = append(out, map[string]any{"key": k.Key, "label": k.Label, "state": state, "detail": detail, "count": n,
+			"pages": pages, "add": add, "hint": k.Hint})
+	}
+	return out
+}
+
+// navLabel is the sidebar label of a page ("" when the sidebar has no link to it).
+func navLabel(href string) string {
+	for _, s := range SECTIONS {
+		for _, l := range s.Links {
+			if l.Href == href {
+				return l.Label
+			}
+		}
+	}
+	return ""
 }

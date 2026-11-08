@@ -63,6 +63,7 @@ type Type struct {
 	Purposes []string `json:"purposes"` // first = default
 	Username bool     `json:"username"` // basic auth (username + password) is possible
 	Managed  string   `json:"managed"`  // added and changed on another page
+	NoCred   bool     `json:"no_cred"`  // the credential is optional (an Alertmanager without a login)
 }
 
 // Types are the P1 types (the page lists P2 types as "coming").
@@ -73,6 +74,9 @@ var Types = map[string]Type{
 	"elasticsearch": {Label: "Elasticsearch / OpenSearch", Purposes: []string{"agent"}, Username: true},
 	"sentry":        {Label: "Sentry", Purposes: []string{"agent"}},
 	"kubernetes":    {Label: "Kubernetes", Purposes: []string{"agent"}, Managed: "/admin/kube"},
+	"alertmanager":  {Label: "Alertmanager / Prometheus", Purposes: []string{"alerts"}, NoCred: true},
+	"jira":          {Label: "Jira", Purposes: []string{"tracker"}, Username: true},
+	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
 }
 
 var (
@@ -168,7 +172,7 @@ func CleanURL(raw string) (string, error) {
 	if err != nil {
 		return "", refusal("the URL must start with https://")
 	}
-	if u.Scheme != "https" && !(testAllowLocal && u.Scheme == "http") {
+	if u.Scheme != "https" && !((testAllowLocal || AllowHTTP) && u.Scheme == "http") {
 		return "", refusal("the URL must start with https://")
 	}
 	if u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.ForceQuery || strings.ContainsAny(raw, "?#") {
@@ -788,6 +792,8 @@ func AuthHeaders(e *Entry, cred string) map[string]string {
 		return map[string]string{"PRIVATE-TOKEN": cred}
 	case "elasticsearch":
 		return esHeaders(e, cred)
+	case "jira":
+		return jiraHeaders(e, cred)
 	}
 	return map[string]string{"Authorization": "Bearer " + cred}
 }

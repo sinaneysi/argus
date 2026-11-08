@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"os"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/migrate"
+	"github.com/sinaneysi/argus/internal/worker"
+
+	_ "modernc.org/sqlite"
 )
 
 // A save of Settings -> General lands in the volume and the worker's job applies it: no root, no systemd.
@@ -85,4 +89,50 @@ func TestVolumeJobNotConfigured(t *testing.T) {
 		return
 	}
 	t.Fatal("no collect-alerts job")
+}
+
+// A Data sources save lands in the volume, the worker applies it, and the alerts collector reads through the entry
+// (ADR-0021 D4, D5): no root unit, no ARGUS_ALERTS_SOURCES.
+func TestVolumeWorkerAppliesSources(t *testing.T) {
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+"\nARGUS_SOURCES_ALLOW_HTTP=1\n"), 0o600)
+	c, err := config.Load(config.Options{File: env, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate.EnsureDirs(c); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := migrate.All(context.Background(), c, func(string, ...any) {}); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", c.AuthDB)
+	if _, err := db.Exec("INSERT INTO users (username, hash, role, disabled) VALUES ('admin', 'x', 'admin', 0)"); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	req, _ := json.Marshal(map[string]any{"user": "admin", "kind": "save", "mode": "add", "type": "alertmanager", "name": "main",
+		"env": "shared", "url": "http://am.example.invalid", "purpose": "alerts"})
+	os.WriteFile(filepath.Join(c.SettingsIn, "sources", "admin-0123456789abcdef.json"), req, 0o600)
+	var jobs = map[string]worker.Job{}
+	for _, j := range volumeJobs(c, map[string]time.Duration{"alerts": time.Minute}, io.Discard) {
+		jobs[j.Name] = j
+	}
+	if ok, _ := jobs["collect-alerts"].Ready(); ok {
+		t.Fatal("ready before the source exists")
+	}
+	if err := jobs["sources-requests"].Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if left, _ := os.ReadDir(filepath.Join(c.SettingsIn, "sources")); len(left) != 0 {
+		t.Fatal("request not consumed")
+	}
+	if ok, why := jobs["collect-alerts"].Ready(); !ok {
+		t.Fatalf("not ready with the source saved: %s", why)
+	}
+	srcs := registryAlertSources(c, nil)
+	if len(srcs) != 1 || srcs[0].URL != "http://am.example.invalid/api/v2/alerts" || srcs[0].Token != "" {
+		t.Fatalf("alert sources: %+v", srcs)
+	}
 }

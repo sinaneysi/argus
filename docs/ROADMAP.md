@@ -124,7 +124,8 @@ layout (`internal/worker`): the collectors, Settings -> General (`settingsapply`
 features (`internal/needs`): "Connect X to enable this page" on pages, `{"notConfigured"}` on API routes, and worker
 jobs that name the missing source. Still open in P0: secrets
 encrypted with `ARGUS_MASTER_KEY` (the Claude env file is a 0600 file in the volume today), the other request kinds
-(Kubernetes, data sources, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, Settings → Data sources for the remaining kinds. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+(Kubernetes, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, the Jira, Outline and GitLab-issues consumers of saved data sources (Settings → Data sources requests are applied by
+the worker, and the alerts collector reads its Alertmanager / Prometheus entries). The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.

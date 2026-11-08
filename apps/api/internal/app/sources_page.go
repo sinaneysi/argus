@@ -101,8 +101,8 @@ func srcBadge(e srcEntry) string {
 
 func srcVerdictOf(f srcFacts) claudeVerdict {
 	if !f.Known {
-		return claudeVerdict{"unknown", "Not checked", "Root has not reported on data sources yet.",
-			"The list appears within minutes of the next deploy: root brings in GitLab, Grafana, Outline and the Kubernetes clusters Argus already uses.", "", ""}
+		return claudeVerdict{"unknown", "Not checked", "Argus has not reported on data sources yet.",
+			"The list appears within minutes of the next deploy: Argus brings in GitLab, Grafana, Outline and the Kubernetes clusters Argus already uses.", "", ""}
 	}
 	if len(f.Entries) == 0 {
 		return claudeVerdict{"unknown", "None yet", "No data source yet.",
@@ -144,10 +144,10 @@ func srcVerdictOf(f srcFacts) claudeVerdict {
 	}
 	if unchecked > 0 {
 		return claudeVerdict{"unknown", "Not checked", I2S(int64(unchecked)) + " of " + I2S(int64(n)) + If(n == 1, " data source is", " data sources are") + " not checked yet.",
-			"Root checks a new source within seconds and all of them every 6 hours.", "", ""}
+			"Argus checks a new source within seconds and all of them every 6 hours.", "", ""}
 	}
 	return claudeVerdict{"ok", "Working", "Argus reads " + I2S(int64(n)) + If(n == 1, " data source", " data sources") + "; every agent login is read-only.",
-		"Each login was checked at its last check. Root checks them all again every 6 hours.", "", ""}
+		"Each login was checked at its last check. Argus checks them all again every 6 hours.", "", ""}
 }
 
 // srcFactList is the facts under the status block, in plain text.
@@ -241,12 +241,12 @@ func sourcesResult(c *Ctx, rid, user string) string {
 		return `<div class="cl-res">` + StateBox(StBusy, title, detail, `<a href="/admin/sources">Pause live updates</a>`) + `</div>`
 	}
 	if boardExists(filepath.Join(SET_IN, "sources", user+"-"+rid+".json")) {
-		return busy("Checking on "+ARGUS_HOSTNAME+"…", "Root is storing it and asking the source what this login may do. "+
+		return busy("Checking on "+ARGUS_HOSTNAME+"…", "Argus is storing it and asking the source what this login may do. "+
 			"You can leave this page; the result shows here and the page refreshes itself.")
 	}
 	r := py.AsMap(py.AsMap(SourcesStatus().Get("results")).Get(rid))
 	if r == nil || r.Get("user") != user {
-		return busy("Sent. Waiting for root to pick it up.", "The result shows here. The page refreshes itself.")
+		return busy("Sent. Waiting for Argus to pick it up.", "The result shows here. The page refreshes itself.")
 	}
 	kind, title, detail := srcResultWords(r.S("result"))
 	box := ""
@@ -268,7 +268,7 @@ func srcResultWords(res string) (kind, title, detail string) {
 	}
 	if strings.HasPrefix(res, "removed ") {
 		n := strings.TrimSuffix(strings.SplitN(strings.TrimPrefix(res, "removed "), ";", 2)[0], ".")
-		return "ok", n + " removed. Argus no longer reads it.", "Root kept a backup of the credential."
+		return "ok", n + " removed. Argus no longer reads it.", "Argus kept a backup of the credential."
 	}
 	if m := reSrcChecked.FindStringSubmatch(res); m != nil {
 		return "ok", "Checked " + m[1] + If(m[1] == "1", " data source.", " data sources."), "Each row below shows its result."

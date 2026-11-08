@@ -19,7 +19,7 @@ const sub = <p className="psub">Every system Argus reads, as many of each type a
 type Row = AdminSources["panels"][number]["rows"][number];
 type Form = NonNullable<AdminSources["form"]>;
 
-function Source({ r, csrf, host }: { r: Row; csrf: string; host: string }) {
+function Source({ r, csrf }: { r: Row; csrf: string }) {
   const ids = { type: r.type, name: r.name };
   return (
     <li className="src-row" id={`src-${r.type}-${r.name}`}>
@@ -36,7 +36,7 @@ function Source({ r, csrf, host }: { r: Row; csrf: string; host: string }) {
         {r.operator ? <span className="muted small">Set by the operator</span> : null}
         {r.editable ? <><a data-slot="button" className={buttonVariants({ variant: "outline", size: "sm" })} href={`${PAGE}?edit=${encodeURIComponent(r.key)}#src-add`} aria-label={`Edit ${r.name}`}>Edit…</a>
           <details className="fold"><summary aria-label={`Remove ${r.name}`}>Remove…</summary><form action={settingsGo} className="u-confirm"><Hidden csrf={csrf} _to="sources" action="remove" {...ids} />
-            <Button variant="destructive" size="sm">Remove {r.name}</Button><span className="muted small">Argus stops reading {r.key} at once. Root keeps a backup of the credential in the backup folder on {host}.</span></form></details></> : null}
+            <Button variant="destructive" size="sm">Remove {r.name}</Button><span className="muted small">Argus stops reading {r.key} at once. Argus keeps a backup of the credential.</span></form></details></> : null}
       </div>
     </li>
   );
@@ -49,10 +49,10 @@ function fields(f: Form, host: string): SetField[] {
   out.push({ name: "env", label: "Environment", type: "radio", value: f.env, options: [{ value: "develop", label: "Develop", sub: "Stage and test." }, { value: "pre-release", label: "Pre-release", sub: "Pre-production." },
     { value: "release", label: "Release", sub: "Production. Read-only, no override." }, { value: "shared", label: "Shared", sub: "One system for every environment, such as GitLab. No override." }] });
   if (f.purposes.length > 1) out.push({ name: "purpose", label: "Used for", type: "radio", value: f.purpose, options: f.purposes });
-  out.push({ name: "url", label: "Address", type: "url", value: f.url, maxLength: 300, required: true, placeholder: "https://", hint: `https only. Root calls it from ${host}.` });
+  out.push({ name: "url", label: "Address", type: "url", value: f.url, maxLength: 300, required: true, placeholder: "https://", hint: `https only. Argus calls it from ${host}.` });
   if (f.username) out.push({ name: "username", label: "Username (optional)", value: f.user, maxLength: 64, hint: "Empty: the field below is an API key." });
-  out.push({ name: "credential", label: f.credLabel, type: "password", maxLength: 8192, required: !edit,
-    hint: edit ? `Leave empty to keep the stored one${f.last4 ? ` (ends …${f.last4})` : ""}. ${f.credHint}` : `${f.credHint} Sent once, to root only; never shown again or logged.` });
+  out.push({ name: "credential", label: f.credLabel, type: "password", maxLength: 8192, required: !edit && !f.credOptional,
+    hint: edit ? `Leave empty to keep the stored one${f.last4 ? ` (ends …${f.last4})` : ""}. ${f.credHint}` : `${f.credHint} Sent once; never shown again or logged.` });
   if (f.override) out.push({ name: "override", label: "Let the agent use it even if it can write", type: "check", on: f.overrideOn, fold: "Advanced", hint: "Develop and pre-release only; release and shared are always refused. Leave this off: the agent is meant to have a read-only login." });
   return out;
 }
@@ -66,8 +66,30 @@ function AddForm({ f, csrf, host }: { f: Form; csrf: string; host: string }) {
   return (
     <PlainCard as="section" id="src-add" aria-labelledby="src-add-h">
       <div className="card-h"><h2 id="src-add-h">{edit ? `Edit ${f.label} ${f.name}` : `Add ${f.label}`}</h2><a className="muted small" href={edit ? PAGE : `${PAGE}?add=1#src-add`}>{edit ? "Cancel" : "Choose another type"}</a></div>
-      <p className="set-note">{f.blurb} Root stores the credential and checks the login before the agent may use it.</p>
-      <SetForm to="sources" page={here} csrf={csrf} form="src" hidden={hidden} fields={fields(f, host)} submit="Save and check" stack note="Root stores and checks it within seconds." />
+      <p className="set-note">{f.blurb} Argus stores the credential and checks the login before anything uses it.</p>
+      <SetForm to="sources" page={here} csrf={csrf} form="src" hidden={hidden} fields={fields(f, host)} submit="Save and check" stack note="Argus stores and checks it within seconds." />
+    </PlainCard>
+  );
+}
+
+const KIND_PILL: Record<Kind["state"], [string, string]> = { ok: ["ok", "Tested OK"], failing: ["fail", "Failing"], config: ["neutral", "Configured"], missing: ["neutral", "Not connected"] };
+type Kind = AdminSources["kinds"][number];
+
+/** Every kind of data source, whether it is connected and what it enables (ADR-0021 D5). */
+function Kinds({ kinds }: { kinds: Kind[] }) {
+  return (
+    <PlainCard as="section" id="src-kinds" aria-labelledby="src-kinds-h">
+      <div className="card-h"><h2 id="src-kinds-h">What Argus can connect to</h2></div>
+      <ul className="src-list">{kinds.map((k) => (
+        <li key={k.key} className="src-row" id={`kind-${k.key}`}>
+          <div className="src-main">
+            <div className="src-t"><Pill tone={tone(KIND_PILL[k.state][0])}>{KIND_PILL[k.state][1]}</Pill><b>{k.label}</b>{k.count ? <span className="ncount">{k.count}</span> : null}</div>
+            <p className="muted small">{k.state === "missing" && k.hint ? `${k.detail} Connect it here, ${k.hint}.` : k.detail}</p>
+            {k.pages.length ? <p className="muted small">Enables {k.pages.map((p, i) => <span key={p.href}>{i ? ", " : ""}<a href={p.href}>{p.label}</a></span>)}.</p> : null}
+          </div>
+          {k.add && k.state !== "ok" ? <div className="u-acts"><a data-slot="button" className={buttonVariants({ variant: "outline", size: "sm" })} href={k.add} aria-label={`Connect ${k.label}`}>Connect…</a></div> : null}
+        </li>
+      ))}</ul>
     </PlainCard>
   );
 }
@@ -96,11 +118,12 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
             <p className="set-note">Coming next: {d.coming?.join(", ")}.</p></PlainCard>
         ) : null}
         {d.form ? <AddForm f={d.form} csrf={csrf} host={d.host} /> : null}
+        {d.kinds?.length ? <Kinds kinds={d.kinds} /> : null}
         {d.panels.map((p) => (
           <PlainCard as="section" key={p.key} id={`src-t-${p.key}`} aria-labelledby={`src-t-${p.key}-h`}>
             <div className="card-h"><h2 id={`src-t-${p.key}-h`}>{p.label} <span className="ncount">{p.rows.length}</span></h2>
               {p.managed ? <a className="muted small" href={p.managed}>Manage in Settings → {p.label}</a> : <a className="muted small" href={`${PAGE}?add=${p.key}#src-add`}>Add {p.label}</a>}</div>
-            <ul className="src-list">{p.rows.map((x) => <Source key={x.key} r={x} csrf={csrf} host={d.host} />)}</ul>
+            <ul className="src-list">{p.rows.map((x) => <Source key={x.key} r={x} csrf={csrf} />)}</ul>
           </PlainCard>
         ))}
       </div>
