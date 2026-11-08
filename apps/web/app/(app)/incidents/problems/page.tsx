@@ -6,10 +6,13 @@ import { Card, TitledCard } from "@/components/ui/card";
 import { full } from "@/lib/format";
 import { apiGet } from "@/lib/server";
 import type { Findings } from "@/lib/types";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Findings" };
 
 export default async function FindingsPage() {
+  const nc = await notConfigured("/incidents/problems", "Findings");
+  if (nc) return nc;
   const r = await apiGet<Findings>("/api/v1/incidents/findings");
   if (r.status !== 200) throw new Error(`/api/v1/incidents/findings answered ${r.status}`);
   const d = r.data;

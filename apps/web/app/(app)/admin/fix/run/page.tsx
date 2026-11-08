@@ -11,10 +11,13 @@ import { full } from "@/lib/format";
 import { apiGet } from "@/lib/server";
 import type { FixRun } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Fix run" };
 
 export default async function FixRunPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/admin/fix/run", "Fix run");
+  if (nc) return nc;
   const r = await apiGet<FixRun>("/api/v1/fix/run" + qs(await pick(searchParams, ["id"])));
   if (r.status === 403) return <><header className="phead"><div><h1>Fix run</h1><HelpQ p="/admin/fix" /></div></header><AdminsOnly /></>;
   if (r.status === 404) notFound();

@@ -91,6 +91,16 @@ one enables. A page whose source is missing shows a "Connect X to enable" state 
 pattern (DESIGN.md §10): never an error and never a blank page. The API answers such a route with HTTP 200 and
 `{"notConfigured": {"sources": [...]}}`.
 
+  As built (P0): `internal/needs` holds the kinds (`gitlab`, `jira`, `alertmanager` (Alertmanager or Prometheus),
+  `grafana`, `kubernetes`, `outline`, `elasticsearch`, `sentry`, `matrix`, `claude`, `teleport`) and the needs of
+  pages (`needs.Pages`, by path prefix, the longest wins), API GET routes (`needs.APIs`) and worker jobs
+  (`needs.Jobs`); a need is satisfied by any one of its kinds. A kind is configured when Settings → Data sources holds
+  an entry of its type, when the configuration sets its key explicitly (automation), or, for Jira and Claude, when
+  their settings file holds the key (presence only; a value is never read back). `GET /api/v1/needs[?page=]` gives the
+  frontend each kind's state; a gated page calls `notConfigured(path, title)` (`components/NotConfigured.tsx`) first,
+  and a test keeps the page list and the frontend in step. The gate is active only in `ARGUS_LAYOUT=volume` outside
+  the demo: a legacy installation keeps its host jobs and host configuration, so its pages stay as they are.
+
 **D6. Optional modules.** A module groups pages, API routes, jobs and a sidebar group. `marketing` (search health,
 crawler traffic, search console, CDN) is the first one and is off by default. `ARGUS_MODULES` (comma-separated)
 switches modules on; an admin may switch a module on or off in Settings → General (stored in `auth.db`

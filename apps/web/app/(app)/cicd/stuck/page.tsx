@@ -5,10 +5,13 @@ import { Banners, Crumb, When } from "@/components/Section";
 import { apiGet, readFlash } from "@/lib/server";
 import type { CicdStuck } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Stuck pipelines" };
 
 export default async function StuckPage() {
+  const nc = await notConfigured("/cicd/stuck", "Stuck pipelines");
+  if (nc) return nc;
   const [r, flash] = await Promise.all([apiGet<CicdStuck>("/api/v1/cicd/stuck"), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/cicd/stuck answered ${r.status}`);
   const d = r.data;

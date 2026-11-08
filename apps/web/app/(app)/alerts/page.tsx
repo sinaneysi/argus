@@ -10,10 +10,13 @@ import type { Alerts } from "@/lib/types";
 import { Reload } from "@/components/Reload";
 import { buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Alerts" };
 
 export default async function AlertsPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/alerts", "Alerts");
+  if (nc) return nc;
   const params = await pick(searchParams, ["q", "state", "sev", "dc", "sort", "page"]);
   const r = await apiGet<Alerts>("/api/v1/alerts" + qs(params));
   if (r.status !== 200) throw new Error(`/api/v1/alerts answered ${r.status}`);

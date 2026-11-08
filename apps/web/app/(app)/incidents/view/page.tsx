@@ -12,6 +12,7 @@ import { full, plural } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Incident } from "@/lib/types";
 import { incidentAct, incidentDeep } from "../actions";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Incident" };
 
@@ -38,6 +39,8 @@ function Source({ s }: { s: Incident["source"] }) {
 }
 
 export default async function IncidentPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/incidents/view", "Incident");
+  if (nc) return nc;
   const params = await pick(searchParams, ["id", "sent", "preq", "pq"]);
   const [r, csrf, flash] = await Promise.all([apiGet<Incident>("/api/v1/incidents/item" + qs(params)), csrfToken(), readFlash()]);
   if (r.status === 404) notFound();

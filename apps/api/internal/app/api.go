@@ -52,6 +52,7 @@ type apiGetFn func(py.QS, *Session) (any, *apiErr)
 var apiGETs = map[string]apiGetFn{
 	"/api/v1/session":                    apiSessionJSON,
 	"/api/v1/nav":                        apiNavJSON,
+	"/api/v1/needs":                      apiNeedsJSON,
 	"/api/v1/status":                     apiStatusJSON,
 	"/api/v1/today":                      apiTodayJSON,
 	"/api/v1/review":                     apiReviewJSON,
@@ -243,6 +244,10 @@ func (h *reqCtx) apiGET(path string) {
 	}
 	sess := h.apiSession()
 	if sess == nil {
+		return
+	}
+	if nc := apiNotConfigured(path); nc != nil { // its data source is not connected (ADR-0021 D5)
+		h.apiJSON(200, nc)
 		return
 	}
 	v, e := fn(py.ParseQS(h.url.Query), sess)

@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/migrate"
@@ -61,4 +63,26 @@ func TestVolumeWorkerAppliesSettings(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+}
+
+// A job whose data source is not connected does not run and says which source to connect (ADR-0021 D3, D5).
+func TestVolumeJobNotConfigured(t *testing.T) {
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+"\n"), 0o600)
+	c, err := config.Load(config.Options{File: env, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, j := range volumeJobs(c, map[string]time.Duration{}, io.Discard) {
+		if j.Name != "collect-alerts" {
+			continue
+		}
+		ok, why := j.Ready()
+		if ok || !strings.Contains(why, "connect Alertmanager or Prometheus") || len(j.Sources) != 1 {
+			t.Fatalf("collect-alerts without a source: %v %q %v", ok, why, j.Sources)
+		}
+		return
+	}
+	t.Fatal("no collect-alerts job")
 }

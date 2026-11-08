@@ -120,10 +120,11 @@ Goal: the images work at another company after the data sources are set; nothing
 P0 built so far: ADR-0021 (PR #11); `internal/migrate`, `argus migrate`, `ARGUS_LAYOUT=volume`, `deploy/` (PR #12);
 the clean-install test and backlog `docs/CLEAN-INSTALL.md` (PR #13); `argus worker` as the scheduler in the volume
 layout (`internal/worker`): the collectors, Settings -> General (`settingsapply`) and Settings -> Claude requests
-(`claudetoken`) applied by the worker within 3 s, job states in `worker-status.json`. Still open in P0: secrets
+(`claudetoken`) applied by the worker within 3 s, job states in `worker-status.json`; the data-source registry of
+features (`internal/needs`): "Connect X to enable this page" on pages, `{"notConfigured"}` on API routes, and worker
+jobs that name the missing source. Still open in P0: secrets
 encrypted with `ARGUS_MASTER_KEY` (the Claude env file is a 0600 file in the volume today), the other request kinds
-(Kubernetes, data sources, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, the data-source
-registry with "Connect X" states. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+(Kubernetes, data sources, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, Settings → Data sources for the remaining kinds. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.

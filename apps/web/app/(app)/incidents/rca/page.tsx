@@ -6,10 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { qs } from "@/lib/api";
 import { apiGet } from "@/lib/server";
 import type { RcaFile } from "@/lib/types";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "RCA report" };
 
 export default async function MergedReport({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/incidents/rca", "RCA report");
+  if (nc) return nc;
   const r = await apiGet<RcaFile>("/api/v1/incidents/report" + qs(await pick(searchParams, ["f"])));
   if (r.status === 404) notFound();
   if (r.status !== 200) throw new Error(`/api/v1/incidents/report answered ${r.status}`);

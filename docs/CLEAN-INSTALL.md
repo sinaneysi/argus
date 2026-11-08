@@ -13,9 +13,9 @@ applies it (ADR-0021 D4).
 
 | kind | works | not-configured | broken |
 |---|---|---|---|
-| page | 59 | 0 | 0 |
-| api | 73 | 0 | 0 |
-| action | 61 | 0 | 0 |
+| page | 53 | 6 | 0 |
+| api | 68 | 6 | 0 |
+| action | 62 | 0 | 0 |
 
 ## Broken (the backlog)
 
@@ -26,3 +26,15 @@ applies it (ADR-0021 D4).
 
 | kind | item |
 |---|---|
+| page | `/admin/fix` |
+| page | `/admin/fix/review` |
+| page | `/admin/fix/run` |
+| page | `/incidents/rca` |
+| page | `/rca` |
+| page | `/rca/view` |
+| api | `GET /api/v1/fix` |
+| api | `GET /api/v1/fix/review` |
+| api | `GET /api/v1/fix/run` |
+| api | `GET /api/v1/incidents/report` |
+| api | `GET /api/v1/rca` |
+| api | `GET /api/v1/rca/item` |

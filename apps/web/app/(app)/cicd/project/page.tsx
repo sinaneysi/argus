@@ -9,10 +9,13 @@ import { qs } from "@/lib/api";
 import { apiGet, readFlash } from "@/lib/server";
 import type { CicdProject } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "CI/CD project" };
 
 export default async function ProjectPage({ searchParams }: { searchParams: Search }) {
+  const nc = await notConfigured("/cicd/project", "CI/CD project");
+  if (nc) return nc;
   const s = await searchParams;
   const [r, flash] = await Promise.all([apiGet<CicdProject>("/api/v1/cicd/project" + qs({ id: one(s.id) })), readFlash()]);
   if (r.status === 404) notFound();

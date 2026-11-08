@@ -5,10 +5,13 @@ import { Banners, Crumb, When } from "@/components/Section";
 import { apiGet, readFlash } from "@/lib/server";
 import type { CicdAudit } from "@/lib/types";
 import { PlainCard } from "@/components/ui/card";
+import { notConfigured } from "@/components/NotConfigured";
 
 export const metadata: Metadata = { title: "Branches and variables" };
 
 export default async function AuditPage() {
+  const nc = await notConfigured("/cicd/audit", "Branches and variables");
+  if (nc) return nc;
   const [r, flash] = await Promise.all([apiGet<CicdAudit>("/api/v1/cicd/audit"), readFlash()]);
   if (r.status !== 200) throw new Error(`/api/v1/cicd/audit answered ${r.status}`);
   const d = r.data;
