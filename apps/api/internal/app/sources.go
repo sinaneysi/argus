@@ -66,6 +66,9 @@ var (
 		{Key: "matrix", Label: "Matrix", Blurb: "Chat: notices to one room, and the conversations Argus reads.",
 			Purposes: []string{"notify"}, CredLabel: "Access token",
 			CredHint: "The access token of the bot account (in the chat client's settings)."},
+		{Key: "anthropic", Label: "Anthropic API", Blurb: "The model for planning, reports and chat when ARGUS_MODEL_PROVIDER=api.",
+			Purposes: []string{"model"}, CredLabel: "API key",
+			CredHint: "An API key from the Anthropic Console (sk-ant-api..). Address: https://api.anthropic.com. A Claude subscription token goes to Settings → Claude."},
 		{Key: "google", Label: "Google Search Console", Blurb: "Search clicks, index state and sitemaps for the SEO page (marketing module).",
 			Purposes: []string{"marketing"}, CredLabel: "Service-account key (JSON)",
 			CredHint: "Address https://www.googleapis.com. Paste the key file's JSON; add the key's e-mail to the property as a Restricted user. Read-only scopes only."},
@@ -78,6 +81,7 @@ var (
 		"alerts":    {"Alerts", "Argus reads the firing alerts every minute."},
 		"notify":    {"Notices", "Argus sends notices to the configured room."},
 		"docs":      {"Publishes docs", "Argus writes service docs there. Needs a member login."},
+		"model":     {"Model", "Argus's model calls use it (ARGUS_MODEL_PROVIDER=api)."},
 		"marketing": {"Marketing", "The marketing module reads search data with it. Read-only."},
 	}
 )

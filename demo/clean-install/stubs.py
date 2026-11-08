@@ -52,6 +52,13 @@ MATRIX = {
 }
 
 
+def model_answer(body):
+    """A Messages API answer (the api model provider): a fixed, synthetic text; no model is called."""
+    return {"type": "message", "role": "assistant", "model": "stub", "stop_reason": "end_turn",
+            "content": [{"type": "text", "text": "OK stub model answer"}],
+            "usage": {"input_tokens": len(body) // 4, "output_tokens": 5}}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "stubs/1"
 
@@ -85,10 +92,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0)
-        self.rfile.read(min(n, 1 << 20))
+        body = self.rfile.read(min(n, 1 << 20))
         path = self.path.split("?", 1)[0]
         if path.startswith("/jira/rest/api/2/issue"):
             return self.send(201, {"id": "10001", "key": "OPS-2"})
+        if path == "/anthropic/v1/messages":
+            return self.send(200, model_answer(body))
         return self.send(200, {"ok": True})
 
     do_PUT = do_POST

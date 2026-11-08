@@ -9,6 +9,7 @@ services:
       ARGUS_TRUSTED_PROXIES: "127.0.0.1,::1,172.30.241.10"
       ARGUS_SOURCES_ALLOW_HTTP: "1"   # the stubs speak plain http; the sources themselves are connected in Settings
       MATRIX_NOTIFY_ROOM: "!notices:chat.example.test"
+      ARGUS_MODEL_PROVIDER: "api"     # the model calls go to the stub's /anthropic/v1/messages (no network, no CLI login)
     depends_on:
       stubs: { condition: service_healthy }
   worker:

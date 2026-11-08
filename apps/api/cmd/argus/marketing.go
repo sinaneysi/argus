@@ -7,7 +7,7 @@ package main
 //	googlebot-watch     every minute: the crawler log buckets from Loki (a Grafana data source) into googlebot.db,
 //	                    then the detector (notices to the notify room)
 //	googlebot-sitemaps  once a day: the site's sitemaps into googlebot.db (ARGUS_GOOGLEBOT_SITEMAP)
-//	seo-check           every 5 minutes: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
+//	seo-check           every minute: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 
 const marketingHelp = `usage: argus marketing googlebot collect|detect|sitemaps|seo [-file PATH]
        argus marketing googlebot backfill [-file PATH] FROM TO
-       argus marketing gsc|suggest|send|cdn [-file PATH]
+       argus marketing gsc|suggest|summary|send|cdn [-file PATH]
 
 The jobs of the marketing module (the worker runs them when the module is on):
 collect   read the finished crawler log buckets of the last 2 hours from Loki (ARGUS_GOOGLEBOT_EDGES_FILE, through
@@ -43,12 +43,13 @@ seo       write the SEO page's Googlebot table (seo_snapshots, seo_errors in ARG
 gsc       read Search Console (the Google data source, property ARGUS_GSC_SITE): daily totals, the key URLs of
           ARGUS_GSC_URLS_FILE, the sitemaps
 suggest   store today's SEO suggestions again (Search Console, and GA4 when ARGUS_GA_PROPERTY is set)
+summary   write the model's short summary of the newest suggestions again (the shared model runtime)
 send      post the newest suggestions to the notify room for the SEO page's Send requests
 cdn       save the counts of the CDN log index ARGUS_CDN_INDEX (the Elasticsearch data source ARGUS_CDN_SOURCE)
 `
 
 func runMarketing(args []string, stdout, stderr io.Writer) int {
-	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "send" || args[0] == "cdn") && !isHelp(args) {
+	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "summary" || args[0] == "send" || args[0] == "cdn") && !isHelp(args) {
 		return runSearchJob(args, stdout, stderr)
 	}
 	if len(args) < 2 || isHelp(args) || args[0] != "googlebot" {
@@ -207,29 +208,14 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 	if !googlebot.HostLabelRe.MatchString(hl) {
 		return nil, fmt.Errorf("ARGUS_GOOGLEBOT_HOST_LABEL is not a label name")
 	}
-	e := googlebotGrafana(c)
-	if e == nil {
-		return nil, errors.New("no Grafana data source: connect Grafana in Settings -> Data sources")
-	}
-	so := sourcesOptions(c)
-	cred := so.Credential(e)
-	base := e.URL
-	get := func(ctx context.Context, path string) (int, []byte, error) {
-		hdr := map[string]string{}
-		if cred != "" {
-			hdr["Authorization"] = "Bearer " + cred
-		}
-		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
-		if err != nil {
-			return 0, nil, errors.New(sources.NetError(err))
-		}
-		return st, b, nil
+	var loki *googlebot.Loki
+	if e := googlebotGrafana(c); e != nil { // the sitemap read needs no Grafana
+		loki = &googlebot.Loki{Get: grafanaGetter(c, e), UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}
 	}
 	rng := &googlebot.Ranges{Path: c.StateDir + "/googlebot-ranges.json", URLs: list(c, "ARGUS_GOOGLE_RANGES_URLS"), Fetch: publicGet,
 		Log: func(f string, a ...any) { fmt.Fprintf(log, f+"\n", a...) }}
 	sitemap := v("ARGUS_GOOGLEBOT_SITEMAP")
-	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes,
-		Loki: &googlebot.Loki{Get: get, UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}, Ranges: rng.Load, Loc: loc,
+	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes, Loki: loki, Ranges: rng.Load, Loc: loc,
 		TZLabel: v("ARGUS_TZ_LABEL"), Width: intVal(c, "ARGUS_GOOGLEBOT_INTERVAL"), StoreLimit: intVal(c, "ARGUS_GOOGLEBOT_STORE_LIMIT_MB") << 20,
 		Sitemap: sitemap, SiteHost: googlebot.SiteHost(sitemap), Fetch: publicGet, Log: log}
 	o.Notify = func(ctx context.Context, text string) error {
@@ -241,6 +227,24 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 		return err
 	}
 	return o, nil
+}
+
+// grafanaGetter is one guarded GET to a Grafana data source with its token.
+func grafanaGetter(c *config.Config, e *sources.Entry) googlebot.Getter {
+	so := sourcesOptions(c)
+	cred := so.Credential(e)
+	base := e.URL
+	return func(ctx context.Context, path string) (int, []byte, error) {
+		hdr := map[string]string{}
+		if cred != "" {
+			hdr["Authorization"] = "Bearer " + cred
+		}
+		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
+		if err != nil {
+			return 0, nil, errors.New(sources.NetError(err))
+		}
+		return st, b, nil
+	}
 }
 
 // seoCheck writes the SEO page's Googlebot table from googlebot.db.
@@ -265,7 +269,7 @@ func seoCheck(c *config.Config) (int64, error) {
 	}
 	sitemap := c.Values["ARGUS_GOOGLEBOT_SITEMAP"].Raw
 	return googlebot.SEOSnapshot(g, ops, googlebot.SEOOptions{Primary: primary, Hosts: list(c, "ARGUS_SEO_HOSTS"),
-		ServiceMap: c.Values["ARGUS_SEO_SERVICE_MAP"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
+		ServiceMap: c.Values["ARGUS_SERVICE_MAP_FILE"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
 }
 
 // marketingJobs are the module's worker jobs.
@@ -323,7 +327,7 @@ func marketingJobs(c *config.Config, det needs.Detector, stderr io.Writer) []wor
 			_, _, err := o.Sitemaps(ctx)
 			return err
 		})},
-		{Name: "seo-check", Every: 5 * time.Minute, Ready: off("seo-check", func() string {
+		{Name: "seo-check", Every: time.Minute, Ready: off("seo-check", func() string {
 			if _, err := os.Stat(c.Values["ARGUS_GOOGLEBOT_DB"].Raw); err != nil {
 				return "no crawler database yet (googlebot-watch writes it)"
 			}
@@ -355,6 +359,8 @@ func runSearchJob(args []string, stdout, stderr io.Writer) int {
 		err = gscRun(ctx, c, stdout)
 	case "suggest":
 		err = suggestRun(ctx, c, true, stdout)
+	case "summary":
+		err = summaryRun(ctx, c, true, stdout)
 	case "send":
 		err = seoSendRun(ctx, c, stdout)
 	case "cdn":
