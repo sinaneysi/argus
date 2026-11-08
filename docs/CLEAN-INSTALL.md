@@ -15,14 +15,12 @@ applies it (ADR-0021 D4).
 |---|---|---|---|
 | page | 59 | 0 | 0 |
 | api | 73 | 0 | 0 |
-| action | 59 | 0 | 2 |
+| action | 61 | 0 | 0 |
 
 ## Broken (the backlog)
 
 | kind | item | state | detail |
 |---|---|---|---|
-| action | `POST /api/v1/admin/claude-egress` | broken | HTTP 500 Could not save |
-| action | `POST /api/v1/admin/jira-hosts` | broken | HTTP 500 Could not save |
 
 ## Not configured
 

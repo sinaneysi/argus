@@ -215,6 +215,13 @@ func runWorker(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "argus worker:", err)
 		return 1
 	}
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && !*once {
+		ev := map[string]time.Duration{}
+		for n, d := range every {
+			ev[n] = *d
+		}
+		return runVolumeWorker(ctx, c, ev, stderr)
+	}
 	code := 0
 	next := map[string]time.Time{}
 	for _, n := range collectorNames {
@@ -229,11 +236,6 @@ func runWorker(args []string, stdout, stderr io.Writer) int {
 	any := false
 	for _, n := range collectorNames {
 		any = any || enabled(c, n)
-	}
-	if !any && c.Values["ARGUS_LAYOUT"].Raw == "volume" { // a compose service: stay up, nothing to run yet
-		fmt.Fprintln(stderr, "argus worker: no collector is enabled (ARGUS_COLLECT_*=1); idle")
-		<-ctx.Done()
-		return 0
 	}
 	if !any {
 		fmt.Fprintln(stderr, "argus worker: no collector is enabled (ARGUS_COLLECT_*=1); exiting")

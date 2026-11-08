@@ -57,6 +57,10 @@ func OnStart(ctx context.Context, c *config.Config, logf func(string, ...any)) e
 	return err
 }
 
+// RequestDirs are the folders under ARGUS_SETTINGS_IN the API writes request files into.
+var RequestDirs = []string{"claude-token", "kube", "sources", "source-actions", "jira-connect", "outline-requests",
+	"gitlab-issues", "board-requests"}
+
 // EnsureDirs creates the folders of the one-volume layout (ARGUS_LAYOUT=volume) that the API and the worker write
 // into; nothing in the legacy layout, where the host owns the folders.
 func EnsureDirs(c *config.Config) error {
@@ -70,6 +74,12 @@ func EnsureDirs(c *config.Config) error {
 			continue
 		}
 		if err := os.MkdirAll(d, 0o750); err != nil {
+			return fmt.Errorf("layout: %w", err)
+		}
+	}
+	// the request folders the API drops one file into without creating the folder (the legacy host creates them)
+	for _, d := range RequestDirs {
+		if err := os.MkdirAll(filepath.Join(c.SettingsIn, d), 0o750); err != nil {
 			return fmt.Errorf("layout: %w", err)
 		}
 	}

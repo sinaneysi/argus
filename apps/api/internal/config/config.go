@@ -233,6 +233,8 @@ var VolumeDefaults = map[string]string{
 	"ARGUS_SECRET_IN":       "${ARGUS_STATE_DIR}/secrets/in",
 	"TOTP_KEY_FILE":         "${ARGUS_STATE_DIR}/keys/totp.key",
 	"ARGUS_IMPORT_HTPASSWD": "",
+	"ARGUS_CLAUDE_ENV_FILE": "${ARGUS_STATE_DIR}/secrets/claude.env",
+	"ARGUS_CLAUDE_RUN_AS":   "",
 }
 
 // Value is the effective value of one key and where it came from.
