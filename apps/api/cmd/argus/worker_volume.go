@@ -55,7 +55,10 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "sources-check", Every: 6 * time.Hour, Run: func(context.Context) error {
 		o := sourcesOptions(c)
 		o.Log = stderr
-		return sources.CheckAll(o)
+		if err := sources.CheckAll(o); err != nil {
+			return err
+		}
+		return recordSources(c)
 	}})
 	// the request kinds root's path units consume in the legacy layout
 	jobs = append(jobs, worker.Job{Name: "kube-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "kube"), func() error {
@@ -97,6 +100,30 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
+	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)
+	for _, ej := range []struct {
+		name, run string
+		every     time.Duration
+	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}} {
+		ej := ej
+		jobs = append(jobs, worker.Job{Name: ej.name, Every: ej.every, Sources: needs.Jobs[ej.name],
+			Ready: func() (bool, string) {
+				if miss := det.Now().Missing(needs.Jobs[ej.name]); len(miss) > 0 {
+					return false, needs.Reason(miss)
+				}
+				return estateConfigured(c)
+			},
+			Run: func(ctx context.Context) error { return estateRun(ctx, c, ej.run, 0, stderr) }})
+	}
+	// Outline: the Settings -> Integrations requests within seconds (each run publishes in publish mode), and the
+	// publish once a day; preview mode sends nothing
+	jobs = append(jobs, worker.Job{Name: "outline-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "outline-requests"), func() error {
+		return outlineRun(c, "requests", io.Discard)
+	})})
+	jobs = append(jobs, worker.Job{Name: "outline-publish", Every: 24 * time.Hour, Run: func(context.Context) error {
+		return outlineRun(c, "publish", io.Discard)
+	}})
 	jobs = append(jobs, marketingJobs(c, det, stderr)...)
 	jobs = append(jobs, seoJobs(c, det, stderr)...)
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
@@ -235,11 +262,21 @@ func sourcesRequestsJob(c *config.Config, stderr io.Writer) func(context.Context
 		names, _ := os.ReadDir(o.ReqDir)
 		for _, n := range names {
 			if filepath.Ext(n.Name()) == ".json" {
-				return sources.Apply(o)
+				if err := sources.Apply(o); err != nil {
+					return err
+				}
+				return recordSources(c)
 			}
 		}
 		return nil
 	}
+}
+
+// recordSources copies the Data sources status into ARGUS_DB data_sources (what argus sources list and find, and
+// the agent, read), as the legacy layout's sources-record unit does after every apply and check.
+func recordSources(c *config.Config) error {
+	_, err := sources.Record(filepath.Join(c.SettingsOut, "sources-status.json"), c.DB)
+	return err
 }
 
 // claudeRequestsJob runs the Settings -> Claude requests (replace, test, egress, egress-settings) when there are any.

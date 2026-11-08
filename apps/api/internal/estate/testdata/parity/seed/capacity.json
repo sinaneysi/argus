@@ -1,0 +1,1 @@
+{"filesystems": [{"host": "worker-01", "mount": "/", "days": 5.5, "loss_per_day": 734003200}, {"host": "SITE-A-app-web-01", "mount": "/data", "days": 12, "loss_per_day": 1000}]}

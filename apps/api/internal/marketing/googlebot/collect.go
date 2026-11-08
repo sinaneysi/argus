@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -282,8 +283,14 @@ func (r Result) AllFailed(groups int) bool {
 	return r.Buckets > 0 && r.Stats.Failed == int64(r.Buckets*groups)
 }
 
+// ErrNoLoki: no Grafana data source to read Loki through.
+var ErrNoLoki = errors.New("no Grafana data source: connect Grafana in Settings -> Data sources")
+
 // Collect is one run: every missing bucket of the last 2 hours, then the detector.
 func (o *Options) Collect(ctx context.Context) (Result, error) {
+	if o.Loki == nil {
+		return Result{}, ErrNoLoki
+	}
 	db, err := Open(ctx, o.DB)
 	if err != nil {
 		return Result{}, err
@@ -338,6 +345,9 @@ func (o *Options) Collect(ctx context.Context) (Result, error) {
 
 // Backfill reads an old range of days (in the zone, inclusive), without the detector and without notices.
 func (o *Options) Backfill(ctx context.Context, d0, d1 string) (Result, error) {
+	if o.Loki == nil {
+		return Result{}, ErrNoLoki
+	}
 	db, err := Open(ctx, o.DB)
 	if err != nil {
 		return Result{}, err

@@ -29,7 +29,7 @@ func (f Files) EtcFiles() map[string]string {
 	if f.EtcDir == "" {
 		return out
 	}
-	for _, n := range []string{"gitlab-issues.token"} {
+	for _, n := range []string{"gitlab-issues.token", "outline.token"} {
 		out[filepath.Join(f.EtcDir, n)] = "etc/" + n
 	}
 	return out

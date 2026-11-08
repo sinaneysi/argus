@@ -111,11 +111,11 @@ Goal: the images work at another company after the data sources are set; nothing
 |---|---|---|
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
-| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse |
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
-| P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | in progress: crawler traffic, search console, SEO suggestions |
+| P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | in progress: crawler traffic, search console, SEO suggestions and summary |
 
 P0 built so far: ADR-0021 (PR #11); `internal/migrate`, `argus migrate`, `ARGUS_LAYOUT=volume`, `deploy/` (PR #12);
 the clean-install test and backlog `docs/CLEAN-INSTALL.md` (PR #13); `argus worker` as the scheduler in the volume
@@ -126,7 +126,7 @@ jobs that name the missing source. Secrets in the volume are encrypted
 with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
 the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
 and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
-connections (`jira-connect`), the Outline publisher (`outline-requests`) and the GitLab issues tracker
+connections (`jira-connect`) and the GitLab issues tracker
 (`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
@@ -137,19 +137,35 @@ root's `argus settings apply`). **REQUIRED for every model run** that P3 and P4 
 ideas, chat): build the prompt with `style.Prepend(prompt)` (`style.Current()` is the custom text, else the default).
 Tasks the board creates from incidents, RCA and CI/CD findings already start with a goal line, facts and checkbox steps.
 
+Model runtime (2026-11-08, P3/P4): `internal/model` with the providers `cli` (the Claude CLI in the `argus` image,
+the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MODEL_PROVIDER`; every call through
+`style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
+Every ported model job calls it (ADR-0021 "As built (P3/P4)").
+
+Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
+the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
+the parent document `OUTLINE_PARENT` only: a missing, trashed, archived or moved parent stops the run with the reason
+in the status, the collection root is never used, a lost page is found again by title among the parent's children
+only, and a person's text outside the block is kept (merge parity with the earlier installation). The API key is
+sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Outline entry of Settings → Data sources
+(purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
+builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 Its jobs (P6) run in the worker only while the module is on. Built: the crawler traffic job (`googlebot-watch`, every
 minute: Loki through a Grafana data source into `googlebot.db`, the detector and its notices), the daily sitemap read
 (`googlebot-sitemaps`) and the SEO page's Googlebot table (`seo-check`, derived from `googlebot.db`); CLI
 `argus marketing googlebot collect|backfill|detect|sitemaps|seo`; Search Console (`gsc`, data-source type google),
-the SEO suggestions (`seo-suggest`) and their Send (`seo-send`); `argus marketing gsc|suggest|send`. Not yet: the
-suggestions' model summary (TODO: the shared model runtime of P3/P4, with `style.Prepend`), the CDN log job. The CDN log sampling job of the earlier
+the SEO suggestions (`seo-suggest`), their model summary (`seo-summary`, through `internal/model`) and their Send
+(`seo-send`); `argus marketing gsc|suggest|summary|send`. Not yet: the CDN log job. The CDN log sampling job of the earlier
 installation (it switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN) is not
 ported: Argus data sources only read.
 
 ## Next
 
-1. More collectors: credential expiry, capacity, inventory; S3 listing for backups.
+1. More collectors: credential expiry, capacity; S3 listing for backups. Host estate: the host shell part of the
+   inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
+   the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
 3. **Task-agent port requirement** (the intake/run dispatcher and runner; the web side above already reads these):
    - Handle the board request `agent-replan` exactly like `agent-answers`: admins only; refuse with a clear reason when

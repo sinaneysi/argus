@@ -7,7 +7,7 @@ package main
 //	googlebot-watch     every minute: the crawler log buckets from Loki (a Grafana data source) into googlebot.db,
 //	                    then the detector (notices to the notify room)
 //	googlebot-sitemaps  once a day: the site's sitemaps into googlebot.db (ARGUS_GOOGLEBOT_SITEMAP)
-//	seo-check           every 5 minutes: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
+//	seo-check           every minute: the SEO page's Googlebot table (seo_snapshots, seo_errors) from googlebot.db
 
 import (
 	"context"
@@ -207,29 +207,14 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 	if !googlebot.HostLabelRe.MatchString(hl) {
 		return nil, fmt.Errorf("ARGUS_GOOGLEBOT_HOST_LABEL is not a label name")
 	}
-	e := googlebotGrafana(c)
-	if e == nil {
-		return nil, errors.New("no Grafana data source: connect Grafana in Settings -> Data sources")
-	}
-	so := sourcesOptions(c)
-	cred := so.Credential(e)
-	base := e.URL
-	get := func(ctx context.Context, path string) (int, []byte, error) {
-		hdr := map[string]string{}
-		if cred != "" {
-			hdr["Authorization"] = "Bearer " + cred
-		}
-		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
-		if err != nil {
-			return 0, nil, errors.New(sources.NetError(err))
-		}
-		return st, b, nil
+	var loki *googlebot.Loki
+	if e := googlebotGrafana(c); e != nil { // the sitemap read needs no Grafana
+		loki = &googlebot.Loki{Get: grafanaGetter(c, e), UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}
 	}
 	rng := &googlebot.Ranges{Path: c.StateDir + "/googlebot-ranges.json", URLs: list(c, "ARGUS_GOOGLE_RANGES_URLS"), Fetch: publicGet,
 		Log: func(f string, a ...any) { fmt.Fprintf(log, f+"\n", a...) }}
 	sitemap := v("ARGUS_GOOGLEBOT_SITEMAP")
-	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes,
-		Loki: &googlebot.Loki{Get: get, UID: v("ARGUS_GOOGLEBOT_LOKI_UID"), HostLabel: hl}, Ranges: rng.Load, Loc: loc,
+	o := &googlebot.Options{DB: v("ARGUS_GOOGLEBOT_DB"), Groups: groups, Classes: classes, Loki: loki, Ranges: rng.Load, Loc: loc,
 		TZLabel: v("ARGUS_TZ_LABEL"), Width: intVal(c, "ARGUS_GOOGLEBOT_INTERVAL"), StoreLimit: intVal(c, "ARGUS_GOOGLEBOT_STORE_LIMIT_MB") << 20,
 		Sitemap: sitemap, SiteHost: googlebot.SiteHost(sitemap), Fetch: publicGet, Log: log}
 	o.Notify = func(ctx context.Context, text string) error {
@@ -241,6 +226,24 @@ func googlebotOptions(c *config.Config, log io.Writer) (*googlebot.Options, erro
 		return err
 	}
 	return o, nil
+}
+
+// grafanaGetter is one guarded GET to a Grafana data source with its token.
+func grafanaGetter(c *config.Config, e *sources.Entry) googlebot.Getter {
+	so := sourcesOptions(c)
+	cred := so.Credential(e)
+	base := e.URL
+	return func(ctx context.Context, path string) (int, []byte, error) {
+		hdr := map[string]string{}
+		if cred != "" {
+			hdr["Authorization"] = "Bearer " + cred
+		}
+		st, b, err := sources.GetRaw(base, path, hdr, 256<<20, 90*time.Second)
+		if err != nil {
+			return 0, nil, errors.New(sources.NetError(err))
+		}
+		return st, b, nil
+	}
 }
 
 // seoCheck writes the SEO page's Googlebot table from googlebot.db.
@@ -265,7 +268,7 @@ func seoCheck(c *config.Config) (int64, error) {
 	}
 	sitemap := c.Values["ARGUS_GOOGLEBOT_SITEMAP"].Raw
 	return googlebot.SEOSnapshot(g, ops, googlebot.SEOOptions{Primary: primary, Hosts: list(c, "ARGUS_SEO_HOSTS"),
-		ServiceMap: c.Values["ARGUS_SEO_SERVICE_MAP"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
+		ServiceMap: c.Values["ARGUS_SERVICE_MAP_FILE"].Raw, SiteHost: googlebot.SiteHost(sitemap)}, time.Now().Unix())
 }
 
 // marketingJobs are the module's worker jobs.
@@ -323,7 +326,7 @@ func marketingJobs(c *config.Config, det needs.Detector, stderr io.Writer) []wor
 			_, _, err := o.Sitemaps(ctx)
 			return err
 		})},
-		{Name: "seo-check", Every: 5 * time.Minute, Ready: off("seo-check", func() string {
+		{Name: "seo-check", Every: time.Minute, Ready: off("seo-check", func() string {
 			if _, err := os.Stat(c.Values["ARGUS_GOOGLEBOT_DB"].Raw); err != nil {
 				return "no crawler database yet (googlebot-watch writes it)"
 			}
