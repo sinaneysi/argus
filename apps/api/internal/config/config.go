@@ -7,6 +7,10 @@
 //     /etc/argus/argus.env (a missing default file is fine; a missing ARGUS_CONFIG file is an error);
 //  3. the process environment (containers and systemd Environment= lines set keys this way).
 //
+// In ARGUS_LAYOUT=volume one more layer sits between the defaults and argus.env: ARGUS_ETC_DIR/imported.env, the
+// site and integration settings `argus import` carried over from an earlier installation. Only the Importable keys
+// are read from it (never a secret, a path or a security setting); argus.env and the environment still win.
+//
 // Every key has one canonical name. Older names (the web app's OPS_* keys, ORG_NAME) are read as aliases with a
 // one-line deprecation warning, so an unchanged installation keeps working. Load never stops at the first
 // problem: it returns every validation error at once. Secret values are never printed.
@@ -342,6 +346,26 @@ func Load(opt Options) (*Config, error) {
 		errs = append(errs, fmt.Sprintf("%s: %v", path, err))
 	}
 
+	imported := map[string]string{}
+	if p := importedPath(env, file); p != "" {
+		if data, err := os.ReadFile(p); err == nil {
+			m, ierrs := ParseEnvFile(ImportedFile, data)
+			errs = append(errs, ierrs...)
+			var ignored []string
+			for k, v := range m {
+				if IsImportable(k) {
+					imported[k] = v
+				} else {
+					ignored = append(ignored, k)
+				}
+			}
+			sort.Strings(ignored)
+			for _, k := range ignored {
+				c.Warnings = append(c.Warnings, fmt.Sprintf("%s: %s ignored (not a setting an import carries)", ImportedFile, k))
+			}
+		}
+	}
+
 	known := map[string]bool{"ARGUS_CONFIG": true}
 	for _, f := range Fields {
 		known[f.Key] = true
@@ -366,7 +390,7 @@ func Load(opt Options) (*Config, error) {
 			for _, layer := range []struct {
 				name string
 				m    map[string]string
-			}{{"file", file}, {"env", env}} { // env last: it wins
+			}{{"imported", imported}, {"file", file}, {"env", env}} { // env last: it wins
 				for k, raw := range layer.m {
 					if matchPattern(f.Key, k) {
 						c.Values[k] = Value{Raw: raw, Source: layer.name, Set: true}
@@ -393,6 +417,9 @@ func Load(opt Options) (*Config, error) {
 			if ok {
 				break
 			}
+		}
+		if raw, found := imported[f.Key]; !ok && found {
+			v, ok = Value{Raw: raw, Source: "imported", Set: true}, true
 		}
 		for _, a := range f.Aliases {
 			_, inEnv := env[a]
@@ -437,6 +464,74 @@ func Load(opt Options) (*Config, error) {
 		return c, errs
 	}
 	return c, nil
+}
+
+// ImportedFile is the file in ARGUS_ETC_DIR that `argus import` writes and the volume layout reads.
+const ImportedFile = "imported.env"
+
+// Importable are the keys `argus import` carries from an earlier installation's env files: names, time zone, the
+// integrations' addresses, rooms and project keys. Never a secret, a path, a listen address or a sign-in setting.
+var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARGUS_TZ_LABEL", "ENV_LABELS", "PUBLIC_DOMAIN",
+	"OBS_SITES", "OBS_SITE_*_LABEL", "GITLAB_URL", "CICD_GROUPS", "CICD_ENGINE_PROJECT", "CICD_ENGINE_PROJECT_ID",
+	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
+	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
+	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS"}
+
+// IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
+func IsImportable(key string) bool {
+	for _, k := range Importable {
+		if k == key || strings.Contains(k, "*") && matchPattern(k, key) {
+			if f := fieldFor(key); f != nil && !f.Secret && f.Kind != Path && f.Kind != Addr {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Canonical is the canonical name of key, which may be an alias (OPS_DB -> ARGUS_DB); key itself when it is canonical
+// or matches a pattern key; empty when unknown.
+func Canonical(key string) string {
+	if fieldFor(key) != nil {
+		return key
+	}
+	for _, f := range Fields {
+		if contains(f.Aliases, key) {
+			return f.Key
+		}
+	}
+	return ""
+}
+
+// importedPath is ARGUS_ETC_DIR/imported.env in ARGUS_LAYOUT=volume (from the environment and argus.env, before the
+// keys are resolved); empty in the legacy layout.
+func importedPath(env, file map[string]string) string {
+	raw := func(key string) (string, bool) {
+		f := fieldFor(key)
+		for _, m := range []map[string]string{env, file} {
+			if v, ok := m[key]; ok {
+				return v, true
+			}
+			for _, a := range f.Aliases {
+				if v, ok := m[a]; ok {
+					return v, true
+				}
+			}
+		}
+		return f.Default, false
+	}
+	if l, _ := raw("ARGUS_LAYOUT"); l != "volume" {
+		return ""
+	}
+	etc, set := raw("ARGUS_ETC_DIR")
+	if !set || etc == "" {
+		sd, _ := raw("ARGUS_STATE_DIR")
+		etc = filepath.Join(sd, "etc")
+	}
+	if !filepath.IsAbs(etc) {
+		return ""
+	}
+	return filepath.Join(etc, ImportedFile)
 }
 
 // matchPattern reports whether name matches a pattern key with one "*" standing for [A-Z0-9_]+.

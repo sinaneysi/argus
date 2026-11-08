@@ -15,11 +15,14 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/board"
@@ -30,8 +33,8 @@ import (
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
-const importHelp = `usage: argus import [-dry-run] [-force] [-etc DIR] [-env FILE]... [-reports DIR] [-auth DB] [-totp-legacy-label L]
-                    [-file PATH] <state dir>
+const importHelp = `usage: argus import [-dry-run] [-force] [-settings-only] [-with-googlebot] [-etc DIR] [-env FILE]... [-reports DIR]
+                    [-auth DB] [-totp-legacy-label L] [-file PATH] <state dir>
 
 One-time import of an earlier installation into the one volume (ARGUS_LAYOUT=volume; run it before the first start
 of the api and the worker, or with them stopped). <state dir> is the earlier installation's state folder: ops.db,
@@ -48,6 +51,14 @@ board/board.db, auth/auth.db, the *.json state files, settings-in/ and settings-
                 re-encrypted under this product's label, so TOTP_LEGACY_LABEL is not needed afterwards
   -dry-run      print what would be imported (names only), change nothing
   -force        import into a volume that already holds data (the imported items replace what is there)
+  -settings-only  write only the carried settings (ARGUS_ETC_DIR/imported.env, the GitLab issues allowed hosts):
+                for a volume imported by an earlier version; the databases and every other file are left as they are
+  -with-googlebot  also copy googlebot.db (the crawler log database, often large; skipped by default)
+
+Carried settings: the site and integration keys of the env files that are not secret (names, time zone, GITLAB_URL,
+the Matrix homeserver and rooms, JIRA_PROJECT, ...; config.Importable) go to ARGUS_ETC_DIR/imported.env, which the
+volume layout reads below argus.env and the environment. A GitLab issues connection whose host is not the GITLAB_URL
+host gets an allowed-hosts file with both.
 
 The databases are copied consistently (VACUUM INTO), then migrated to this version's schema. Every credential
 becomes a Settings -> Data sources entry sealed with the master key (ARGUS_MASTER_KEY, else ARGUS_MASTER_KEY_FILE,
@@ -64,6 +75,7 @@ type importer struct {
 	envSrc map[string]string
 	dry    bool
 	force  bool
+	gbot   bool
 	out    io.Writer
 	done   []string
 	skip   []string
@@ -88,6 +100,8 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 	reports := fs.String("reports", "", "the earlier installation's reports folder")
 	label := fs.String("totp-legacy-label", "", "the label of the earlier 2FA secrets")
 	authDB := fs.String("auth", "", "the users database to import instead of <state dir>/auth/auth.db")
+	settingsOnly := fs.Bool("settings-only", false, "write only the carried settings (imported.env, GitLab issues allowed hosts)")
+	gbot := fs.Bool("with-googlebot", false, "also copy googlebot.db (large)")
 	var envs multiFlag
 	fs.Var(&envs, "env", "a KEY=value file of the earlier installation (repeatable)")
 	if len(args) > 0 && isHelp(args[:1]) {
@@ -122,7 +136,7 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "argus import: the source is the volume itself")
 		return 1
 	}
-	im := &importer{c: c, src: src, etc: *etc, authDB: *authDB, dry: *dry, force: *force, out: stdout, env: map[string]string{}, envSrc: map[string]string{}}
+	im := &importer{c: c, src: src, etc: *etc, authDB: *authDB, dry: *dry, force: *force, gbot: *gbot, out: stdout, env: map[string]string{}, envSrc: map[string]string{}}
 	for _, p := range envs {
 		b, err := os.ReadFile(p)
 		if err != nil {
@@ -134,6 +148,21 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 				im.env[k], im.envSrc[k] = v, filepath.Base(p)
 			}
 		}
+	}
+	if *settingsOnly {
+		if !im.dry {
+			if err := os.MkdirAll(c.EtcDir, 0o750); err != nil {
+				fmt.Fprintln(stderr, "argus import:", err)
+				return 1
+			}
+		}
+		if err := im.carried(context.Background()); err != nil {
+			fmt.Fprintln(stderr, "argus import:", err)
+			im.print()
+			return 1
+		}
+		im.print()
+		return 0
 	}
 	if busy := im.occupied(); len(busy) > 0 && !im.force {
 		fmt.Fprintln(stderr, "argus import: the volume already holds data (use -force to replace it):")
@@ -168,7 +197,7 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx := context.Background()
 	steps := []func(context.Context) error{im.databases, im.stateFiles, im.settings, func(context.Context) error { return im.tree(*reports, c.ReportsDir, "reports") },
-		im.totp, im.integrations, im.sealAll}
+		im.totp, im.integrations, im.carried, im.otherDBs, im.sealAll}
 	for _, st := range steps {
 		if err := st(ctx); err != nil {
 			fmt.Fprintln(stderr, "argus import:", err)
@@ -652,6 +681,191 @@ func (im *importer) integrations(context.Context) error {
 		im.did("Claude token: %s (sealed) -> %s", im.envSrc["CLAUDE_CODE_OAUTH_TOKEN"], p)
 	}
 	return nil
+}
+
+// --- carried settings: ARGUS_ETC_DIR/imported.env ----------------------------------------------------------------------
+
+var tzKeyRe = regexp.MustCompile(`^([A-Z0-9]+_)?TZ$`)
+
+// carriedValues are the non-secret site and integration keys of the env files (canonical names), with JIRA_PROJECT
+// from jira.env and a time zone from a TZ-like key when ARGUS_TZ is not set.
+func (im *importer) carriedValues() (map[string]string, map[string]string) {
+	vals, from := map[string]string{}, map[string]string{}
+	var ks []string
+	for k := range im.env {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks) // canonical names first ("ARGUS_..." < "MATRIX_NOTIFY_ENABLED"): a canonical key beats an alias
+	for _, k := range ks {
+		ck := config.Canonical(k)
+		if ck == "" || !config.IsImportable(ck) {
+			continue
+		}
+		if _, ok := vals[ck]; ok && ck != k {
+			continue
+		}
+		vals[ck], from[ck] = im.env[k], im.envSrc[k]+" "+k
+	}
+	if _, ok := vals["ARGUS_TZ"]; !ok {
+		for _, k := range ks {
+			if tzKeyRe.MatchString(k) && k != "ARGUS_TZ" {
+				if _, err := time.LoadLocation(im.env[k]); err == nil && strings.Contains(im.env[k], "/") {
+					vals["ARGUS_TZ"], from["ARGUS_TZ"] = im.env[k], im.envSrc[k]+" "+k
+					break
+				}
+			}
+		}
+	}
+	if _, ok := vals["JIRA_PROJECT"]; !ok && im.etc != "" {
+		if b, err := os.ReadFile(filepath.Join(im.etc, "jira.env")); err == nil {
+			if p := sources.ParseEnv(string(b))["JIRA_PROJECT"]; p != "" {
+				vals["JIRA_PROJECT"], from["JIRA_PROJECT"] = p, "jira.env"
+			}
+		}
+	}
+	return vals, from
+}
+
+// carried writes the carried settings to ARGUS_ETC_DIR/imported.env and, when the GitLab issues connection's host is
+// not the GITLAB_URL host and the earlier installation had no allowed-hosts file, the allowed hosts of both.
+func (im *importer) carried(context.Context) error {
+	vals, from := im.carriedValues()
+	p := filepath.Join(im.c.EtcDir, config.ImportedFile)
+	var ks []string
+	for k := range vals {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+	if len(ks) == 0 {
+		im.skip_("carried settings: the env files set none of the carried keys")
+	} else {
+		var b strings.Builder
+		b.WriteString("# Written by argus import: settings carried from the earlier installation (no secret).\n")
+		b.WriteString("# Read in ARGUS_LAYOUT=volume below argus.env and the environment; edit or delete freely.\n")
+		for _, k := range ks {
+			fmt.Fprintf(&b, "%s=%s\n", k, strings.ReplaceAll(vals[k], "\n", " "))
+		}
+		if !im.dry {
+			if err := writeAtomic(p, []byte(b.String()), 0o640); err != nil {
+				return err
+			}
+		}
+		var names []string
+		for _, k := range ks {
+			names = append(names, k+" ("+strings.TrimSpace(from[k])+")")
+		}
+		im.did("carried settings: %d keys -> %s: %s", len(ks), p, strings.Join(names, ", "))
+	}
+	return im.gitlabHosts(vals["GITLAB_URL"])
+}
+
+// gitlabHosts writes gitlab-issues-allowed-hosts when the connection's host differs from the GITLAB_URL host (the
+// guard's default) and there is no such file yet.
+func (im *importer) gitlabHosts(gitlabURL string) error {
+	if im.etc == "" || !fileOK(filepath.Join(im.etc, "gitlab-issues.json")) {
+		return nil
+	}
+	dst := filepath.Join(im.c.EtcDir, "gitlab-issues-allowed-hosts")
+	if fileOK(filepath.Join(im.etc, "gitlab-issues-allowed-hosts")) || fileOK(dst) && !im.force {
+		return nil
+	}
+	var m struct {
+		URL  string `json:"url"`
+		Host string `json:"host"`
+	}
+	b, _ := os.ReadFile(filepath.Join(im.etc, "gitlab-issues.json"))
+	json.Unmarshal(b, &m)
+	var hosts []string
+	for _, raw := range []string{gitlabURL, m.URL} {
+		if h := hostKey(raw); h != "" && !slices.Contains(hosts, h) {
+			hosts = append(hosts, h)
+		}
+	}
+	if h := strings.ToLower(strings.TrimSpace(m.Host)); h != "" && m.URL == "" && !slices.Contains(hosts, h) {
+		hosts = append(hosts, h)
+	}
+	if len(hosts) < 2 && hostKey(gitlabURL) != "" {
+		return nil // the connection is on the GITLAB_URL host: the guard's default allows it
+	}
+	if len(hosts) == 0 {
+		im.skip_("GitLab issues allowed hosts: no GITLAB_URL and no host in gitlab-issues.json")
+		return nil
+	}
+	if !im.dry {
+		if err := writeAtomic(dst, []byte(strings.Join(hosts, "\n")+"\n"), 0o644); err != nil {
+			return err
+		}
+	}
+	im.did("GitLab issues allowed hosts: %s -> %s", strings.Join(hosts, ", "), dst)
+	return nil
+}
+
+// hostKey is "host" or "host:port" (port when not 443) of an https URL; empty when it is not one.
+func hostKey(raw string) string {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Hostname() == "" || !(u.Scheme == "https" || u.Scheme == "http") {
+		return ""
+	}
+	h := strings.ToLower(u.Hostname())
+	if p := u.Port(); p != "" && p != "443" {
+		h += ":" + p
+	}
+	return h
+}
+
+func writeAtomic(p string, data []byte, mode os.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
+		return err
+	}
+	tmp := p + ".import.tmp"
+	if err := os.WriteFile(tmp, data, mode); err != nil {
+		return err
+	}
+	os.Chmod(tmp, mode)
+	return os.Rename(tmp, p)
+}
+
+// --- other databases ----------------------------------------------------------------------------------------------------
+
+// otherDBs reports the databases at the top of the state folder that are not imported, with their size; googlebot.db
+// (the crawler log database of the marketing module) is copied with -with-googlebot.
+func (im *importer) otherDBs(ctx context.Context) error {
+	m, _ := filepath.Glob(filepath.Join(im.src, "*.db"))
+	sort.Strings(m)
+	for _, p := range m {
+		name := filepath.Base(p)
+		if name == "ops.db" {
+			continue
+		}
+		fi, err := os.Stat(p)
+		if err != nil || !fi.Mode().IsRegular() {
+			continue
+		}
+		if name == "googlebot.db" && im.gbot {
+			if err := im.copyDB(ctx, p, filepath.Join(im.c.StateDir, name), "crawler log database"); err != nil {
+				return err
+			}
+			continue
+		}
+		hint := ""
+		if name == "googlebot.db" {
+			hint = "; -with-googlebot copies it"
+		}
+		im.skip_("%s: %s, not used by this version%s", name, humanSize(fi.Size()), hint)
+	}
+	return nil
+}
+
+func humanSize(n int64) string {
+	switch {
+	case n >= 1<<30:
+		return fmt.Sprintf("%.1f GiB", float64(n)/(1<<30))
+	case n >= 1<<20:
+		return fmt.Sprintf("%.1f MiB", float64(n)/(1<<20))
+	case n >= 1<<10:
+		return fmt.Sprintf("%.1f KiB", float64(n)/(1<<10))
+	}
+	return fmt.Sprintf("%d B", n)
 }
 
 func fileOK(p string) bool {

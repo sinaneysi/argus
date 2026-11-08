@@ -214,3 +214,40 @@ func TestVolumeLayout(t *testing.T) {
 		t.Fatalf("bad layout: %v", err)
 	}
 }
+
+// ARGUS_ETC_DIR/imported.env: read in the volume layout only, only the importable keys, below argus.env and the
+// environment.
+func TestImportedLayer(t *testing.T) {
+	vol := t.TempDir()
+	os.MkdirAll(filepath.Join(vol, "etc"), 0o750)
+	os.WriteFile(filepath.Join(vol, "etc", ImportedFile), []byte("GITLAB_URL=https://gitlab.example.test\nMATRIX_NOTIFY_ROOM=!a:example.test\n"+
+		"JIRA_PROJECT=DEV\nARGUS_DB=/elsewhere.db\nMATRIX_ACCESS_TOKEN=fake-token\nOBS_SITE_EAST_LABEL=East one\n"), 0o640)
+	load := func(file string, environ ...string) *Config {
+		p := filepath.Join(vol, "argus.env")
+		os.WriteFile(p, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.test\nARGUS_STATE_DIR="+vol+"\n"+file), 0o600)
+		if environ == nil {
+			environ = []string{}
+		}
+		c, err := Load(Options{File: p, Environ: environ})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c
+	}
+	c := load("ARGUS_LAYOUT=volume\nJIRA_PROJECT=OPS2\n", "MATRIX_NOTIFY_ROOM=!env:example.test")
+	for k, want := range map[string][2]string{"GITLAB_URL": {"https://gitlab.example.test", "imported"}, "JIRA_PROJECT": {"OPS2", "file"},
+		"MATRIX_NOTIFY_ROOM": {"!env:example.test", "env"}, "OBS_SITE_EAST_LABEL": {"East one", "imported"}} {
+		if v := c.Values[k]; v.Raw != want[0] || v.Source != want[1] {
+			t.Fatalf("%s = %q (%s)", k, v.Raw, v.Source)
+		}
+	}
+	if c.Values["ARGUS_DB"].Raw == "/elsewhere.db" || c.Values["MATRIX_ACCESS_TOKEN"].Set {
+		t.Fatal("a path or a secret was read from imported.env")
+	}
+	if w := strings.Join(c.Warnings, "\n"); !strings.Contains(w, "ARGUS_DB ignored") || !strings.Contains(w, "MATRIX_ACCESS_TOKEN ignored") {
+		t.Fatalf("warnings: %s", w)
+	}
+	if c := load(""); c.Values["GITLAB_URL"].Source != "default" {
+		t.Fatal("imported.env read in the legacy layout")
+	}
+}

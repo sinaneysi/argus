@@ -147,18 +147,30 @@ func exitErr(what string, rc int) error {
 // are configured; GitLab issues with the connection of Settings -> Integrations, whose token may be the GitLab
 // entry of Settings -> Data sources with purpose tracker.
 func boardSyncJob(ctx context.Context, c *config.Config) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	return board.Run(ctx, volumeBoardOptions(c))
+}
+
+// volumeBoardOptions are the board sync's options in the volume. A Jira data source supplies the address and the
+// credential only: the Jira settings (project, JQL, status map, transitions, user map, mode, component, board id)
+// still come from the volume's jira.env. JIRA_PROJECT of the configuration is used when it is set explicitly, or when
+// jira.env names no project (then the compiled-in example is the last resort).
+func volumeBoardOptions(c *config.Config) board.Options {
 	o := boardOptions(c, false, false)
 	so := sourcesOptions(c)
 	if e := firstSource(c, "jira"); e != nil {
-		o.Config = map[string]string{"JIRA_URL": e.URL, "JIRA_PROJECT": c.Values["JIRA_PROJECT"].Raw}
+		o.Config = map[string]string{"JIRA_URL": e.URL}
+		file, _ := board.LoadConfig(o.EnvFiles, o.OwnerUID)
+		if p := c.Values["JIRA_PROJECT"]; p.Source != "default" || file["JIRA_PROJECT"] == "" {
+			o.Config["JIRA_PROJECT"] = p.Raw
+		}
 		o.Token, o.JiraUser = so.Credential(e), e.Username
 	}
 	if e := trackerSource(c, "gitlab"); e != nil {
 		o.GitLabURL, o.GitLabToken = e.URL, so.Credential(e)
 	}
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	defer cancel()
-	return board.Run(ctx, o)
+	return o
 }
 
 // sourcesRequestsJob applies the Settings -> Data sources requests (save, test, remove, check-all) when there are
