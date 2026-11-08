@@ -181,6 +181,16 @@ func (h *reqCtx) adminPost(path string, body map[string]any, sess *Session) (any
 			return nil, nil
 		}
 		return map[string]any{"ok": true, "message": msg}, nil
+	case "/api/v1/admin/writing-style":
+		msg, field, err := StylePost(form, sess)
+		if err != nil {
+			panic(err)
+		}
+		if field != "" {
+			h.apiFail(&apiErr{400, msg}, "field", field)
+			return nil, nil
+		}
+		return map[string]any{"ok": true, "message": msg}, nil
 	case "/api/v1/admin/modules":
 		msg, e := ModuleSave(form.Get("module"), form.Get("on"), sess)
 		if e != nil {

@@ -725,6 +725,10 @@ export type AdminClaude = {
   usage: { on: boolean };
 };
 
+export type AdminWritingStyle = {
+  text: string; custom: boolean; line: string; max: number; bytes: number; notices: Banner[]; refresh: { seconds: number } | null; demo: boolean;
+};
+
 export type AdminKube = {
   host: string; notices: Banner[]; refresh: { seconds: number } | null; busy: boolean; status: StatusVerdict;
   clusters: { connect?: ConnectStep[] | null; connectVia?: string; name: string; env: string; badge: Badge | null; line: string; agent: string; test: string; why: string; findings: string[] }[];

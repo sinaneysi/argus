@@ -117,6 +117,7 @@ var apiGETs = map[string]apiGetFn{
 	"/api/v1/admin/board":                apiAdminBoardJSON,
 	"/api/v1/admin/claude":               apiAdminClaudeJSON,
 	"/api/v1/admin/kube":                 apiAdminKubeJSON,
+	"/api/v1/settings/writing-style":     apiWritingStyleJSON,
 	"/api/v1/admin/sources":              apiAdminSourcesJSON,
 	"/api/v1/lessons":                    apiLessonsJSON,
 	"/api/v1/suggestions":                apiSuggestionsJSON,
@@ -275,7 +276,7 @@ func apiIsPost(path string) bool {
 		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
 		"/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move",
 		"/api/v1/admin/claude-token", "/api/v1/admin/claude-egress", "/api/v1/admin/kube", "/api/v1/admin/sources",
-		"/api/v1/admin/backup-targets", "/api/v1/admin/outline", "/api/v1/admin/gitlab-issues",
+		"/api/v1/admin/backup-targets", "/api/v1/admin/outline", "/api/v1/admin/gitlab-issues", "/api/v1/admin/writing-style",
 		"/api/v1/account", "/api/v1/account/jira", "/api/v1/account/matrix", "/api/v1/account/sessions",
 		"/api/v1/account/2fa/begin", "/api/v1/account/2fa/confirm", "/api/v1/account/2fa/disable", "/api/v1/account/2fa/recovery":
 		return true
@@ -394,7 +395,8 @@ func (h *reqCtx) apiPOST(path string) {
 		v, e = proposalsAPIPost(path, body, sess)
 	case "/api/v1/lessons/act", "/api/v1/lessons/settings":
 		v, e = lessonsAPIPost(path, body, sess)
-	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix":
+	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
+		"/api/v1/admin/writing-style":
 		v, e = h.adminPost(path, body, sess)
 	case "/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move":
 		v, e = h.settingsPost(strings.TrimPrefix(path, "/api/v1"), "/admin/board", body, sess, func(c *Ctx, route string, form py.QS) (int, string) { return BoardPost(c, route, form, sess) })

@@ -400,6 +400,17 @@ if cf:
     ok("Disabled in the demo" in body2, "Check again shows the demo refusal")
 s, h, body2 = req("POST", "/api/v1/admin/kube", '{"action":"test","name":"dev"}', {"Content-Type": "application/json", "X-CSRF-Token": tok})
 ok(s == 403 and "Disabled in the demo" in body2, f"POST /api/v1/admin/kube refused in the demo ({s})")
+# Settings: Writing style; the default style in a textarea, Save refused in the demo, the read endpoint is for admins
+ws = next_page("/admin/writing-style", "<h1>Writing style</h1>", 'id="style-text"', 'name="text"', "ASD-STE100", "Reset to default")
+wf = [f for f in forms(ws) if 'name="text"' in f[2]]
+ok(len(wf) == 1, "Writing style offers the style form")
+if wf:
+    s, h, body2 = post_form("/admin/writing-style", wf[0][1])
+    ok("Disabled in the demo" in body2, f"Save writing style shows the demo refusal ({s})")
+s, h, body2 = req("GET", "/api/v1/settings/writing-style")
+ok(s == 200 and "ASD-STE100" in body2, f"GET /api/v1/settings/writing-style answers ({s})")
+s, h, body2 = req("POST", "/api/v1/admin/writing-style", '{"action":"reset"}', {"Content-Type": "application/json", "X-CSRF-Token": tok})
+ok(s == 403 and "Disabled in the demo" in body2, f"POST /api/v1/admin/writing-style refused in the demo ({s})")
 # Settings: Data sources on Next; add, check and save are refused in the demo, no credential value on the page
 sb2 = next_page("/admin/sources", "<h1>Data sources</h1>", 'id="src-now"', "Add data source", "Check all now", "Edit…", "credential ends")
 next_page("/admin/sources?add=1", "Add a data source", "Coming next")

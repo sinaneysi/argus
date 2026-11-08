@@ -2,7 +2,7 @@ import "./section.css";
 import "./settings.css";
 import { SoftLink } from "./Soft";
 
-const TABS: [string, string][] = [["General", "/admin"], ["Claude", "/admin/claude"], ["Data sources", "/admin/sources"], ["Kubernetes", "/admin/kube"], ["Users and access", "/admin/users"],
+const TABS: [string, string][] = [["General", "/admin"], ["Claude", "/admin/claude"], ["Writing style", "/admin/writing-style"], ["Data sources", "/admin/sources"], ["Kubernetes", "/admin/kube"], ["Users and access", "/admin/users"],
   ["Jira sync", "/admin/board"], ["Backup targets", "/admin/backup-targets"], ["Integrations", "/admin/outline"], ["Credentials", "/admin/credentials"]];
 
 /** The Settings pages' tabs; the ones not ported yet are still Go pages on the same origin. */

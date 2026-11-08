@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 
 	"github.com/sinaneysi/argus/internal/config"
@@ -19,7 +21,8 @@ apply   root, run by argus-settings.path (examples/systemd) when the web app sav
         page shows "Last save was rejected" with the reason). Writes in ARGUS_ETC_DIR: thresholds.env, rca-auto.json,
         readiness.json, qa-ask.json, claude.json, and ARGUS_CLAUDE_EGRESS_FILE when settings.json has
         "claude_egress". Status in ARGUS_SETTINGS_OUT: applied.json, qa-ask.json, claude.json, claude-egress.json,
-        audit.log. Schedules change the systemd timers <ARGUS_SETTINGS_TIMER_PREFIX><task>.timer (drop-in
+        audit.log. Also applies Settings -> Writing style (ARGUS_SETTINGS_IN/writing-style.json) to
+        ARGUS_ETC_DIR/writing-style.md, live copy and writing-style-applied.json in ARGUS_SETTINGS_OUT. Schedules change the systemd timers <ARGUS_SETTINGS_TIMER_PREFIX><task>.timer (drop-in
         schedule.conf, enable/disable); with the prefix empty no timer is touched. Refused when DEMO_MODE=1.
 claude  print the Claude usage switch, or switch it (ARGUS_ETC_DIR/claude.json and the live copy).
 qa      print the QA follow-up question settings, or change them (ARGUS_ETC_DIR/qa-ask.json and the live copy).
@@ -72,13 +75,24 @@ func runSettings(args []string, stdout, stderr io.Writer) int {
 	case "qa":
 		return settingsapply.QA(o, words)
 	}
+	rc := 0
+	styled, err := settingsapply.ApplyStyle(o)
+	if err != nil {
+		if !settingsapply.IsRejected(err) {
+			fmt.Fprintln(stderr, "argus settings apply: writing style failed part way:", err)
+		}
+		rc = 1
+	}
+	if _, e := os.Stat(o.In); styled && errors.Is(e, os.ErrNotExist) {
+		return rc // only a writing style was saved so far
+	}
 	if err := settingsapply.Apply(o); err != nil {
 		if !settingsapply.IsRejected(err) {
 			fmt.Fprintln(stderr, "argus settings apply: failed part way:", err)
 		}
 		return 1
 	}
-	return 0
+	return rc
 }
 
 func settingsOptions(c *config.Config) settingsapply.Options {

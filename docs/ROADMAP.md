@@ -112,8 +112,8 @@ Goal: the images work at another company after the data sources are set; nothing
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
 | P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents |
-| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake) | planned |
-| P4 | the model runner inside the worker (no host user) | planned |
+| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
+| P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
 | P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | planned |
 
@@ -129,6 +129,13 @@ and runs the board sync with the Jira entry of Settings → Data sources (PR #20
 connections (`jira-connect`), the Outline publisher (`outline-requests`) and the GitLab issues tracker
 (`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
+
+Writing style (2026-11-08): `internal/style` holds the default style (embedded `default.md`, about 80% ASD-STE100
+and a fixed layout); an admin edits it in Settings → Writing style (`/admin/writing-style`,
+`GET /api/v1/settings/writing-style`). The worker applies the request to `etc/writing-style.md` within 3 s (legacy:
+root's `argus settings apply`). **REQUIRED for every model run** that P3 and P4 port (task agent, RCA, proposals,
+ideas, chat): build the prompt with `style.Prepend(prompt)` (`style.Current()` is the custom text, else the default).
+Tasks the board creates from incidents, RCA and CI/CD findings already start with a goal line, facts and checkbox steps.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
