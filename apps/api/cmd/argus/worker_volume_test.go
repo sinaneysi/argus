@@ -145,6 +145,13 @@ func TestVolumeWorkerAppliesSources(t *testing.T) {
 	if ok, why := jobs["collect-alerts"].Ready(); !ok {
 		t.Fatalf("not ready with the source saved: %s", why)
 	}
+	ops, _ := sql.Open("sqlite", c.DB)
+	var n int
+	ops.QueryRow("SELECT count(*) FROM data_sources WHERE key='alertmanager/main'").Scan(&n)
+	ops.Close()
+	if n != 1 {
+		t.Fatal("the saved source was not recorded in data_sources (sources list, find and the agent read it)")
+	}
 	srcs := registryAlertSources(c, nil)
 	if len(srcs) != 1 || srcs[0].URL != "http://am.example.invalid/api/v2/alerts" || srcs[0].Token != "" {
 		t.Fatalf("alert sources: %+v", srcs)
