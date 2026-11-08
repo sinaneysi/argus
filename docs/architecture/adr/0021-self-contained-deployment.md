@@ -204,6 +204,19 @@ exit 124 at the time limit), the secret scan over the error, the record and the 
 log file in `ARGUS_MODEL_LOG_DIR`. `argus claude run` makes one call to check the provider. The clean-install test
 uses the api provider against the stub's `/anthropic/v1/messages`; the unit tests use a fake CLI.
 
+As built (P2, host estate): `internal/estate` and `argus estate inventory|vmstate|pulse|all|sites` port the VM
+inventory, the VM state and the 5-minute pulse from Prometheus only (parity with the earlier jobs on synthetic
+fixtures, two rounds: `internal/estate/testdata/parity`, the same files byte for byte and the same `vms`,
+`vm_changes` and `vm_state` rows). A site is a Grafana entry of Settings -> Data sources enabled for the agent (its
+first Prometheus data source, through Grafana's proxy), a Prometheus entry of type Alertmanager / Prometheus, or
+`ARGUS_PROM_SOURCES`; the site's name is the VM's "dc". In the volume the worker runs `inventory` (inventory, then VM
+state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a site. Company specifics are keys:
+`ARGUS_INVENTORY_ENV_PREFIXES` (environment by address), `ARGUS_VM_APP_UNITS` (application unit prefixes),
+`ARGUS_SERVICE_MAP_FILE`. Not ported, waiting for the access broker (P5): the read-only host facts and snapshots
+(services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
+(kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
+evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+
 As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
 Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
 map, else the same name): it writes a job file to `task-agent/jobs/`, the worker job `task-agent` runs it through

@@ -88,6 +88,8 @@ var APIs = []Need{
 var Jobs = map[string][]string{
 	"collect-alerts": {"alertmanager"},
 	"incidents":      {"alertmanager"},
+	"inventory":      {"grafana", "alertmanager"},
+	"vm-pulse":       {"grafana", "alertmanager"},
 	"task-agent":     {"claude"},
 }
 

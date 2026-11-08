@@ -1,0 +1,119 @@
+[
+ {
+  "name": "empty",
+  "remote": "",
+  "block": "new",
+  "known": [],
+  "text": "<!-- argus:begin -->\nnew\n<!-- argus:end -->\n\n## Team notes\n\n_Write your own notes here. Argus only rewrites the block above, between its markers._\n",
+  "state": "updated",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "11507a0e2f5e69d5",
+  "proposed": null
+ },
+ {
+  "name": "outside-kept",
+  "remote": "Intro by a person.\n\n<!-- argus:begin -->\nold\n<!-- argus:end -->\n\n## Team notes\n\nOwner: payments team.\n",
+  "block": "new",
+  "known": [
+   "cba06b5736faf67e"
+  ],
+  "text": "Intro by a person.\n\n<!-- argus:begin -->\nnew\n<!-- argus:end -->\n\n## Team notes\n\nOwner: payments team.\n",
+  "state": "updated",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "11507a0e2f5e69d5",
+  "proposed": null
+ },
+ {
+  "name": "same",
+  "remote": "<!-- argus:begin -->\nsame\n<!-- argus:end -->\n\n## Team notes\n\nx\n",
+  "block": "same",
+  "known": [],
+  "text": "<!-- argus:begin -->\nsame\n<!-- argus:end -->\n\n## Team notes\n\nx\n",
+  "state": "unchanged",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "0967115f2813a354",
+  "proposed": null
+ },
+ {
+  "name": "human-edit",
+  "remote": "<!-- argus:begin -->\nArgus text\n\nplus a person's line\n<!-- argus:end -->\n\n## Team notes\n\nmine\n",
+  "block": "Argus v2",
+  "known": [
+   "400c4fc54c0fff54"
+  ],
+  "text": "<!-- argus:begin -->\nArgus text\n\nplus a person's line\n<!-- argus:end -->\n\n## Argus proposed update\n\n_A person edited Argus's block above, so Argus did not overwrite it. This is what Argus would write now: copy what is right into the block, or undo the edits there, and this section goes away at the next sync._\n\n<!-- argus:proposed:begin -->\nArgus v2\n<!-- argus:proposed:end -->\n\n## Team notes\n\nmine\n",
+  "state": "human-edit",
+  "flags": [
+   "human-edit"
+  ],
+  "again_state": "unchanged",
+  "hash": "b074be62e1fa9ce6",
+  "proposed": "Argus v2"
+ },
+ {
+  "name": "no-markers",
+  "remote": "A page a person rewrote.\n",
+  "block": "Argus",
+  "known": [],
+  "text": "A page a person rewrote.\n\n## Argus proposed update\n\n_A person edited Argus's block above, so Argus did not overwrite it. This is what Argus would write now: copy what is right into the block, or undo the edits there, and this section goes away at the next sync._\n\n<!-- argus:proposed:begin -->\nArgus\n<!-- argus:proposed:end -->\n",
+  "state": "no-markers",
+  "flags": [
+   "markers-missing"
+  ],
+  "again_state": "unchanged",
+  "hash": "3950e40a8fc3aeff",
+  "proposed": "Argus"
+ },
+ {
+  "name": "escaped",
+  "remote": "\\<!-- argus:begin --\\>\n* item\n\\<!-- argus:end --\\>\n\nnotes",
+  "block": "- new",
+  "known": [
+   "50b7ba42fd77aeb9"
+  ],
+  "text": "<!-- argus:begin -->\n- new\n<!-- argus:end -->\n\nnotes",
+  "state": "updated",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "cd74f698e0e1fabf",
+  "proposed": null
+ },
+ {
+  "name": "table-pad",
+  "remote": "<!-- argus:begin -->\n| a | b |\n|---|---|\n| 1 | 2 |\n<!-- argus:end -->\n",
+  "block": "|a|b|\n|---|---|\n|1|2|",
+  "known": [],
+  "text": "<!-- argus:begin -->\n| a | b |\n|---|---|\n| 1 | 2 |\n<!-- argus:end -->\n",
+  "state": "unchanged",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "826bc095a1db2eab",
+  "proposed": null
+ },
+ {
+  "name": "padded-known",
+  "remote": "<!-- argus:begin -->\n|   a     |   b   |\n|---------|---------|\n| x\\_y | 2 |\n<!-- argus:end -->\n\nnotes\n",
+  "block": "| a | b |\n|---|---|\n| x_y | 3 |",
+  "known": [
+   "b8cdaef3dd1d0e4c"
+  ],
+  "text": "<!-- argus:begin -->\n| a | b |\n|---|---|\n| x_y | 3 |\n<!-- argus:end -->\n\nnotes\n",
+  "state": "updated",
+  "flags": [],
+  "again_state": "unchanged",
+  "hash": "753e4785e2fce73a",
+  "proposed": null
+ },
+ {
+  "name": "chain",
+  "t3": "<!-- argus:begin -->\nArgus text\n\nplus a person's line\n<!-- argus:end -->\n\n## Argus proposed update\n\n_A person edited Argus's block above, so Argus did not overwrite it. This is what Argus would write now: copy what is right into the block, or undo the edits there, and this section goes away at the next sync._\n\n<!-- argus:proposed:begin -->\nArgus v3\n<!-- argus:proposed:end -->\n\n## Team notes\n\nmine\n",
+  "s3": "human-edit",
+  "accepted": "<!-- argus:begin -->\nArgus v3\n<!-- argus:end -->\n\n## Argus proposed update\n\n_A person edited Argus's block above, so Argus did not overwrite it. This is what Argus would write now: copy what is right into the block, or undo the edits there, and this section goes away at the next sync._\n\n<!-- argus:proposed:begin -->\nArgus v3\n<!-- argus:proposed:end -->\n\n## Team notes\n\nmine\n",
+  "t4": "<!-- argus:begin -->\nArgus v3\n<!-- argus:end -->\n\n## Team notes\n\nmine\n",
+  "s4": "updated",
+  "f4": []
+ }
+]
