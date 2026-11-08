@@ -1,0 +1,4 @@
+{"alerts": [
+ {"dc": "east", "alertname": "HTTP503High", "instance": "shop.example.com:443", "severity": "critical", "fp": "fp-shop-503", "labels": {"host": "shop.example.com"}},
+ {"dc": "west", "alertname": "HighLatency", "instance": "api.example.com", "severity": "warning", "labels": {}}
+]}

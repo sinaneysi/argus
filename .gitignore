@@ -1,5 +1,7 @@
 .env
 *.log
+# test fixtures are committed
+!**/testdata/**
 __pycache__/
 *.pyc
 /argus-api
