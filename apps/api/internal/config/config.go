@@ -148,6 +148,9 @@ var Fields = []Field{
 	{Key: "CICD_ENGINE_PROJECT_ID", Kind: Str, Default: "100"},
 	{Key: "BACKUP_TEMPLATES_REPO", Kind: Str, Default: "ops/backup-templates", Help: "group/project of the backup templates"},
 	{Key: "OUTLINE_URL", Kind: Str, Default: "https://docs.example.com", Help: "the default Outline server"},
+	{Key: "OUTLINE_PARENT", Kind: Str, Default: "Argus", Help: "title of the top-level Outline document every service page is published under (never the collection root)"},
+	{Key: "OUTLINE_PILOT", Kind: List, Help: "group/repo, ...: the services of the Outline scope pilot (the overview page always goes)"},
+	{Key: "OUTLINE_MARKER", Kind: Str, Default: "argus", Help: "the word in the block markers of the Outline pages (<!-- word:begin -->); an installation that moves from an earlier product keeps its word"},
 	{Key: "PUBLIC_DOMAIN", Kind: Str, Default: "example.com", Help: "the company's public domain"},
 	{Key: "JIRA_PROJECT", Kind: Str, Default: "OPS", Help: "the Jira project key in examples"},
 	{Key: "OBS_SITES", Kind: List, Default: "east,west", Help: "monitoring sites (datacenters)"},
@@ -495,7 +498,7 @@ const ImportedFile = "imported.env"
 // integrations' addresses, rooms and project keys. Never a secret, a path, a listen address or a sign-in setting.
 var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARGUS_TZ_LABEL", "ENV_LABELS", "PUBLIC_DOMAIN",
 	"OBS_SITES", "OBS_SITE_*_LABEL", "GITLAB_URL", "CICD_GROUPS", "CICD_ENGINE_PROJECT", "CICD_ENGINE_PROJECT_ID",
-	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
+	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
 	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS"}

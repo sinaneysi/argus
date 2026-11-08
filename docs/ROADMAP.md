@@ -126,7 +126,7 @@ jobs that name the missing source. Secrets in the volume are encrypted
 with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
 the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
 and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
-connections (`jira-connect`), the Outline publisher (`outline-requests`) and the GitLab issues tracker
+connections (`jira-connect`) and the GitLab issues tracker
 (`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
@@ -141,6 +141,15 @@ Model runtime (2026-11-08, P3/P4): `internal/model` with the providers `cli` (th
 the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MODEL_PROVIDER`; every call through
 `style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
 Every ported model job calls it (ADR-0021 "As built (P3/P4)").
+
+Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
+the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
+the parent document `OUTLINE_PARENT` only: a missing, trashed, archived or moved parent stops the run with the reason
+in the status, the collection root is never used, a lost page is found again by title among the parent's children
+only, and a person's text outside the block is kept (merge parity with the earlier installation). The API key is
+sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Outline entry of Settings → Data sources
+(purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
+builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
