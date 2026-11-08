@@ -970,3 +970,31 @@ func CheckAll(o Options) error {
 	}
 	return nil
 }
+
+// Import adds one entry to the registry (argus import: an earlier installation's integration). The credential, when
+// given, is sealed with the master key into <dir>/<type>/<name>.cred. An entry that exists already is left as it is
+// unless replace is set. The status is "unchecked" until the worker's sources-check or a person's Check runs.
+func (o *Options) Import(e Entry, cred string, replace bool) (bool, error) {
+	if _, ok := Types[e.Type]; !ok {
+		return false, fmt.Errorf("unknown type %q", e.Type)
+	}
+	if !NameRe.MatchString(e.Name) {
+		return false, fmt.Errorf("bad name %q", e.Name)
+	}
+	reg := o.Registry()
+	if _, ok := reg[e.key()]; ok && !replace {
+		return false, nil
+	}
+	if cred != "" {
+		if err := o.writeCred(e.Type, e.Name, cred); err != nil {
+			return false, err
+		}
+		e.CredLast4, e.CredSetAt, e.CredSetBy = last4(cred), o.now(), "import"
+	}
+	e.Managed, e.Status = "registry", "unchecked"
+	if e.Detail == "" {
+		e.Detail = "imported; not checked yet"
+	}
+	reg[e.key()] = &e
+	return true, o.saveRegistry(reg)
+}

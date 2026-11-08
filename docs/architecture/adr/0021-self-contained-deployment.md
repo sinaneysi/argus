@@ -154,12 +154,22 @@ that list.
 | phase | what | state |
 |---|---|---|
 | P0 | this ADR; migrations + `argus migrate` + volume layout; clean-install test; worker scheduler + in-volume settings/secrets; data-source registry + "Connect X" states + Settings → Data sources; marketing module switch | in progress |
-| P1 | `argus import <dir>`: one-time import of an earlier installation's databases, state files, settings and secrets into the volume (dry run first, a report of what was skipped) | documented |
+| P1 | `argus import <dir>`: one-time import of an earlier installation's databases, state files, settings and secrets into the volume (dry run first, a report of what was skipped); GitLab issue tasks in the board sync | in progress |
 | P2 | port the evidence jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) to worker jobs | documented |
 | P3 | port the decision jobs (board, proposals, review, notices, chat intake) | documented |
 | P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user | documented |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020), no host SSH scripts | documented |
 | P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | documented |
+
+As built (P1): `argus import [-dry-run] [-force] [-etc DIR] [-env FILE]... [-reports DIR] [-totp-legacy-label L]
+<state dir>` copies `ops.db`, `board/board.db` and `auth/auth.db` consistently (`VACUUM INTO` from a scratch copy; the
+source is only read) and migrates them; copies the `*.json` state files, `settings-in/` (without pending request
+folders) and `settings-out/`, and the reports; copies the 2FA key and re-encrypts the 2FA secrets written under the
+earlier label (`TOTP_LEGACY_LABEL` is not needed afterwards); turns the integrations of the env files and the etc
+folder (GitLab read-only token, the GitLab issues connection, Jira, Outline, Matrix, Alertmanager / Prometheus,
+Grafana sites, Kubernetes clusters, the Claude token) into Settings -> Data sources entries and volume files sealed
+with the master key (created when missing), then seals every secret of the volume. It prints names only, refuses a
+volume that already holds data unless `-force`, and a second forced run gives the same result.
 
 ## Consequences
 
