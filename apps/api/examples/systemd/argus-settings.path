@@ -1,0 +1,15 @@
+# Settings -> General: run argus settings apply as soon as the web app saves settings.json (schedules, thresholds,
+# automatic deep RCA, readiness, QA questions, Claude usage).
+#
+#   install -m 0644 argus-settings.path argus-settings.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now argus-settings.path
+#   touch /var/lib/argus/settings-in/settings.json   # apply a save made before the unit existed
+[Unit]
+Description=Argus Settings -> General saves
+
+[Path]
+PathChanged=/var/lib/argus/settings-in/settings.json
+Unit=argus-settings.service
+
+[Install]
+WantedBy=paths.target

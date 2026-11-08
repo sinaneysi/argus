@@ -462,7 +462,7 @@ func merged(defs []setting, saved any) *py.OMap {
 func settingsPath() string { return filepath.Join(SET_IN, "settings.json") }
 
 // QAAskSettings is qa_ask_settings(cfg): the saved values, and over them the live copy root writes
-// (settings-out/qa-ask.json, also changed by `argus-apply-settings qa ...` on the Argus host).
+// (settings-out/qa-ask.json, also changed by `argus settings qa ...` on the Argus host).
 func QAAskSettings(cfg any) *py.OMap {
 	if cfg == nil { // qa_ask_settings() with no argument reads settings.json
 		cfg = ReadJSON(settingsPath(), py.NewOMap())

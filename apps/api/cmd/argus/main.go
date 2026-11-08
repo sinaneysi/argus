@@ -9,6 +9,7 @@
 //	argus checks <name|all|list>  run collectors once (alerts, certs, backups), each behind ARGUS_COLLECT_<NAME>=1
 //	argus worker [-once]          run the enabled collectors on their intervals
 //	argus claude check|egress     the egress-country guard in front of every Claude run
+//	argus settings apply          root: apply what Settings -> General saved (claude, qa: the same from the shell)
 //	argus secrets apply-claude    root: replace or test the Claude token, egress check and guard settings
 //	argus secrets apply-kube      root: store and check kubeconfigs from Settings -> Kubernetes (install-kubectl too)
 //	argus tools kube ...          the agent's read-only Kubernetes tool (get, describe, logs, events ...)
@@ -47,6 +48,7 @@ var commands = []command{
 	{"checks", "run collectors once: alerts snapshot, certificates, backups", runChecks},
 	{"worker", "run the enabled collectors on their intervals", runWorker},
 	{"claude", "the egress-country guard in front of every Claude run (check, egress)", runClaude},
+	{"settings", "root: apply Settings -> General (apply), switch Claude usage (claude) or QA questions (qa)", runSettings},
 	{"secrets", "root: apply Settings -> Claude and -> Kubernetes requests (apply-claude, apply-kube, install-kubectl)", runSecrets},
 	{"tools", "the agent's read-only tools (kube)", runTools},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},

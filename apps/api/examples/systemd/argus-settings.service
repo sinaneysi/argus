@@ -1,0 +1,31 @@
+# argus settings apply (root): validates settings.json as a whole and applies it, or rejects it and keeps what is live
+# (the page shows "Last save was rejected" with the reason). Writes the applied settings in ARGUS_ETC_DIR and the
+# status (applied.json, live copies, audit.log) in ARGUS_SETTINGS_OUT. Started by argus-settings.path.
+# ARGUS_SETTINGS_TIMER_PREFIX=argus- lets it edit and enable/disable the argus-<task>.timer units; leave it empty
+# while no job timers are installed (then no timer is touched). The paths below are the host side of the web app's
+# mounts; adjust them to your install.
+[Unit]
+Description=Argus Settings -> General: apply the saved settings
+Documentation=https://github.com/sinaneysi/argus/blob/main/apps/api/internal/app/helpdocs/settings.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus settings apply
+Environment=ARGUS_SETTINGS_IN=/var/lib/argus/settings-in ARGUS_SETTINGS_OUT=/var/lib/argus/settings-out
+Environment=ARGUS_ETC_DIR=/etc/argus ARGUS_SETTINGS_TIMER_PREFIX=
+TimeoutStartSec=120
+UMask=0022
+
+# hardening: root writes only the settings directory, the status directory and (with timers) the timer drop-ins
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/argus /var/lib/argus/settings-out
+# with ARGUS_SETTINGS_TIMER_PREFIX set, also: ReadWritePaths=/etc/systemd/system
+PrivateTmp=yes
+PrivateNetwork=yes
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=yes

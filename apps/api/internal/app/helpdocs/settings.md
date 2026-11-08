@@ -17,7 +17,7 @@ checks it again, applies it, logs it, and posts the change to Matrix.
   Off stops every Claude call: triage, deep RCA, storage and VM analyses, ideas, task runs, the fixer,
   translations and Lazy readings are skipped and recorded as skipped, never as failures (no incident, no Matrix FAIL
   notice). Checks still collect their facts. Today, Checks, the brief and the self-check say **Claude paused**.
-  Root can also run `sudo argus-apply-settings claude on|off` on {{host}} (no word prints it).
+  Root can also run `sudo argus settings claude on|off` on {{host}} (no word prints it).
 - **Schedules:** how often chat triage, log RCA, the backup check and the certificate check run, and whether each is
   enabled, with the next run.
 - **Thresholds:** Kuma minutes down before a monitor counts (default 5), Kuma downs that count as flapping (3),
@@ -26,7 +26,7 @@ checks it again, applies it, logs it, and posts the change to Matrix.
 - **Hub services and sales-event readiness:** hub services raise severity (on); the event name and date (default
   Black Friday, 2026-11-27); the freeze reminder from D-7; the readiness brief from D-30 to D+2. Reports only.
 - **QA follow-up questions:** on, off, or dry run; **Read images in QA messages** on or off (off by default). Root
-  can also run `sudo argus-apply-settings qa on|off|dry-run|send|images-on|images-off` on {{host}}.
+  can also run `sudo argus settings qa on|off|dry-run|send|images-on|images-off` on {{host}}.
 - **Sign-in:** "SSO only" (password sign-in refused except for the break-glass account). It has no effect until
   Keycloak is configured.
 - **Credentials:** status only, checked hourly. Values are never shown. Healthy ones fold.
@@ -274,7 +274,9 @@ shown in Argus health. The archive's passphrase must also be kept outside the se
 ## FAQ {#faq}
 
 :::details I saved a setting but nothing changed.
-Root applies it within seconds. If the save was rejected, the page shows "Last save was rejected" with the reason.
+Root applies it within seconds (`argus settings apply`, run by `argus-settings.path`). If the save was rejected, the
+page shows "Last save was rejected" with the reason. "Nothing applied from this page yet" means the root job is not
+installed on {{host}}.
 :::
 
 :::details Can I see a token or password here?
