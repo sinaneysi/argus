@@ -4,6 +4,7 @@ package main
 //
 //	gsc          every 6 hours: Search Console daily totals, the key URLs' index state, the sitemaps (ARGUS_DB)
 //	seo-suggest  once a day: the rule-based suggestions of the SEO page
+//	seo-summary  once a day: the model's short summary of them (internal/model, with the writing style)
 //	seo-send     within seconds of the SEO page's Send: the newest suggestions to the notify room
 //
 // The Google data source (Settings -> Data sources, type google) holds the service-account key.
@@ -23,6 +24,7 @@ import (
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/marketing/google"
 	"github.com/sinaneysi/argus/internal/marketing/seo"
+	"github.com/sinaneysi/argus/internal/model"
 	"github.com/sinaneysi/argus/internal/needs"
 	"github.com/sinaneysi/argus/internal/notify"
 	"github.com/sinaneysi/argus/internal/sources"
@@ -100,9 +102,47 @@ func suggestRun(ctx context.Context, c *config.Config, force bool, out io.Writer
 		by[s.Rule]++
 	}
 	fmt.Fprintf(out, "seo suggestions %s: %d %v%s\n", now.Format("2006-01-02"), len(sug), by, map[bool]string{true: " (" + note + ")", false: ""}[note != ""])
-	// TODO(P3a model runtime): the daily summary (seo_summary) through internal/model with style.Prepend.
 	return nil
 }
+
+// summaryRun writes the model's summary of the newest suggestions through the shared model runtime (internal/model:
+// the writing style, the Claude usage switch, the egress guard, a budget cap and a runs row). force false: only when
+// that day has no summary yet.
+func summaryRun(ctx context.Context, c *config.Config, force bool, out io.Writer) error {
+	db, err := openOpsDB(c)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	day := seo.NewestDay(db)
+	if day == "" || !force && seo.HasSummary(db, day) {
+		return nil
+	}
+	r := model.New(modelOptions(c, db))
+	if ok, why := r.Configured(); !ok {
+		return errors.New(why)
+	}
+	call := func(ctx context.Context, prompt string) (string, float64, string) {
+		res := r.Run(ctx, model.Request{Task: "seo-summary", Prompt: prompt, MaxTurns: 1, BudgetUSD: summaryBudget, Timeout: 5 * time.Minute})
+		switch {
+		case res.Skipped != "":
+			return "", 0, res.Skipped
+		case res.Error != "":
+			return "", res.CostUSD, res.Error
+		case res.IsError || strings.TrimSpace(res.Text) == "":
+			return "", res.CostUSD, "the model returned no usable text"
+		}
+		return res.Text, res.CostUSD, ""
+	}
+	if _, err := seo.Summarize(ctx, db, c.Values["COMPANY_NAME"].Raw, r.O.Model, call, time.Now()); err != nil {
+		return err
+	}
+	fmt.Fprintf(out, "seo summary %s written\n", day)
+	return nil
+}
+
+// summaryBudget is the daily summary's budget in USD.
+const summaryBudget = 0.15
 
 // seoSendRun consumes the Send requests of the SEO page first (a failed send is never retried in a loop), then posts
 // the newest suggestions once for all of them.
@@ -191,6 +231,12 @@ func seoJobs(c *config.Config, det needs.Detector, out io.Writer) []worker.Job {
 			Run: func(ctx context.Context) error { return gscRun(ctx, c, out) }},
 		{Name: "seo-suggest", Every: time.Hour, Sources: needs.Jobs["seo-suggest"], Ready: ready("seo-suggest", true),
 			Run: func(ctx context.Context) error { return suggestRun(ctx, c, false, out) }},
+		{Name: "seo-summary", Every: time.Hour, Ready: func() (bool, string) {
+			if ok, why := ready("seo-summary", false)(); !ok {
+				return ok, why
+			}
+			return model.New(modelOptions(c, nil)).Configured()
+		}, Run: func(ctx context.Context) error { return summaryRun(ctx, c, false, out) }},
 		{Name: "seo-send", Every: applyEvery, Ready: ready("seo-send", false),
 			Run: pendingJob(filepath.Join(c.SettingsIn, "seo-send"), func() error { return seoSendRun(context.Background(), c, out) })},
 	}

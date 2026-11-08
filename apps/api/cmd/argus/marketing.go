@@ -31,7 +31,7 @@ import (
 
 const marketingHelp = `usage: argus marketing googlebot collect|detect|sitemaps|seo [-file PATH]
        argus marketing googlebot backfill [-file PATH] FROM TO
-       argus marketing gsc|suggest|send [-file PATH]
+       argus marketing gsc|suggest|summary|send [-file PATH]
 
 The jobs of the marketing module (the worker runs them when the module is on):
 collect   read the finished crawler log buckets of the last 2 hours from Loki (ARGUS_GOOGLEBOT_EDGES_FILE, through
@@ -43,11 +43,12 @@ seo       write the SEO page's Googlebot table (seo_snapshots, seo_errors in ARG
 gsc       read Search Console (the Google data source, property ARGUS_GSC_SITE): daily totals, the key URLs of
           ARGUS_GSC_URLS_FILE, the sitemaps
 suggest   store today's SEO suggestions again (Search Console, and GA4 when ARGUS_GA_PROPERTY is set)
+summary   write the model's short summary of the newest suggestions again (the shared model runtime)
 send      post the newest suggestions to the notify room for the SEO page's Send requests
 `
 
 func runMarketing(args []string, stdout, stderr io.Writer) int {
-	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "send") && !isHelp(args) {
+	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "summary" || args[0] == "send") && !isHelp(args) {
 		return runSearchJob(args, stdout, stderr)
 	}
 	if len(args) < 2 || isHelp(args) || args[0] != "googlebot" {
@@ -354,6 +355,8 @@ func runSearchJob(args []string, stdout, stderr io.Writer) int {
 		err = gscRun(ctx, c, stdout)
 	case "suggest":
 		err = suggestRun(ctx, c, true, stdout)
+	case "summary":
+		err = summaryRun(ctx, c, true, stdout)
 	case "send":
 		err = seoSendRun(ctx, c, stdout)
 	}
