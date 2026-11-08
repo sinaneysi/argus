@@ -1,0 +1,54 @@
+# argus board sync (root): applies the task board requests the web app drops, pushes the queued changes to Jira,
+# pulls the changed issues and writes board-status.json. Root only because the Jira token file is root-owned 0600;
+# the job reads the auth database read-only and writes only the board database and the status directory.
+# Started by argus-board-sync.timer (every 2 minutes) and argus-board-sync.path (at once on a new request).
+#
+#   install -m 0644 argus-board-sync.service argus-board-sync.timer argus-board-sync.path /etc/systemd/system/
+#   install -m 0600 -o root /dev/null /etc/argus/jira.pat     # then write the token into it
+#   install -m 0644 -o root /dev/null /etc/argus/jira.env     # JIRA_URL=, JIRA_PROJECT=, ... (no secret)
+#   systemctl daemon-reload && systemctl enable --now argus-board-sync.timer argus-board-sync.path
+#   systemctl start argus-board-sync.service && journalctl -u argus-board-sync -n 30
+#   /usr/local/bin/argus board sync -dry-run      # log the Jira writes it would send, change nothing
+#
+# ARGUS_BOARD_SYNC=1 must be set (here or in /etc/argus/argus.env), else the job logs "disabled". The paths below
+# are the host side of the web app's mounts; adjust them to your install.
+[Unit]
+Description=Argus task board: apply requests, two-way sync with Jira
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/argus board sync
+Environment=ARGUS_BOARD_SYNC=1
+Environment=ARGUS_BOARD_DB=/var/lib/argus/board/board.db ARGUS_BOARD_REQ_DIR=/var/lib/argus/settings-in/board-requests
+Environment=ARGUS_BOARD_OUT=/var/lib/argus/settings-out ARGUS_BOARD_AUTH_DB=/var/lib/argus/auth/auth.db
+Environment=ARGUS_BOARD_ENV_FILES=/etc/argus/jira.env ARGUS_BOARD_PAT_FILE=/etc/argus/jira.pat
+TimeoutStartSec=300
+MemoryMax=200M
+UMask=0022
+
+# hardening: network for Jira only; writes the board directory, the request directory (consumed files) and the
+# status directory
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/argus/board /var/lib/argus/settings-in/board-requests /var/lib/argus/settings-out
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
