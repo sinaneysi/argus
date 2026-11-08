@@ -4,17 +4,13 @@ import { Pill } from "./Pills";
 import { Hidden, tone, When } from "./Section";
 import { backupOverride, scanAct } from "@/app/(app)/inventory/actions";
 import { ago, full, iso } from "@/lib/format";
-import type { Accepted, MeterData, MiniData, PillData, Reload as R, Restore, RunStrip, ScanBar } from "@/lib/types";
+import type { Accepted, MeterData, MiniData, PillData, Restore, RunStrip, ScanBar } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
 // The parts the Infrastructure pages share. Server components; meters and small charts are plain SVG attributes, so
 // the strict CSP needs nothing extra.
 
-export function Reload({ r }: { r: R | boolean | undefined }) {
-  if (!r) return null;
-  if (r === true) return <meta httpEquiv="refresh" content="5" />;
-  return <meta httpEquiv="refresh" content={r.url ? `${r.seconds};url=${r.url}` : String(r.seconds)} />;
-}
+export { Reload } from "./Reload";
 
 export function P({ p }: { p: PillData }) {
   return <Pill tone={tone(p.kind)} title={p.title}>{p.text}</Pill>;

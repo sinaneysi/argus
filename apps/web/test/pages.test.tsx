@@ -36,7 +36,7 @@ const railCookie = { value: undefined as string | undefined };
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => (railCookie.value ? { value: railCookie.value } : undefined) }),
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => null, useRouter: () => ({ push: vi.fn() }),
+vi.mock("next/navigation", () => ({ usePathname: () => null, useRouter: () => ({ push: vi.fn(), refresh() {}, replace() {} }),
   redirect: (to: string) => {
     throw new Error("REDIRECT " + to);
   },

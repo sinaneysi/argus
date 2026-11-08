@@ -12,6 +12,7 @@ import { qs } from "@/lib/api";
 import { day, full, iso, minutes, plural } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { Action, Fact, Review, ReviewDetail, ReviewRow, Section } from "@/lib/types";
+import { Reload } from "@/components/Reload";
 import { reviewAct } from "./actions";
 import { IdeasFull } from "./Ideas";
 import { LessonsFull } from "./Lessons";
@@ -270,7 +271,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
 
   return (
     <div>
-      {d.refresh ? <meta httpEquiv="refresh" content="3" /> : null}
+      <Reload r={d.refresh ? 3 : 0} />
       <header className="phead">
         <div>
           <h1>Review inbox</h1><HelpQ p="/review" />

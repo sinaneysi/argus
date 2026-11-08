@@ -10,6 +10,7 @@ import { hours, minutes, plural } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import { ago, full, iso } from "@/lib/format";
 import type { Today, TodayChecks, TodayIncidents, TodayItem } from "@/lib/types";
+import { Reload } from "@/components/Reload";
 import { cn } from "cn";
 import { todayAct } from "./actions";
 
@@ -211,7 +212,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Search
 
   return (
     <>
-      {t.banner?.refresh ? <meta httpEquiv="refresh" content={String(t.banner.refresh)} /> : null}
+      <Reload r={t.banner?.refresh} />
       <header className="phead">
         <div>
           <h1>Today</h1>

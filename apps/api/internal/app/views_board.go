@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -138,12 +139,17 @@ func BoardRequestBanner(c *Ctx, qs py.QS) string {
 	if !boardIDRe.MatchString(rid) {
 		return ""
 	}
-	if _, err := os.Stat(filepath.Join(SET_IN, "board-requests", rid+".json")); err == nil {
-		c.Refresh = true
-		return Banner("Sent. The board sync applies it within seconds; this page refreshes itself.", "ok")
+	st := BoardStatus()
+	if b, ok := requestWaitBanner(c, filepath.Join(SET_IN, "board-requests", rid+".json"), rid, "the board sync",
+		"Nothing changed in GitLab or Jira.", py.Num(st.Get("last_run"))); ok {
+		return b
 	}
-	res := py.AsMap(py.AsMap(BoardStatus().Get("requests")).Get(rid))
+	res := py.AsMap(py.AsMap(st.Get("requests")).Get(rid))
 	if !py.Truthy(res) {
+		if age, ok := requestAge(rid); ok && age >= requestNoResult {
+			return Banner("No result: the board sync took this request but reported nothing after "+
+				strconv.Itoa(int(age)/60)+" min. Check the board sync log.", "fail")
+		}
 		c.Refresh = true
 		return Banner("Sent. Waiting for the board sync; this page refreshes itself.", "ok")
 	}

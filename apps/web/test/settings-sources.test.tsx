@@ -20,7 +20,7 @@ vi.mock("@/lib/server", () => ({
   formCsrf: (fd: FormData) => String(fd.get("csrf") ?? ""),
   setFlash: vi.fn(async () => undefined),
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => null, redirect: (to: string) => { throw new Error("REDIRECT " + to); }, notFound: () => { throw new Error("NOT FOUND"); } }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh() {}, replace() {} }), usePathname: () => null, redirect: (to: string) => { throw new Error("REDIRECT " + to); }, notFound: () => { throw new Error("NOT FOUND"); } }));
 
 beforeEach(() => {
   for (const k of Object.keys(answers)) delete answers[k];

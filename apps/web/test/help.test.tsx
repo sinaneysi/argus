@@ -17,7 +17,7 @@ vi.mock("@/lib/server", () => ({
   back: async (to: string) => { throw new Error("REDIRECT " + to); },
   apiGet: vi.fn(async (path: string) => { asked.push(path); return { ...(answers[path.split("?")[0]!] ?? { status: 404, data: { error: "no" } }), setCookies: [] }; }),
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => null, notFound: () => { throw new Error("NOT FOUND"); } }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh() {}, replace() {} }), usePathname: () => null, notFound: () => { throw new Error("NOT FOUND"); } }));
 
 beforeEach(() => { for (const k of Object.keys(answers)) delete answers[k]; asked.length = 0; });
 

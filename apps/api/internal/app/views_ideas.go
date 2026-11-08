@@ -242,9 +242,8 @@ func ideasSentBanner(c *Ctx, qs py.QS) string {
 		return ""
 	}
 	if ideaRidRe.MatchString(rid) {
-		if _, err := os.Stat(filepath.Join(SET_IN, "idea-actions", rid+".json")); err == nil {
-			c.Refresh = true
-			return Banner("Sent. Argus applies it within seconds; this page refreshes itself.")
+		if b, ok := requestWaitBanner(c, filepath.Join(SET_IN, "idea-actions", rid+".json"), rid, "Argus", "Nothing changed.", 0); ok {
+			return b
 		}
 	}
 	return Banner(map[string]string{"explore": "Marked under review.", "accept": "Accepted. The build prompt for Claude Code is on the " +

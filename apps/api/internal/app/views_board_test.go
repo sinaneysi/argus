@@ -252,6 +252,7 @@ func TestBoardRequestBannerStates(t *testing.T) {
 	if b := BoardRequestBanner(c, py.NewQS("req", "20261021000001-abcdef12")); !strings.Contains(b, `/board/task?id=3`) {
 		t.Fatal(b)
 	}
+	fakeNow(t, "20261021000009", 5)
 	c2 := e.ctx(e.view)
 	if b := BoardRequestBanner(c2, py.NewQS("req", "20261021000009-abcdef12")); !strings.Contains(b, "Waiting") || c2.Refresh != true {
 		t.Fatal(b)
