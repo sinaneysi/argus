@@ -100,6 +100,22 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
+	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)
+	for _, ej := range []struct {
+		name, run string
+		every     time.Duration
+	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}} {
+		ej := ej
+		jobs = append(jobs, worker.Job{Name: ej.name, Every: ej.every, Sources: needs.Jobs[ej.name],
+			Ready: func() (bool, string) {
+				if miss := det.Now().Missing(needs.Jobs[ej.name]); len(miss) > 0 {
+					return false, needs.Reason(miss)
+				}
+				return estateConfigured(c)
+			},
+			Run: func(ctx context.Context) error { return estateRun(ctx, c, ej.run, 0, stderr) }})
+	}
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }

@@ -670,6 +670,41 @@
       "help": "the backup sets to check (JSON)"
     },
     {
+      "key": "ARGUS_PROM_SOURCES",
+      "type": "list",
+      "help": "name=url, ...: Prometheus base URLs for the inventory and VM state, besides the Grafana and Prometheus entries of Settings -> Data sources"
+    },
+    {
+      "key": "ARGUS_PROM_CA_FILE",
+      "type": "path",
+      "help": "extra CA certificates for the Prometheus and Grafana sites of the inventory"
+    },
+    {
+      "key": "ARGUS_PROM_TIMEOUT",
+      "type": "int",
+      "default": "60",
+      "min": 5,
+      "max": 300,
+      "help": "seconds per Prometheus query of the inventory and VM state"
+    },
+    {
+      "key": "ARGUS_INVENTORY_ENV_PREFIXES",
+      "type": "list",
+      "help": "env=address prefix, ...: the environment of a VM without an env label, by its address (first match wins), e.g. develop=10.0.9.,release=10.0."
+    },
+    {
+      "key": "ARGUS_VM_APP_UNITS",
+      "type": "list",
+      "default": "app-",
+      "help": "name prefixes of the application systemd units (letters, digits, - and _)"
+    },
+    {
+      "key": "ARGUS_SERVICE_MAP_FILE",
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/service-map.json",
+      "help": "the service map (domains, edges, backends) the inventory and VM state read"
+    },
+    {
       "key": "ARGUS_INCIDENT_AUTORESOLVE_HOURS",
       "aliases": [
         "INCIDENT_AUTORESOLVE_HOURS"

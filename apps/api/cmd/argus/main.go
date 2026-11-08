@@ -54,6 +54,7 @@ var commands = []command{
 	{"secrets", "root: apply Settings -> Claude and -> Kubernetes requests (apply-claude, apply-kube, install-kubectl)", runSecrets},
 	{"tools", "the agent's read-only tools (kube)", runTools},
 	{"board", "the task board sync with Jira and GitLab issues (sync)", runBoard},
+	{"estate", "host estate from Prometheus: VM inventory, VM state, the 5-minute pulse", runEstate},
 	{"incidents", "incident records: apply the incident page's requests and auto-resolve (tick); attach, backfill", runIncidents},
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
