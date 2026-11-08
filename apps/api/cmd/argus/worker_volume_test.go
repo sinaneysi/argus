@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -166,5 +169,70 @@ func TestVolumeWorkerConsumers(t *testing.T) {
 	// the board works locally without Jira: one sync run in the volume
 	if err := jobs["board-sync"].Run(context.Background()); err != nil {
 		t.Fatalf("board sync: %v", err)
+	}
+}
+
+// The incidents job in the volume: the page's requests are applied within seconds without any source; the
+// auto-resolve waits for an alerts source (it would resolve every quiet incident otherwise); a changed incident with
+// a Matrix thread gets a note in that thread, in the notify room only.
+func TestVolumeIncidents(t *testing.T) {
+	var got []map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var m map[string]any
+		json.NewDecoder(r.Body).Decode(&m)
+		m["path"] = r.URL.Path
+		got = append(got, m)
+		w.Write([]byte(`{"event_id": "$sent"}`))
+	}))
+	defer srv.Close()
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+
+		"\nARGUS_NOTIFY_MATRIX=1\nMATRIX_HOMESERVER="+srv.URL+"\nMATRIX_ACCESS_TOKEN=fake-matrix-token-0001\nMATRIX_NOTIFY_ROOM=!notices:example.com\n"), 0o600)
+	c, err := config.Load(config.Options{File: env, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate.EnsureDirs(c); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := migrate.All(context.Background(), c, func(string, ...any) {}); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", c.DB)
+	defer db.Close()
+	if _, err := db.Exec(`INSERT INTO incidents (id, key, dc, subject, family, title, status, first_seen, last_seen, thread_root, thread_room)
+ VALUES (1, '|shop.example.com|down', '', 'shop.example.com', 'down', 'Shop down', 'open', 1, 1, '$root:example.com', '!notices:example.com'),
+        (2, '|db.example.com|disk', '', 'db.example.com', 'disk', 'Disk', 'open', 1, 1, '$other:example.com', '!elsewhere:example.com')`); err != nil {
+		t.Fatal(err)
+	}
+	jobs := map[string]worker.Job{}
+	for _, j := range volumeJobs(c, map[string]time.Duration{}, io.Discard) {
+		jobs[j.Name] = j
+	}
+	if ok, why := jobs["incidents"].Ready(); ok || !strings.Contains(why, "Alertmanager") {
+		t.Fatalf("incidents without an alerts source: %v %q", ok, why)
+	}
+	dir := filepath.Join(c.SettingsIn, "incident-actions")
+	os.MkdirAll(dir, 0o750)
+	for i, id := range []int{1, 2} {
+		b, _ := json.Marshal(map[string]any{"id": id, "action": "resolve", "by": "alex.admin", "role": "admin", "note": "done"})
+		os.WriteFile(filepath.Join(dir, fmt.Sprintf("1800000000-0000000%d.json", i)), b, 0o600)
+	}
+	if err := jobs["incident-actions"].Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	var st string
+	db.QueryRow(`SELECT status FROM incidents WHERE id=1`).Scan(&st)
+	if st != "resolved" {
+		t.Fatal("status", st)
+	}
+	if len(got) != 1 {
+		t.Fatalf("thread notes: %d (the other room must not get one)", len(got))
+	}
+	rel, _ := got[0]["m.relates_to"].(map[string]any)
+	if rel["rel_type"] != "m.thread" || rel["event_id"] != "$root:example.com" || !strings.Contains(got[0]["body"].(string), "resolved by alex.admin: done") ||
+		!strings.Contains(got[0]["path"].(string), "/rooms/!notices:example.com/send/") {
+		t.Fatalf("note: %v", got[0])
 	}
 }

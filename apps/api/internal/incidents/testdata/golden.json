@@ -1,0 +1,304 @@
+{
+ "candidates": {
+  "chat-camel": [
+   [
+    "",
+    "paging",
+    "memory"
+   ]
+  ],
+  "chat-host": [
+   [
+    "WEST",
+    "shop.example.com",
+    "latency"
+   ]
+  ],
+  "chat-slug": [
+   [
+    "",
+    "login-button-broken",
+    "other"
+   ]
+  ],
+  "incident-alerts": [
+   [
+    "EAST",
+    "shop.example.com",
+    "http-5xx"
+   ],
+   [
+    "WEST",
+    "api.example.com",
+    "latency"
+   ]
+  ],
+  "incident-no-alert": [
+   [
+    "",
+    "db-02.example.org",
+    "disk"
+   ]
+  ],
+  "incident-no-host": [
+   [
+    "",
+    "queue-stuck",
+    "down"
+   ]
+  ]
+ },
+ "events": [
+  [
+   1,
+   1800000000,
+   "finding",
+   1,
+   0,
+   "incident",
+   "argus",
+   "shop.example.com answers 503 to every checkout"
+  ],
+  [
+   2,
+   1800000600,
+   "finding",
+   2,
+   0,
+   "chat-triage",
+   "argus",
+   "users say shop.example.com is slow since noon"
+  ],
+  [
+   3,
+   1800000600,
+   "finding",
+   2,
+   2,
+   "chat-triage",
+   "argus",
+   "the payment page times out for some users"
+  ],
+  [
+   4,
+   1800001200,
+   "finding",
+   3,
+   null,
+   "log-rca",
+   "argus",
+   "WARN `DiskSpaceLow` on db-01.example.net: /var is full. Known incident #1 covers shop.example.com."
+  ],
+  [
+   1,
+   1800003600,
+   "ack",
+   null,
+   null,
+   null,
+   "alex.admin",
+   null
+  ],
+  [
+   2,
+   1800025200,
+   "auto-resolve",
+   null,
+   null,
+   null,
+   "argus",
+   "auto-resolved: no matching alert firing for 6 h"
+  ],
+  [
+   4,
+   1800025200,
+   "auto-resolve",
+   null,
+   null,
+   null,
+   "argus",
+   "auto-resolved: no matching alert firing for 6 h"
+  ],
+  [
+   1,
+   1800111600,
+   "auto-resolve",
+   null,
+   null,
+   null,
+   "argus",
+   "auto-resolved: no matching alert firing for 6 h"
+  ],
+  [
+   3,
+   1800111600,
+   "auto-resolve",
+   null,
+   null,
+   null,
+   "argus",
+   "auto-resolved: no new report for 24 h"
+  ],
+  [
+   1,
+   1800115200,
+   "reopen",
+   5,
+   null,
+   "incident",
+   "argus",
+   "re-opened: the same problem was found again"
+  ],
+  [
+   1,
+   1800115200,
+   "finding",
+   5,
+   0,
+   "incident",
+   "argus",
+   "shop.example.com answers 503 again"
+  ],
+  [
+   1,
+   1800116000,
+   "resolve",
+   null,
+   null,
+   null,
+   "alex.admin",
+   "fixed the cache"
+  ]
+ ],
+ "families": {
+  "": "other",
+  "CertExpiry": "cert",
+  "DiskSpaceLow": "disk",
+  "HTTP503High": "http-5xx",
+  "HighCPULoad": "cpu",
+  "KubePodOOMKilled": "memory",
+  "TargetDown": "down",
+  "Upstream_Timeout": "http-5xx",
+  "Weird Alert!": "weirdalert",
+  "up": "down"
+ },
+ "incidents": [
+  {
+   "acked_at": null,
+   "acked_by": null,
+   "alert_severity": "critical",
+   "clear_since": null,
+   "customer_facing": 1,
+   "dc": "EAST",
+   "env": "release",
+   "family": "http-5xx",
+   "fingerprints": "[\"fp-shop-503\", \"west|HighLatency|api.example.com\"]",
+   "first_seen": 1800000000,
+   "id": 1,
+   "key": "EAST|shop.example.com|http-5xx",
+   "last_firing": 1800025200,
+   "last_seen": 1800115200,
+   "occurrences": 2,
+   "owner": "alex.admin",
+   "resolve_note": "fixed the cache",
+   "resolved_at": 1800116000,
+   "resolved_by": "alex.admin",
+   "severity": "critical",
+   "sources": "[\"alertmanager\"]",
+   "status": "resolved",
+   "subject": "shop.example.com",
+   "title": "Checkout 503s"
+  },
+  {
+   "acked_at": null,
+   "acked_by": null,
+   "alert_severity": "",
+   "clear_since": 1800000600,
+   "customer_facing": 1,
+   "dc": "EAST",
+   "env": "release",
+   "family": "latency",
+   "fingerprints": "[]",
+   "first_seen": 1800000600,
+   "id": 2,
+   "key": "EAST|shop.example.com|latency",
+   "last_firing": null,
+   "last_seen": 1800000600,
+   "occurrences": 1,
+   "owner": null,
+   "resolve_note": "auto-resolved: no matching alert firing for 6 h",
+   "resolved_at": 1800000600,
+   "resolved_by": "argus",
+   "severity": "medium",
+   "sources": "[\"qa\"]",
+   "status": "resolved",
+   "subject": "shop.example.com",
+   "title": "Site is slow"
+  },
+  {
+   "acked_at": null,
+   "acked_by": null,
+   "alert_severity": "",
+   "clear_since": 1800000600,
+   "customer_facing": 0,
+   "dc": "",
+   "env": "release",
+   "family": "latency",
+   "fingerprints": "[]",
+   "first_seen": 1800000600,
+   "id": 3,
+   "key": "|payment-page-timeout|latency",
+   "last_firing": null,
+   "last_seen": 1800000600,
+   "occurrences": 1,
+   "owner": null,
+   "resolve_note": "auto-resolved: no new report for 24 h",
+   "resolved_at": 1800000600,
+   "resolved_by": "argus",
+   "severity": "high",
+   "sources": "[\"matrix\"]",
+   "status": "resolved",
+   "subject": "payment-page-timeout",
+   "title": "Payment page timeout"
+  },
+  {
+   "acked_at": null,
+   "acked_by": null,
+   "alert_severity": "warning",
+   "clear_since": 1800001200,
+   "customer_facing": 0,
+   "dc": "EAST",
+   "env": "release",
+   "family": "disk",
+   "fingerprints": "[]",
+   "first_seen": 1800001200,
+   "id": 4,
+   "key": "EAST|db-01.example.net|disk",
+   "last_firing": null,
+   "last_seen": 1800001200,
+   "occurrences": 1,
+   "owner": null,
+   "resolve_note": "auto-resolved: no matching alert firing for 6 h",
+   "resolved_at": 1800001200,
+   "resolved_by": "argus",
+   "severity": "medium",
+   "sources": "[\"alertmanager\"]",
+   "status": "resolved",
+   "subject": "db-01.example.net",
+   "title": "DiskSpaceLow on db-01.example.net"
+  }
+ ],
+ "subjects": {
+  " API.example.com ": "api.example.com",
+  "HTTPS://Shop.Example.com:443/cart": "shop.example.com",
+  "db-01.example.net:9100": "db-01.example.net"
+ },
+ "text_families": {
+  "fine": "other",
+  "got a 502 from the edge": "http-5xx",
+  "it is slow": "latency",
+  "no space left": "disk",
+  "out of memory": "memory",
+  "site down": "down"
+ }
+}

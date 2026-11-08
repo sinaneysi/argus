@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -137,7 +138,29 @@ func (s *Sender) RoomAllowed() string {
 	return ""
 }
 
-func (s *Sender) matrix(ctx context.Context, c Content) error {
+// threadRootRe is a Matrix event id.
+var threadRootRe = regexp.MustCompile(`^\$[A-Za-z0-9_\-+/=.:]{1,250}$`)
+
+// SendThread posts c as a reply in the Matrix thread whose root event is root, in the notify room only. Matrix only:
+// it returns ErrNotSent when Matrix is off, the room is refused, or root is not an event id.
+func (s *Sender) SendThread(ctx context.Context, c Content, label, root string) error {
+	if !s.Matrix {
+		return fmt.Errorf("%w: Matrix is off", ErrNotSent)
+	}
+	if !threadRootRe.MatchString(root) {
+		return fmt.Errorf("%w: not a thread root", ErrNotSent)
+	}
+	c = s.Safe(c, label)
+	if strings.TrimSpace(c.Body) == "" {
+		return fmt.Errorf("notify: empty message from %s", label)
+	}
+	return s.matrixRel(ctx, c, map[string]any{"rel_type": "m.thread", "event_id": root, "is_falling_back": true,
+		"m.in_reply_to": map[string]any{"event_id": root}})
+}
+
+func (s *Sender) matrix(ctx context.Context, c Content) error { return s.matrixRel(ctx, c, nil) }
+
+func (s *Sender) matrixRel(ctx context.Context, c Content, rel map[string]any) error {
 	if why := s.RoomAllowed(); why != "" {
 		return fmt.Errorf("%w: refusing to send: %s", ErrNotSent, why)
 	}
@@ -147,6 +170,9 @@ func (s *Sender) matrix(ctx context.Context, c Content) error {
 	content := map[string]any{"msgtype": c.MsgType, "body": c.Body, "m.mentions": map[string]any{}}
 	if c.Format != "" {
 		content["format"], content["formatted_body"] = c.Format, c.FormattedBody
+	}
+	if rel != nil {
+		content["m.relates_to"] = rel
 	}
 	b, _ := json.Marshal(content)
 	id := "argus-" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + strconv.Itoa(os.Getpid()) + "-" +

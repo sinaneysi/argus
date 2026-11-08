@@ -170,6 +170,14 @@ var Fields = []Field{
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
 	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
 	// notifications (argus notify; every job that posts a notice): Matrix, else Telegram, else a webhook, else none
+	{Key: "ARGUS_INCIDENT_AUTORESOLVE_HOURS", Aliases: []string{"INCIDENT_AUTORESOLVE_HOURS"}, Kind: Int, Default: "6", Min: 1, Max: 720, Help: "an alert-backed incident resolves after this many hours with no matching alert firing"},
+	{Key: "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", Aliases: []string{"INCIDENT_CHAT_RESOLVE_HOURS"}, Kind: Int, Default: "24", Min: 1, Max: 720, Help: "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"},
+	{Key: "ARGUS_INCIDENT_REOPEN_DAYS", Aliases: []string{"INCIDENT_REOPEN_DAYS"}, Kind: Int, Default: "7", Min: 1, Max: 365, Help: "a finding re-opens a resolved incident of the same problem within this many days"},
+	{Key: "ARGUS_CUSTOMER_FACING", Kind: List, Help: "subjects that are customer-facing (glob patterns such as www.example.com, api.*)"},
+	{Key: "ARGUS_INCIDENT_HOST_SUFFIXES", Kind: List, Default: "com,net,org,io,dev,app,cloud,internal,local,test", Help: "domain suffixes a host name in a finding's text may end in"},
+	{Key: "ARGUS_INCIDENT_HOST_PREFIXES", Kind: List, Help: "prefixes of bare host names in a finding's text (such as web-, db-)"},
+	{Key: "ARGUS_INCIDENT_FAMILY_WORDS", Kind: List, Help: "extra symptom words in the team's language, as family=word (latency=..., down=...), matched in alert names and reports"},
+	{Key: "ARGUS_INCIDENT_SKIP_HOSTS", Kind: List, Help: "hosts never taken as an incident's subject (the own, GitLab and chat hosts are skipped anyway)"},
 	{Key: "ARGUS_NOTIFY_MATRIX", Aliases: []string{"MATRIX_NOTIFY_ENABLED"}, Kind: Bool, Default: "0", Help: "1: notices go to MATRIX_NOTIFY_ROOM"},
 	{Key: "MATRIX_HOMESERVER", Kind: Str, Help: "the Matrix homeserver URL notices are sent to"},
 	{Key: "ARGUS_MATRIX_TOKEN_FILE", Kind: Path, Help: "file holding the Matrix access token (empty: ARGUS_SECRETS_DIR/matrix-token; missing file: MATRIX_ACCESS_TOKEN)"},
@@ -475,7 +483,8 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"OBS_SITES", "OBS_SITE_*_LABEL", "GITLAB_URL", "CICD_GROUPS", "CICD_ENGINE_PROJECT", "CICD_ENGINE_PROJECT_ID",
 	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
-	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS"}
+	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
+	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {

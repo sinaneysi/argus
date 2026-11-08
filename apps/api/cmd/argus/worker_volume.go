@@ -82,6 +82,20 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "gitlab-issues-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "gitlab-issues"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
+	// incidents: the incident page's requests within seconds (local data, always on); the auto-resolve against the
+	// live alerts every 5 minutes, only once an alerts source is configured (without one every incident would
+	// look quiet and resolve)
+	jobs = append(jobs, worker.Job{Name: "incident-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "incident-actions"), func() error {
+		return incidentsTick(c, false)
+	})})
+	jobs = append(jobs, worker.Job{Name: "incidents", Every: 5 * time.Minute, Sources: needs.Jobs["incidents"],
+		Ready: func() (bool, string) {
+			if miss := det.Now().Missing(needs.Jobs["incidents"]); len(miss) > 0 {
+				return false, needs.Reason(miss)
+			}
+			return true, ""
+		},
+		Run: func(context.Context) error { return incidentsTick(c, true) }})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
@@ -171,6 +185,17 @@ func volumeBoardOptions(c *config.Config) board.Options {
 		o.GitLabURL, o.GitLabToken = e.URL, so.Credential(e)
 	}
 	return o
+}
+
+// incidentsTick is argus incidents tick inside the worker.
+func incidentsTick(c *config.Config, resolve bool) error {
+	db, err := openOpsDB(c)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = incidentOptions(c).Tick(db, resolve)
+	return err
 }
 
 // sourcesRequestsJob applies the Settings -> Data sources requests (save, test, remove, check-all) when there are

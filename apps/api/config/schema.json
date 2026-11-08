@@ -670,6 +670,65 @@
       "help": "the backup sets to check (JSON)"
     },
     {
+      "key": "ARGUS_INCIDENT_AUTORESOLVE_HOURS",
+      "aliases": [
+        "INCIDENT_AUTORESOLVE_HOURS"
+      ],
+      "type": "int",
+      "default": "6",
+      "min": 1,
+      "max": 720,
+      "help": "an alert-backed incident resolves after this many hours with no matching alert firing"
+    },
+    {
+      "key": "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS",
+      "aliases": [
+        "INCIDENT_CHAT_RESOLVE_HOURS"
+      ],
+      "type": "int",
+      "default": "24",
+      "min": 1,
+      "max": 720,
+      "help": "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"
+    },
+    {
+      "key": "ARGUS_INCIDENT_REOPEN_DAYS",
+      "aliases": [
+        "INCIDENT_REOPEN_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 1,
+      "max": 365,
+      "help": "a finding re-opens a resolved incident of the same problem within this many days"
+    },
+    {
+      "key": "ARGUS_CUSTOMER_FACING",
+      "type": "list",
+      "help": "subjects that are customer-facing (glob patterns such as www.example.com, api.*)"
+    },
+    {
+      "key": "ARGUS_INCIDENT_HOST_SUFFIXES",
+      "type": "list",
+      "default": "com,net,org,io,dev,app,cloud,internal,local,test",
+      "help": "domain suffixes a host name in a finding's text may end in"
+    },
+    {
+      "key": "ARGUS_INCIDENT_HOST_PREFIXES",
+      "type": "list",
+      "help": "prefixes of bare host names in a finding's text (such as web-, db-)"
+    },
+    {
+      "key": "ARGUS_INCIDENT_FAMILY_WORDS",
+      "type": "list",
+      "help": "extra symptom words in the team's language, as family=word (latency=..., down=...), matched in alert names and reports"
+    },
+    {
+      "key": "ARGUS_INCIDENT_SKIP_HOSTS",
+      "type": "list",
+      "help": "hosts never taken as an incident's subject (the own, GitLab and chat hosts are skipped anyway)"
+    },
+    {
       "key": "ARGUS_NOTIFY_MATRIX",
       "aliases": [
         "MATRIX_NOTIFY_ENABLED"

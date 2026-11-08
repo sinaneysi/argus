@@ -155,7 +155,7 @@ that list.
 |---|---|---|
 | P0 | this ADR; migrations + `argus migrate` + volume layout; clean-install test; worker scheduler + in-volume settings/secrets; data-source registry + "Connect X" states + Settings → Data sources; marketing module switch | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's databases, state files, settings and secrets into the volume (dry run first, a report of what was skipped); GitLab issue tasks in the board sync | in progress |
-| P2 | port the evidence jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) to worker jobs | documented |
+| P2 | port the evidence jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) to worker jobs | in progress |
 | P3 | port the decision jobs (board, proposals, review, notices, chat intake) | documented |
 | P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user | documented |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020), no host SSH scripts | documented |
@@ -177,6 +177,15 @@ folder are reported as skipped with their size; `-with-googlebot` copies the cra
 writes only the carried settings, for a volume imported by an earlier version. With a Jira data source the board sync
 takes only the address and the credential from it: the Jira settings come from `etc/jira.env` (owned by the user the
 worker runs as), and the configured `JIRA_PROJECT` wins only when it is set explicitly.
+
+As built (P2): `internal/incidents` and `argus incidents tick|attach|backfill` port the incident records job
+(parity with the earlier job on synthetic fixtures: `internal/incidents/testdata/golden.json`). In the volume the worker
+applies the incident page's requests (`incident-actions`) within seconds and auto-resolves every 5 minutes once an
+alerts source is configured (job `incidents`, "not configured" without one); a changed incident with a Matrix thread
+gets a note in that thread (notify room only). Site names come from `OBS_SITES`, host names in text from
+`ARGUS_INCIDENT_HOST_SUFFIXES` / `_PREFIXES`, customer-facing subjects from `ARGUS_CUSTOMER_FACING`, symptom words in the team's language from `ARGUS_INCIDENT_FAMILY_WORDS`; the own, GitLab and
+chat hosts are never subjects. A log-RCA finding attaches only to the primary alert's host; hosts named as covered by a
+known incident ("Known incident #N") are never candidates. Not ported: hub service tiers, the prompt history.
 
 ## Consequences
 
