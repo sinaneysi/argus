@@ -104,6 +104,12 @@ user name signs in with basic auth.
   plaintext values and moves values sealed with `ARGUS_MASTER_KEY_OLD` to the current key; `argus secrets new-key`
   prints a fresh key. A request file still carries a pasted secret for the seconds until the worker consumes it
   (0600, deleted on read), as in the legacy flow.
+- As built: Settings → Writing style saves `settings/in/writing-style.json` (the text, or a reset; plain UTF-8 text or
+  Markdown, at most 16 KB). The worker job `writing-style-apply` validates it and writes `etc/writing-style.md` and the
+  live copy `settings/out/writing-style.md` (status `writing-style-applied.json`, a line in `audit.log`); a reset
+  removes both. The legacy applier (`argus settings apply`, `argus-settings.path`) does the same. `internal/style`
+  reads it: `style.Current()` is the custom text, else the default embedded in the binary. **Every model run (P3
+  task agent, RCA, proposals, chat; P4 runner) must build its prompt with `style.Prepend`.**
 - No host root job and no `settings-in/` / `settings-out/` hand-off in this mode. The file mode stays available
   behind `ARGUS_LAYOUT=legacy` until the pilot is cut over.
 
@@ -157,7 +163,7 @@ that list.
 | P1 | `argus import <dir>`: one-time import of an earlier installation's databases, state files, settings and secrets into the volume (dry run first, a report of what was skipped); GitLab issue tasks in the board sync | in progress |
 | P2 | port the evidence jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) to worker jobs | in progress |
 | P3 | port the decision jobs (board, proposals, review, notices, chat intake) | documented |
-| P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user | documented |
+| P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user; every prompt through `style.Prepend` | documented |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020), no host SSH scripts | documented |
 | P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | documented |
 

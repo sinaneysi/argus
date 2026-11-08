@@ -8,6 +8,7 @@ export const HELP_FOR: Record<string, string> = {
   "/backups": "/help/infrastructure#backups", "/certs": "/help/infrastructure#certificates",
   "/vulns": "/help/security#vulnerabilities", "/seo": "/help/marketing#seo", "/admin/fix": "/help/agent#fix-runs",
   "/admin": "/help/settings#general", "/admin/users": "/help/settings#users",
+  "/admin/writing-style": "/help/settings#writing-style",
   "/admin/board": "/help/settings#jira", "/admin/backup-targets": "/help/settings#backup-targets",
   "/admin/outline": "/help/settings#integrations", "/account": "/help/overview#sign-in",
 };

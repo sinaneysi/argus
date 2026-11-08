@@ -735,7 +735,9 @@ func boardPrefill(kind, sid string) *py.OMap {
 		}
 		return py.NewOMap("title", "Incident #"+r.Str("id")+": "+py.Str(py.Or(py.Or(r.Get("title"), r.Get("subject")), r.Get("key"))),
 			"env", r.S("env"), "host", host, "priority", pri,
-			"description", "Follow-up of incident #"+r.Str("id")+" ("+py.Str(py.Or(r.Get("title"), r.Get("key")))+").",
+			"description", boardTaskBody("Follow up incident #"+r.Str("id")+" ("+py.Str(py.Or(r.Get("title"), r.Get("key")))+") and fix its cause.",
+				[][2]string{{"Incident", "#" + r.Str("id") + " " + r.Str("key")}, {"Severity", py.OrS(r.Get("severity"), "?")}, {"Environment", py.OrS(r.Get("env"), "-")}},
+				"Read the evidence and the fix prompt below.", "Fix the cause, then check that the incident is resolved."),
 			"evidence", ev, "fix_prompt", fp,
 			"url", "/incidents/view?id="+I2S(r.I("id")), "what", "incident #"+I2S(r.I("id")))
 	case kind == "rca" && boardRcaSid.MatchString(sid):
@@ -788,7 +790,9 @@ func boardPrefill(kind, sid string) *py.OMap {
 			fp = "From the RCA \"" + r.Str("title") + "\" (Argus RCA #" + I2S(rid) + "), fix proposal " + I2S(n) + ":\n\n" + prop.Text
 		}
 		return py.NewOMap("title", "RCA fix "+I2S(n)+": "+prop.Title, "env", env, "host", "", "priority", "Medium",
-			"description", "Fix proposal "+I2S(n)+" of the RCA \""+r.Str("title")+"\".",
+			"description", boardTaskBody("Apply fix proposal "+I2S(n)+" of the RCA \""+r.Str("title")+"\".",
+				[][2]string{{"RCA", "#" + I2S(rid)}, {"Fix proposal", I2S(n)}, {"Environment", py.OrS(env, "-")}},
+				"Read the root cause and the fix prompt below.", "Apply the fix, then check the result."),
 			"evidence", "RCA #"+I2S(rid)+": "+r.Str("title")+"\n\nRoot cause:\n"+boardCap(py.Strip(root), 8000),
 			"fix_prompt", fp, "url", "/rca/view?id="+I2S(rid), "what", "RCA #"+I2S(rid)+", fix "+I2S(n))
 	case (kind == "vm" || kind == "disk") && py.IsDigit(sid):
@@ -826,13 +830,35 @@ func boardPrefill(kind, sid string) *py.OMap {
 		}
 		return py.NewOMap("title", py.Head(host+": "+py.OrS(r.Get("ptitle"), what), BoardMaxTitle), "env", env,
 			"host", hostV, "priority", "Medium",
-			"description", "From the "+what+" of "+When(r.Get("created"))+".",
+			"description", boardTaskBody("Act on the "+what+" of "+When(r.Get("created"))+".",
+				[][2]string{{"Host", hh}, {"Environment", py.OrS(env, "-")}},
+				"Read the evidence and the fix prompt below.", "Fix the cause, then check the result."),
 			"evidence", r.S("summary")+"\n\n"+boardCap(r.S("rca"), 16000),
 			"fix_prompt", fp, "url", url, "what", what)
 	case kind == "cicd" && boardCicdSid.MatchString(sid):
 		return CicdPrefill(sid)
 	}
 	return nil
+}
+
+// boardTaskBody is a generated task description in the writing style (internal/style): a one-line goal, the facts
+// as a list, one action per checkbox task. Plain lines that read the same in Jira and in GitLab.
+func boardTaskBody(goal string, facts [][2]string, steps ...string) string {
+	var b strings.Builder
+	b.WriteString("Goal: " + goal + "\n")
+	if len(facts) > 0 {
+		b.WriteString("\n")
+		for _, f := range facts {
+			b.WriteString("- " + f[0] + ": " + f[1] + "\n")
+		}
+	}
+	if len(steps) > 0 {
+		b.WriteString("\n")
+		for _, x := range steps {
+			b.WriteString("- [ ] " + x + "\n")
+		}
+	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 // --- posts ----------------------------------------------------------------------------------------------

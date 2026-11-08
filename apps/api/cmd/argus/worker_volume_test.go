@@ -64,6 +64,17 @@ func TestVolumeWorkerAppliesSettings(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(c.SettingsOut, "applied.json")); err == nil {
 		t.Fatal("applied again without a change")
 	}
+	// Settings -> Writing style: the request lands in etc/ of the volume, live copy in settings/out
+	sj := styleApplyJob(c, io.Discard)
+	os.WriteFile(filepath.Join(c.SettingsIn, "writing-style.json"), []byte(`{"text":"Write short.","updated_by":"admin","updated_at":1800000001}`), 0o600)
+	if err := sj(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{filepath.Join(vol, "etc", "writing-style.md"), filepath.Join(c.SettingsOut, "writing-style.md")} {
+		if b, _ := os.ReadFile(p); string(b) != "Write short.\n" {
+			t.Fatalf("%s: %q", p, b)
+		}
+	}
 	// the request folders exist for the API
 	for _, d := range migrate.RequestDirs {
 		if _, err := os.Stat(filepath.Join(c.SettingsIn, d)); err != nil {
@@ -151,7 +162,7 @@ func TestVolumeWorkerConsumers(t *testing.T) {
 	for _, j := range volumeJobs(c, map[string]time.Duration{}, io.Discard) {
 		jobs[j.Name] = j
 	}
-	for _, n := range []string{"settings-apply", "claude-requests", "sources-requests", "sources-check", "kube-requests",
+	for _, n := range []string{"settings-apply", "writing-style-apply", "claude-requests", "sources-requests", "sources-check", "kube-requests",
 		"source-actions", "sources-discover", "board-sync", "board-requests"} {
 		if _, ok := jobs[n]; !ok {
 			t.Errorf("no %s job", n)

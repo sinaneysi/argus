@@ -29,6 +29,7 @@ const ROUTES: Record<string, [api: string, page: string]> = {
   "account-sessions": ["/api/v1/account/sessions", "/account"],
   gitlab: ["/api/v1/admin/gitlab-issues", "/admin/outline#gitlab"],
   "claude-usage": ["/api/v1/admin/claude", "/admin/claude#claude-usage"],
+  "writing-style": ["/api/v1/admin/writing-style", "/admin/writing-style"],
 };
 
 type Answer = { ok?: boolean; redirect?: string; message?: string; field?: string };

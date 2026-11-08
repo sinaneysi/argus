@@ -14,7 +14,7 @@ const base = (process.argv[2] || "http://127.0.0.1:3000").replace(/\/+$/, "");
 const pw = await import(process.env.PLAYWRIGHT_CORE || "playwright-core");
 const chromium = pw.chromium ?? pw.default.chromium;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || "/usr/bin/google-chrome", headless: true });
-const extra = ["/account", "/account/2fa", "/admin", "/admin/claude", "/admin/sources", "/admin/kube", "/admin/users", "/admin/board",
+const extra = ["/account", "/account/2fa", "/admin", "/admin/claude", "/admin/writing-style", "/admin/sources", "/admin/kube", "/admin/users", "/admin/board",
   "/admin/fix", "/admin/backup-targets", "/admin/credentials", "/inventory/view?id=7", "/incidents/view?id=145", "/board/task?id=14"];
 const found = [];
 

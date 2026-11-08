@@ -2,7 +2,7 @@ package main
 
 // worker_volume.go: `argus worker` in the one-volume layout (ADR-0021 D3, D4). The worker is the scheduler: the
 // collectors run on their intervals, and the saves of Settings that the legacy layout hands to root path units are
-// applied here within seconds: Settings -> General (internal/settingsapply) and Settings -> Claude
+// applied here within seconds: Settings -> General and Writing style (internal/settingsapply) and Settings -> Claude
 // (internal/claudetoken). No host job, no systemd timer. The job states go to worker-status.json in the volume.
 
 import (
@@ -50,6 +50,7 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			Run: func(ctx context.Context) error { return runCollector(ctx, c, n) }})
 	}
 	jobs = append(jobs, worker.Job{Name: "settings-apply", Every: applyEvery, Run: settingsApplyJob(c, stderr)})
+	jobs = append(jobs, worker.Job{Name: "writing-style-apply", Every: applyEvery, Run: styleApplyJob(c, stderr)})
 	jobs = append(jobs, worker.Job{Name: "sources-requests", Every: applyEvery, Run: sourcesRequestsJob(c, stderr)})
 	jobs = append(jobs, worker.Job{Name: "sources-check", Every: 6 * time.Hour, Run: func(context.Context) error {
 		o := sourcesOptions(c)
@@ -131,6 +132,31 @@ func settingsApplyJob(c *config.Config, stderr io.Writer) func(context.Context) 
 		o.Notify = settingsNotice(c, stderr)
 		if err := settingsapply.Apply(o); err != nil && !settingsapply.IsRejected(err) {
 			return fmt.Errorf("settings apply: %w", err)
+		}
+		return nil
+	}
+}
+
+// styleApplyJob applies Settings -> Writing style when its request file changed since the last apply (by content).
+func styleApplyJob(c *config.Config, stderr io.Writer) func(context.Context) error {
+	var last [32]byte
+	return func(context.Context) error {
+		o := settingsOptions(c)
+		data, err := os.ReadFile(o.StyleRequestPath())
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		sum := sha256.Sum256(data)
+		if sum == last {
+			return nil
+		}
+		last = sum
+		o.Log, o.Err = stderr, stderr
+		o.Notify = settingsNotice(c, stderr)
+		if _, err := settingsapply.ApplyStyle(o); err != nil && !settingsapply.IsRejected(err) {
+			return fmt.Errorf("writing style apply: %w", err)
 		}
 		return nil
 	}

@@ -47,7 +47,8 @@ const CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-a
 
 var postLimits = map[string]int64{"/backups/new": 32768, "/admin/fix/review": 65536, "/board/comment": 65536,
 	"/board/create": 262144, "/admin/jira-shared": 262144, "/board/agent": 262144, "/board/agent/chat": 65536, "/board/task/secret": 65536, "/admin/backup-targets": 65536,
-	"/admin/lessons/act": 32768, "/admin/kube": 262144, "/admin/sources": 32768}
+	"/admin/lessons/act": 32768, "/admin/kube": 262144, "/admin/sources": 32768,
+	"/admin/writing-style": 131072}
 
 // Handler serves the app.
 type Handler struct{}

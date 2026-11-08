@@ -77,6 +77,22 @@ Below it, three sections in this order:
   route the traffic takes or hides the location; it only stops AI and says why.
 - **Claude usage:** the same On/Off switch as on General.
 
+## Writing style {#writing-style}
+
+**Where:** Settings → [Writing style](/admin/writing-style). Admins only; every change needs a recent 2FA step.
+
+The style of every text Argus generates: task descriptions, plans, RCA reports, proposals, notices and chat answers.
+The default ships with Argus: about 80% ASD-STE100 (one idea per sentence, short sentences, active voice, imperative
+steps), a one-line goal, a facts table, numbered sections, one action per checkbox task with a "Reason:" sub-bullet,
+and a final **Warnings** list. Facts, commands, paths and error strings stay exact; a secret is named, never written.
+
+- **Edit:** change the text and choose **Save**. Plain text or Markdown, up to 16 KB. The worker applies it within
+  seconds (`etc/writing-style.md` in the volume; in the file layout root's `argus settings apply` writes
+  `ARGUS_ETC_DIR/writing-style.md`). A refused text keeps the style in use.
+- **Reset to default:** deletes the custom text; the default is used again.
+- **Who uses it:** every model run gets the style before its prompt (task runs, RCA, proposals, ideas, chat). Tasks
+  Argus creates from incidents, RCA and CI/CD findings start with a goal line, the facts and checkbox steps.
+
 ## Data sources {#sources}
 
 **Where:** Settings → [Data sources](/admin/sources). Admins only; every change needs a recent 2FA step.

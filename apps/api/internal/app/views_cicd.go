@@ -236,8 +236,9 @@ func CicdPrefill(sid string) *py.OMap {
 	return py.NewOMap(
 		"title", py.Head(cicdShortPath(f.S("project"))+": "+f.Str("title"), 200),
 		"env", f.S("env"), "host", "", "priority", pr,
-		"description", "CI/CD finding #"+f.Str("id")+" ("+f.Str("kind")+", "+py.OrS(f.Get("klass"), "-")+") on "+f.Str("project")+" "+f.S("ref")+". "+
-			"Commit "+py.Head(f.S("sha"), 10)+" by "+py.OrS(f.Get("author"), "?")+" "+f.S("mr")+".",
+		"description", boardTaskBody("Fix CI/CD finding #"+f.Str("id")+" ("+f.Str("kind")+", "+py.OrS(f.Get("klass"), "-")+") on "+f.Str("project")+" "+f.S("ref")+".",
+			[][2]string{{"Commit", py.Head(f.S("sha"), 10) + " by " + py.OrS(f.Get("author"), "?") + strings.TrimRight(" "+f.S("mr"), " ")}, {"Environment", py.OrS(f.Get("env"), "-")}},
+			"Read the evidence and the fix prompt below.", "Fix the cause, then check that the pipeline passes."),
 		"evidence", py.Head(f.S("detail")+"\n\n"+f.S("evidence"), 16000),
 		"fix_prompt", fp,
 		"url", "/cicd/finding?id="+I2S(f.I("id")), "what", "CI/CD finding #"+f.Str("id"))

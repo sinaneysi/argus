@@ -1,5 +1,5 @@
 # Settings -> General: run argus settings apply as soon as the web app saves settings.json (schedules, thresholds,
-# automatic deep RCA, readiness, QA questions, Claude usage).
+# automatic deep RCA, readiness, QA questions, Claude usage) or Settings -> Writing style (writing-style.json).
 #
 #   install -m 0644 argus-settings.path argus-settings.service /etc/systemd/system/
 #   systemctl daemon-reload && systemctl enable --now argus-settings.path
@@ -9,6 +9,7 @@ Description=Argus Settings -> General saves
 
 [Path]
 PathChanged=/var/lib/argus/settings-in/settings.json
+PathChanged=/var/lib/argus/settings-in/writing-style.json
 Unit=argus-settings.service
 
 [Install]
