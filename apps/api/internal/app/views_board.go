@@ -583,8 +583,8 @@ func boardFixerBlock(t Row, sess *Session, ret string) string {
 			`A human makes the change, with the operator's approval for that one change.</p>`
 	}
 	if !In(env, BoardFixEnvs...) {
-		return `<h2>Fixer</h2><p class="section-note">Set the environment (label <code>env-develop</code> or ` +
-			`<code>env-pre-release</code> in Jira) to make this task runnable by the fixer.</p>`
+		return `<h2>Fixer</h2><p class="section-note">Set the environment to make this task runnable by the fixer: a label ` +
+			`such as <code>env:stage</code>, <code>env-develop</code> or <code>env:pre-release</code> (GitLab or Jira).</p>`
 	}
 	fs := t.S("fix_state")
 	state := ""
