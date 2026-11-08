@@ -25,8 +25,12 @@ import (
 
 type fixtures map[string]map[string]map[string]map[string][]map[string]any // round -> site -> instant|range -> key -> rows
 
-func loadFixtures(t *testing.T) fixtures {
-	b, err := os.ReadFile("testdata/parity/fixtures.json")
+func loadFixtures(t *testing.T, path ...string) fixtures {
+	p := "testdata/parity/fixtures.json"
+	if len(path) > 0 {
+		p = path[0]
+	}
+	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatal(err)
 	}

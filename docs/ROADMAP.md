@@ -111,7 +111,7 @@ Goal: the images work at another company after the data sources are set; nothing
 |---|---|---|
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
-| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity |
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
@@ -146,7 +146,7 @@ Marketing is an optional module from P0 on: hidden from the navigation and the A
 
 ## Next
 
-1. More collectors: credential expiry, capacity; S3 listing for backups. Host estate: the host shell part of the
+1. More collectors: credential expiry; S3 listing for backups. Host estate: the host shell part of the
    inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
    the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
