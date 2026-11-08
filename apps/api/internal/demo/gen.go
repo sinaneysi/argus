@@ -10,6 +10,7 @@
 package demo
 
 import (
+	"context"
 	"crypto/sha1"
 	"database/sql"
 	"embed"
@@ -23,11 +24,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/py"
 	_ "modernc.org/sqlite"
 )
 
-//go:embed data/schema_ops.sql data/schema_board.sql data/schema_mfa.sql data/content/*.md
+//go:embed data/content/*.md
 var files embed.FS
 
 // Time and size units. They are variables, not constants, on purpose: Go folds constant expressions exactly, while
@@ -70,12 +72,12 @@ func content(name string) string {
 	return string(b)
 }
 
-func schema(name string) string {
-	b, err := files.ReadFile("data/" + name)
-	if err != nil {
+// migrate creates a database's tables with Argus's own migrations (internal/migrate): the demo, the tests and a real
+// install share one schema (ADR-0021 D2). The recorded time is the generator's now, so a data set stays reproducible.
+func (g *Gen) migrate(t tx, db string) {
+	if _, err := migrate.Apply(context.Background(), t, db, func() int64 { return g.now }); err != nil {
 		panic(err)
 	}
-	return string(b)
 }
 
 // round is Python's round(x, n) for n >= 1: correctly rounded on the exact binary value, ties to even.
@@ -267,9 +269,9 @@ func (g *Gen) build() {
 		panic(err)
 	}
 	g.opsDB, g.ops = openDB(g.path("ops.db"))
-	g.exec(g.ops, schema("schema_ops.sql"))
+	g.migrate(g.ops, migrate.Ops)
 	g.brdDB, g.board = openDB(g.path("board", "board.db"))
-	g.exec(g.board, schema("schema_board.sql"))
+	g.migrate(g.board, migrate.Board)
 	for _, step := range []func(){g.inventory, g.scheduledRuns, g.incidents, g.qa, g.problems, g.alerts, g.capacity,
 		g.hygiene, g.backups, g.certs, g.cve, g.cicd, g.boardData, g.proposals, g.reviewCases, g.ideas, g.fixer,
 		g.gitlabIssues, g.kubeStatus, g.sourcesStatus, g.sourceCatalogue, g.credentials, g.today, g.stateFiles, g.settingsOut, g.queues, g.seo} {

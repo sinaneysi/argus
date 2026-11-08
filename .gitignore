@@ -11,3 +11,6 @@ node_modules/
 /apps/web/next-env.d.ts
 *.tsbuildinfo
 .taste-skill/
+
+# a real installation's settings (deploy/compose.yml)
+deploy/argus.env

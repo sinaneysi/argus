@@ -69,7 +69,7 @@ func writeFileAtomic(path string, data []byte) error {
 	return nil
 }
 
-// schema: the tables the collectors write, exactly as in the evidence database (internal/demo/data/schema_ops.sql).
+// schema: the tables the collectors write, exactly as in the evidence database (internal/migrate/migrations/ops).
 // CREATE TABLE IF NOT EXISTS leaves an existing database untouched.
 const schema = `
 CREATE TABLE IF NOT EXISTS runs (

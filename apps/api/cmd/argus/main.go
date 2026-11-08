@@ -44,6 +44,7 @@ type command struct {
 var commands = []command{
 	{"version", "print the version", runVersion},
 	{"config", "check the configuration (argus config check)", runConfig},
+	{"migrate", "apply the schema migrations to every database (-status: show versions only)", runMigrate},
 	{"demo", "the public demo: generate sample data, readiness check", runDemo},
 	{"checks", "run collectors once: alerts snapshot, certificates, backups", runChecks},
 	{"worker", "run the enabled collectors on their intervals", runWorker},

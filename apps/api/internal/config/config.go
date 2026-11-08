@@ -58,8 +58,9 @@ type Field struct {
 	Required bool
 	Secret   bool
 	Help     string
-	Min, Max int  // Int only: the allowed range when Max > 0
-	Pattern  bool // Key is a pattern with one "*" (OBS_SITE_*_LABEL): every matching name is read
+	Min, Max int      // Int only: the allowed range when Max > 0
+	Pattern  bool     // Key is a pattern with one "*" (OBS_SITE_*_LABEL): every matching name is read
+	Choices  []string // Str only: the allowed values when not empty
 }
 
 // Fields is the schema: every key the loader knows, in print order.
@@ -69,6 +70,8 @@ var Fields = []Field{
 	{Key: "ARGUS_PUBLIC_URL", Aliases: []string{"OPS_PUBLIC_URL"}, Kind: URL, Help: "the https address users open (required unless DEMO_MODE=1)"},
 	{Key: "ARGUS_HOSTNAME", Kind: Str, Help: "the server Argus runs on, in operator hints"},
 	{Key: "ARGUS_TZ", Kind: Zone, Default: "UTC", Help: "time zone of timers, quiet hours and day caps"},
+	{Key: "ARGUS_LAYOUT", Kind: Str, Default: "legacy", Choices: []string{"legacy", "volume"}, Help: "legacy: today's paths; volume: every path default under ARGUS_STATE_DIR (one volume, ADR-0021 D1)"},
+	{Key: "ARGUS_MIGRATE", Kind: Str, Default: "auto", Choices: []string{"auto", "off"}, Help: "auto: argus-api and argus worker apply the schema migrations at start (a read-only database is skipped); off: only argus migrate does"},
 	{Key: "ARGUS_ETC_DIR", Kind: Path, Default: "/etc/argus", Help: "configuration directory"},
 	{Key: "ARGUS_SECRETS_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/secrets", Help: "one secret per file"},
 	{Key: "ARGUS_STATE_DIR", Aliases: []string{"OPS_STATE_DIR", "OPS_DATA_DIR"}, Kind: Path, Default: "/var/lib/argus", Help: "collector state: databases and JSON files"},
@@ -216,6 +219,20 @@ var Fields = []Field{
 	{Key: "DEMO_VIEWER", Kind: Str, Default: "demo.viewer"},
 	{Key: "DEMO_ADMIN", Kind: Str, Default: "demo.admin"},
 	{Key: "DEMO_BANNER", Kind: Str, Default: "Demo — sample data, not a real company"},
+}
+
+// VolumeDefaults are the path defaults of ARGUS_LAYOUT=volume (ADR-0021 D1): one volume at ARGUS_STATE_DIR holds the
+// databases, the state files, the saved settings, the secrets, the reports and the keys. A configured key still wins.
+var VolumeDefaults = map[string]string{
+	"ARGUS_ETC_DIR":         "${ARGUS_STATE_DIR}/etc",
+	"ARGUS_SECRETS_DIR":     "${ARGUS_STATE_DIR}/secrets",
+	"ARGUS_AUTH_DB":         "${ARGUS_STATE_DIR}/auth/auth.db",
+	"ARGUS_REPORTS_DIR":     "${ARGUS_STATE_DIR}/reports/rca",
+	"ARGUS_SETTINGS_IN":     "${ARGUS_STATE_DIR}/settings/in",
+	"ARGUS_SETTINGS_OUT":    "${ARGUS_STATE_DIR}/settings/out",
+	"ARGUS_SECRET_IN":       "${ARGUS_STATE_DIR}/secrets/in",
+	"TOTP_KEY_FILE":         "${ARGUS_STATE_DIR}/keys/totp.key",
+	"ARGUS_IMPORT_HTPASSWD": "",
 }
 
 // Value is the effective value of one key and where it came from.
@@ -384,11 +401,21 @@ func Load(opt Options) (*Config, error) {
 		}
 		c.Values[f.Key] = v
 	}
-	// defaults may name other keys: ${ARGUS_STATE_DIR}/ops.db (one level is enough for the schema)
-	for k, v := range c.Values {
-		if v.Source == "default" && strings.Contains(v.Raw, "${") {
-			v.Raw = expandRefs(v.Raw, c.Values)
-			c.Values[k] = v
+	// ARGUS_LAYOUT=volume: the path keys that are not configured default to places inside ARGUS_STATE_DIR
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" {
+		for k, d := range VolumeDefaults {
+			if v := c.Values[k]; !v.Set || v.Source == "default" {
+				c.Values[k] = Value{Raw: d, Source: "default", Set: true}
+			}
+		}
+	}
+	// defaults may name other keys: ${ARGUS_STATE_DIR}/ops.db; two passes resolve a default that names a default
+	for pass := 0; pass < 2; pass++ {
+		for k, v := range c.Values {
+			if v.Source == "default" && strings.Contains(v.Raw, "${") {
+				v.Raw = expandRefs(v.Raw, c.Values)
+				c.Values[k] = v
+			}
 		}
 	}
 	// the board database lives next to the evidence database unless it is set
@@ -499,6 +526,9 @@ func (c *Config) fill() Errors {
 		}
 		if raw == "" {
 			continue
+		}
+		if len(f.Choices) > 0 && !contains(f.Choices, raw) {
+			bad(f, "must be one of %s, got %q", strings.Join(f.Choices, ", "), raw)
 		}
 		switch f.Kind {
 		case Path:
@@ -762,12 +792,13 @@ func SchemaJSON() []byte {
 		Min      *int     `json:"min,omitempty"`
 		Max      *int     `json:"max,omitempty"`
 		Pattern  bool     `json:"pattern,omitempty"`
+		Enum     []string `json:"enum,omitempty"`
 		Help     string   `json:"help,omitempty"`
 	}
 	var keys []key
 	for _, f := range Fields {
 		k := key{Key: f.Key, Aliases: f.Aliases, Type: kinds[f.Kind], Default: f.Default, Required: f.Required,
-			Secret: f.Secret, Pattern: f.Pattern, Help: f.Help}
+			Secret: f.Secret, Pattern: f.Pattern, Enum: f.Choices, Help: f.Help}
 		if f.Max > 0 {
 			lo, hi := f.Min, f.Max
 			k.Min, k.Max = &lo, &hi
@@ -818,4 +849,13 @@ func Known(key string) bool { return fieldFor(key) != nil }
 func Get(key string) (string, bool) {
 	v := Lookup(key)
 	return v.Raw, v.Set
+}
+
+func contains(xs []string, x string) bool {
+	for _, y := range xs {
+		if y == x {
+			return true
+		}
+	}
+	return false
 }

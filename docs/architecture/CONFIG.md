@@ -65,6 +65,14 @@ still the target design.
 - **Not yet:** `argus config render`, per-module checks (`--module`), secrets from `ARGUS_SECRETS_DIR`, and the
   JSON data files.
 
+### One volume and migrations (ADR-0021, 2026-11-08)
+
+- `ARGUS_LAYOUT=volume` (the `deploy/Dockerfile` image sets it) puts every path default under `ARGUS_STATE_DIR`:
+  `auth/auth.db`, `settings/in`, `settings/out`, `secrets/`, `etc/` (sources, kube), `reports/rca`, `keys/totp.key`;
+  no htpasswd import. `legacy` (the default) keeps the paths above. A configured key always wins.
+- `ARGUS_MIGRATE=auto` (default): `argus-api` and `argus worker` apply `internal/migrate` at start; a read-only
+  database is skipped; demo mode never migrates. `off`: only `argus migrate` does.
+
 ## 1. Files
 
 | file | owner / mode | holds | read by |

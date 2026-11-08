@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/py"
 	"golang.org/x/crypto/scrypt"
 )
@@ -245,17 +246,7 @@ func (g *Gen) auth() {
 	}
 	os.Remove(path)
 	db, t := openDB(path)
-	g.exec(t, `
-CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, hash TEXT NOT NULL, role TEXT NOT NULL,
-  disabled INTEGER NOT NULL DEFAULT 0, must_change INTEGER NOT NULL DEFAULT 0, created_at INTEGER);
-CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, username TEXT NOT NULL,
-  created INTEGER NOT NULL, last_seen INTEGER NOT NULL, csrf TEXT NOT NULL, id_token TEXT);
-CREATE TABLE IF NOT EXISTS failures (key TEXT PRIMARY KEY, count INTEGER NOT NULL, until INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS user_meta (username TEXT PRIMARY KEY, source TEXT NOT NULL DEFAULT 'local', sub TEXT,
-  last_login INTEGER);
-CREATE TABLE IF NOT EXISTS oidc_states (state_hash TEXT PRIMARY KEY, nonce TEXT NOT NULL, verifier TEXT NOT NULL,
-  next TEXT NOT NULL, created INTEGER NOT NULL);
-`)
+	g.migrate(t, migrate.Auth)
 	rng := newPyRand(g.seed * 7919) // salts are seeded: the demo must be reproducible
 	users := [][2]string{{DEMO_VIEWER, "viewer"}, {DEMO_ADMIN, "admin"}}
 	for _, p := range PEOPLE[:4] {
@@ -279,7 +270,6 @@ CREATE TABLE IF NOT EXISTS oidc_states (state_hash TEXT PRIMARY KEY, nonce TEXT 
 		g.exec(t, "INSERT INTO user_meta (username, source, last_login) VALUES (?, 'local', ?)", u[0], g.t(D))
 	}
 	// 2FA: two people have an authenticator (a placeholder box: these accounts cannot sign in), the audit trail
-	g.exec(t, schema("schema_mfa.sql"))
 	for _, m := range []struct {
 		user string
 		ago  float64
