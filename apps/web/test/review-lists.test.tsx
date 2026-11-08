@@ -26,7 +26,7 @@ vi.mock("@/lib/server", () => ({
   formCsrf: (fd: FormData) => String(fd.get("csrf") ?? ""),
   setFlash: vi.fn(async (m: string) => { flashes.push(m); }),
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => null,
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh() {}, replace() {} }), usePathname: () => null,
   redirect: (to: string) => { throw new Error("REDIRECT " + to); },
   notFound: () => { throw new Error("NOT FOUND"); },
 }));

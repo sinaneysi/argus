@@ -43,9 +43,8 @@ func probSentBanner(c *Ctx, qs py.QS) string {
 		return ""
 	}
 	if rid := qs.Get("preq"); probReqRe.MatchString(rid) {
-		if _, err := os.Stat(filepath.Join(SET_IN, "problem-actions", rid+".json")); err == nil {
-			c.Refresh = true
-			return Banner("Sent. Argus applies it within seconds; this page refreshes itself.")
+		if b, ok := requestWaitBanner(c, filepath.Join(SET_IN, "problem-actions", rid+".json"), rid, "Argus", "Nothing changed.", 0); ok {
+			return b
 		}
 	}
 	return Banner("Applied. A request Argus refused changes nothing; the problem's timeline shows what was done.")

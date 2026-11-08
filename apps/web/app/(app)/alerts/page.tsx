@@ -7,6 +7,7 @@ import { Filters, Pager, pick, type Search, Tiles, tone, When } from "@/componen
 import { qs } from "@/lib/api";
 import { apiGet } from "@/lib/server";
 import type { Alerts } from "@/lib/types";
+import { Reload } from "@/components/Reload";
 import { buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
 
@@ -19,7 +20,7 @@ export default async function AlertsPage({ searchParams }: { searchParams: Searc
   const d = r.data;
   return (
     <>
-      {!d.loaded ? <meta httpEquiv="refresh" content="60" /> : null}
+      <Reload r={d.loaded ? 0 : 60} />
       <header className="phead"><div><h1>Alerts</h1><HelpQ p="/alerts" />
         {d.loaded ? <p className="status-line"><b>{d.firing} firing</b><span className="sep">·</span>{d.pending} pending<span className="sep">·</span>updated <When ts={d.fetchedAt} /></p> : null}</div>
         <div className="phead-act"><a data-slot="button" className={buttonVariants({ variant: "ghost", size: "sm" })} href={d.list.path + (Object.keys(params).length ? qs(params) : "")}><Icon name="reset" />Refresh</a></div></header>

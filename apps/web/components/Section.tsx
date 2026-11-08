@@ -9,6 +9,7 @@ import { Field, Input, Label, Select } from "./ui/field";
 import { problemAct } from "@/app/(app)/incidents/actions";
 import { ago, full, iso } from "@/lib/format";
 import type { Banner as B, Facet, Fact, Fix, Lazy, ListState, MdDoc, Option, ProblemPanel, ProbItem, ProbLink, ProbSuggestion, Seg, Tile, TimelineEv } from "@/lib/types";
+import { Reload } from "./Reload";
 import { GetForm, SoftLink } from "./Soft";
 
 // The parts the Incidents pages share (DESIGN.md "Queue page", "Detail page"). All server components: forms post
@@ -40,8 +41,9 @@ export function Crumb({ href, label }: { href: string; label: string }) {
   return <a className="crumb-back" href={href}><Icon name="back" size={14} /> {label}</a>;
 }
 
+/** A page that follows live work: every 5 s while `on` (the shared Reload; never a bare meta refresh). */
 export function Refresh({ on }: { on?: boolean }) {
-  return on ? <meta httpEquiv="refresh" content="5" /> : null;
+  return <Reload r={!!on} />;
 }
 
 /** `compact` sets the figure beside its label: for lists where the table is the page, not the tiles. */
