@@ -246,6 +246,11 @@ var Fields = []Field{
 	{Key: "ARGUS_SOURCES_FANOUT_MAX_SECONDS", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "fan-out: wall time at most"},
 	{Key: "ARGUS_SOURCES_FANOUT_MAX_OUTPUT", Kind: Int, Default: "6000", Min: 1000, Max: 50000, Help: "argus sources find: text output cap in bytes"},
 	{Key: "GRAFANA_*_URL", Kind: Str, Pattern: true, Help: "the Grafana of one monitoring site; with the grafana-<id>-token secret it is listed as data source grafana/<id>"},
+	// the marketing module's search jobs (internal/marketing/seo); the key is a Settings -> Data sources entry (google)
+	{Key: "ARGUS_GSC_SITE", Aliases: []string{"GSC_SITE"}, Kind: Str, Help: "the Search Console property (sc-domain:example.com or https://www.example.com/)"},
+	{Key: "ARGUS_GSC_URLS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/seo-urls.txt", Help: "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"},
+	{Key: "ARGUS_SEO_BRAND", Aliases: []string{"SEO_BRAND"}, Kind: Str, Help: "brand words, | separated: a brand query gets no low-CTR suggestion"},
+	{Key: "ARGUS_GA_PROPERTY", Aliases: []string{"GA_PROPERTY"}, Kind: Str, Help: "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"},
 	{Key: "DEMO_MODE", Kind: Bool, Default: "0", Help: "1: sample data, every write refused"},
 	{Key: "DEMO_PASSWORD", Kind: Str, Secret: true, Help: "the demo users' throwaway password"},
 	{Key: "DEMO_VIEWER", Kind: Str, Default: "demo.viewer"},
@@ -498,7 +503,8 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
 	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS",
-	"ARGUS_MODULES", "ARGUS_GOOGLEBOT_SITEMAP", "ARGUS_GOOGLEBOT_INTERVAL", "ARGUS_GOOGLEBOT_HOST_LABEL", "ARGUS_GOOGLEBOT_LOKI_UID", "ARGUS_SEO_HOSTS"}
+	"ARGUS_MODULES", "ARGUS_GOOGLEBOT_SITEMAP", "ARGUS_GOOGLEBOT_INTERVAL", "ARGUS_GOOGLEBOT_HOST_LABEL", "ARGUS_GOOGLEBOT_LOKI_UID", "ARGUS_SEO_HOSTS",
+	"ARGUS_GSC_SITE", "ARGUS_SEO_BRAND", "ARGUS_GA_PROPERTY"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {

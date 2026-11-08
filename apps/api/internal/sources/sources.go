@@ -77,6 +77,7 @@ var Types = map[string]Type{
 	"alertmanager":  {Label: "Alertmanager / Prometheus", Purposes: []string{"alerts"}, NoCred: true},
 	"jira":          {Label: "Jira", Purposes: []string{"tracker"}, Username: true},
 	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
+	"google":        {Label: "Google Search Console", Purposes: []string{"marketing"}},
 }
 
 var (

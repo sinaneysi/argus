@@ -31,6 +31,7 @@ import (
 
 const marketingHelp = `usage: argus marketing googlebot collect|detect|sitemaps|seo [-file PATH]
        argus marketing googlebot backfill [-file PATH] FROM TO
+       argus marketing gsc|suggest|send [-file PATH]
 
 The jobs of the marketing module (the worker runs them when the module is on):
 collect   read the finished crawler log buckets of the last 2 hours from Loki (ARGUS_GOOGLEBOT_EDGES_FILE, through
@@ -39,9 +40,16 @@ backfill  the same for the days FROM..TO (YYYY-MM-DD in ARGUS_TZ, inclusive), wi
 detect    the detector alone: open and resolve alerts, send their notices
 sitemaps  read the sitemap index ARGUS_GOOGLEBOT_SITEMAP and every sitemap it lists
 seo       write the SEO page's Googlebot table (seo_snapshots, seo_errors in ARGUS_DB) for the newest window
+gsc       read Search Console (the Google data source, property ARGUS_GSC_SITE): daily totals, the key URLs of
+          ARGUS_GSC_URLS_FILE, the sitemaps
+suggest   store today's SEO suggestions again (Search Console, and GA4 when ARGUS_GA_PROPERTY is set)
+send      post the newest suggestions to the notify room for the SEO page's Send requests
 `
 
 func runMarketing(args []string, stdout, stderr io.Writer) int {
+	if len(args) >= 1 && (args[0] == "gsc" || args[0] == "suggest" || args[0] == "send") && !isHelp(args) {
+		return runSearchJob(args, stdout, stderr)
+	}
 	if len(args) < 2 || isHelp(args) || args[0] != "googlebot" {
 		fmt.Fprint(stdout, marketingHelp)
 		if isHelp(args) {
@@ -321,4 +329,37 @@ func marketingJobs(c *config.Config, det needs.Detector, stderr io.Writer) []wor
 			return ""
 		}), Run: func(context.Context) error { _, err := seoCheck(c); return err }},
 	}
+}
+
+// runSearchJob is argus marketing gsc|suggest|send.
+func runSearchJob(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("marketing "+args[0], flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	file := fs.String("file", "", "configuration file (default: ARGUS_CONFIG, else "+config.DefaultFile+")")
+	if err := fs.Parse(args[1:]); err != nil || fs.NArg() != 0 {
+		return 2
+	}
+	c, ok := loadQuiet(*file, stderr)
+	if !ok {
+		return 1
+	}
+	if c.DemoMode {
+		fmt.Fprintln(stderr, "argus marketing: disabled in the demo (DEMO_MODE=1): nothing was changed")
+		return 1
+	}
+	ctx := context.Background()
+	var err error
+	switch args[0] {
+	case "gsc":
+		err = gscRun(ctx, c, stdout)
+	case "suggest":
+		err = suggestRun(ctx, c, true, stdout)
+	case "send":
+		err = seoSendRun(ctx, c, stdout)
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, "argus marketing:", sources.Mask(err.Error()))
+		return 1
+	}
+	return 0
 }

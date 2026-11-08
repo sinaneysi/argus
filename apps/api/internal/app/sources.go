@@ -66,15 +66,19 @@ var (
 		{Key: "matrix", Label: "Matrix", Blurb: "Chat: notices to one room, and the conversations Argus reads.",
 			Purposes: []string{"notify"}, CredLabel: "Access token",
 			CredHint: "The access token of the bot account (in the chat client's settings)."},
+		{Key: "google", Label: "Google Search Console", Blurb: "Search clicks, index state and sitemaps for the SEO page (marketing module).",
+			Purposes: []string{"marketing"}, CredLabel: "Service-account key (JSON)",
+			CredHint: "Address https://www.googleapis.com. Paste the key file's JSON; add the key's e-mail to the property as a Restricted user. Read-only scopes only."},
 	}
 	// srcComing are the types ADR-0017 plans for P2; listed so nobody looks for them in vain.
 	srcComing       = []string{"Loki (direct)", "MinIO", "Splunk"}
 	srcPurposeWords = map[string][2]string{
-		"agent":   {"Agent reads", "The agent reads through it. Must be read-only."},
-		"tracker": {"Issue tracker", "The board's issues. Needs a login that changes issues (GitLab: scope api)."},
-		"alerts":  {"Alerts", "Argus reads the firing alerts every minute."},
-		"notify":  {"Notices", "Argus sends notices to the configured room."},
-		"docs":    {"Publishes docs", "Argus writes service docs there. Needs a member login."},
+		"agent":     {"Agent reads", "The agent reads through it. Must be read-only."},
+		"tracker":   {"Issue tracker", "The board's issues. Needs a login that changes issues (GitLab: scope api)."},
+		"alerts":    {"Alerts", "Argus reads the firing alerts every minute."},
+		"notify":    {"Notices", "Argus sends notices to the configured room."},
+		"docs":      {"Publishes docs", "Argus writes service docs there. Needs a member login."},
+		"marketing": {"Marketing", "The marketing module reads search data with it. Read-only."},
 	}
 )
 
