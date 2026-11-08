@@ -1747,12 +1747,7 @@ func (r *run) glUpsert(g *GitLab, m *glMeta, issue map[string]any, withNotes boo
 	ps := r.glParse(orStr(issue["description"]))
 	env := ps.env
 	if env == "" {
-		for _, lb := range labels {
-			if strings.HasPrefix(lb, "env-") && contains(envs, lb[4:]) {
-				env = lb[4:]
-				break
-			}
-		}
+		env = envFromLabels(labels)
 	}
 	asg := map[string]any{}
 	if l, ok := issue["assignees"].([]any); ok && len(l) > 0 {

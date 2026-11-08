@@ -106,16 +106,20 @@ var category = map[string]string{"new": "todo", "indeterminate": "progress", "do
 var (
 	priorities = []string{"Highest", "High", "Medium", "Low", "Lowest"}
 	envs       = []string{"develop", "pre-release", "release"}
-	sourcesOK  = []string{"incident", "rca", "vm", "disk", "backup", "cicd"}
-	idRe       = regexp.MustCompile(`^[0-9]{14}-[0-9a-f]{8}$`)
-	userRe     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._@-]{0,63}$`)
-	hostRe     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$`)
-	labelRe    = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$`)
-	srcIDRe    = regexp.MustCompile(`^[0-9]{1,9}(-[0-9]{1,3})?$`)
-	srcURLRe   = regexp.MustCompile(`^/(incidents/view|incidents/problem|rca/view|inventory/view|capacity|admin/design/view|backups|backups/plan|cicd/finding)(\?[A-Za-z0-9=&;_-]{0,80})?$`)
-	keyRe      = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,19}-[0-9]{1,9}$`)
-	projectRe  = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,19}$`)
-	cfgLineRe  = regexp.MustCompile(`^\s*(JIRA_[A-Z_]+|BOARD_[A-Z_]+|FIXER_TRIGGER)\s*=\s*(.*?)\s*$`)
+	// envAliases maps the words teams use in labels to an environment.
+	envAliases = map[string]string{"develop": "develop", "dev": "develop", "stage": "develop", "staging": "develop",
+		"pre-release": "pre-release", "pre": "pre-release", "preprod": "pre-release", "pre-production": "pre-release",
+		"release": "release", "prod": "release", "production": "release"}
+	sourcesOK = []string{"incident", "rca", "vm", "disk", "backup", "cicd"}
+	idRe      = regexp.MustCompile(`^[0-9]{14}-[0-9a-f]{8}$`)
+	userRe    = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._@-]{0,63}$`)
+	hostRe    = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$`)
+	labelRe   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$`)
+	srcIDRe   = regexp.MustCompile(`^[0-9]{1,9}(-[0-9]{1,3})?$`)
+	srcURLRe  = regexp.MustCompile(`^/(incidents/view|incidents/problem|rca/view|inventory/view|capacity|admin/design/view|backups|backups/plan|cicd/finding)(\?[A-Za-z0-9=&;_-]{0,80})?$`)
+	keyRe     = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,19}-[0-9]{1,9}$`)
+	projectRe = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,19}$`)
+	cfgLineRe = regexp.MustCompile(`^\s*(JIRA_[A-Z_]+|BOARD_[A-Z_]+|FIXER_TRIGGER)\s*=\s*(.*?)\s*$`)
 )
 
 const (
@@ -814,4 +818,25 @@ func dedupe(xs []string) []string {
 		}
 	}
 	return out
+}
+
+// envFromLabels is the environment named by the first environment label: env-<x>, env:<x> or env::<x> (GitLab
+// scoped labels), where <x> is an environment or a common alias (stage, dev, pre, prod, production).
+func envFromLabels(labels []string) string {
+	for _, lb := range labels {
+		l := strings.ToLower(strings.TrimSpace(lb))
+		var v string
+		switch {
+		case strings.HasPrefix(l, "env::"):
+			v = l[5:]
+		case strings.HasPrefix(l, "env:"), strings.HasPrefix(l, "env-"):
+			v = l[4:]
+		default:
+			continue
+		}
+		if e, ok := envAliases[strings.TrimSpace(v)]; ok {
+			return e
+		}
+	}
+	return ""
 }

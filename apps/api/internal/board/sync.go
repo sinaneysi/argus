@@ -351,12 +351,7 @@ func (r *run) upsert(base string, issue map[string]any) string {
 	ps := r.parse(orStr(f["description"]))
 	env := ps.env
 	if env == "" {
-		for _, lb := range labels {
-			if strings.HasPrefix(lb, "env-") && contains(envs, lb[4:]) {
-				env = lb[4:]
-				break
-			}
-		}
+		env = envFromLabels(labels)
 	}
 	jupd := jiraTS(f["updated"])
 	if jupd == 0 {
