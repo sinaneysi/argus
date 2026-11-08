@@ -81,6 +81,7 @@ func runSourcesRead(sub string, args []string, stdout, stderr io.Writer) int {
 func discoverOptions(c *config.Config) *discover.Options {
 	v := func(k string) string { return c.Values[k].Raw }
 	host, _ := os.Hostname()
+	sources.AllowHTTP = v("ARGUS_SOURCES_ALLOW_HTTP") == "1"
 	return &discover.Options{DB: c.DB, Sources: sources.LoadStatus(filepath.Join(c.SettingsOut, "sources-status.json")),
 		SourcesDir: v("ARGUS_SOURCES_DIR"), SecretsDir: c.SecretsDir, Key: volumeKey(c),
 		Kube: &kube.Tool{KubeDir: v("ARGUS_KUBE_DIR"), Kubectl: v("ARGUS_KUBECTL"), AuditLog: v("ARGUS_KUBE_AUDIT_LOG"),

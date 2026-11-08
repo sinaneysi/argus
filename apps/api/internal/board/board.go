@@ -49,19 +49,21 @@ import (
 
 // Options say where the job reads and writes, and how it names things.
 type Options struct {
-	DB       string   // the board database (BOARD_DB)
-	ReqDir   string   // request files from the app (BOARD_REQ_DIR)
-	Out      string   // status files for the app (BOARD_OUT): board-status.json
-	AuthDB   string   // users and roles, read only (BOARD_AUTH_DB)
-	EnvFiles []string // Jira configuration files (BOARD_ENV_FILES)
-	PATFile  string   // the Jira token file (BOARD_PAT_FILE)
-	OwnerUID int      // the owner the config and token files must have (0 = root)
-	AppURL   string   // the web app's address, in the Jira description's source link
-	Name     string   // the product name in texts written to Jira ("<Name> task · ...")
-	Label    string   // the label prefix of tasks this job creates ("<label>", "<label>-auto", "<label>-src-...")
-	Ref      string   // the reference prefix of a task without an issue key ("<Ref>-<id>")
-	DryRun   bool     // log Jira writes instead of sending them; nothing is changed in the database
-	Full     bool     // a full reconcile this run
+	DB       string            // the board database (BOARD_DB)
+	ReqDir   string            // request files from the app (BOARD_REQ_DIR)
+	Out      string            // status files for the app (BOARD_OUT): board-status.json
+	AuthDB   string            // users and roles, read only (BOARD_AUTH_DB)
+	EnvFiles []string          // Jira configuration files (BOARD_ENV_FILES)
+	PATFile  string            // the Jira token file (BOARD_PAT_FILE)
+	Config   map[string]string // Jira settings given directly (Settings -> Data sources); win over EnvFiles
+	Token    string            // the Jira token given directly; wins over PATFile
+	OwnerUID int               // the owner the config and token files must have (0 = root)
+	AppURL   string            // the web app's address, in the Jira description's source link
+	Name     string            // the product name in texts written to Jira ("<Name> task · ...")
+	Label    string            // the label prefix of tasks this job creates ("<label>", "<label>-auto", "<label>-src-...")
+	Ref      string            // the reference prefix of a task without an issue key ("<Ref>-<id>")
+	DryRun   bool              // log Jira writes instead of sending them; nothing is changed in the database
+	Full     bool              // a full reconcile this run
 	Now      func() time.Time
 	Log      *slog.Logger
 	Allow    notify.Allowlist

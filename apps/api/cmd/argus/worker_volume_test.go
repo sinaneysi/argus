@@ -136,3 +136,35 @@ func TestVolumeWorkerAppliesSources(t *testing.T) {
 		t.Fatalf("alert sources: %+v", srcs)
 	}
 }
+
+// the request kinds of the legacy root units have a worker job in the volume layout; discovery waits for a source
+func TestVolumeWorkerConsumers(t *testing.T) {
+	vol := t.TempDir()
+	c, _ := volumeConfig(t, vol, "")
+	if err := migrate.OnStart(context.Background(), c, func(string, ...any) {}); err != nil {
+		t.Fatal(err)
+	}
+	jobs := map[string]worker.Job{}
+	for _, j := range volumeJobs(c, map[string]time.Duration{}, io.Discard) {
+		jobs[j.Name] = j
+	}
+	for _, n := range []string{"settings-apply", "claude-requests", "sources-requests", "sources-check", "kube-requests",
+		"source-actions", "sources-discover", "board-sync", "board-requests"} {
+		if _, ok := jobs[n]; !ok {
+			t.Errorf("no %s job", n)
+		}
+	}
+	if ok, why := jobs["sources-discover"].Ready(); ok || !strings.Contains(why, "enabled for the agent") {
+		t.Fatalf("discovery without a source: %v %q", ok, why)
+	}
+	// nothing waiting: the request jobs return at once
+	for _, n := range []string{"kube-requests", "source-actions", "board-requests"} {
+		if err := jobs[n].Run(context.Background()); err != nil {
+			t.Fatalf("%s: %v", n, err)
+		}
+	}
+	// the board works locally without Jira: one sync run in the volume
+	if err := jobs["board-sync"].Run(context.Background()); err != nil {
+		t.Fatalf("board sync: %v", err)
+	}
+}

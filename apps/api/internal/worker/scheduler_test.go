@@ -52,3 +52,21 @@ func TestPanicIsAnError(t *testing.T) {
 		t.Fatalf("%+v", s.States())
 	}
 }
+
+// a job that is not ready is looked at again after Recheck, not after its interval
+func TestNotReadyRechecked(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	ready := false
+	runs := 0
+	s := &Scheduler{Now: func() time.Time { return now }}
+	s.Add(Job{Name: "hourly", Every: time.Hour, Ready: func() (bool, string) { return ready, "not configured" },
+		Run: func(context.Context) error { runs++; return nil }})
+	s.Step(context.Background())
+	ready = true
+	now = now.Add(Recheck)
+	s.Step(context.Background())
+	s.Wait()
+	if runs != 1 {
+		t.Fatalf("runs %d, want 1 after the source was connected", runs)
+	}
+}

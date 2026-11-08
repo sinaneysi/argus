@@ -123,9 +123,11 @@ layout (`internal/worker`): the collectors, Settings -> General (`settingsapply`
 (`claudetoken`) applied by the worker within 3 s, job states in `worker-status.json`; the data-source registry of
 features (`internal/needs`): "Connect X to enable this page" on pages, `{"notConfigured"}` on API routes, and worker
 jobs that name the missing source. Secrets in the volume are encrypted
-with the master key (PR #18: `internal/secret`, `argus secrets rekey`). Still open in P0: the other request kinds
-(Kubernetes, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, the Jira, Outline and GitLab-issues consumers of saved data sources (Settings → Data sources requests are applied by
-the worker, and the alerts collector reads its Alertmanager / Prometheus entries). The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
+the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
+and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
+connections (`jira-connect`), the Outline publisher (`outline-requests`) and the GitLab issues tracker
+(`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.

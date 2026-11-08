@@ -141,7 +141,7 @@ func senderFrom(c *config.Config) *notify.Sender {
 		tok = strings.TrimSpace(v("MATRIX_ACCESS_TOKEN"))
 	}
 	hs := v("MATRIX_HOMESERVER")
-	if e := matrixSource(c); e != nil { // Settings -> Data sources wins (ADR-0021 D5)
+	if e := firstSource(c, "matrix"); e != nil { // Settings -> Data sources wins (ADR-0021 D5)
 		o := sourcesOptions(c)
 		if t := o.Credential(e); t != "" {
 			tok, hs = t, e.URL
@@ -170,13 +170,13 @@ func settingsNotice(c *config.Config, stderr io.Writer) func(by string, changes 
 	}
 }
 
-// matrixSource is the first Matrix entry of Settings -> Data sources (nil when there is none).
-func matrixSource(c *config.Config) *sources.Entry {
+// firstSource is the first entry of a type in Settings -> Data sources, by name (nil when there is none).
+func firstSource(c *config.Config, typ string) *sources.Entry {
 	o := sourcesOptions(c)
 	var names []string
 	reg := o.Registry()
 	for k, e := range reg {
-		if e.Type == "matrix" {
+		if e.Type == typ {
 			names = append(names, k)
 		}
 	}

@@ -72,6 +72,13 @@ is listed as "not configured", not as failed. One job runs at a time per name; a
 skipped and recorded. Each run records start, end, result and a one-line reason in `ops.db` (`runs`), the same table
 the pages already read.
 
+As built (P0): a job that is not ready is looked at again after 15 s, not after its interval, so a source connected
+in Settings is used at once. Request consumers in the volume layout: Settings → General, Claude, Data sources,
+Kubernetes (`kube-requests`), catalogue actions (`source-actions`), board requests and the board sync (Jira from the
+Data sources entry; the board works locally without one), and hourly discovery (`sources-discover`) once a source is
+enabled for the agent. No Go consumer yet for the per-user Jira connections, the Outline publisher and the GitLab
+issues tracker; their requests wait and their pages say so.
+
 **D4. Settings and secrets are saved and applied inside the volume.** In `ARGUS_LAYOUT=volume`:
 
 - the API validates a save and writes it to `settings/<area>.json` (atomic, 0600). A secret is encrypted with

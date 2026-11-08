@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// Recheck is how soon a job that is not ready (its source missing) is looked at again.
+var Recheck = 15 * time.Second
+
 // Job is one scheduled job.
 type Job struct {
 	Name    string
@@ -105,6 +108,10 @@ func (s *Scheduler) Step(ctx context.Context) {
 			}
 		}
 		if !ok {
+			// a source may be connected any time: look again soon, not one interval later
+			if r := now.Add(Recheck); r.Before(st.nextAt) {
+				st.nextAt = r
+			}
 			continue
 		}
 		if st.running {
