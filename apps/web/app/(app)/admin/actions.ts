@@ -45,6 +45,19 @@ export async function setClaude(fd: FormData): Promise<void> {
   redirect("/admin");
 }
 
+/** Switch an optional module on or off, or back to the configured default (ARGUS_MODULES); applied at once. */
+export async function setModule(fd: FormData): Promise<void> {
+  const r = await apiPost<Answer>("/api/v1/admin/modules", { module: field(fd, "module"), on: field(fd, "on") }, formCsrf(fd));
+  if (r.status === 200 && r.data.ok) await setFlash(r.data.message ?? "Saved.", "ok");
+  else {
+    const up = stepUpPath(r.data, "/admin");
+    if (up) redirect(up);
+    const msg = errorOf(r.data, "Not saved.");
+    await setFlash(msg === DEMO ? DEMO_WORDS : msg, msg === DEMO ? "info" : "fail");
+  }
+  redirect("/admin");
+}
+
 /** Every write of Users and access. The answer stays in the action's state, never in the flash cookie: it can carry a
  * temporary password, shown once. */
 export async function userAct(_: UsersState | null, fd: FormData): Promise<UsersState> {

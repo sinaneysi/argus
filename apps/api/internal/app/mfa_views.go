@@ -88,6 +88,7 @@ var POST_ROUTES = map[string]Policy{
 	"/api/v1/admin/backup-targets":             PolicySensitive,
 	"/api/v1/admin/board":                      PolicySensitive,
 	"/api/v1/admin/claude":                     PolicySensitive,
+	"/api/v1/admin/modules":                    PolicySensitive,
 	"/api/v1/admin/claude-egress":              PolicySensitive,
 	"/api/v1/admin/claude-token":               PolicySensitive,
 	"/api/v1/admin/gitlab-issues":              PolicySensitive,

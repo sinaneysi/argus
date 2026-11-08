@@ -1,5 +1,6 @@
 import { HelpQ } from "@/components/HelpQ";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { seoSend } from "./actions";
 import { At, Line, P, Reload } from "@/components/Infra";
 import { Pill } from "@/components/Pills";
@@ -30,6 +31,7 @@ function Win({ w, label }: { w: SeoWindow; label: string }) {
 export default async function SeoPage({ searchParams }: { searchParams: Search }) {
   const params = await pick(searchParams, ["sent"]);
   const [r, csrf, flash] = await Promise.all([apiGet<Seo>("/api/v1/seo" + qs(params)), csrfToken(), readFlash()]);
+  if (r.status === 404) notFound(); // the marketing module is off (ADR-0021 D6)
   if (r.status !== 200) throw new Error(`/api/v1/seo answered ${r.status}`);
   const d = r.data;
   const s = d.suggestions;

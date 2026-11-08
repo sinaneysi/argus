@@ -120,6 +120,7 @@ var Fields = []Field{
 	{Key: "TOTP_KEY_FILE", Kind: Path, Default: "/keys/totp.key", Help: "key that encrypts the 2FA secrets"},
 	{Key: "TOTP_KEY_FILE_OLD", Kind: Path, Help: "the previous key, for argus-api mfa rekey"},
 	{Key: "TOTP_LEGACY_LABEL", Kind: Str, Help: "label of 2FA secrets an earlier install wrote under another product name (<name>-totp); read as a fallback, rewritten by argus-api mfa rekey"},
+	{Key: "ARGUS_MODULES", Kind: List, Help: "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"},
 	{Key: "FEATURE_TODAY", Kind: Bool, Default: "0", Help: "show the Today page without the root switch"},
 	{Key: "FEATURE_PROBLEMS", Kind: Bool, Default: "0", Help: "show Problems without the root switch"},
 	{Key: "CICD_STUCK_MINUTES", Kind: Int, Default: "10", Help: "a pipeline waiting longer than this is stuck"},

@@ -106,6 +106,7 @@ func apiAdminJSON(_ py.QS, sess *Session) (any, *apiErr) {
 	on := ClaudeOn(nil)
 	return map[string]any{"host": ARGUS_HOSTNAME, "qaRoom": MATRIX_QA_ROOM_LABEL, "applied": apiAdminApplied(applied),
 		"claude":    map[string]any{"on": on},
+		"modules":   apiModules(),
 		"schedules": sched, "options": SCHEDULES, "thresholds": limits, "rcaAuto": apiSettings("ra:", RCA_AUTO, ra), "readiness": apiSettings("rd:", READINESS, rd), "qa": apiSettings("qa:", QA_ASK, qa),
 		"notes": map[string]string{"ra": If(py.Truthy(ra.Get("enabled")), "on", "off"), "rd": If(py.Truthy(rd.Get("event_date")), "event "+py.Str(rd.Get("event_date")), ""),
 			"qa": If(!py.Truthy(qa.Get("enabled")), "off", If(py.Truthy(qa.Get("dry_run")), "dry run", "on"))},
@@ -178,6 +179,12 @@ func (h *reqCtx) adminPost(path string, body map[string]any, sess *Session) (any
 		if field != "" {
 			h.apiFail(&apiErr{400, msg}, "field", field)
 			return nil, nil
+		}
+		return map[string]any{"ok": true, "message": msg}, nil
+	case "/api/v1/admin/modules":
+		msg, e := ModuleSave(form.Get("module"), form.Get("on"), sess)
+		if e != nil {
+			return nil, e
 		}
 		return map[string]any{"ok": true, "message": msg}, nil
 	case "/api/v1/admin/claude":

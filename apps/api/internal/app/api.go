@@ -229,6 +229,10 @@ func (h *reqCtx) apiGET(path string) {
 		return
 	}
 	fn, ok := apiGETs[path]
+	if ok && routeOff(path) { // an optional module that is off (ADR-0021 D6)
+		h.apiFail(&apiErr{404, "no such endpoint"})
+		return
+	}
 	if !ok {
 		if apiIsPost(path) || apiAuthPOSTs[path] != nil {
 			h.apiFail(&apiErr{405, "use POST"})
@@ -263,7 +267,7 @@ func apiIsPost(path string) bool {
 		"/api/v1/board/jmove", "/api/v1/board/refresh", "/api/v1/board/agent", "/api/v1/board/agent/spinup", "/api/v1/board/agent/chat",
 		"/api/v1/board/task/secret", "/api/v1/board/mxpreview", "/api/v1/fix/review", "/api/v1/ideas/act", "/api/v1/ideas/generate",
 		"/api/v1/proposals/act", "/api/v1/proposals/settings", "/api/v1/lessons/act", "/api/v1/lessons/settings",
-		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
+		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
 		"/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move",
 		"/api/v1/admin/claude-token", "/api/v1/admin/claude-egress", "/api/v1/admin/kube", "/api/v1/admin/sources",
 		"/api/v1/admin/backup-targets", "/api/v1/admin/outline", "/api/v1/admin/gitlab-issues",
@@ -290,6 +294,10 @@ func (h *reqCtx) csrfOK(body map[string]any, sess *Session) bool {
 }
 
 func (h *reqCtx) apiPOST(path string) {
+	if routeOff(path) { // an optional module that is off (ADR-0021 D6)
+		h.apiFail(&apiErr{404, "no such endpoint"})
+		return
+	}
 	open := apiAuthPOSTs[path]
 	if !apiIsPost(path) && open == nil {
 		if _, ok := apiGETs[path]; ok || apiOpenGETs[path] != nil {
@@ -381,7 +389,7 @@ func (h *reqCtx) apiPOST(path string) {
 		v, e = proposalsAPIPost(path, body, sess)
 	case "/api/v1/lessons/act", "/api/v1/lessons/settings":
 		v, e = lessonsAPIPost(path, body, sess)
-	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix":
+	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix":
 		v, e = h.adminPost(path, body, sess)
 	case "/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move":
 		v, e = h.settingsPost(strings.TrimPrefix(path, "/api/v1"), "/admin/board", body, sess, func(c *Ctx, route string, form py.QS) (int, string) { return BoardPost(c, route, form, sess) })
@@ -717,6 +725,9 @@ func apiNavJSON(_ py.QS, sess *Session) (any, *apiErr) {
 	groups := []apiNavGroup{}
 	for i := range SECTIONS {
 		s := &SECTIONS[i]
+		if sectionOff(s.Key) {
+			continue
+		}
 		g := apiNavGroup{Key: s.Key, Name: s.Name, Icon: s.Icon, Question: s.Question, Links: []apiNavLink{}}
 		for _, l := range s.visibleLinks(admin) {
 			n, title := sideCount(l.Count, sess)

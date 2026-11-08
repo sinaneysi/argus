@@ -413,6 +413,11 @@
       "help": "label of 2FA secrets an earlier install wrote under another product name (<name>-totp); read as a fallback, rewritten by argus-api mfa rekey"
     },
     {
+      "key": "ARGUS_MODULES",
+      "type": "list",
+      "help": "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"
+    },
+    {
       "key": "FEATURE_TODAY",
       "type": "bool",
       "default": "0",

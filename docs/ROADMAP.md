@@ -123,7 +123,8 @@ layout (`internal/worker`): the collectors, Settings -> General (`settingsapply`
 (`claudetoken`) applied by the worker within 3 s, job states in `worker-status.json`. Still open in P0: secrets
 encrypted with `ARGUS_MASTER_KEY` (the Claude env file is a 0600 file in the volume today), the other request kinds
 (Kubernetes, data sources, Jira, Outline, GitLab issues, board) are still consumed only by host jobs, the data-source
-registry with "Connect X" states, the marketing module switch.
+registry with "Connect X" states. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+Settings → General; off by default, on in the demo.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
