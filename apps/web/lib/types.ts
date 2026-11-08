@@ -693,6 +693,7 @@ export type AdminGeneral = {
   thresholds: SettingField[]; rcaAuto: SettingField[]; readiness: SettingField[]; qa: SettingField[]; notes: { ra: string; rd: string; qa: string };
   sso: { on: boolean; note: string; breakGlass: string };
   credentials: { checkedAt: number; bad: { name: string; detail: string; ok: boolean }[]; ok: { name: string; detail: string; ok: boolean }[] }; log: string[];
+  modules?: { key: string; name: string; desc: string; on: boolean; source: "settings" | "config" | "default" }[];
 };
 export type AdminUser = {
   name: string; you: boolean; role: string; source: string; mfa: boolean; mfaUsed: number; lastLogin: number; matrix: string; state: string; stateKind: string; actions: string[];

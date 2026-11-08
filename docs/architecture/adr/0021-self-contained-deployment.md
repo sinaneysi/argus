@@ -93,7 +93,9 @@ pattern (DESIGN.md §10): never an error and never a blank page. The API answers
 
 **D6. Optional modules.** A module groups pages, API routes, jobs and a sidebar group. `marketing` (search health,
 crawler traffic, search console, CDN) is the first one and is off by default. `ARGUS_MODULES` (comma-separated)
-switches modules on; a saved setting may switch them too. A module that is off is hidden from the navigation, its API
+switches modules on; an admin may switch a module on or off in Settings → General (stored in `auth.db`
+`auth_settings` as `module.<key>`), which wins over `ARGUS_MODULES` and applies at once, without a restart; "Use
+the configured default" drops the admin's choice. A module that is off is hidden from the navigation, its API
 routes answer 404 and its jobs do not run.
 
 **D7. Company specifics only in configuration.** Names, domains, groups, rooms, environments and labels come from

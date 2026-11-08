@@ -35,6 +35,7 @@ services:
       DEMO_VIEWER: demo.viewer
       DEMO_ADMIN: demo.admin
       COMPANY_NAME: "Northwind Commerce"
+      ARGUS_MODULES: marketing          # optional modules on in the demo (ADR-0021 D6): SEO, crawler, search console, CDN
       ARGUS_HOSTNAME: argus-01
       ARGUS_SSH_ALIAS: argus-01
       ARGUS_REPO: ops/argus

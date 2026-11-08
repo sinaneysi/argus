@@ -28,7 +28,7 @@ ENV DEMO_MODE=1 ARGUS_BIND=0.0.0.0:8080 ARGUS_STATIC_DIR=/app/static \
     ARGUS_REPORTS_DIR=/data/reports/rca ARGUS_CRED_STATUS_FILE=/data/cred-status.json ARGUS_ALERTS_FILE=/data/alerts-firing.json \
     ARGUS_SELFCHECK_FILE=/data/selfcheck.json ARGUS_READINESS_FILE=/data/readiness.json ARGUS_BACKUP_REF_DIR=/data/backup-plans/ref \
     ARGUS_AUTH_DB=/auth/auth.db ARGUS_IMPORT_HTPASSWD= ARGUS_ADMINS= ARGUS_ADMIN_USER=demo.admin \
-    FEATURE_TODAY=1 FEATURE_PROBLEMS=1 TZ=UTC
+    FEATURE_TODAY=1 FEATURE_PROBLEMS=1 ARGUS_MODULES=marketing TZ=UTC
 USER 65534:65534
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD ["/app/argus-api", "healthcheck", "http://127.0.0.1:8080/healthz"]
