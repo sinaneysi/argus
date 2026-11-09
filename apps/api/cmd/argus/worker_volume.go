@@ -100,6 +100,19 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	// problems: the Problems page's requests within seconds; closing, the state file and the link suggester every
+	// 15 minutes (each does nothing while FEATURE_PROBLEMS is not 1)
+	jobs = append(jobs, worker.Job{Name: "problem-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "problem-actions"), func() error {
+		_, err := problemsRun(c, "tick")
+		return err
+	})})
+	jobs = append(jobs, worker.Job{Name: "problems", Every: 15 * time.Minute, Run: func(context.Context) error {
+		if _, err := problemsRun(c, "tick"); err != nil {
+			return err
+		}
+		_, err := problemsRun(c, "suggest")
+		return err
+	}})
 	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
 	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)

@@ -516,6 +516,12 @@
       "help": "show Problems without the root switch"
     },
     {
+      "key": "PROBLEMS_*",
+      "type": "str",
+      "pattern": true,
+      "help": "problem records: PROBLEMS_SUGGEST, PROBLEMS_AUTO_ACCEPT, PROBLEMS_CLOSE_DAYS, ... (argus problems -h; out of range: the default)"
+    },
+    {
       "key": "CICD_STUCK_MINUTES",
       "type": "int",
       "default": "10",

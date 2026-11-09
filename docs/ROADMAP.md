@@ -112,7 +112,7 @@ Goal: the images work at another company after the data sources are set; nothing
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
 | P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, selfcheck, credentials |
-| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
+| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | in progress: problem records |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
 | P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | planned |
@@ -150,6 +150,15 @@ only, and a person's text outside the block is kept (merge parity with the earli
 sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Outline entry of Settings → Data sources
 (purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
 builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
+
+Problem records (P3, 2026-11-09): `internal/problems`, `argus problems tick|suggest`; the worker applies the Problems
+page's requests within 3 s and every 15 minutes closes the problems resolved for `PROBLEMS_CLOSE_DAYS`, rewrites
+`problems.json` and runs the deterministic link suggester (suggestions only unless `PROBLEMS_AUTO_ACCEPT=1`).
+Same tables, events, state file and refusals as the reference job on a synthetic scenario (nine steps: create, link,
+accept, reject, primary, status, edit, unlink, merge, resolve with incidents, recurrence, auto-close, suggestions with
+auto-accept, the switches off). Settings: `FEATURE_PROBLEMS`, `PROBLEMS_*`, admin overrides in
+`ARGUS_ETC_DIR/problems.json`; host-name prefixes and skipped hosts as the incident job has them. Not ported: the
+one-time backfill from earlier RCA reports and the purge.
 
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 

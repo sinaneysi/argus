@@ -56,6 +56,7 @@ var commands = []command{
 	{"board", "the task board sync with Jira and GitLab issues (sync)", runBoard},
 	{"estate", "host estate from Prometheus: VM inventory, VM state, the 5-minute pulse", runEstate},
 	{"outline", "documentation publisher: apply the Outline requests, publish the service pages under the parent document", runOutline},
+	{"problems", "problem records: apply the Problems page's requests (tick); the link suggester (suggest)", runProblems},
 	{"incidents", "incident records: apply the incident page's requests and auto-resolve (tick); attach, backfill", runIncidents},
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
