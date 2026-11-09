@@ -170,6 +170,50 @@
       "help": "credential expiry file (empty: the app's default)"
     },
     {
+      "key": "ARGUS_CRED_WARN_DAYS",
+      "aliases": [
+        "CRED_WARN_DAYS"
+      ],
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "worker job cred-expiry: a credential expiring within this many days is a warning"
+    },
+    {
+      "key": "ARGUS_CRED_CRIT_DAYS",
+      "aliases": [
+        "CRED_CRIT_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 90,
+      "help": "worker job cred-expiry: within this many days it is an incident and a notice"
+    },
+    {
+      "key": "ARGUS_CRED_ROTATE_DAYS",
+      "aliases": [
+        "CRED_ROTATE_DAYS"
+      ],
+      "type": "int",
+      "default": "180",
+      "min": 7,
+      "max": 3650,
+      "help": "worker job cred-expiry: a credential without an expiry date older than this is due for rotation"
+    },
+    {
+      "key": "ARGUS_CRED_TODAY_DAYS",
+      "aliases": [
+        "CRED_TODAY_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 0,
+      "max": 365,
+      "help": "worker job cred-expiry: within this many days it is on Today"
+    },
+    {
       "key": "ARGUS_BACKUP_PLANS_DIR",
       "aliases": [
         "OPS_BACKUP_PLANS"

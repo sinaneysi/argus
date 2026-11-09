@@ -90,6 +90,10 @@ var Fields = []Field{
 	{Key: "ARGUS_DEADMAN_PUSH_URL", Aliases: []string{"KUMA_PUSH_URL"}, Kind: URL, Secret: true, Help: "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"},
 	{Key: "ARGUS_READINESS_FILE", Aliases: []string{"OPS_READINESS_DATA"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/readiness.json"},
 	{Key: "ARGUS_CRED_EXPIRY_FILE", Aliases: []string{"OPS_CRED_EXPIRY"}, Kind: Path, Help: "credential expiry file (empty: the app's default)"},
+	{Key: "ARGUS_CRED_WARN_DAYS", Aliases: []string{"CRED_WARN_DAYS"}, Kind: Int, Default: "30", Min: 1, Max: 365, Help: "worker job cred-expiry: a credential expiring within this many days is a warning"},
+	{Key: "ARGUS_CRED_CRIT_DAYS", Aliases: []string{"CRED_CRIT_DAYS"}, Kind: Int, Default: "7", Min: 0, Max: 90, Help: "worker job cred-expiry: within this many days it is an incident and a notice"},
+	{Key: "ARGUS_CRED_ROTATE_DAYS", Aliases: []string{"CRED_ROTATE_DAYS"}, Kind: Int, Default: "180", Min: 7, Max: 3650, Help: "worker job cred-expiry: a credential without an expiry date older than this is due for rotation"},
+	{Key: "ARGUS_CRED_TODAY_DAYS", Aliases: []string{"CRED_TODAY_DAYS"}, Kind: Int, Default: "14", Min: 0, Max: 365, Help: "worker job cred-expiry: within this many days it is on Today"},
 	{Key: "ARGUS_BACKUP_PLANS_DIR", Aliases: []string{"OPS_BACKUP_PLANS"}, Kind: Path, Help: "backup plans (empty: the app's default)"},
 	{Key: "ARGUS_BACKUP_REF_DIR", Aliases: []string{"OPS_BACKUP_REF"}, Kind: Path, Help: "backup reference data (empty: the app's default)"},
 	{Key: "ARGUS_REPORTS_DIR", Aliases: []string{"OPS_REPORTS_DIR"}, Kind: Path, Default: "/opt/argus/reports/rca", Help: "merged RCA reports"},
@@ -514,7 +518,7 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
-	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER"}
+	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER", "ARGUS_CRED_WARN_DAYS", "ARGUS_CRED_CRIT_DAYS", "ARGUS_CRED_ROTATE_DAYS", "ARGUS_CRED_TODAY_DAYS"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {
