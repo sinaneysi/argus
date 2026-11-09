@@ -28,6 +28,28 @@ GITLAB = {
     ],
     "/gitlab/api/v4/groups": [{"id": 5, "full_path": "shop", "name": "shop"}],
 }
+# the CI/CD watcher: shop/checkout has a CI file, a green develop pipeline and a failed release pipeline
+GITLAB_CI = {
+    "/gitlab/api/v4/projects/101/repository/branches": [
+        {"name": b, "commit": {"id": "c0ffee%02d" % i, "committed_date": iso(NOW - 5400), "title": "feat: checkout step"}}
+        for i, b in enumerate(("develop", "pre-release", "release"))],
+    "/gitlab/api/v4/projects/101/protected_branches": [{"name": "release", "push_access_levels": [{"access_level": 40}],
+                                                        "merge_access_levels": [{"access_level": 40}]}],
+    "/gitlab/api/v4/projects/101/pipelines": [
+        {"id": 7001, "ref": "develop", "status": "success", "sha": "c0ffee00", "source": "push",
+         "created_at": iso(NOW - 3000), "updated_at": iso(NOW - 2700)},
+        {"id": 7002, "ref": "release", "status": "failed", "sha": "c0ffee02", "source": "push",
+         "created_at": iso(NOW - 2000), "updated_at": iso(NOW - 1800)}],
+    "/gitlab/api/v4/projects/101/pipelines/7002/jobs": [
+        {"id": 8002, "name": "build", "status": "failed", "stage": "build", "allow_failure": False,
+         "failure_reason": "script_failure"}],
+    "/gitlab/api/v4/projects/101/repository/commits/c0ffee02": {"author_name": "Dev One", "title": "feat: checkout step"},
+    "/gitlab/api/v4/projects/101/repository/commits/c0ffee02/merge_requests": [{"iid": 12}],
+}
+GITLAB_RAW = {
+    "/gitlab/api/v4/projects/101/repository/files/.gitlab-ci.yml/raw": "build:\n  script: make\n",
+    "/gitlab/api/v4/projects/101/jobs/8002/trace": "npm ERR! Missing: left-pad@1.3.0 from lock file\n",
+}
 JIRA = {
     "/jira/rest/api/2/myself": {"name": "argus-bot", "displayName": "Argus bot", "active": True},
     "/jira/rest/api/2/serverInfo": {"version": "9.12.0", "deploymentType": "Server"},
@@ -54,8 +76,15 @@ MATRIX = {
 
 def model_answer(body):
     """A Messages API answer (the api model provider): a fixed, synthetic text; no model is called."""
+    text = "OK stub model answer"
+    if b"Task: task-intake" in body:  # the task agent's planning run: a fixed, valid plan
+        text = json.dumps({"classification": {"environment": "develop", "kind": "investigate"},
+                           "summary": "Stub plan for the clean-install test.",
+                           "plan": [{"text": "Read the task and report", "mode": "read-only", "targets": []}],
+                           "questions": [], "needs": [], "estimate": {"effort": "5 min", "cost_usd": 0.01},
+                           "confidence": "low", "suggested_column": "Done"})
     return {"type": "message", "role": "assistant", "model": "stub", "stop_reason": "end_turn",
-            "content": [{"type": "text", "text": "OK stub model answer"}],
+            "content": [{"type": "text", "text": text}],
             "usage": {"input_tokens": len(body) // 4, "output_tokens": 5}}
 
 
@@ -77,7 +106,14 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0].rstrip("/") or "/"
         if path == "/healthz":
             return self.send(200, {"ok": True})
-        for table in (GITLAB, JIRA, MATRIX):
+        if path in GITLAB_RAW:
+            data = GITLAB_RAW[path].encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
+        for table in (GITLAB, GITLAB_CI, JIRA, MATRIX):
             if path in table:
                 return self.send(200, table[path])
         if path == "/alertmanager/api/v2/alerts":
