@@ -1048,6 +1048,23 @@
       "help": "one run of an approved plan takes at most this long"
     },
     {
+      "key": "ARGUS_TASK_CHAT_BUDGET_USD",
+      "aliases": [
+        "TASK_CHAT_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "0.15",
+      "help": "one task-chat reply spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_CHAT_MINUTES",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 30,
+      "help": "one task-chat reply takes at most this long"
+    },
+    {
       "key": "ARGUS_TASK_BUDGET_USD",
       "aliases": [
         "TASK_BUDGET_USD"

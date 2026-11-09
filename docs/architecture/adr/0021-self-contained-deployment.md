@@ -229,6 +229,14 @@ read-only run reports the steps for a person). Limits: `ARGUS_TASK_INTAKE_BUDGET
 `ARGUS_TASK_INTAKE_MINUTES` / `_RUN_MINUTES`, `ARGUS_TASK_BUDGET_USD` per task, `ARGUS_TASK_PLAN_DEBOUNCE_SEC`, 20
 intakes and 3 runs a day, one job at a time.
 
+As built (P3, the task chat): the task page's chat messages (`settings/in/task-chat/`) are applied by the board sync
+(an enabled admin, chat on in Settings -> Task agent, the agent works the task, 1..4000 characters, one post per 10
+s, secret-scanned); one read-only model turn per queued batch (`task-agent/jobs/<key>.chat.json`, the worker job
+`task-agent`), none while the task's own intake or run is in flight; the reply, the rolling summary, answers to the
+plan's questions and `replan` (the task plans again) as in the earlier job. Limits: `ARGUS_TASK_CHAT_BUDGET_USD`,
+`ARGUS_TASK_CHAT_MINUTES`, the task budget, 30 replies per task and 100 a day. Not ported: the board-level Ask
+threads and proposed tasks from the chat.
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings
