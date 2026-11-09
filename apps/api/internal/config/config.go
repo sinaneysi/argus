@@ -151,6 +151,9 @@ var Fields = []Field{
 	{Key: "CICD_ENGINE_PROJECT_ID", Kind: Str, Default: "100"},
 	{Key: "BACKUP_TEMPLATES_REPO", Kind: Str, Default: "ops/backup-templates", Help: "group/project of the backup templates"},
 	{Key: "OUTLINE_URL", Kind: Str, Default: "https://docs.example.com", Help: "the default Outline server"},
+	{Key: "OUTLINE_PARENT", Kind: Str, Default: "Argus", Help: "title of the top-level Outline document every service page is published under (never the collection root)"},
+	{Key: "OUTLINE_PILOT", Kind: List, Help: "group/repo, ...: the services of the Outline scope pilot (the overview page always goes)"},
+	{Key: "OUTLINE_MARKER", Kind: Str, Default: "argus", Help: "the word in the block markers of the Outline pages (<!-- word:begin -->); an installation that moves from an earlier product keeps its word"},
 	{Key: "PUBLIC_DOMAIN", Kind: Str, Default: "example.com", Help: "the company's public domain"},
 	{Key: "JIRA_PROJECT", Kind: Str, Default: "OPS", Help: "the Jira project key in examples"},
 	{Key: "OBS_SITES", Kind: List, Default: "east,west", Help: "monitoring sites (datacenters)"},
@@ -172,6 +175,13 @@ var Fields = []Field{
 	{Key: "ARGUS_CERT_TIMEOUT", Kind: Int, Default: "10", Min: 1, Max: 120, Help: "seconds per TLS probe"},
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
 	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
+	// the host estate (argus estate; worker jobs inventory and vm-pulse): Prometheus through Settings -> Data sources
+	{Key: "ARGUS_PROM_SOURCES", Kind: List, Help: "name=url, ...: Prometheus base URLs for the inventory and VM state, besides the Grafana and Prometheus entries of Settings -> Data sources"},
+	{Key: "ARGUS_PROM_CA_FILE", Kind: Path, Help: "extra CA certificates for the Prometheus and Grafana sites of the inventory"},
+	{Key: "ARGUS_PROM_TIMEOUT", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "seconds per Prometheus query of the inventory and VM state"},
+	{Key: "ARGUS_INVENTORY_ENV_PREFIXES", Kind: List, Help: "env=address prefix, ...: the environment of a VM without an env label, by its address (first match wins), e.g. develop=10.0.9.,release=10.0."},
+	{Key: "ARGUS_VM_APP_UNITS", Kind: List, Default: "app-", Help: "name prefixes of the application systemd units (letters, digits, - and _)"},
+	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory and VM state read"},
 	// notifications (argus notify; every job that posts a notice): Matrix, else Telegram, else a webhook, else none
 	{Key: "ARGUS_INCIDENT_AUTORESOLVE_HOURS", Aliases: []string{"INCIDENT_AUTORESOLVE_HOURS"}, Kind: Int, Default: "6", Min: 1, Max: 720, Help: "an alert-backed incident resolves after this many hours with no matching alert firing"},
 	{Key: "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", Aliases: []string{"INCIDENT_CHAT_RESOLVE_HOURS"}, Kind: Int, Default: "24", Min: 1, Max: 720, Help: "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"},
@@ -219,6 +229,16 @@ var Fields = []Field{
 	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
 	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
 	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
+	// the task agent (internal/board agent.go plans, internal/taskagent runs the model jobs; volume layout)
+	{Key: "ARGUS_TASK_AGENT_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/task-agent", Help: "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"},
+	{Key: "ARGUS_TASK_INTAKE_BUDGET_USD", Aliases: []string{"TASK_INTAKE_BUDGET_USD"}, Kind: Str, Default: "0.5", Help: "one planning run (intake) spends at most this (USD)"},
+	{Key: "ARGUS_TASK_RUN_BUDGET_USD", Aliases: []string{"TASK_RUN_BUDGET_USD"}, Kind: Str, Default: "5", Help: "one run of an approved plan spends at most this (USD)"},
+	{Key: "ARGUS_TASK_INTAKE_MINUTES", Kind: Int, Default: "10", Min: 1, Max: 60, Help: "one planning run takes at most this long"},
+	{Key: "ARGUS_TASK_RUN_MINUTES", Kind: Int, Default: "60", Min: 1, Max: 180, Help: "one run of an approved plan takes at most this long"},
+	{Key: "ARGUS_TASK_CHAT_BUDGET_USD", Aliases: []string{"TASK_CHAT_BUDGET_USD"}, Kind: Str, Default: "0.15", Help: "one task-chat reply spends at most this (USD)"},
+	{Key: "ARGUS_TASK_CHAT_MINUTES", Kind: Int, Default: "5", Min: 1, Max: 30, Help: "one task-chat reply takes at most this long"},
+	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
+	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},
@@ -491,7 +511,7 @@ const ImportedFile = "imported.env"
 // integrations' addresses, rooms and project keys. Never a secret, a path, a listen address or a sign-in setting.
 var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARGUS_TZ_LABEL", "ENV_LABELS", "PUBLIC_DOMAIN",
 	"OBS_SITES", "OBS_SITE_*_LABEL", "GITLAB_URL", "CICD_GROUPS", "CICD_ENGINE_PROJECT", "CICD_ENGINE_PROJECT_ID",
-	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
+	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
 	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER"}

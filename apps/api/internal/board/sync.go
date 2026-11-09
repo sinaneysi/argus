@@ -623,7 +623,7 @@ func (r *run) publish(problems []string, calls int) error {
 	}
 	doc = append(doc, kv{"approvers", listAny(r.mp.approvers)}, kv{"shared_mode", shared}, kv{"board", nil},
 		kv{"user_map", um}, kv{"board_snap_at", r.stateInt("board_snap_at")}, kv{"board_error", r.getState("board_error", "")},
-		kv{"board_counts", counts}, kv{"agent", rawOr(old["agent"], object{})}, kv{"requests", ro})
+		kv{"board_counts", counts}, kv{"agent", r.agentBlock(old["agent"])}, kv{"requests", ro})
 	if r.o.DryRun {
 		r.log().Info("dry run: board-status.json not written")
 		return nil
@@ -784,6 +784,9 @@ func (r *run) main() error {
 	}
 	r.glProcessRequests()
 	r.processRequests()
+	if r.o.Agent != nil && r.o.Agent.ChatReqDir != "" && !o.DryRun {
+		r.chatProcess()
+	}
 	if o.Full {
 		r.setState("want_full", "1")
 	}
@@ -868,6 +871,13 @@ func (r *run) main() error {
 		r.commit()
 	}
 	glRun := r.glSync()
+	if r.o.Agent != nil && !o.DryRun {
+		r.o.Agent.defaults()
+		r.agentTick = r.agentRunTick()
+		if r.o.Agent.ChatReqDir != "" {
+			r.chatTickS = r.chatTick()
+		}
+	}
 	r.kickNotice()
 	r.commit()
 	if err := r.publish(problems, calls); err != nil {

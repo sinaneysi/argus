@@ -1,0 +1,1 @@
+{"at":1767000000,"edges":{"1":{"at":1766996400,"ips":["10.0.1.11"],"name":"SITE-A-app-web-01","targets":[{"loc":"/api","server":["api.example.com"],"target":"127.0.0.1:3000","upstream":"api"},{"loc":"/","server":["admin.example.com","adm.example.com"],"target":"10.0.9.31:9090","upstream":"adm"},{"loc":"/x","server":[],"target":"bad-target"}]}}}
