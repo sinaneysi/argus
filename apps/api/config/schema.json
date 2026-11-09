@@ -1518,6 +1518,16 @@
       "help": "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"
     },
     {
+      "key": "ARGUS_CDN_INDEX",
+      "type": "str",
+      "help": "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"
+    },
+    {
+      "key": "ARGUS_CDN_SOURCE",
+      "type": "str",
+      "help": "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"
+    },
+    {
       "key": "DEMO_MODE",
       "type": "bool",
       "default": "0",

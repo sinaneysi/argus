@@ -99,6 +99,7 @@ var Jobs = map[string][]string{
 	"googlebot-watch": {"grafana"},
 	"gsc":             {"google"},
 	"seo-suggest":     {"google"},
+	"cdn-watch":       {"elasticsearch"},
 }
 
 // Match is the need of the longest entry that covers path; ok false when none does.
