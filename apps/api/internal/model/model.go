@@ -66,6 +66,7 @@ type Request struct {
 	MaxTokens int           // API: max_tokens (0: 16000)
 	Timeout   time.Duration // 0: 10 minutes; never above Options.MaxTimeout
 	Dir       string        // CLI: the working directory (a workspace the job prepared); "": the throwaway HOME
+	Agent     string        // CLI: --agent, an agent file of Dir/.claude/agents ("": none)
 	Tools     []string      // CLI: the only tools the model gets (--tools); nil: none at all
 	Disallow  []string      // CLI: --disallowedTools
 	OnEvent   func(Event)   // CLI: called for each event while the model works
