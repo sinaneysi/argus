@@ -100,12 +100,14 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
-	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
-	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)
+	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
+	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, the
+	// capacity daily, once a Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus
+	// entry, ARGUS_PROM_SOURCES)
 	for _, ej := range []struct {
 		name, run string
 		every     time.Duration
-	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}} {
+	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}, {"capacity", "capacity", 24 * time.Hour}} {
 		ej := ej
 		jobs = append(jobs, worker.Job{Name: ej.name, Every: ej.every, Sources: needs.Jobs[ej.name],
 			Ready: func() (bool, string) {
@@ -124,6 +126,52 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "outline-publish", Every: 24 * time.Hour, Run: func(context.Context) error {
 		return outlineRun(c, "publish", io.Discard)
 	}})
+	// CI/CD: the estate and the audit once a day (and at start), the pipelines every 5 minutes, once GitLab is connected with
+	// purpose agent (read-only)
+	for _, cj := range []struct {
+		task  string
+		every time.Duration
+	}{{"daily", 24 * time.Hour}, {"watch", 5 * time.Minute}} {
+		cj := cj
+		jobs = append(jobs, worker.Job{Name: "cicd-" + cj.task, Every: cj.every, Sources: needs.Jobs["cicd-"+cj.task],
+			Ready: func() (bool, string) {
+				if cicdSource(c) == nil {
+					return false, "not configured: connect GitLab in Settings -> Data sources (purpose agent, read-only)"
+				}
+				return true, ""
+			},
+			Run: func(ctx context.Context) error {
+				ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
+				defer cancel()
+				if err := cicdRun(ctx, c, cj.task, cicdBudgets[cj.task], io.Discard); err != nil || cj.task == "watch" {
+					return err
+				}
+				// after the estate run, the pipelines at once (the first scan of a new installation would
+				// otherwise wait 5 minutes for its first watch)
+				return cicdRun(ctx, c, "watch", cicdBudgets["watch"], io.Discard)
+			}})
+	}
+	jobs = append(jobs, worker.Job{Name: "ci-vars-meta", Every: 24 * time.Hour, Sources: []string{"gitlab"},
+		Ready: func() (bool, string) {
+			if cicdVarsSource(c) == nil {
+				return false, "not configured: CICD_VARS_SOURCE names no GitLab data source (a token that reads CI variables)"
+			}
+			return true, ""
+		},
+		Run: func(ctx context.Context) error {
+			ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
+			defer cancel()
+			return cicdRun(ctx, c, "vars-meta", cicdBudgets["vars-meta"], io.Discard)
+		}})
+	// the task agent's model jobs (planning, runs): the board sync above decides what runs; one job at a time
+	jobs = append(jobs, worker.Job{Name: "task-agent", Every: 15 * time.Second, Sources: needs.Jobs["task-agent"],
+		Ready: func() (bool, string) {
+			if miss := det.Now().Missing(needs.Jobs["task-agent"]); len(miss) > 0 {
+				return false, needs.Reason(miss)
+			}
+			return true, ""
+		},
+		Run: taskAgentJob(c)})
 	jobs = append(jobs, marketingJobs(c, det, stderr)...)
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
@@ -226,6 +274,7 @@ func boardSyncJob(ctx context.Context, c *config.Config) error {
 // jira.env names no project (then the compiled-in example is the last resort).
 func volumeBoardOptions(c *config.Config) board.Options {
 	o := boardOptions(c, false, false)
+	o.Agent = agentBoardOptions(c)
 	so := sourcesOptions(c)
 	if e := firstSource(c, "jira"); e != nil {
 		o.Config = map[string]string{"JIRA_URL": e.URL}
@@ -310,6 +359,7 @@ func runVolumeWorker(ctx context.Context, c *config.Config, every map[string]tim
 	for _, j := range volumeJobs(c, every, stderr) {
 		s.Add(j)
 	}
+	s.Add(selfcheckJob(c, s, stderr)) // reads the other jobs' states
 	statusPath := filepath.Join(c.StateDir, "worker-status.json")
 	go func() {
 		t := time.NewTicker(15 * time.Second)

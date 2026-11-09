@@ -1,0 +1,321 @@
+{
+ "rows": [
+  {
+   "key": "EXECUTOR",
+   "scope": "*",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": [],
+   "value": "systemd"
+  },
+  {
+   "key": "DOTENV",
+   "scope": "develop",
+   "type": "file",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [
+    "A",
+    "B"
+   ],
+   "dotenv_prod_keys": []
+  },
+  {
+   "key": "DOTENV",
+   "scope": "pre-release",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [
+    "A"
+   ],
+   "dotenv_prod_keys": []
+  },
+  {
+   "key": "DOTENV",
+   "scope": "release",
+   "type": "file",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [
+    "A",
+    "B",
+    "C"
+   ],
+   "dotenv_prod_keys": []
+  },
+  {
+   "key": "API_URL",
+   "scope": "develop",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [
+    "prod-host"
+   ],
+   "prod": true,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": []
+  },
+  {
+   "key": "TARGET_HOSTS",
+   "scope": "develop",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": [],
+   "value": "develop"
+  },
+  {
+   "key": "TARGET_HOSTS",
+   "scope": "pre-release",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": [],
+   "value": "main-shop"
+  },
+  {
+   "key": "TARGET_HOSTS",
+   "scope": "*",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": [],
+   "value": "main-shop"
+  },
+  {
+   "key": "SECRET_X",
+   "scope": "relese",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": false,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": []
+  },
+  {
+   "key": "EXECUTOR",
+   "scope": "release",
+   "type": "env_var",
+   "masked": false,
+   "protected": false,
+   "empty": true,
+   "markers": [],
+   "prod": false,
+   "dotenv_keys": [],
+   "dotenv_prod_keys": []
+  }
+ ],
+ "envs": [
+  "develop",
+  "pre-release",
+  "release"
+ ],
+ "sample": [
+  "A",
+  "B",
+  "Z"
+ ],
+ "check": [
+  [
+   "guardrail-4",
+   "develop",
+   "high",
+   "API_URL@develop names production (prod-host)",
+   "API_URL"
+  ],
+  [
+   "sample-keys",
+   "develop",
+   "low",
+   "DOTENV@develop lacks 1 key(s) of the repo's env sample",
+   "DOTENV"
+  ],
+  [
+   "dotenv-type",
+   "pre-release",
+   "low",
+   "DOTENV@pre-release is not a File variable",
+   "DOTENV"
+  ],
+  [
+   "sample-keys",
+   "pre-release",
+   "low",
+   "DOTENV@pre-release lacks 2 key(s) of the repo's env sample",
+   "DOTENV"
+  ],
+  [
+   "empty-key",
+   "release",
+   "medium",
+   "EXECUTOR@release is empty",
+   "EXECUTOR"
+  ],
+  [
+   "sample-keys",
+   "release",
+   "low",
+   "DOTENV@release lacks 1 key(s) of the repo's env sample",
+   "DOTENV"
+  ],
+  [
+   "key-diff",
+   "pre-release",
+   "low",
+   "DOTENV@pre-release lacks 2 key(s) that release has",
+   "DOTENV"
+  ]
+ ],
+ "routing": [
+  [
+   "target-env",
+   "pre-release",
+   "critical",
+   "TARGET_HOSTS@pre-release = main-shop belongs to another environment",
+   "TARGET_HOSTS"
+  ],
+  [
+   "target-star",
+   "",
+   "high",
+   "TARGET_HOSTS@* = main-shop (production) is the fallback for every scope",
+   "TARGET_HOSTS"
+  ],
+  [
+   "unprotected",
+   "release",
+   "high",
+   "DOTENV@release is not protected",
+   "DOTENV"
+  ],
+  [
+   "scope-typo",
+   "",
+   "medium",
+   "SECRET_X has scope 'relese'",
+   "SECRET_X"
+  ]
+ ],
+ "routing_empty": [
+  [
+   "no-target",
+   "pre-release",
+   "high",
+   "TARGET_HOSTS@pre-release is not set",
+   "TARGET_HOSTS"
+  ],
+  [
+   "no-target",
+   "release",
+   "high",
+   "TARGET_HOSTS@release is not set",
+   "TARGET_HOSTS"
+  ]
+ ],
+ "groups": {
+  "grp": [
+   {
+    "key": "SSH_PRIVATE_KEY_PROD",
+    "scope": "*",
+    "type": "env_var",
+    "masked": false,
+    "protected": false,
+    "empty": false,
+    "markers": [],
+    "prod": false,
+    "dotenv_keys": [],
+    "dotenv_prod_keys": []
+   },
+   {
+    "key": "DEPLOYMENT_REPO_ACCESS_TOKEN",
+    "scope": "*",
+    "type": "env_var",
+    "masked": false,
+    "protected": true,
+    "empty": false,
+    "markers": [],
+    "prod": false,
+    "dotenv_keys": [],
+    "dotenv_prod_keys": []
+   },
+   {
+    "key": "PUBLIC_URL",
+    "scope": "*",
+    "type": "env_var",
+    "masked": false,
+    "protected": false,
+    "empty": false,
+    "markers": [],
+    "prod": true,
+    "dotenv_keys": [],
+    "dotenv_prod_keys": []
+   },
+   {
+    "key": "SSH_PRIVATE_KEY",
+    "scope": "*",
+    "type": "env_var",
+    "masked": false,
+    "protected": true,
+    "empty": false,
+    "markers": [],
+    "prod": false,
+    "dotenv_keys": [],
+    "dotenv_prod_keys": []
+   }
+  ]
+ },
+ "group_checks": [
+  [
+   "grp",
+   "SSH_PRIVATE_KEY_PROD",
+   "*",
+   "critical"
+  ],
+  [
+   "grp",
+   "PUBLIC_URL",
+   "*",
+   "medium"
+  ]
+ ],
+ "check_titles": [
+  "API_URL@develop names production (prod-host)",
+  "DOTENV@develop lacks 1 key(s) of the repo's env sample",
+  "DOTENV@pre-release is not a File variable",
+  "DOTENV@pre-release lacks 2 key(s) of the repo's env sample",
+  "EXECUTOR@release is empty",
+  "DOTENV@release lacks 1 key(s) of the repo's env sample",
+  "DOTENV@pre-release lacks 2 key(s) that release has"
+ ]
+}

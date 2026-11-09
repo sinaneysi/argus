@@ -86,6 +86,9 @@ type Options struct {
 	Key              secret.Key // the master key: the stored token is sealed with it (one-volume layout)
 	Resolve          func(host string) ([]net.IP, error)
 	NewGitLab        func(base, token, pin string) (*GitLab, error) // tests; nil: NewGitLab
+
+	// Agent turns the task agent on (agent.go); nil: its requests are refused as not handled.
+	Agent *AgentOptions
 }
 
 // Columns of the board, in order.
@@ -194,6 +197,8 @@ type run struct {
 	stats   map[string]int
 
 	glResults map[string]object // Settings -> Integrations (GitLab issues) results, by request id
+	agentTick string            // the task agent's summary of this run
+	chatTickS string            // the task chat's summary of this run
 }
 
 func (r *run) now() int64 { return r.o.Now().Unix() }

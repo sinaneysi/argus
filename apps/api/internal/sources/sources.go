@@ -78,6 +78,7 @@ var Types = map[string]Type{
 	"jira":          {Label: "Jira", Purposes: []string{"tracker"}, Username: true},
 	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
 	"anthropic":     {Label: "Anthropic API", Purposes: []string{"model"}},
+	"s3":            {Label: "S3 / MinIO", Purposes: []string{"backups"}, Username: true},
 }
 
 var (

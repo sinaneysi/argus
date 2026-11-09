@@ -205,7 +205,8 @@ def run(c):
 
 def connect(c, seconds=200):
     """Connect the stubs through Settings -> Data sources, wait for the worker to apply them, for the first alerts
-    snapshot and for a board sync with the fake Jira (the pages read what the worker's jobs wrote)."""
+    snapshot, for a board sync with the fake Jira and for the first CI/CD scan (the pages read what the worker's
+    jobs wrote)."""
     for src in CONNECT:
         code, d = c.json("POST", "/api/v1/admin/sources", dict(src, action="save", mode="add", csrf=c.csrf))
         if code != 200:
@@ -216,7 +217,9 @@ def connect(c, seconds=200):
         kinds = {k["key"]: k["state"] for k in d.get("kinds", [])} if code == 200 else {}
         code, a = c.json("GET", "/api/v1/alerts")
         _, board, _ = c.req("GET", c.web + "/board", accept="text/html")  # the board sync runs every 2 minutes
-        if all(kinds.get(k) == "ok" for k in ("gitlab", "jira", "alertmanager", "matrix")) and a.get("loaded") and "synced" in board:
+        _, cicd, _ = c.req("GET", c.web + "/cicd", accept="text/html")  # the CI/CD scan runs once GitLab is connected
+        if all(kinds.get(k) == "ok" for k in ("gitlab", "jira", "alertmanager", "matrix")) and a.get("loaded") and "synced" in board \
+                and EXPECT["/cicd"] in cicd:
             return
         time.sleep(3)
     print("warning: sources or the first alerts snapshot not ready:", kinds)
