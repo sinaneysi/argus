@@ -36,7 +36,7 @@ type State struct {
 	LastError string    `json:"last_error,omitempty"`
 	Runs      int       `json:"runs"`
 	Skipped   int       `json:"skipped"`
-	running   bool
+	Running   bool      `json:"running,omitempty"`
 	nextAt    time.Time
 }
 
@@ -114,14 +114,14 @@ func (s *Scheduler) Step(ctx context.Context) {
 			}
 			continue
 		}
-		if st.running {
+		if st.Running {
 			st.Skipped++
 			if s.Log != nil {
 				s.Log.Warn("job still running: tick skipped", "job", j.Name)
 			}
 			continue
 		}
-		st.running, st.LastStart = true, now
+		st.Running, st.LastStart = true, now
 		s.wg.Add(1)
 		go func(j Job, st *State) {
 			defer s.wg.Done()
@@ -134,7 +134,7 @@ func (s *Scheduler) Step(ctx context.Context) {
 				return j.Run(ctx)
 			}()
 			s.mu.Lock()
-			st.running, st.LastEnd, st.Runs = false, s.now(), st.Runs+1
+			st.Running, st.LastEnd, st.Runs = false, s.now(), st.Runs+1
 			st.LastError = ""
 			if err != nil {
 				st.LastError = err.Error()

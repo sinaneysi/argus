@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,25 +23,35 @@ import (
 //
 // path is a file or a directory (searched recursively, symlinks not followed). The newest matching file decides
 // the age and the size. The part of the name before the first "_" is the bucket filter on /backups.
+//
+// A set in object storage has "s3": "<source>/<bucket>/<prefix>" instead of path (source: a Settings -> Data
+// sources entry of type S3) and "min_size": "auto" or a byte count; it is checked by the earlier MinIO check's rule
+// (backups_s3.go). A sets file whose name ends in .tsv is the earlier check's TSV (name, path, max age, min size).
 type BackupSet struct {
 	Name        string  `json:"name"`
 	Path        string  `json:"path"`
-	Glob        string  `json:"glob"`          // basename pattern (path.Match); default "*"
-	MaxAgeHours int     `json:"max_age_hours"` // older: STALE; default 26
-	MinBytes    int64   `json:"min_bytes"`     // smaller: SMALL; default 1
-	MinRatio    float64 `json:"min_ratio"`     // below this share of the median of the last 7 checks: SMALL; default 0.5
+	S3          string  `json:"s3,omitempty"`
+	MinSize     string  `json:"min_size,omitempty"` // S3 sets: auto (default) or a byte count
+	Glob        string  `json:"glob"`               // basename pattern (path.Match); default "*"
+	MaxAgeHours int     `json:"max_age_hours"`      // older: STALE; default 26
+	MinBytes    int64   `json:"min_bytes"`          // smaller: SMALL; default 1
+	MinRatio    float64 `json:"min_ratio"`          // below this share of the median of the last 7 checks: SMALL; default 0.5
 }
 
 // BackupsOptions configure the backup check.
 type BackupsOptions struct {
-	SetsFile string // ARGUS_BACKUP_SETS_FILE
-	DB       string // ARGUS_DB
-	MaxFiles int    // per set, a bound on the directory walk (default 100000)
+	SetsFile string              // ARGUS_BACKUP_SETS_FILE
+	DB       string              // ARGUS_DB
+	S3       map[string]S3Lister // the S3 data sources by name
+	MaxFiles int                 // per set, a bound on the directory walk (default 100000)
 	Now      func() time.Time
 }
 
 // LoadBackupSets reads and validates the sets file; every problem is returned at once.
 func LoadBackupSets(path string) ([]BackupSet, error) {
+	if strings.HasSuffix(path, ".tsv") {
+		return LoadBackupSetsTSV(path)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -62,6 +73,17 @@ func LoadBackupSets(path string) ([]BackupSet, error) {
 			errs = append(errs, fmt.Sprintf("set %d: name must be set, without spaces or slashes", i+1))
 		case seen[s.Name]:
 			errs = append(errs, fmt.Sprintf("set %s: listed twice", s.Name))
+		case s.S3 != "" && s.Path != "":
+			errs = append(errs, fmt.Sprintf("set %s: path or s3, not both", s.Name))
+		case s.S3 != "":
+			if _, _, _, err := ParseS3Path(s.S3); err != nil {
+				errs = append(errs, fmt.Sprintf("set %s: %v", s.Name, err))
+			}
+			if s.MinSize == "" {
+				s.MinSize = "auto"
+			} else if _, err := strconv.ParseInt(s.MinSize, 10, 64); err != nil && s.MinSize != "auto" {
+				errs = append(errs, fmt.Sprintf("set %s: min_size must be auto or a byte count", s.Name))
+			}
 		case !filepath.IsAbs(s.Path):
 			errs = append(errs, fmt.Sprintf("set %s: path must be absolute", s.Name))
 		}
@@ -209,6 +231,7 @@ func Backups(ctx context.Context, o BackupsOptions) (Result, error) {
 		newest       any
 		age, size    any
 		median       int64
+		s3med        any // S3 sets: the median of the earlier check (0 included)
 		kinds        any
 	}
 	var rows []row
@@ -216,6 +239,28 @@ func Backups(ctx context.Context, o BackupsOptions) (Result, error) {
 	for _, s := range sets {
 		if err := ctx.Err(); err != nil {
 			return Result{Status: "ERROR"}, err
+		}
+		if s.S3 != "" {
+			r := row{name: s.Name, status: "FAIL(empty)", newest: "-", kinds: int64(0)}
+			src, bucket, prefix, _ := ParseS3Path(s.S3)
+			if l := o.S3[src]; l == nil {
+				Logger.Warn("set not checked: no S3 data source of this name", "collector", "backups", "set", s.Name, "source", src)
+			} else if objs, err := l.List(ctx, bucket, prefix); err != nil {
+				Logger.Warn("listing failed", "collector", "backups", "set", s.Name, "err", err)
+			} else {
+				for i := range objs {
+					objs[i].Key = strings.TrimPrefix(objs[i].Key, prefix)
+				}
+				if x, ok := checkS3(objs, o.Now(), int64(s.MaxAgeHours), s.MinSize); ok {
+					r = row{name: s.Name, status: x.status, newest: x.newest, age: x.age, size: x.size, s3med: x.med, kinds: x.kinds}
+				}
+			}
+			if r.status != "OK" {
+				bad = append(bad, s.Name)
+			}
+			Logger.Info("set checked", "collector", "backups", "set", s.Name, "status", r.status)
+			rows = append(rows, r)
+			continue
 		}
 		f, err := scanSet(s, o.MaxFiles)
 		if err != nil {
@@ -267,6 +312,9 @@ func Backups(ctx context.Context, o BackupsOptions) (Result, error) {
 		var med any
 		if r.median > 0 {
 			med = r.median
+		}
+		if r.s3med != nil {
+			med = r.s3med
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO backup_results (run_id, name, status, newest, age_h, size, median_prev7, kinds)
 		  VALUES (?,?,?,?,?,?,?,?)`, rid, r.name, r.status, r.newest, r.age, r.size, med, r.kinds); err != nil {

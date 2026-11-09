@@ -56,6 +56,7 @@ var commands = []command{
 	{"board", "the task board sync with Jira and GitLab issues (sync)", runBoard},
 	{"estate", "host estate from Prometheus: VM inventory, VM state, the 5-minute pulse", runEstate},
 	{"outline", "documentation publisher: apply the Outline requests, publish the service pages under the parent document", runOutline},
+	{"cicd", "CI/CD watcher: scan the GitLab estate, watch pipelines (failures, stuck pipelines, deploys)", runCicd},
 	{"incidents", "incident records: apply the incident page's requests and auto-resolve (tick); attach, backfill", runIncidents},
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"marketing", "the marketing module's jobs: crawler logs, sitemaps, the SEO page's Googlebot table (googlebot ...)", runMarketing},
