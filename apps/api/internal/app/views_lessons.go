@@ -2,10 +2,10 @@ package app
 
 // Lessons (ADR-0013 decision 4, phase P4): what Argus learned from its runs, reviewed by an admin.
 //   /admin/lessons  admins: approve, edit + approve, reject, retire, back to review; the on/off switch. Every action
-//                   is a board request (kind "lesson" / "lesson-settings") that root's bin/lessons.py re-validates,
-//                   secret-scans and audits; this page only reads board.db.
+//                   is a board request (kind "lesson" / "lesson-settings") that the board sync (internal/lessons)
+//                   re-validates, secret-scans and audits; this page only reads board.db.
 //   /knowledge      every signed-in user: the approved lessons as one generated, read-only page (help style).
-// Only approved lessons ever reach a prompt (bin/lessons.py select); nothing here approves by itself.
+// Only approved lessons ever reach a prompt (internal/lessons Select); nothing here approves by itself.
 
 import (
 	"encoding/json"

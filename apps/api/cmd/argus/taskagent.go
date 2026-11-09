@@ -14,7 +14,9 @@ import (
 	"github.com/sinaneysi/argus/internal/board"
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/lessons"
 	"github.com/sinaneysi/argus/internal/model"
+	"github.com/sinaneysi/argus/internal/notify"
 	"github.com/sinaneysi/argus/internal/taskagent"
 )
 
@@ -80,6 +82,8 @@ func taskAgentJob(c *config.Config) func(context.Context) error {
 			Run:    taskagent.Limits{BudgetUSD: cfgFloat(c, "ARGUS_TASK_RUN_BUDGET_USD", 5), Timeout: cfgMinutes(c, "ARGUS_TASK_RUN_MINUTES", 60), MaxTurns: 200},
 			Chat:   taskagent.Limits{BudgetUSD: cfgFloat(c, "ARGUS_TASK_CHAT_BUDGET_USD", 0.15), Timeout: cfgMinutes(c, "ARGUS_TASK_CHAT_MINUTES", 5), MaxTurns: 12},
 			Log:    collect.Logger}
+		lo := &lessons.Options{Allow: notify.LoadAllowlist(c.Values["ARGUS_SECRET_ALLOWLIST"].Raw), Log: collect.Logger}
+		o.Lessons = func(ctx context.Context, job []byte) (string, []int64) { return lo.SelectFor(ctx, c.BoardDB, job) }
 		if _, _, ok := o.Pending(); !ok {
 			return nil
 		}

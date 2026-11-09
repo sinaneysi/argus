@@ -107,8 +107,16 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		DryRun: dry, Full: full, Log: collect.Logger, Allow: notify.LoadAllowlist(v("ARGUS_SECRET_ALLOWLIST")),
 		GitLabReqDir: or("ARGUS_GITLAB_ISSUES_REQ_DIR", filepath.Join(c.SettingsIn, "gitlab-issues")), EtcDir: c.EtcDir,
 		GitLabEnvFile: or("ARGUS_GITLAB_ISSUES_ENV_FILE", filepath.Join(c.EtcDir, "env")), GitLabDefaultURL: gitlabURL(c),
-		Key: volumeKey(c),
+		Key: volumeKey(c), KnowledgeDir: knowledgeDir(c),
 	}
+}
+
+// knowledgeDir receives the generated files of the approved lessons (<state>/knowledge; "" without a state folder).
+func knowledgeDir(c *config.Config) string {
+	if c.StateDir == "" {
+		return ""
+	}
+	return filepath.Join(c.StateDir, "knowledge")
 }
 
 // gitlabURL is GITLAB_URL when it is configured (not the compiled-in example).
