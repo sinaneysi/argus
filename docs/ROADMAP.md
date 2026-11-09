@@ -183,6 +183,18 @@ the SEO suggestions (`seo-suggest`), their model summary (`seo-summary`, through
 installation (it switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN) is not
 ported: Argus data sources only read.
 
+Lessons (P3, 2026-11-09): `internal/lessons`, inside the board sync and the task agent's model runner. An intake or
+run may propose up to 3 lessons (validated, secret-scanned: a hit drops the lesson, never stored redacted; deduped by
+normalised text, and a similar title of the same service becomes an "update" of it); an admin approves, edits,
+rejects, retires or sends one back to review on /admin/lessons (board requests `lesson`, `lesson-settings`). Before
+an intake or run, the runner loads the approved lessons that fit the task (service 3, env 1, kind 1, tag and title
+word overlap; at most 8 within 6 KiB) into a file the model reads as quoted context, never as instructions; the
+board sync counts their uses and the "did not help" flags (two flags send a lesson back to review). Daily decay:
+unused for 90 days, or above 300 approved, back to review as "retire?". Generated files of the approved lessons in
+`<state>/knowledge/` (`lessons.md`, `services/<path>.md`). Same results, rows, events and files as the reference job
+on a synthetic scenario (`testdata/parity.json`, 50 steps). Differences: the job file's own block is `argus`, and an
+ids file entry `true` is not read as lesson 1.
+
 ## Next
 
 1. More collectors: credential expiry; the backup plans status for backups. Host estate: the host shell part of the
@@ -191,7 +203,7 @@ ported: Argus data sources only read.
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
 3. **Task-agent port requirement** (built 2026-11-08 in the volume worker: `internal/board` agent.go plans and
    dispatches inside the board sync, `internal/taskagent` runs the model jobs through `internal/model`; not ported:
-   the fixer (WRITE steps on develop / pre-release get a read-only report for a person), task secrets, lessons, the
+   the fixer (WRITE steps on develop / pre-release get a read-only report for a person), task secrets, the
    QA intake; the task text comes from board.db, so attachments and links are not in the task file):
    - Handle the board request `agent-replan` exactly like `agent-answers`: admins only; refuse with a clear reason when
      the task is not in the agent column for an agent-enabled user, a job is already running for it, Claude usage is

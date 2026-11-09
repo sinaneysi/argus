@@ -21,7 +21,10 @@ package board
 // intakes and 3 runs a day, one job at a time. Results go back as a comment on the issue (through the outbox) and a
 // notice; the issue is never moved by itself unless "auto-move to Done" is on (GitLab tasks only in this port).
 //
-// Not ported (their requests are refused with a reason): the fixer and its column move, task secrets, lessons, the
+// Lessons (lessons.go, internal/lessons): the model runner loads the approved lessons that fit the task; the result
+// may propose up to 3 new ones and flag loaded ones that did not help; an admin reviews them on /admin/lessons.
+//
+// Not ported (their requests are refused with a reason): the fixer and its column move, task secrets, the
 // QA intake. Differences from the reference job: the task's text comes from board.db (the board sync mirrors the
 // summary, description and comments) instead of a fresh tracker read, so attachments and issue links are not in
 // the task file; the model answers the JSON object as its final text (no Write tool).
@@ -576,6 +579,7 @@ func (r *run) agentIngest() {
 		}
 		cost := f64(meta["cost_usd"])
 		d := readOut(base + ".json")
+		r.lessonsAfter(key, d, base+".lessons.json", meta["run_id"]) // count the loaded lessons, store the proposed ones
 		bad := d == nil || d["_error"] != nil || len(d) == 0
 		var me string
 		var limit bool

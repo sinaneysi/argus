@@ -23,8 +23,8 @@
 // GitLab issue tasks are pushed and pulled in gitlab_issues.go (ADR-0009, ADR-0010).
 //
 // Not handled here (requests of these kinds are refused with a reason): per-user Jira
-// connections, the Jira agile board mirror, the fixer column and its bridge, approval proposals, lessons, the task
-// agent and its chat, Matrix requests.
+// connections, the Jira agile board mirror, the fixer column and its bridge, approval proposals, Matrix requests.
+// The task agent and its chat are in agent.go and chat.go, the lessons review in lessons.go.
 package board
 
 import (
@@ -47,6 +47,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"github.com/sinaneysi/argus/internal/lessons"
 	"github.com/sinaneysi/argus/internal/notify"
 	"github.com/sinaneysi/argus/internal/secret"
 )
@@ -89,6 +90,9 @@ type Options struct {
 
 	// Agent turns the task agent on (agent.go); nil: its requests are refused as not handled.
 	Agent *AgentOptions
+
+	// KnowledgeDir receives the generated files of the approved lessons (lessons.md, services/); "": none.
+	KnowledgeDir string
 }
 
 // Columns of the board, in order.
@@ -392,7 +396,7 @@ func Connect(ctx context.Context, path string) (*sql.DB, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1)
-	if _, err := db.ExecContext(ctx, Schema); err != nil {
+	if _, err := db.ExecContext(ctx, Schema+lessons.Schema); err != nil {
 		db.Close()
 		return nil, err
 	}

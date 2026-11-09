@@ -787,6 +787,9 @@ func (r *run) main() error {
 	if r.o.Agent != nil && r.o.Agent.ChatReqDir != "" && !o.DryRun {
 		r.chatProcess()
 	}
+	if !o.DryRun {
+		r.lessonTick() // daily decay, knowledge files
+	}
 	if o.Full {
 		r.setState("want_full", "1")
 	}

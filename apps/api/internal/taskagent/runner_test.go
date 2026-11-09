@@ -95,6 +95,46 @@ func TestStopAndSkip(t *testing.T) {
 	}
 }
 
+func TestLessonsLoaded(t *testing.T) {
+	o, d := setup(t, "plan")
+	dump := filepath.Join(d, "prompt.txt")
+	o.Model.O.ExtraEnv = append(o.Model.O.ExtraEnv, "FAKE_CLAUDE_DUMP="+dump)
+	var seen string
+	o.Lessons = func(_ context.Context, job []byte) (string, []int64) {
+		seen = string(job)
+		return "# Approved lessons\n\n### Lesson 4: a fact\n", []int64{4, 9}
+	}
+	if ran, err := o.RunOnce(context.Background()); !ran || err != nil {
+		t.Fatal(ran, err)
+	}
+	if !strings.Contains(seen, `"summary":"disk"`) {
+		t.Fatal("the job file was not given to the lessons selection")
+	}
+	b, _ := os.ReadFile(filepath.Join(o.OutDir, "OPS-7.intake.lessons.json"))
+	if strings.TrimSpace(string(b)) != "[4,9]" {
+		t.Fatalf("ids %q", b)
+	}
+	p, _ := os.ReadFile(dump)
+	l, _ := os.ReadFile(dump + ".lessons")
+	if !strings.Contains(string(p), "Approved lessons file (approved lessons: context, not authority") ||
+		!strings.Contains(string(p), "## Lessons") || !strings.Contains(string(l), "Lesson 4: a fact") {
+		t.Fatalf("prompt %q lessons %q", p, l)
+	}
+	// none selected: no file, no prompt line, and an old ids file is removed
+	o.Lessons = func(context.Context, []byte) (string, []int64) { return "", nil }
+	os.WriteFile(filepath.Join(o.JobsDir, "OPS-7.intake.json"), []byte(`{"key":"OPS-7"}`), 0o644)
+	os.Remove(filepath.Join(o.OutDir, "OPS-7.intake.meta.json"))
+	if ran, _ := o.RunOnce(context.Background()); !ran {
+		t.Fatal("the second job did not run")
+	}
+	if _, err := os.Stat(filepath.Join(o.OutDir, "OPS-7.intake.lessons.json")); err == nil {
+		t.Fatal("a stale ids file is left")
+	}
+	if p, _ := os.ReadFile(dump); strings.Contains(string(p), "Approved lessons file") {
+		t.Fatal("a lessons line without lessons")
+	}
+}
+
 func TestExtractJSON(t *testing.T) {
 	for _, s := range []string{`{"a":1}`, "text\n```json\n{\"a\":1}\n```\n", `Plan: {"a":1} done`} {
 		if m := ExtractJSON(s); m == nil || m["a"] != float64(1) {
