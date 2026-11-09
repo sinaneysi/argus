@@ -319,6 +319,7 @@ func runVolumeWorker(ctx context.Context, c *config.Config, every map[string]tim
 	for _, j := range volumeJobs(c, every, stderr) {
 		s.Add(j)
 	}
+	s.Add(selfcheckJob(c, s, stderr)) // reads the other jobs' states
 	statusPath := filepath.Join(c.StateDir, "worker-status.json")
 	go func() {
 		t := time.NewTicker(15 * time.Second)

@@ -85,6 +85,9 @@ var Fields = []Field{
 	{Key: "ARGUS_ALERTS_FILE", Aliases: []string{"OPS_ALERTS"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/alerts-firing.json"},
 	{Key: "ARGUS_CRED_STATUS_FILE", Aliases: []string{"OPS_CRED_STATUS"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/cred-status.json"},
 	{Key: "ARGUS_SELFCHECK_FILE", Aliases: []string{"OPS_SELFCHECK"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/selfcheck.json"},
+	{Key: "ARGUS_SELFCHECK_PAGE_AFTER", Aliases: []string{"SELF_PAGE_AFTER"}, Kind: Int, Default: "3600", Min: 300, Max: 604800, Help: "worker job selfcheck: seconds Argus must be failing before one notice is sent"},
+	{Key: "ARGUS_SELFCHECK_API_URL", Kind: Str, Help: "worker job selfcheck: the API's health address it checks (empty: not checked; deploy/compose.yml sets it)"},
+	{Key: "ARGUS_DEADMAN_PUSH_URL", Aliases: []string{"KUMA_PUSH_URL"}, Kind: URL, Secret: true, Help: "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"},
 	{Key: "ARGUS_READINESS_FILE", Aliases: []string{"OPS_READINESS_DATA"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/readiness.json"},
 	{Key: "ARGUS_CRED_EXPIRY_FILE", Aliases: []string{"OPS_CRED_EXPIRY"}, Kind: Path, Help: "credential expiry file (empty: the app's default)"},
 	{Key: "ARGUS_BACKUP_PLANS_DIR", Aliases: []string{"OPS_BACKUP_PLANS"}, Kind: Path, Help: "backup plans (empty: the app's default)"},
@@ -511,7 +514,7 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
-	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS"}
+	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {
