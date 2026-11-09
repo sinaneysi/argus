@@ -54,11 +54,24 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
      from a file, TLS checks on, no redirects. Writes `alerts-firing.json` atomically.
    - `certs`: TLS handshake to `host:port` targets and PEM files. Expiry, issuer, SANs, name mismatch, chain trust.
      Records a `cert-check` run in `ARGUS_DB`.
+     Since 2026-11-09 the grouping, the rows and the notice are the earlier check's (parity on synthetic probes:
+     `internal/collect/testdata/certs`): one group per served certificate (expiry, issuer, SAN set; wildcard and
+     "+N SANs" labels), unreachable names apart (`UNREACH`, never a failure), pinned names (`ARGUS_CERT_PINS_FILE`)
+     until renewed, expected name mismatches (`ARGUS_CERT_EXPECT_FILE`), page below `ARGUS_CERT_PAGE_DAYS`, long
+     expired (`ARGUS_CERT_STALE_DAYS`) a warning. Names: `ARGUS_CERT_TARGETS`, the domains file
+     (`ARGUS_CERT_DOMAINS_FILE`, one `host[:port]` per line) and, with `ARGUS_CERT_FROM_SERVICE_MAP=1`, every public
+     TLS name of the service map that resolves. A run that is not OK posts the grouped notice (`internal/notify`).
+     Argus's own chain-trust check stays, in the run summary only.
    - `backups`: files and directories in a JSON sets file. Age, size, size against the median of the last 7 checks.
      Records a `backup-check` run in `ARGUS_DB`.
    - Tests run each collector against local fixtures and render the output on the existing pages.
    - Hardened example units: `examples/systemd/argus-checks@.service` and three timers.
-   - Later: S3-compatible object listing for backups (no client is vendored yet), Matrix alert rooms and the
+   - S3-compatible object listing for backups (2026-11-08): a set `"s3": "<source>/<bucket>/<prefix>"` (or the
+     earlier check's TSV sets file) is listed with ListObjectsV2 signed with SigV4 (`internal/collect/s3.go`, no
+     SDK) through a Settings -> Data sources entry of type S3 (user name = access key, credential = secret key), and
+     checked by the earlier MinIO check's rule (kinds, per-kind interval, retired kinds, `auto` size floor), with its
+     statuses `FAIL(stale)`, `FAIL(small)`, `FAIL(empty)` (parity: `internal/collect/testdata/backups-s3`).
+   - Later: Matrix alert rooms and the
      Alertmanager webhook as alert sources, shadow parity against the reference installation.
 
 5. **Information architecture v2** (2026-10-30, ADR-0016 D3). The sidebar is seven sections (Today, Review,
@@ -111,7 +124,7 @@ Goal: the images work at another company after the data sources are set; nothing
 |---|---|---|
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
-| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity, selfcheck, credentials |
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
@@ -151,6 +164,15 @@ sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Out
 (purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
 builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
 
+CI/CD watcher (P2, 2026-11-08): `internal/cicd`, `argus cicd scan|watch`; the worker runs `cicd-daily` (the scan, then the branch and
+variable audit) daily and `cicd-watch` every 5 minutes once Settings → Data sources has a GitLab entry with purpose agent (read-only; Argus
+never writes to GitLab, every fix is a proposal). Without `CICD_GROUPS`/`CICD_ENGINE_PROJECT` every project the token
+reads with a `.gitlab-ci.yml` is watched. Same rows and `cicd-status.json` as the earlier installation (parity on
+synthetic logs: class, rule, key line, signature, excerpt, proposals). `ci-vars-meta` (`argus cicd vars-meta`) writes the CI variable metadata (keys, scopes, flags, marker classes;
+never a value) with the token of `CICD_VARS_SOURCE`; the audit uses it when it is under 3 days old. Still open: post-deploy verification (needs the
+access broker for host checks) and the model triage of unclassified logs (next: through `internal/model`, with
+`style.Prepend`).
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 Its jobs (P6) run in the worker only while the module is on. Built: the crawler traffic job (`googlebot-watch`, every
 minute: Loki through a Grafana data source into `googlebot.db`, the detector and its notices), the daily sitemap read
@@ -164,11 +186,14 @@ ported: Argus data sources only read.
 
 ## Next
 
-1. More collectors: credential expiry, capacity; S3 listing for backups. Host estate: the host shell part of the
+1. More collectors: credential expiry; the backup plans status for backups. Host estate: the host shell part of the
    inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
    the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
-3. **Task-agent port requirement** (the intake/run dispatcher and runner; the web side above already reads these):
+3. **Task-agent port requirement** (built 2026-11-08 in the volume worker: `internal/board` agent.go plans and
+   dispatches inside the board sync, `internal/taskagent` runs the model jobs through `internal/model`; not ported:
+   the fixer (WRITE steps on develop / pre-release get a read-only report for a person), task secrets, lessons, the
+   QA intake; the task text comes from board.db, so attachments and links are not in the task file):
    - Handle the board request `agent-replan` exactly like `agent-answers`: admins only; refuse with a clear reason when
      the task is not in the agent column for an agent-enabled user, a job is already running for it, Claude usage is
      off, the egress guard blocks, the task budget is spent or the daily planning cap is reached; keep the saved

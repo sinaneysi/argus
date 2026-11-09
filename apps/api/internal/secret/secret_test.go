@@ -71,3 +71,20 @@ func TestLoad(t *testing.T) {
 		t.Fatal("bad key accepted")
 	}
 }
+
+func TestAudit(t *testing.T) {
+	dir := t.TempDir()
+	k, _ := ParseKey(NewKeyText())
+	other, _ := ParseKey(NewKeyText())
+	os.MkdirAll(filepath.Join(dir, "sources", "gitlab"), 0o700)
+	good, _ := k.Seal(CredName("gitlab", "main"), "tok-1")
+	bad, _ := other.Seal(CredName("gitlab", "old"), "tok-2")
+	os.WriteFile(filepath.Join(dir, "sources", "gitlab", "main.cred"), []byte(good), 0o600)
+	os.WriteFile(filepath.Join(dir, "sources", "gitlab", "old.cred"), []byte(bad), 0o600)
+	os.WriteFile(filepath.Join(dir, "matrix-token"), []byte("plain-token"), 0o600)
+	f := Files{SourcesDir: filepath.Join(dir, "sources"), MatrixFile: filepath.Join(dir, "matrix-token")}
+	opened, plain, names := f.Audit(k)
+	if opened != 1 || plain != 1 || len(names) != 1 || names[0] != "sources/gitlab/old" {
+		t.Errorf("audit: %d %d %v", opened, plain, names)
+	}
+}

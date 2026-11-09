@@ -1,0 +1,10 @@
+#!/bin/sh
+# A fake Claude CLI: answers a task-agent prompt with a fixed plan in stream-json (no network).
+cat >/dev/null
+case "${FAKE_CLAUDE_MODE:-plan}" in
+  sleep) echo '{"type":"system","subtype":"init"}'; sleep 30 ;;
+esac
+echo '{"type":"system","subtype":"init"}'
+echo '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"'"$PWD"'/task.json"}}]}}'
+echo '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Grep","input":{"pattern":"secret-arg"}}]}}'
+printf '%s\n' '{"type":"result","is_error":false,"num_turns":3,"total_cost_usd":0.21,"duration_ms":900,"result":"Here is the plan:\n```json\n{\"classification\":{\"environment\":\"develop\",\"kind\":\"investigate\"},\"summary\":\"s\",\"plan\":[{\"text\":\"look\",\"mode\":\"read-only\"}]}\n```"}'

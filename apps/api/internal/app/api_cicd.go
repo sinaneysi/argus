@@ -19,10 +19,10 @@ func apiCicdStatus(st any) apiPill {
 func apiCicdStale(st *py.OMap) []apiBanner {
 	w := py.AsMap(py.Or(st.Get("watch"), nil))
 	if w.Len() == 0 {
-		return []apiBanner{{Text: "CI/CD data has not loaded: the watcher has written none yet. Failures, stuck pipelines and audits appear here after its first run (every 5 minutes). If this stays, check that argus-cicd-watch.timer is installed on " + ARGUS_HOSTNAME + ".", Kind: "fail"}}
+		return []apiBanner{{Text: "CI/CD data has not loaded: the watcher has written none yet. Failures, stuck pipelines and audits appear here after its first run (every 5 minutes). If this stays, check the worker job cicd-watch (worker-status.json) and that GitLab is connected in Settings -> Data sources with purpose agent; legacy layout: argus-cicd-watch.timer on " + ARGUS_HOSTNAME + ".", Kind: "fail"}}
 	}
 	if Now()-py.Num(py.Or(w.Get("at"), int64(0))) > 30*60 {
-		return []apiBanner{{Text: "CI/CD data is out of date: the watcher last ran " + Ago(w.Get("at")) + ". It should run every 5 minutes, so what follows may be stale. Check argus-cicd-watch.timer on " + ARGUS_HOSTNAME + ".", Kind: "fail"}}
+		return []apiBanner{{Text: "CI/CD data is out of date: the watcher last ran " + Ago(w.Get("at")) + ". It should run every 5 minutes, so what follows may be stale. Check the worker job cicd-watch (legacy layout: argus-cicd-watch.timer on " + ARGUS_HOSTNAME + ").", Kind: "fail"}}
 	}
 	if w.Get("status") != "OK" {
 		return []apiBanner{{Text: "The last watcher run ended with: " + py.OrS(w.Get("note"), "WARN"), Kind: "warn"}}

@@ -39,6 +39,9 @@ CONNECT = [
     {"type": "jira", "name": "main", "env": "shared", "purpose": "tracker", "url": STUB + "/jira", "credential": "fake-jira-token-0001"},
     {"type": "alertmanager", "name": "main", "env": "shared", "purpose": "alerts", "url": STUB + "/alertmanager"},
     {"type": "matrix", "name": "main", "env": "shared", "purpose": "notify", "url": STUB + "/matrix", "credential": "fake-matrix-token-0001"},
+    # the model of the api provider (ARGUS_MODEL_PROVIDER=api in compose.yml): the stub answers /v1/messages offline
+    {"type": "anthropic", "name": "main", "env": "shared", "purpose": "model", "url": STUB + "/anthropic",
+     "credential": "sk-ant-api03-" + "fake" * 8},
     # the marketing module: Loki through Grafana, Google's search APIs (a throwaway key made per run), CDN logs
     {"type": "grafana", "name": "logs", "env": "shared", "purpose": "agent", "url": STUB + "/grafana", "credential": "fake-grafana-token-0001"},
     {"type": "google", "name": "main", "env": "shared", "purpose": "marketing", "url": STUB + "/google", "credential": None},
@@ -225,7 +228,8 @@ def run(c):
 
 def connect(c, seconds=200):
     """Connect the stubs through Settings -> Data sources, wait for the worker to apply them, for the first alerts
-    snapshot and for a board sync with the fake Jira (the pages read what the worker's jobs wrote)."""
+    snapshot, for a board sync with the fake Jira and for the first CI/CD scan (the pages read what the worker's
+    jobs wrote)."""
     for src in CONNECT:
         if src.get("credential", "") is None:
             src = dict(src, credential=google_key())
@@ -240,8 +244,9 @@ def connect(c, seconds=200):
         _, board, _ = c.req("GET", c.web + "/board", accept="text/html")  # the board sync runs every 2 minutes
         code, seo = c.json("GET", "/api/v1/seo")  # the marketing jobs: crawler table and Search Console
         marketing = code == 200 and seo.get("edges") and not (seo.get("gsc") or {}).get("empty", True)
+        _, cicd, _ = c.req("GET", c.web + "/cicd", accept="text/html")  # the CI/CD scan runs once GitLab is connected
         if all(kinds.get(k) == "ok" for k in ("gitlab", "jira", "alertmanager", "matrix", "grafana", "google", "elasticsearch")) \
-                and a.get("loaded") and "synced" in board and marketing:
+                and a.get("loaded") and "synced" in board and marketing and EXPECT["/cicd"] in cicd:
             return
         time.sleep(3)
     print("warning: sources, the first alerts snapshot or the marketing jobs not ready:", kinds)
