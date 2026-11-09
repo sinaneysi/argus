@@ -58,7 +58,12 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
      Records a `backup-check` run in `ARGUS_DB`.
    - Tests run each collector against local fixtures and render the output on the existing pages.
    - Hardened example units: `examples/systemd/argus-checks@.service` and three timers.
-   - Later: S3-compatible object listing for backups (no client is vendored yet), Matrix alert rooms and the
+   - S3-compatible object listing for backups (2026-11-08): a set `"s3": "<source>/<bucket>/<prefix>"` (or the
+     earlier check's TSV sets file) is listed with ListObjectsV2 signed with SigV4 (`internal/collect/s3.go`, no
+     SDK) through a Settings -> Data sources entry of type S3 (user name = access key, credential = secret key), and
+     checked by the earlier MinIO check's rule (kinds, per-kind interval, retired kinds, `auto` size floor), with its
+     statuses `FAIL(stale)`, `FAIL(small)`, `FAIL(empty)` (parity: `internal/collect/testdata/backups-s3`).
+   - Later: Matrix alert rooms and the
      Alertmanager webhook as alert sources, shadow parity against the reference installation.
 
 5. **Information architecture v2** (2026-10-30, ADR-0016 D3). The sidebar is seven sections (Today, Review,
@@ -164,7 +169,7 @@ Marketing is an optional module from P0 on: hidden from the navigation and the A
 
 ## Next
 
-1. More collectors: credential expiry; S3 listing for backups. Host estate: the host shell part of the
+1. More collectors: credential expiry; the backup plans status for backups. Host estate: the host shell part of the
    inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
    the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
