@@ -94,6 +94,8 @@ var Jobs = map[string][]string{
 	"cicd-watch":     {"gitlab"},
 	"cicd-daily":     {"gitlab"},
 	"task-agent":     {"claude"},
+	// the marketing module (its jobs also need the module on)
+	"googlebot-watch": {"grafana"},
 }
 
 // Match is the need of the longest entry that covers path; ok false when none does.

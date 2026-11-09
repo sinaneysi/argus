@@ -504,6 +504,81 @@
       "help": "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"
     },
     {
+      "key": "ARGUS_GOOGLEBOT_DB",
+      "aliases": [
+        "GW_DB"
+      ],
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/googlebot.db",
+      "help": "crawler traffic database of the marketing module (its own file: several GB)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_EDGES_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-edges.tsv",
+      "help": "edge groups to read from Loki: label<TAB>json|cache<TAB>{stream selector}[<TAB>site host of a cache group]; the first is the primary group"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_PATHS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-paths.tsv",
+      "help": "path classes: class<TAB>regex, first match wins (missing: a built-in generic list)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_SITEMAP",
+      "aliases": [
+        "GW_SITEMAP"
+      ],
+      "type": "str",
+      "help": "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_INTERVAL",
+      "aliases": [
+        "GW_INTERVAL"
+      ],
+      "type": "int",
+      "default": "300",
+      "min": 60,
+      "max": 600,
+      "help": "bucket width of a new crawler database, seconds (60, 300 or 600; it adapts itself afterwards)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_STORE_LIMIT_MB",
+      "type": "int",
+      "default": "6144",
+      "min": 0,
+      "max": 10000000,
+      "help": "above this size of the crawler database the per-URL rows stop and an alert opens (0: no limit)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_GRAFANA",
+      "type": "str",
+      "help": "the Grafana data source (its name in Settings -> Data sources) whose Loki holds the edge logs (empty: the first Grafana)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_LOKI_UID",
+      "type": "str",
+      "help": "the Loki data source uid in that Grafana (empty: its first Loki data source)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_HOST_LABEL",
+      "type": "str",
+      "default": "hostname",
+      "help": "the Loki stream label that names the edge host"
+    },
+    {
+      "key": "ARGUS_GOOGLE_RANGES_URLS",
+      "type": "list",
+      "default": "https://developers.google.com/static/crawling/ipranges/common-crawlers.json,https://developers.google.com/static/crawling/ipranges/special-crawlers.json,https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers.json",
+      "help": "Google's crawler address lists, fetched once a day (HTTPS_PROXY applies)"
+    },
+    {
+      "key": "ARGUS_SEO_HOSTS",
+      "type": "list",
+      "help": "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"
+    },
+    {
       "key": "FEATURE_TODAY",
       "type": "bool",
       "default": "0",

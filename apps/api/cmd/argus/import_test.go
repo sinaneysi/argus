@@ -20,6 +20,7 @@ import (
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/board"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/secret"
 )
 
@@ -319,6 +320,9 @@ func TestImportSettingsOnlyAndGooglebot(t *testing.T) {
 	}
 	if n := countRows(filepath.Join(vol, "googlebot.db"), "hits"); n != 3 {
 		t.Fatalf("googlebot.db: %d rows", n)
+	}
+	if v, _, err := migrate.StatusFile(context.Background(), filepath.Join(vol, "googlebot.db"), migrate.Googlebot); err != nil || v != migrate.Latest(migrate.Googlebot) {
+		t.Fatalf("googlebot.db not adopted into the module's schema: version %d %v", v, err)
 	}
 	// the earlier version's import: no imported.env, no allowed hosts
 	os.Remove(filepath.Join(c.EtcDir, config.ImportedFile))

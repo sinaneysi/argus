@@ -38,6 +38,9 @@ const (
 	Ops   = "ops"   // evidence database (ARGUS_DB)
 	Board = "board" // decisions and tasks (ARGUS_BOARD_DB)
 	Auth  = "auth"  // users and sessions (ARGUS_AUTH_DB)
+	// Googlebot is the crawler traffic database of the marketing module (ARGUS_GOOGLEBOT_DB). It is not in DBs: the
+	// module's job migrates it when it opens the file, so an installation without the module never creates it.
+	Googlebot = "googlebot"
 )
 
 // DBs lists every database, in apply order.

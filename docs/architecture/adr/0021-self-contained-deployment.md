@@ -165,7 +165,7 @@ that list.
 | P3 | port the decision jobs (board, proposals, review, notices, chat intake) | documented |
 | P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user; every prompt through `style.Prepend` | documented |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020), no host SSH scripts | documented |
-| P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | documented |
+| P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | in progress |
 
 As built (P1): `argus import [-dry-run] [-force] [-etc DIR] [-env FILE]... [-reports DIR] [-totp-legacy-label L]
 <state dir>` copies `ops.db`, `board/board.db` and `auth/auth.db` consistently (`VACUUM INTO` from a scratch copy; the
@@ -266,6 +266,22 @@ Claude login and the notify switch. Differences from the earlier jobs: the list 
 a hand-kept file; a credential's set date is its file's change time (no env-file backups); neutral how-to steps; no
 `credentials` snapshot table, rotation proposals or Today items yet; credcheck makes no calls of its own (the
 `sources-check` job does).
+
+As built (P6, marketing): `internal/marketing/googlebot` and `argus marketing googlebot` port the crawler traffic job
+(parity with the earlier job on synthetic fixtures: `internal/marketing/googlebot/testdata/golden.json`). The worker runs
+`googlebot-watch` every minute, `googlebot-sitemaps` once a day and `seo-check` every minute, only while the module
+is on; "not configured" names what is missing (the module, a Grafana data source, the edge groups file
+`etc/googlebot-edges.tsv`, `ARGUS_GOOGLEBOT_SITEMAP`). The job reads the edge access lines with a Google crawler user
+agent from Loki through the Grafana data source (`ARGUS_GOOGLEBOT_GRAFANA`, GET only, the address guard of the data
+sources), one bucket at a time in chunks of at most 5,000 lines, and writes its own database `googlebot.db`
+(`ARGUS_GOOGLEBOT_DB`; migrations `migrate.Googlebot`, applied by the job and by `argus import -with-googlebot`, never at
+start). Google's crawler ranges are fetched daily into `googlebot-ranges.json` (direct, or through `HTTPS_PROXY`). The
+SEO page's Googlebot table (`seo_snapshots`, `seo_errors`) is derived from `googlebot.db`, so Loki is read once.
+Company specifics are configuration: the edge groups and their log formats, the path classes
+(`etc/googlebot-paths.tsv`, a generic built-in list without it), the site's sitemap, the hosts on the page
+(`ARGUS_SEO_HOSTS`), the Loki host label; the service map (`ARGUS_SERVICE_MAP_FILE`) names a backend. Listed differences from the earlier job:
+upstream kinds have neutral names (origin, edge, local, external, cache); the primary edge group is the first line of the
+groups file; days are in `ARGUS_TZ`; the page's verified share uses the full range lists and its p50/p95 the histogram.
 
 ## Consequences
 
