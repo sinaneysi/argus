@@ -109,6 +109,20 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 		_, err := ideasRun(c, "status")
 		return err
 	}})
+	// the advisers' weekly model run: the adviser whose slot is due (nothing when none is, or Ideas are off)
+	jobs = append(jobs, worker.Job{Name: "ideas", Every: time.Hour, Sources: needs.Jobs["ideas"],
+		Ready: func() (bool, string) {
+			if miss := det.Now().Missing(needs.Jobs["ideas"]); len(miss) > 0 {
+				return false, needs.Reason(miss)
+			}
+			return true, ""
+		},
+		Run: func(ctx context.Context) error {
+			ctx, cancel := context.WithTimeout(ctx, 35*time.Minute)
+			defer cancel()
+			_, err := ideasModelRun(ctx, c, "auto")
+			return err
+		}})
 	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
 	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)

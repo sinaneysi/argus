@@ -9,8 +9,8 @@
 //
 // Tables (ops.db, migration 0001): ideas, idea_events.
 //
-// Not ported yet: the advisers' model run (the workspace of facts, the run, the validation and dedupe of the
-// answer) and the optional model refinement of the build prompt (IDEAS_REFINE; the status says it is off).
+// The advisers' weekly model run is in run.go. Not ported yet: the optional model refinement of the build prompt
+// (IDEAS_REFINE; the status says it is off).
 package ideas
 
 import (

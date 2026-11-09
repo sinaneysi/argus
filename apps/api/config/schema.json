@@ -525,7 +525,7 @@
       "key": "IDEAS_*",
       "type": "str",
       "pattern": true,
-      "help": "Ideas: IDEAS_SCHEDULE, IDEAS_MAX_TURNS, IDEAS_BUDGET_USD, IDEAS_TIMEOUT_MIN, IDEAS_MODEL, IDEAS_MAX_PER_RUN, IDEAS_DAILY_USD (out of range: clamped)"
+      "help": "Ideas: IDEAS_SCHEDULE, IDEAS_MAX_TURNS, IDEAS_BUDGET_USD, IDEAS_TIMEOUT_MIN, IDEAS_MODEL, IDEAS_MAX_PER_RUN, IDEAS_DAILY_USD, IDEAS_SIMILARITY (out of range: clamped)"
     },
     {
       "key": "CICD_STUCK_MINUTES",

@@ -146,9 +146,19 @@ Ideas, the decision side (P3, 2026-11-09): `internal/ideas`, `argus ideas apply|
 Ideas review's requests (explore, accept, reject, built) within 3 s and rewrites `ideas-status.json` every hour. An
 accepted idea gets its deterministic build prompt from the template `ARGUS_ETC_DIR/ideas-build.md` (built-in neutral
 default) and the advisers and build values of `ARGUS_ETC_DIR/ideas.json` (built-in default). Same rows, events, build
-prompts and status file as the reference job on synthetic ideas. Not ported yet: the advisers' weekly model run (the
-workspace of facts, the run through `internal/model`, the validation and dedupe of the answer) and the optional
-model refinement of the build prompt.
+prompts and status file as the reference job on synthetic ideas.
+
+Ideas, the advisers' weekly model run (P3/P4, 2026-11-09): `argus ideas run [-adviser auto|KEY]`, the worker job
+`ideas` (hourly: the adviser whose weekly slot is due, if any). The run writes a read-only workspace of redacted facts
+(incidents, RCA, QA, alerts and hygiene, CI/CD, capacity, CVE, backups, certificates, self-check, proposals, runs and
+costs, earlier ideas) and calls the model through `internal/model` (CLI: the workspace is the working directory, the
+adviser is the agent, Read/Glob/Grep only; API: the workspace inline in the prompt). The JSON answer is validated,
+deduplicated against every earlier idea (a rejected idea comes back only with changed evidence) and stored; the
+`runs` row gets the summary. Neutral built-in prompt, advisers and feature list, overridable in `ARGUS_ETC_DIR`
+(`ideas-run.md`, `ideas-agents/<agent>.md`, `ideas-features.md`, optional `ideas-job-model.md`). Parity: the
+reference job's schedule, caps, workspace, validation, dedupe and stored rows on synthetic data and canned answers
+(`testdata/ideas-run-parity.json`). Not ported yet: the optional model refinement of the build prompt; "Generate
+now" from the page (the CLI does it).
 
 Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
 the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
