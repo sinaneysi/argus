@@ -1,0 +1,29 @@
+{
+ "about": "Ideas: who proposes, when, and the values the build prompt names. Copy to ARGUS_ETC_DIR/ideas.json and change it there; FEATURE_IDEAS and the IDEAS_* keys are in the configuration.",
+ "personas": {
+  "devops": {"agent": "senior-devops", "name": "DevOps adviser", "role": "Senior DevOps", "day": "Mon",
+             "focus": "CI/CD, deploys, reliability, toil, automation, backups, capacity, security hygiene"},
+  "qa": {"agent": "qa-specialist", "name": "QA adviser", "role": "QA specialist", "day": "Wed",
+         "focus": "QA intake and triage, release quality gates, smoke and regression checks, synthetic checks, how QA reports reach engineering"},
+  "noc": {"agent": "noc-engineer", "name": "NOC adviser", "role": "NOC engineer", "day": "Fri",
+          "focus": "alerting noise, detection and response time, on-call flow, edges and reachability, incident communication, status for everyone"}
+ },
+ "areas": ["ci-cd", "monitoring", "qa", "security", "backup", "capacity", "ux", "other"],
+ "build": {
+  "product": "Argus",
+  "operator": "the operator who runs Argus",
+  "repo": "the Argus repository",
+  "public_url": "",
+  "commit_trailer": ""
+ },
+ "area_paths": {
+  "ci-cd": ["apps/api/internal/cicd/", "apps/api/internal/board/"],
+  "monitoring": ["apps/api/internal/incidents/", "apps/api/internal/collect/", "apps/api/internal/notify/"],
+  "qa": ["apps/api/internal/app/views_qa.go"],
+  "security": ["apps/api/internal/app/views_cve.go", "apps/api/internal/notify/secretscan.go"],
+  "backup": ["apps/api/internal/app/views_backup.go"],
+  "capacity": ["apps/api/internal/estate/"],
+  "ux": ["apps/web/", "packages/design/DESIGN.md"],
+  "other": ["apps/api/", "apps/web/", "docs/"]
+ }
+}
