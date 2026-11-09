@@ -100,6 +100,7 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, once a
 	// Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus entry, ARGUS_PROM_SOURCES)
 	for _, ej := range []struct {
@@ -161,6 +162,15 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			defer cancel()
 			return cicdRun(ctx, c, "vars-meta", cicdBudgets["vars-meta"], io.Discard)
 		}})
+	// the task agent's model jobs (planning, runs): the board sync above decides what runs; one job at a time
+	jobs = append(jobs, worker.Job{Name: "task-agent", Every: 15 * time.Second, Sources: needs.Jobs["task-agent"],
+		Ready: func() (bool, string) {
+			if miss := det.Now().Missing(needs.Jobs["task-agent"]); len(miss) > 0 {
+				return false, needs.Reason(miss)
+			}
+			return true, ""
+		},
+		Run: taskAgentJob(c)})
 	jobs = append(jobs, worker.Job{Name: "claude-requests", Every: applyEvery, Sources: []string{"claude"}, Run: claudeRequestsJob(c, stderr)})
 	return jobs
 }
@@ -262,6 +272,7 @@ func boardSyncJob(ctx context.Context, c *config.Config) error {
 // jira.env names no project (then the compiled-in example is the last resort).
 func volumeBoardOptions(c *config.Config) board.Options {
 	o := boardOptions(c, false, false)
+	o.Agent = agentBoardOptions(c)
 	so := sourcesOptions(c)
 	if e := firstSource(c, "jira"); e != nil {
 		o.Config = map[string]string{"JIRA_URL": e.URL}
@@ -346,6 +357,7 @@ func runVolumeWorker(ctx context.Context, c *config.Config, every map[string]tim
 	for _, j := range volumeJobs(c, every, stderr) {
 		s.Add(j)
 	}
+	s.Add(selfcheckJob(c, s, stderr)) // reads the other jobs' states
 	statusPath := filepath.Join(c.StateDir, "worker-status.json")
 	go func() {
 		t := time.NewTicker(15 * time.Second)
