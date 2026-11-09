@@ -125,9 +125,10 @@ features (`internal/needs`): "Connect X to enable this page" on pages, `{"notCon
 jobs that name the missing source. Secrets in the volume are encrypted
 with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
 the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
-and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
-connections (`jira-connect`) and the GitLab issues tracker
-(`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+and runs the board sync with the Jira entry of Settings → Data sources (PR #20). The Jira connection requests
+(`jira-connect`: Account and Settings → Jira sync; tokens sealed in `ARGUS_ETC_DIR/jira`) are applied at the start of
+each board sync, with parity to the earlier job on an 18-step scenario; the pulls and writes with a user's own token
+are not ported yet (the shared connection is used). Still open in P0: kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
 Writing style (2026-11-08): `internal/style` holds the default style (embedded `default.md`, about 80% ASD-STE100

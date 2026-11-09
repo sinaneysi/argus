@@ -41,6 +41,7 @@ type Jira struct {
 	User    string // basic auth: user name with the token as password (a Jira data source with a user name)
 	Log     *slog.Logger
 	dryN    int
+	pin     string // connect to this checked address (NewJiraPinned)
 }
 
 // JiraError is a failed Jira call; Status is the HTTP status (0 for a network error).
@@ -106,10 +107,32 @@ func NewJira(base, token, caFile string) (*Jira, error) {
 	}
 	tr.TLSClientConfig = tc
 	tr.Proxy = nil
-	return &Jira{Base: base, token: token, prefix: strings.TrimRight(u.Path, "/"), Budget: 300,
-		MinGap: 100 * time.Millisecond, Retries: 3, MaxWait: 60 * time.Second, Sleep: time.Sleep,
-		client: &http.Client{Transport: tr, Timeout: 20 * time.Second,
-			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}, nil
+	j := &Jira{Base: base, token: token, prefix: strings.TrimRight(u.Path, "/"), Budget: 300,
+		MinGap: 100 * time.Millisecond, Retries: 3, MaxWait: 60 * time.Second, Sleep: time.Sleep}
+	port := u.Port()
+	if port == "" {
+		port = map[string]string{"https": "443", "http": "80"}[u.Scheme]
+	}
+	d := &net.Dialer{Timeout: 20 * time.Second}
+	tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if j.pin != "" {
+			addr = net.JoinHostPort(j.pin, port)
+		}
+		return d.DialContext(ctx, network, addr)
+	}
+	j.client = &http.Client{Transport: tr, Timeout: 20 * time.Second,
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	return j, nil
+}
+
+// NewJiraPinned is NewJira with the TCP connection sent to pin, an address the SSRF guard already checked (TLS still
+// verifies the host name).
+func NewJiraPinned(base, token, caFile, pin string) (*Jira, error) {
+	j, err := NewJira(base, token, caFile)
+	if err == nil {
+		j.pin = pin
+	}
+	return j, err
 }
 
 func (j *Jira) scrub(s string) string {
@@ -360,4 +383,42 @@ func (j *Jira) AddLabel(ctx context.Context, key, label string, add bool) error 
 	}
 	_, err := j.Request(ctx, "PUT", "/rest/api/2/issue/"+esc(key), object{{"update", object{{"labels", []any{object{{op, label}}}}}}})
 	return err
+}
+
+// ServerInfo, Projects, Board, Boards and Components are the reads of a connection test (jiraconnect.go).
+func (j *Jira) ServerInfo(ctx context.Context) (map[string]any, error) {
+	r, err := j.Request(ctx, "GET", "/rest/api/2/serverInfo", nil)
+	return asMap(r), err
+}
+
+func (j *Jira) Projects(ctx context.Context) ([]any, error) {
+	r, err := j.Request(ctx, "GET", "/rest/api/2/project", nil)
+	l, _ := r.([]any)
+	return l, err
+}
+
+func (j *Jira) Board(ctx context.Context, id string) (map[string]any, error) {
+	r, err := j.Request(ctx, "GET", "/rest/agile/1.0/board/"+id, nil)
+	return asMap(r), err
+}
+
+func (j *Jira) Boards(ctx context.Context, project string) ([]any, error) {
+	r, err := j.Request(ctx, "GET", "/rest/agile/1.0/board", nil, "projectKeyOrId", project, "maxResults", "50")
+	if err != nil {
+		return nil, err
+	}
+	var out []any
+	vs, _ := asMap(r)["values"].([]any)
+	for _, b := range vs {
+		if _, ok := b.(map[string]any); ok {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+func (j *Jira) Components(ctx context.Context, project string) ([]any, error) {
+	r, err := j.Request(ctx, "GET", "/rest/api/2/project/"+esc(project)+"/components", nil)
+	l, _ := r.([]any)
+	return l, err
 }

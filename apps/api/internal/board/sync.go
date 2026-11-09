@@ -13,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
 // --- push ------------------------------------------------------------------------------------------------------------
@@ -740,7 +742,7 @@ func Run(ctx context.Context, o Options) error {
 	if !o.DryRun {
 		os.Chmod(o.DB, 0o644)
 	}
-	r := &run{o: &o, ctx: ctx, db: db, results: map[string]object{}, glResults: map[string]object{},
+	r := &run{o: &o, ctx: ctx, db: db, results: map[string]object{}, glResults: map[string]object{}, jcResults: map[string]any{},
 		stats: map[string]int{"pushed": 0, "failed": 0, "conflicts": 0, "new": 0, "updated": 0, "gone": 0}}
 	defer func() {
 		if x := recover(); x != nil {
@@ -757,6 +759,7 @@ func Run(ctx context.Context, o Options) error {
 
 func (r *run) main() error {
 	o := r.o
+	r.jcProcess() // connect / disconnect / projects / allowed hosts / shared connection, before the config is read
 	cfg, problems := LoadConfig(o.EnvFiles, o.OwnerUID)
 	for k, v := range o.Config {
 		if v != "" {
@@ -765,6 +768,13 @@ func (r *run) main() error {
 	}
 	r.cfg, r.mp = cfg, newMapping(cfg)
 	token, tproblem := LoadToken(o.PATFile, o.OwnerUID)
+	if secret.Sealed(token) {
+		if plain, err := o.Key.Open(SharedJiraName, token); err == nil {
+			token = plain
+		} else {
+			token, tproblem = "", "the token is sealed with another master key"
+		}
+	}
 	if o.Token != "" {
 		token, tproblem = o.Token, ""
 	}
@@ -878,6 +888,9 @@ func (r *run) main() error {
 		return err
 	}
 	if err := r.glPublish(glRun); err != nil {
+		return err
+	}
+	if err := r.jcPublish(); err != nil {
 		return err
 	}
 	mode := "local"

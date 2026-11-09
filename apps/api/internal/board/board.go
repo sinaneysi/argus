@@ -22,8 +22,10 @@
 //
 // GitLab issue tasks are pushed and pulled in gitlab_issues.go (ADR-0009, ADR-0010).
 //
-// Not handled here (requests of these kinds are refused with a reason): per-user Jira
-// connections, the Jira agile board mirror, the fixer column and its bridge, approval proposals, lessons, the task
+// The Jira connection requests of Account and Settings -> Jira sync are applied first (jiraconnect.go); the pulls and
+// writes with a user's own token are not ported yet (the shared connection is used).
+//
+// Not handled here (requests of these kinds are refused with a reason): the Jira agile board mirror, the fixer column and its bridge, approval proposals, lessons, the task
 // agent and its chat, Matrix requests.
 package board
 
@@ -86,6 +88,10 @@ type Options struct {
 	Key              secret.Key // the master key: the stored token is sealed with it (one-volume layout)
 	Resolve          func(host string) ([]net.IP, error)
 	NewGitLab        func(base, token, pin string) (*GitLab, error) // tests; nil: NewGitLab
+
+	// JiraConnectDir: the Account and Settings -> Jira sync connection requests (settings-in/jira-connect,
+	// jiraconnect.go); "" turns them off. The connections live in EtcDir/jira.
+	JiraConnectDir string
 
 	// Agent turns the task agent on (agent.go); nil: its requests are refused as not handled.
 	Agent *AgentOptions
@@ -198,6 +204,7 @@ type run struct {
 
 	glResults map[string]object // Settings -> Integrations (GitLab issues) results, by request id
 	agentTick string            // the task agent's summary of this run
+	jcResults map[string]any    // Jira connection request results, by request id
 }
 
 func (r *run) now() int64 { return r.o.Now().Unix() }

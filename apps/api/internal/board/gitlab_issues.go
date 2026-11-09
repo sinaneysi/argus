@@ -1255,7 +1255,10 @@ func (r *run) glSafeHandle(req map[string]any, user, role string) (res string) {
 	return r.glHandle(req, user, role)
 }
 
-func glReadRequest(path string) (map[string]any, error) {
+func glReadRequest(path string) (map[string]any, error) { return readRequestFile(path, glMaxFile) }
+
+// readRequestFile reads one request of the app: a regular file (no symlink) of the app or this user, at most max bytes, a JSON object.
+func readRequestFile(path string, max int) (map[string]any, error) {
 	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK|syscall.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open request (%s)", strerror(err))
@@ -1269,8 +1272,8 @@ func glReadRequest(path string) (map[string]any, error) {
 	if st, ok := fi.Sys().(*syscall.Stat_t); !ok || (int(st.Uid) != glAppUID && int(st.Uid) != os.Geteuid()) {
 		return nil, errors.New("request not written by the app")
 	}
-	data, _ := io.ReadAll(io.LimitReader(f, glMaxFile+1))
-	if len(data) > glMaxFile {
+	data, _ := io.ReadAll(io.LimitReader(f, int64(max)+1))
+	if len(data) > max {
 		return nil, errors.New("request file too large")
 	}
 	d := json.NewDecoder(bytes.NewReader(data))

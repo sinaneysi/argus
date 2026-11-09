@@ -897,6 +897,14 @@
       "help": "GitLab issues connection requests from Settings -> Integrations (empty: ARGUS_SETTINGS_IN/gitlab-issues)"
     },
     {
+      "key": "ARGUS_JIRA_CONNECT_DIR",
+      "aliases": [
+        "JIRA_CONNECT_DIR"
+      ],
+      "type": "path",
+      "help": "Jira connection requests from Account and Settings -> Jira sync (empty: ARGUS_SETTINGS_IN/jira-connect)"
+    },
+    {
       "key": "ARGUS_GITLAB_ISSUES_ENV_FILE",
       "aliases": [
         "GITLAB_ISSUES_ENV_FILE"

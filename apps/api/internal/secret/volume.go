@@ -29,8 +29,13 @@ func (f Files) EtcFiles() map[string]string {
 	if f.EtcDir == "" {
 		return out
 	}
-	for _, n := range []string{"gitlab-issues.token", "outline.token"} {
+	for _, n := range []string{"gitlab-issues.token", "outline.token", "jira.pat"} {
 		out[filepath.Join(f.EtcDir, n)] = "etc/" + n
+	}
+	// the per-user Jira tokens of Account (jira/users/<user>.pat)
+	m, _ := filepath.Glob(filepath.Join(f.EtcDir, "jira", "users", "*.pat"))
+	for _, p := range m {
+		out[p] = "etc/jira/users/" + filepath.Base(p)
 	}
 	return out
 }

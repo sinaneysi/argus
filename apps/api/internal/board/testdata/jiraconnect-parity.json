@@ -1,0 +1,1838 @@
+{
+ "steps": [
+  {
+   "calls": [],
+   "env": [],
+   "pats": [],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_V}",
+      "url": "{URL}"
+     },
+     "file": "viewer.one-0000000000000001.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [],
+    "ca_installed": false,
+    "results": {
+     "0000000000000001": {
+      "kind": "connect",
+      "result": "refused: 127.0.0.1:PORT is not an allowed Jira host; ask an admin to add it (Admin > Jira sync > Allowed Jira hosts)",
+      "user": "viewer.one"
+     }
+    },
+    "shared": {},
+    "users": {}
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "wrong"
+    ]
+   ],
+   "env": [],
+   "pats": [],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "rw",
+      "token": "{TOK_WRONG}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-0000000000000002.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [],
+    "ca_installed": false,
+    "results": {
+     "0000000000000002": {
+      "kind": "connect",
+      "result": "refused: Jira refused the token (HTTP 401): Unauthorized. Check that the whole token was pasted and that it has not expired.",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {}
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "A"
+    ],
+    [
+     "GET",
+     "/rest/api/2/myself",
+     "A"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project",
+     "A"
+    ]
+   ],
+   "env": [],
+   "pats": [
+    "admin.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "rw",
+      "token": "{TOK_A}",
+      "url": "{URL}/"
+     },
+     "file": "admin.one-0000000000000003.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000003": {
+      "kind": "connect",
+      "result": "connected as Lead Dev",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "rw",
+      "projects": [],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [],
+   "env": [],
+   "pats": [
+    "admin.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "hosts": [
+       "{HOST}",
+       "Bad host!"
+      ],
+      "kind": "hosts"
+     },
+     "file": "admin.one-0000000000000004.json"
+    },
+    {
+     "body": {
+      "hosts": [
+       "evil.example"
+      ],
+      "kind": "hosts"
+     },
+     "file": "viewer.one-0000000000000005.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000004": {
+      "kind": "hosts",
+      "result": "refused: not a host name: bad host!",
+      "user": "admin.one"
+     },
+     "0000000000000005": {
+      "kind": "hosts",
+      "result": "refused: only admins can change the allowed Jira hosts",
+      "user": "viewer.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "rw",
+      "projects": [],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "V"
+    ],
+    [
+     "GET",
+     "/rest/api/2/myself",
+     "V"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project",
+     "V"
+    ]
+   ],
+   "env": [],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_V}",
+      "url": "{URL}"
+     },
+     "file": "viewer.one-0000000000000006.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000006": {
+      "kind": "connect",
+      "result": "connected as View Er",
+      "user": "viewer.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "rw",
+      "projects": [],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [],
+   "env": [],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "default_project": "",
+      "kind": "projects",
+      "projects": [
+       "DEV"
+      ]
+     },
+     "file": "viewer.one-0000000000000007.json"
+    },
+    {
+     "body": {
+      "default_project": "DEV",
+      "kind": "projects",
+      "mode": "rw",
+      "projects": [
+       "OPS",
+       "DEV"
+      ]
+     },
+     "file": "admin.one-0000000000000008.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000007": {
+      "kind": "projects",
+      "result": "refused: choose projects from the list",
+      "user": "viewer.one"
+     },
+     "0000000000000008": {
+      "kind": "projects",
+      "result": "saved",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "rw",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [],
+   "env": [],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "default_project": "",
+      "kind": "projects",
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ]
+     },
+     "file": "viewer.one-0000000000000009.json"
+    },
+    {
+     "body": {
+      "default_project": "DEV",
+      "kind": "projects",
+      "projects": [
+       "OPS"
+      ]
+     },
+     "file": "admin.one-000000000000000a.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000009": {
+      "kind": "projects",
+      "result": "saved",
+      "user": "viewer.one"
+     },
+     "000000000000000a": {
+      "kind": "projects",
+      "result": "refused: the project for new tasks must be one of the chosen projects",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "rw",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "A"
+    ],
+    [
+     "GET",
+     "/rest/api/2/myself",
+     "A"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project",
+     "A"
+    ]
+   ],
+   "env": [],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_A}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-000000000000000b.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "000000000000000b": {
+      "kind": "connect",
+      "result": "connected as Lead Dev",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [],
+   "env": [],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "ca_pem": "not a certificate",
+      "kind": "shared-connect",
+      "mode": "rw",
+      "project": "",
+      "token": "{TOK_BOT}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-000000000000000c.json"
+    },
+    {
+     "body": {
+      "kind": "shared-connect",
+      "mode": "rw",
+      "token": "{TOK_BOT}",
+      "url": "{URL}"
+     },
+     "file": "viewer.one-000000000000000d.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "000000000000000c": {
+      "kind": "shared-connect",
+      "result": "refused: the CA field must hold PEM certificates only (-----BEGIN CERTIFICATE----- ...), nothing else",
+      "user": "admin.one"
+     },
+     "000000000000000d": {
+      "kind": "shared-connect",
+      "result": "refused: only admins can change the shared Jira connection",
+      "user": "viewer.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/myself",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project",
+     "bot"
+    ]
+   ],
+   "env": [
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_MODE=rw"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "shared-connect",
+      "mode": "rw",
+      "project": "",
+      "token": "{TOK_BOT}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-000000000000000e.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "000000000000000e": {
+      "kind": "shared-connect",
+      "result": "connected as Argus bot; now choose the project",
+      "user": "admin.one"
+     }
+    },
+    "shared": {
+     "approvers": "",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "",
+     "board_name": "",
+     "boards": [],
+     "by": "admin.one",
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "rw",
+     "project": "",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/agile/1.0/board/11",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/agile/1.0/board?projectKeyOrId=OPS&maxResults=50",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project/OPS/components",
+     "bot"
+    ]
+   ],
+   "env": [
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_PROJECT=OPS",
+    "JIRA_BOARD_ID=11",
+    "JIRA_FIXER_APPROVERS=lead.dev,other.one",
+    "JIRA_MODE=rw",
+    "JIRA_COMPONENT=Docker"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "approvers": "lead.dev, other.one",
+      "board_id": "{URL}/secure/RapidBoard.jspa?rapidView=11#",
+      "component": "Docker",
+      "kind": "shared-settings",
+      "mode": "rw",
+      "project": "OPS"
+     },
+     "file": "admin.one-000000000000000f.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "000000000000000f": {
+      "kind": "shared-settings",
+      "result": "saved; board 11 \u2014 OPS board",
+      "user": "admin.one"
+     }
+    },
+    "shared": {
+     "approvers": "lead.dev,other.one",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "11",
+     "board_name": "OPS board",
+     "boards": [
+      {
+       "id": 11,
+       "name": "OPS board"
+      },
+      {
+       "id": 12,
+       "name": "OPS kanban"
+      }
+     ],
+     "by": "admin.one",
+     "component": "Docker",
+     "components": [
+      "DevOps Dep",
+      "Docker"
+     ],
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "rw",
+     "project": "OPS",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/agile/1.0/board/99",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/agile/1.0/board?projectKeyOrId=OPS&maxResults=50",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project/OPS/components",
+     "bot"
+    ]
+   ],
+   "env": [
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_PROJECT=OPS",
+    "JIRA_BOARD_ID=11",
+    "JIRA_FIXER_APPROVERS=lead.dev,other.one",
+    "JIRA_MODE=rw",
+    "JIRA_COMPONENT=Docker"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "board_id": "99",
+      "kind": "shared-settings",
+      "project": "OPS"
+     },
+     "file": "admin.one-0000000000000010.json"
+    },
+    {
+     "body": {
+      "kind": "shared-settings",
+      "project": "NOPE"
+     },
+     "file": "admin.one-0000000000000011.json"
+    },
+    {
+     "body": {
+      "board_id": "https://elsewhere.example/boards/3",
+      "kind": "shared-settings",
+      "project": "OPS"
+     },
+     "file": "admin.one-0000000000000012.json"
+    },
+    {
+     "body": {
+      "component": "Nope",
+      "kind": "shared-settings",
+      "project": "OPS"
+     },
+     "file": "admin.one-0000000000000013.json"
+    },
+    {
+     "body": {
+      "approvers": "a;b",
+      "kind": "shared-settings",
+      "project": "OPS"
+     },
+     "file": "admin.one-0000000000000014.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000010": {
+      "kind": "shared-settings",
+      "result": "refused: board 99 was not found or is not visible to this token",
+      "user": "admin.one"
+     },
+     "0000000000000011": {
+      "kind": "shared-settings",
+      "result": "refused: project NOPE is not visible to this token",
+      "user": "admin.one"
+     },
+     "0000000000000012": {
+      "kind": "shared-settings",
+      "result": "refused: that board URL is on elsewhere.example, but the connected Jira is 127.0.0.1:PORT",
+      "user": "admin.one"
+     },
+     "0000000000000013": {
+      "kind": "shared-settings",
+      "result": "refused: component Nope is not in project OPS",
+      "user": "admin.one"
+     },
+     "0000000000000014": {
+      "kind": "shared-settings",
+      "result": "refused: approvers: a comma list of Jira user names",
+      "user": "admin.one"
+     }
+    },
+    "shared": {
+     "approvers": "lead.dev,other.one",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "11",
+     "board_name": "OPS board",
+     "boards": [
+      {
+       "id": 11,
+       "name": "OPS board"
+      },
+      {
+       "id": 12,
+       "name": "OPS kanban"
+      }
+     ],
+     "by": "admin.one",
+     "component": "Docker",
+     "components": [
+      "DevOps Dep",
+      "Docker"
+     ],
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "rw",
+     "project": "OPS",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/myself",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/api/2/project",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/agile/1.0/board/21",
+     "bot"
+    ],
+    [
+     "GET",
+     "/rest/agile/1.0/board?projectKeyOrId=DEV&maxResults=50",
+     "bot"
+    ]
+   ],
+   "env": [
+    "JIRA_COMPONENT=Docker",
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_PROJECT=DEV",
+    "JIRA_BOARD_ID=21",
+    "JIRA_MODE=ro"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "board_id": "{URL}/jira/software/projects/DEV/boards/21/backlog",
+      "kind": "shared-connect",
+      "mode": "ro",
+      "project": "DEV",
+      "token": "{TOK_BOT}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-0000000000000015.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000015": {
+      "kind": "shared-connect",
+      "result": "connected as Argus bot",
+      "user": "admin.one"
+     }
+    },
+    "shared": {
+     "approvers": "",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "21",
+     "board_name": "DEV board",
+     "boards": [
+      {
+       "id": 21,
+       "name": "DEV board"
+      }
+     ],
+     "by": "admin.one",
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "ro",
+     "project": "DEV",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "version": [
+    8,
+    13,
+    5
+   ]
+  },
+  {
+   "calls": [
+    [
+     "GET",
+     "/rest/api/2/serverInfo",
+     "V"
+    ]
+   ],
+   "env": [
+    "JIRA_COMPONENT=Docker",
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_PROJECT=DEV",
+    "JIRA_BOARD_ID=21",
+    "JIRA_MODE=ro"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_V}",
+      "url": "{URL}"
+     },
+     "file": "viewer.one-0000000000000016.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000016": {
+      "kind": "connect",
+      "result": "refused: Jira 8.13.5 is older than 8.14 and has no personal access tokens. Argus does not store passwords; the board stays local for you until Jira is upgraded.",
+      "user": "viewer.one"
+     }
+    },
+    "shared": {
+     "approvers": "",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "21",
+     "board_name": "DEV board",
+     "boards": [
+      {
+       "id": 21,
+       "name": "DEV board"
+      }
+     ],
+     "by": "admin.one",
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "ro",
+     "project": "DEV",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "version": [
+    9,
+    12,
+    3
+   ]
+  },
+  {
+   "calls": [],
+   "env": [
+    "JIRA_COMPONENT=Docker",
+    "JIRA_URL=http://127.0.0.1:PORT",
+    "JIRA_PROJECT=DEV",
+    "JIRA_BOARD_ID=21",
+    "JIRA_MODE=ro"
+   ],
+   "pats": [
+    "admin.one.pat",
+    "viewer.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "bad",
+      "token": "{TOK_A}",
+      "url": "{URL}"
+     },
+     "file": "admin.one-0000000000000017.json"
+    },
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_A}",
+      "url": "ftp://x.example"
+     },
+     "file": "admin.one-0000000000000018.json"
+    },
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_A}",
+      "url": "https://{USERINFO}@x.example"
+     },
+     "file": "admin.one-0000000000000019.json"
+    },
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_A}",
+      "url": "https://x.example/?q=1"
+     },
+     "file": "admin.one-000000000000001a.json"
+    },
+    {
+     "body": {
+      "kind": "connect",
+      "mode": "ro",
+      "token": "{TOK_A}",
+      "url": "https://x.example/a%20b"
+     },
+     "file": "admin.one-000000000000001b.json"
+    },
+    {
+     "body": {
+      "kind": "frobnicate"
+     },
+     "file": "admin.one-000000000000001c.json"
+    },
+    {
+     "body": {
+      "kind": "disconnect",
+      "user": "viewer.one"
+     },
+     "file": "admin.one-000000000000001d.json"
+    },
+    {
+     "body": {
+      "kind": "disconnect"
+     },
+     "file": "ghost.user-000000000000001e.json"
+    }
+   ],
+   "shared_pat": true,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "0000000000000017": {
+      "kind": "connect",
+      "result": "refused: choose read-only or read and write",
+      "user": "admin.one"
+     },
+     "0000000000000018": {
+      "kind": "connect",
+      "result": "refused: the Jira URL must start with https://",
+      "user": "admin.one"
+     },
+     "0000000000000019": {
+      "kind": "connect",
+      "result": "refused: the Jira URL must not contain a user name or password",
+      "user": "admin.one"
+     },
+     "000000000000001a": {
+      "kind": "connect",
+      "result": "refused: the Jira URL must not have a query or fragment",
+      "user": "admin.one"
+     },
+     "000000000000001b": {
+      "kind": "connect",
+      "result": "refused: the Jira URL path may only hold letters, digits and . _ ~ -",
+      "user": "admin.one"
+     },
+     "000000000000001c": {
+      "kind": "frobnicate",
+      "result": "refused: unknown request kind",
+      "user": "admin.one"
+     },
+     "000000000000001d": {
+      "kind": "disconnect",
+      "result": "refused: request user does not match its file name",
+      "user": "admin.one"
+     },
+     "000000000000001e": {
+      "kind": "disconnect",
+      "result": "refused: unknown or disabled user",
+      "user": "ghost.user"
+     }
+    },
+    "shared": {
+     "approvers": "",
+     "available": [
+      {
+       "key": "OPS",
+       "name": "Ops"
+      },
+      {
+       "key": "DEV",
+       "name": "Development"
+      }
+     ],
+     "board_id": "21",
+     "board_name": "DEV board",
+     "boards": [
+      {
+       "id": 21,
+       "name": "DEV board"
+      }
+     ],
+     "by": "admin.one",
+     "deployment": "Server",
+     "display": "Argus bot",
+     "host": "127.0.0.1:PORT",
+     "jira_name": "argus-bot",
+     "mode": "ro",
+     "project": "DEV",
+     "url": "http://127.0.0.1:PORT",
+     "version": "9.12.3"
+    },
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     },
+     "viewer.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       }
+      ],
+      "default_project": "OPS",
+      "deployment": "Server",
+      "display": "View Er",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "view.er",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "viewer.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  },
+  {
+   "calls": [],
+   "env": [
+    "JIRA_COMPONENT=Docker"
+   ],
+   "pats": [
+    "admin.one.pat"
+   ],
+   "requests": [
+    {
+     "body": {
+      "kind": "disconnect"
+     },
+     "file": "viewer.one-000000000000001f.json"
+    },
+    {
+     "body": {
+      "kind": "shared-disconnect"
+     },
+     "file": "admin.one-0000000000000020.json"
+    }
+   ],
+   "shared_pat": false,
+   "state": {
+    "allowed_hosts": [
+     "127.0.0.1:PORT"
+    ],
+    "ca_installed": false,
+    "results": {
+     "000000000000001f": {
+      "kind": "disconnect",
+      "result": "disconnected",
+      "user": "viewer.one"
+     },
+     "0000000000000020": {
+      "kind": "shared-disconnect",
+      "result": "shared connection removed",
+      "user": "admin.one"
+     }
+    },
+    "shared": {},
+    "users": {
+     "admin.one": {
+      "available": [
+       {
+        "key": "OPS",
+        "name": "Ops"
+       },
+       {
+        "key": "DEV",
+        "name": "Development"
+       }
+      ],
+      "default_project": "DEV",
+      "deployment": "Server",
+      "display": "Lead Dev",
+      "fixer_mode": "",
+      "host": "127.0.0.1:PORT",
+      "jira_name": "lead.dev",
+      "last_error": "",
+      "last_error_at": 0,
+      "last_sync": 0,
+      "mode": "ro",
+      "projects": [
+       "OPS",
+       "DEV"
+      ],
+      "server_title": "Fake Jira",
+      "url": "http://127.0.0.1:PORT",
+      "user": "admin.one",
+      "version": "9.12.3"
+     }
+    }
+   }
+  }
+ ]
+}
