@@ -283,6 +283,21 @@ Company specifics are configuration: the edge groups and their log formats, the 
 upstream kinds have neutral names (origin, edge, local, external, cache); the primary edge group is the first line of the
 groups file; days are in `ARGUS_TZ`; the page's verified share uses the full range lists and its p50/p95 the histogram.
 
+As built (P6, marketing search): `internal/marketing/google` and `internal/marketing/seo` port the Search Console job
+and the SEO suggestions (parity of the rules with the earlier job: `internal/marketing/seo/testdata`). Data-source
+type `google` (Settings -> Data sources, purpose marketing): address `https://www.googleapis.com`, credential the
+service-account key's JSON (sealed with the master key); its check signs in with the read-only Search Console scope and
+lists the properties the key reads. The key signs a JWT (RS256) in the process; the earlier installation's openssl
+call and its SSH tunnel are gone: the worker reaches Google directly, or through `HTTPS_PROXY` / `NO_PROXY` in its
+environment when the installation has no direct way out. Jobs, only while the module is on: `gsc` every 6 hours
+(`gsc_daily`, `gsc_urls`, `gsc_sitemaps`; property `ARGUS_GSC_SITE`, key URLs `ARGUS_GSC_URLS_FILE`), `seo-suggest` once a
+day (`seo_suggestions`; `ARGUS_SEO_BRAND`, GA4 bounce rule with `ARGUS_GA_PROPERTY`), `seo-send` for the page's Send
+requests (consumed before the send; one notice for all of them). `argus import` turns the earlier `gsc-key.json` (or
+`GSC_KEY`) into the `google/main` data source and copies `seo-urls.txt`. `seo-summary` (once a day, when the
+model runtime is configured) writes the model's short summary of the newest suggestions to `seo_summary` through
+`internal/model` (the writing style, the Claude usage switch, the egress guard, a $0.15 budget, one turn, a `runs`
+row); a call that did not run is stored with its reason and no text, and is not retried the same day.
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings

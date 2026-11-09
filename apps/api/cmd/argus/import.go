@@ -7,6 +7,7 @@ package main
 // read. Nothing is printed but names: never a value.
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -631,6 +632,27 @@ func (im *importer) integrations(context.Context) error {
 		if err := im.source(sources.Entry{Type: "matrix", Name: "main", Env: "shared", URL: hs, Purpose: "notify"}, tok, im.envSrc["MATRIX_ACCESS_TOKEN"]); err != nil {
 			return err
 		}
+	}
+	// Google Search Console: the service-account key file (GSC_KEY, else gsc-key.json in the etc folder)
+	kf := env["GSC_KEY"]
+	if kf == "" && im.etc != "" {
+		kf = filepath.Join(im.etc, "gsc-key.json")
+	} else if kf != "" && im.etc != "" && !fileOK(kf) {
+		kf = filepath.Join(im.etc, filepath.Base(kf))
+	}
+	if kf != "" && fileOK(kf) {
+		var buf bytes.Buffer
+		raw, _ := os.ReadFile(kf)
+		if json.Compact(&buf, raw) != nil {
+			im.skip_("data source google/main: %s is not JSON", filepath.Base(kf))
+		} else if err := im.source(sources.Entry{Type: "google", Name: "main", Env: "shared", URL: "https://www.googleapis.com", Purpose: "marketing"},
+			buf.String(), filepath.Base(kf)); err != nil {
+			return err
+		}
+	}
+	if uf := filepath.Join(im.etc, "seo-urls.txt"); im.etc != "" && fileOK(uf) && !im.dry {
+		copyFile(uf, c.Values["ARGUS_GSC_URLS_FILE"].Raw, 0o640)
+		im.did("SEO key URLs: seo-urls.txt -> %s", c.Values["ARGUS_GSC_URLS_FILE"].Raw)
 	}
 	// Alertmanager / Prometheus
 	for _, k := range []string{"ALERTMANAGER_URL", "PROM_URL", "PROMETHEUS_URL"} {

@@ -79,6 +79,7 @@ var Types = map[string]Type{
 	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
 	"anthropic":     {Label: "Anthropic API", Purposes: []string{"model"}},
 	"s3":            {Label: "S3 / MinIO", Purposes: []string{"backups"}, Username: true},
+	"google":        {Label: "Google Search Console", Purposes: []string{"marketing"}},
 }
 
 var (

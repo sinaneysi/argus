@@ -68,3 +68,43 @@ func TestMarketingJobsGate(t *testing.T) {
 		t.Fatal("the admin switched it off")
 	}
 }
+
+// The Send requests of the SEO page are consumed before the send, so a failing channel never loops.
+func TestSEOSendConsumesFirst(t *testing.T) {
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+"\n"), 0o600)
+	c, err := config.Load(config.Options{File: env, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	migrate.EnsureDirs(c)
+	if _, err := migrate.ApplyFile(context.Background(), c.DB, migrate.Ops); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", "file:"+c.DB)
+	db.Exec("INSERT INTO seo_suggestions VALUES ('2026-11-05','ctr',0,'https://www.example.com/a','q','Low CTR for q','10000 impressions','fix',1)")
+	db.Close()
+	dir := filepath.Join(c.SettingsIn, "seo-send")
+	os.MkdirAll(dir, 0o700)
+	for _, n := range []string{"1.json", "2.json"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(`{"by": "admin"}`), 0o600)
+	}
+	err = seoSendRun(context.Background(), c, io.Discard)
+	if err == nil || !strings.Contains(err.Error(), "no notice channel") {
+		t.Fatalf("%v", err)
+	}
+	if left, _ := os.ReadDir(dir); len(left) != 0 {
+		t.Fatalf("requests left: %v", left)
+	}
+	if err := seoSendRun(context.Background(), c, io.Discard); err != nil {
+		t.Fatalf("nothing pending: %v", err)
+	}
+	det := needs.FromConfig(func(k string) config.Value { return c.Values[k] }, false)
+	det.Active = true
+	for _, j := range seoJobs(c, det, io.Discard) {
+		if ok, r := j.Ready(); ok || !strings.Contains(r, "module is off") {
+			t.Errorf("%s: %v %q", j.Name, ok, r)
+		}
+	}
+}

@@ -1488,6 +1488,36 @@
       "help": "the Grafana of one monitoring site; with the grafana-<id>-token secret it is listed as data source grafana/<id>"
     },
     {
+      "key": "ARGUS_GSC_SITE",
+      "aliases": [
+        "GSC_SITE"
+      ],
+      "type": "str",
+      "help": "the Search Console property (sc-domain:example.com or https://www.example.com/)"
+    },
+    {
+      "key": "ARGUS_GSC_URLS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/seo-urls.txt",
+      "help": "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"
+    },
+    {
+      "key": "ARGUS_SEO_BRAND",
+      "aliases": [
+        "SEO_BRAND"
+      ],
+      "type": "str",
+      "help": "brand words, | separated: a brand query gets no low-CTR suggestion"
+    },
+    {
+      "key": "ARGUS_GA_PROPERTY",
+      "aliases": [
+        "GA_PROPERTY"
+      ],
+      "type": "str",
+      "help": "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"
+    },
+    {
       "key": "DEMO_MODE",
       "type": "bool",
       "default": "0",
