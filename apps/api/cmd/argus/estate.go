@@ -2,7 +2,7 @@ package main
 
 // estate.go: argus estate (the host estate jobs, internal/estate): the VM inventory, the VM state and the 5-minute
 // pulse, from Prometheus only. In the volume layout the worker runs them: inventory and VM state every 6 hours, the
-// pulse every 5 minutes, the capacity daily, once a Prometheus site is configured.
+// pulse every 5 minutes, the capacity and the alert hygiene daily, once a Prometheus site is configured.
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
-const estateHelp = `usage: argus estate inventory|vmstate|pulse|capacity|all|sites [-file PATH] [-vm ID]
+const estateHelp = `usage: argus estate inventory|vmstate|pulse|capacity|hygiene|all|sites [-file PATH] [-vm ID]
 
 inventory  every VM that a Prometheus site sees (node_exporter), merged by node name: ops.db vms and vm_changes,
            ARGUS_STATE_DIR/inventory-status.json
@@ -30,6 +30,9 @@ pulse      the 15-minute pressure and the failed units of every VM: ARGUS_STATE_
 capacity   every filesystem's free space and 7-day trend (days to full), CPU / memory / load / IO (7-day average
            and p95) of every VM, joined to the inventory: ARGUS_STATE_DIR/capacity.json (the previous one kept as
            capacity-prev.json)
+hygiene    the alert hygiene report: test alerts still firing, alerts firing for more than 7 days, scrape targets
+           down for 7 days, flapping and noisy rules (from alerts-firing.json, the optional watch-stats.json and
+           each site's up series), each with a suggested rule change: ARGUS_STATE_DIR/hygiene.json
 all        inventory, then vmstate
 sites      list the Prometheus sites (no query)
 
@@ -148,6 +151,12 @@ func estateRun(ctx context.Context, c *config.Config, job string, vid int64, w i
 			return err
 		}
 		fmt.Fprintln(w, "capacity:", py.Dumps(st, -1, true))
+	case "hygiene":
+		line, err := o.Hygiene(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(w, line)
 	case "pulse":
 		st, err := o.Pulse(ctx)
 		if err != nil {
@@ -215,7 +224,7 @@ func runEstate(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		return 0
-	case "inventory", "vmstate", "pulse", "capacity", "all":
+	case "inventory", "vmstate", "pulse", "capacity", "hygiene", "all":
 	default:
 		fmt.Fprint(stderr, estateHelp)
 		return 2

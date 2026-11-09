@@ -102,12 +102,12 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
 	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, the
-	// capacity daily, once a Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus
+	// capacity and the alert hygiene daily, once a Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus
 	// entry, ARGUS_PROM_SOURCES)
 	for _, ej := range []struct {
 		name, run string
 		every     time.Duration
-	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}, {"capacity", "capacity", 24 * time.Hour}} {
+	}{{"inventory", "all", 6 * time.Hour}, {"vm-pulse", "pulse", 5 * time.Minute}, {"capacity", "capacity", 24 * time.Hour}, {"hygiene", "hygiene", 24 * time.Hour}} {
 		ej := ej
 		jobs = append(jobs, worker.Job{Name: ej.name, Every: ej.every, Sources: needs.Jobs[ej.name],
 			Ready: func() (bool, string) {

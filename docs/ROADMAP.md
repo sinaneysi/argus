@@ -124,7 +124,7 @@ Goal: the images work at another company after the data sources are set; nothing
 |---|---|---|
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
-| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity, selfcheck, credentials |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity, alert hygiene, selfcheck, credentials |
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
@@ -181,6 +181,14 @@ minute: Loki through a Grafana data source into `googlebot.db`, the detector and
 model summary waits for the shared model runtime), the CDN log job. The CDN log sampling job of the earlier
 installation (it switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN) is not
 ported: Argus data sources only read.
+
+Alert hygiene (P2, 2026-11-09): `argus estate hygiene`, the worker job `hygiene` (daily, once a Prometheus site is
+configured). Test alerts still firing, alerts firing for more than 7 days (and never resolved in the counted window),
+scrape targets down for 7 days on each site (`max_over_time(up[7d]) == 0`, GET only), flapping and noisy rules from
+the optional `watch-stats.json` counters; each finding has a suggested rule change, nothing is changed. Writes
+`hygiene.json`. Same findings, order, counts and summary as the reference job on synthetic inputs
+(`testdata/hygiene/parity.json`). Not ported: the alert-room watcher that writes `watch-stats.json` (without it,
+flapping and noisy stay empty).
 
 ## Next
 
