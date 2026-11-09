@@ -54,6 +54,14 @@ strict CSP, one Go module with an `argus-web` binary and a multi-call `argus` bi
      from a file, TLS checks on, no redirects. Writes `alerts-firing.json` atomically.
    - `certs`: TLS handshake to `host:port` targets and PEM files. Expiry, issuer, SANs, name mismatch, chain trust.
      Records a `cert-check` run in `ARGUS_DB`.
+     Since 2026-11-09 the grouping, the rows and the notice are the earlier check's (parity on synthetic probes:
+     `internal/collect/testdata/certs`): one group per served certificate (expiry, issuer, SAN set; wildcard and
+     "+N SANs" labels), unreachable names apart (`UNREACH`, never a failure), pinned names (`ARGUS_CERT_PINS_FILE`)
+     until renewed, expected name mismatches (`ARGUS_CERT_EXPECT_FILE`), page below `ARGUS_CERT_PAGE_DAYS`, long
+     expired (`ARGUS_CERT_STALE_DAYS`) a warning. Names: `ARGUS_CERT_TARGETS`, the domains file
+     (`ARGUS_CERT_DOMAINS_FILE`, one `host[:port]` per line) and, with `ARGUS_CERT_FROM_SERVICE_MAP=1`, every public
+     TLS name of the service map that resolves. A run that is not OK posts the grouped notice (`internal/notify`).
+     Argus's own chain-trust check stays, in the run summary only.
    - `backups`: files and directories in a JSON sets file. Age, size, size against the median of the last 7 checks.
      Records a `backup-check` run in `ARGUS_DB`.
    - Tests run each collector against local fixtures and render the output on the existing pages.
