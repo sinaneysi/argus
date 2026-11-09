@@ -21,7 +21,7 @@ func SelfcheckSummary(doc *py.OMap, now float64) (any, string) {
 		now = Now()
 	}
 	if doc.Len() == 0 || !py.Truthy(doc.Get("ts")) {
-		return "WARN", "No self-check yet (argus-selfcheck.timer not running?)"
+		return "WARN", "No self-check yet (is the worker running?)"
 	}
 	ts := py.Num(doc.Get("ts"))
 	if now-ts > selfcheckStale {

@@ -2,7 +2,7 @@ package main
 
 // estate.go: argus estate (the host estate jobs, internal/estate): the VM inventory, the VM state and the 5-minute
 // pulse, from Prometheus only. In the volume layout the worker runs them: inventory and VM state every 6 hours, the
-// pulse every 5 minutes, once a Prometheus site is configured.
+// pulse every 5 minutes, the capacity daily, once a Prometheus site is configured.
 
 import (
 	"context"
@@ -20,13 +20,16 @@ import (
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
-const estateHelp = `usage: argus estate inventory|vmstate|pulse|all|sites [-file PATH] [-vm ID]
+const estateHelp = `usage: argus estate inventory|vmstate|pulse|capacity|all|sites [-file PATH] [-vm ID]
 
 inventory  every VM that a Prometheus site sees (node_exporter), merged by node name: ops.db vms and vm_changes,
            ARGUS_STATE_DIR/inventory-status.json
 vmstate    every VM of the inventory (or -vm ID): 24-hour and 7-day series, mounts, unit states, verdicts and
            upstreams: ARGUS_STATE_DIR/vm/<id>.json, ops.db vm_state, vmstate-status.json
 pulse      the 15-minute pressure and the failed units of every VM: ARGUS_STATE_DIR/vm-pulse.json
+capacity   every filesystem's free space and 7-day trend (days to full), CPU / memory / load / IO (7-day average
+           and p95) of every VM, joined to the inventory: ARGUS_STATE_DIR/capacity.json (the previous one kept as
+           capacity-prev.json)
 all        inventory, then vmstate
 sites      list the Prometheus sites (no query)
 
@@ -139,6 +142,12 @@ func estateRun(ctx context.Context, c *config.Config, job string, vid int64, w i
 			return err
 		}
 		fmt.Fprintln(w, "vmstate:", py.Dumps(st, -1, true))
+	case "capacity":
+		st, err := o.Capacity(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(w, "capacity:", py.Dumps(st, -1, true))
 	case "pulse":
 		st, err := o.Pulse(ctx)
 		if err != nil {
@@ -206,7 +215,7 @@ func runEstate(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		return 0
-	case "inventory", "vmstate", "pulse", "all":
+	case "inventory", "vmstate", "pulse", "capacity", "all":
 	default:
 		fmt.Fprint(stderr, estateHelp)
 		return 2
