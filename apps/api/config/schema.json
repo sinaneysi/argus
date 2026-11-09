@@ -129,6 +129,31 @@
       "default": "${ARGUS_STATE_DIR}/selfcheck.json"
     },
     {
+      "key": "ARGUS_SELFCHECK_PAGE_AFTER",
+      "aliases": [
+        "SELF_PAGE_AFTER"
+      ],
+      "type": "int",
+      "default": "3600",
+      "min": 300,
+      "max": 604800,
+      "help": "worker job selfcheck: seconds Argus must be failing before one notice is sent"
+    },
+    {
+      "key": "ARGUS_SELFCHECK_API_URL",
+      "type": "str",
+      "help": "worker job selfcheck: the API's health address it checks (empty: not checked; deploy/compose.yml sets it)"
+    },
+    {
+      "key": "ARGUS_DEADMAN_PUSH_URL",
+      "aliases": [
+        "KUMA_PUSH_URL"
+      ],
+      "type": "url",
+      "secret": true,
+      "help": "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"
+    },
+    {
       "key": "ARGUS_READINESS_FILE",
       "aliases": [
         "OPS_READINESS_DATA"
@@ -143,6 +168,50 @@
       ],
       "type": "path",
       "help": "credential expiry file (empty: the app's default)"
+    },
+    {
+      "key": "ARGUS_CRED_WARN_DAYS",
+      "aliases": [
+        "CRED_WARN_DAYS"
+      ],
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "worker job cred-expiry: a credential expiring within this many days is a warning"
+    },
+    {
+      "key": "ARGUS_CRED_CRIT_DAYS",
+      "aliases": [
+        "CRED_CRIT_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 90,
+      "help": "worker job cred-expiry: within this many days it is an incident and a notice"
+    },
+    {
+      "key": "ARGUS_CRED_ROTATE_DAYS",
+      "aliases": [
+        "CRED_ROTATE_DAYS"
+      ],
+      "type": "int",
+      "default": "180",
+      "min": 7,
+      "max": 3650,
+      "help": "worker job cred-expiry: a credential without an expiry date older than this is due for rotation"
+    },
+    {
+      "key": "ARGUS_CRED_TODAY_DAYS",
+      "aliases": [
+        "CRED_TODAY_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 0,
+      "max": 365,
+      "help": "worker job cred-expiry: within this many days it is on Today"
     },
     {
       "key": "ARGUS_BACKUP_PLANS_DIR",
@@ -1040,6 +1109,83 @@
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/model-runs",
       "help": "the final result of each model call as JSON (redacted), one file per call"
+    },
+    {
+      "key": "ARGUS_TASK_AGENT_DIR",
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/task-agent",
+      "help": "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"
+    },
+    {
+      "key": "ARGUS_TASK_INTAKE_BUDGET_USD",
+      "aliases": [
+        "TASK_INTAKE_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "0.5",
+      "help": "one planning run (intake) spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_RUN_BUDGET_USD",
+      "aliases": [
+        "TASK_RUN_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "5",
+      "help": "one run of an approved plan spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_INTAKE_MINUTES",
+      "type": "int",
+      "default": "10",
+      "min": 1,
+      "max": 60,
+      "help": "one planning run takes at most this long"
+    },
+    {
+      "key": "ARGUS_TASK_RUN_MINUTES",
+      "type": "int",
+      "default": "60",
+      "min": 1,
+      "max": 180,
+      "help": "one run of an approved plan takes at most this long"
+    },
+    {
+      "key": "ARGUS_TASK_CHAT_BUDGET_USD",
+      "aliases": [
+        "TASK_CHAT_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "0.15",
+      "help": "one task-chat reply spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_CHAT_MINUTES",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 30,
+      "help": "one task-chat reply takes at most this long"
+    },
+    {
+      "key": "ARGUS_TASK_BUDGET_USD",
+      "aliases": [
+        "TASK_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "8",
+      "help": "all planning and runs of one task together spend at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_PLAN_DEBOUNCE_SEC",
+      "aliases": [
+        "TASK_PLAN_DEBOUNCE_SEC"
+      ],
+      "type": "int",
+      "default": "120",
+      "min": 0,
+      "max": 1800,
+      "help": "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"
     },
     {
       "key": "ARGUS_KUBE_DIR",

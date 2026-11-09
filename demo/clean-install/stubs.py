@@ -76,8 +76,15 @@ MATRIX = {
 
 def model_answer(body):
     """A Messages API answer (the api model provider): a fixed, synthetic text; no model is called."""
+    text = "OK stub model answer"
+    if b"Task: task-intake" in body:  # the task agent's planning run: a fixed, valid plan
+        text = json.dumps({"classification": {"environment": "develop", "kind": "investigate"},
+                           "summary": "Stub plan for the clean-install test.",
+                           "plan": [{"text": "Read the task and report", "mode": "read-only", "targets": []}],
+                           "questions": [], "needs": [], "estimate": {"effort": "5 min", "cost_usd": 0.01},
+                           "confidence": "low", "suggested_column": "Done"})
     return {"type": "message", "role": "assistant", "model": "stub", "stop_reason": "end_turn",
-            "content": [{"type": "text", "text": "OK stub model answer"}],
+            "content": [{"type": "text", "text": text}],
             "usage": {"input_tokens": len(body) // 4, "output_tokens": 5}}
 
 

@@ -85,8 +85,15 @@ var Fields = []Field{
 	{Key: "ARGUS_ALERTS_FILE", Aliases: []string{"OPS_ALERTS"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/alerts-firing.json"},
 	{Key: "ARGUS_CRED_STATUS_FILE", Aliases: []string{"OPS_CRED_STATUS"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/cred-status.json"},
 	{Key: "ARGUS_SELFCHECK_FILE", Aliases: []string{"OPS_SELFCHECK"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/selfcheck.json"},
+	{Key: "ARGUS_SELFCHECK_PAGE_AFTER", Aliases: []string{"SELF_PAGE_AFTER"}, Kind: Int, Default: "3600", Min: 300, Max: 604800, Help: "worker job selfcheck: seconds Argus must be failing before one notice is sent"},
+	{Key: "ARGUS_SELFCHECK_API_URL", Kind: Str, Help: "worker job selfcheck: the API's health address it checks (empty: not checked; deploy/compose.yml sets it)"},
+	{Key: "ARGUS_DEADMAN_PUSH_URL", Aliases: []string{"KUMA_PUSH_URL"}, Kind: URL, Secret: true, Help: "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"},
 	{Key: "ARGUS_READINESS_FILE", Aliases: []string{"OPS_READINESS_DATA"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/readiness.json"},
 	{Key: "ARGUS_CRED_EXPIRY_FILE", Aliases: []string{"OPS_CRED_EXPIRY"}, Kind: Path, Help: "credential expiry file (empty: the app's default)"},
+	{Key: "ARGUS_CRED_WARN_DAYS", Aliases: []string{"CRED_WARN_DAYS"}, Kind: Int, Default: "30", Min: 1, Max: 365, Help: "worker job cred-expiry: a credential expiring within this many days is a warning"},
+	{Key: "ARGUS_CRED_CRIT_DAYS", Aliases: []string{"CRED_CRIT_DAYS"}, Kind: Int, Default: "7", Min: 0, Max: 90, Help: "worker job cred-expiry: within this many days it is an incident and a notice"},
+	{Key: "ARGUS_CRED_ROTATE_DAYS", Aliases: []string{"CRED_ROTATE_DAYS"}, Kind: Int, Default: "180", Min: 7, Max: 3650, Help: "worker job cred-expiry: a credential without an expiry date older than this is due for rotation"},
+	{Key: "ARGUS_CRED_TODAY_DAYS", Aliases: []string{"CRED_TODAY_DAYS"}, Kind: Int, Default: "14", Min: 0, Max: 365, Help: "worker job cred-expiry: within this many days it is on Today"},
 	{Key: "ARGUS_BACKUP_PLANS_DIR", Aliases: []string{"OPS_BACKUP_PLANS"}, Kind: Path, Help: "backup plans (empty: the app's default)"},
 	{Key: "ARGUS_BACKUP_REF_DIR", Aliases: []string{"OPS_BACKUP_REF"}, Kind: Path, Help: "backup reference data (empty: the app's default)"},
 	{Key: "ARGUS_REPORTS_DIR", Aliases: []string{"OPS_REPORTS_DIR"}, Kind: Path, Default: "/opt/argus/reports/rca", Help: "merged RCA reports"},
@@ -232,6 +239,16 @@ var Fields = []Field{
 	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
 	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
 	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
+	// the task agent (internal/board agent.go plans, internal/taskagent runs the model jobs; volume layout)
+	{Key: "ARGUS_TASK_AGENT_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/task-agent", Help: "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"},
+	{Key: "ARGUS_TASK_INTAKE_BUDGET_USD", Aliases: []string{"TASK_INTAKE_BUDGET_USD"}, Kind: Str, Default: "0.5", Help: "one planning run (intake) spends at most this (USD)"},
+	{Key: "ARGUS_TASK_RUN_BUDGET_USD", Aliases: []string{"TASK_RUN_BUDGET_USD"}, Kind: Str, Default: "5", Help: "one run of an approved plan spends at most this (USD)"},
+	{Key: "ARGUS_TASK_INTAKE_MINUTES", Kind: Int, Default: "10", Min: 1, Max: 60, Help: "one planning run takes at most this long"},
+	{Key: "ARGUS_TASK_RUN_MINUTES", Kind: Int, Default: "60", Min: 1, Max: 180, Help: "one run of an approved plan takes at most this long"},
+	{Key: "ARGUS_TASK_CHAT_BUDGET_USD", Aliases: []string{"TASK_CHAT_BUDGET_USD"}, Kind: Str, Default: "0.15", Help: "one task-chat reply spends at most this (USD)"},
+	{Key: "ARGUS_TASK_CHAT_MINUTES", Kind: Int, Default: "5", Min: 1, Max: 30, Help: "one task-chat reply takes at most this long"},
+	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
+	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},
@@ -509,7 +526,7 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
-	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS"}
+	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER", "ARGUS_CRED_WARN_DAYS", "ARGUS_CRED_CRIT_DAYS", "ARGUS_CRED_ROTATE_DAYS", "ARGUS_CRED_TODAY_DAYS"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {

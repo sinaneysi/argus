@@ -3,6 +3,7 @@ package secret
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -119,4 +120,44 @@ func EnvValue(path, key string) string {
 		}
 	}
 	return ""
+}
+
+// Audit opens every secret the volume holds with k (names only, never values): how many opened, how many are
+// still plaintext (`argus secrets rekey` seals them), and the names that do not open with k.
+func (f Files) Audit(k Key) (opened, plain int, bad []string) {
+	try := func(name, stored string) {
+		if strings.TrimSpace(stored) == "" {
+			return
+		}
+		if !Sealed(stored) {
+			plain++
+			return
+		}
+		if _, err := k.Open(name, stored); err != nil {
+			bad = append(bad, name)
+			return
+		}
+		opened++
+	}
+	read := func(p string) string {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(b))
+	}
+	for p, name := range f.Creds() {
+		try(name, read(p))
+	}
+	for _, p := range f.ClaudeFiles() {
+		try(ClaudeName, EnvValue(p, "CLAUDE_CODE_OAUTH_TOKEN"))
+	}
+	if f.MatrixFile != "" {
+		try(MatrixName, read(f.MatrixFile))
+	}
+	for p, name := range f.EtcFiles() {
+		try(name, read(p))
+	}
+	sort.Strings(bad)
+	return opened, plain, bad
 }
