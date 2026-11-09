@@ -226,6 +226,14 @@ var Fields = []Field{
 	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
 	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
 	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
+	// the task agent (internal/board agent.go plans, internal/taskagent runs the model jobs; volume layout)
+	{Key: "ARGUS_TASK_AGENT_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/task-agent", Help: "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"},
+	{Key: "ARGUS_TASK_INTAKE_BUDGET_USD", Aliases: []string{"TASK_INTAKE_BUDGET_USD"}, Kind: Str, Default: "0.5", Help: "one planning run (intake) spends at most this (USD)"},
+	{Key: "ARGUS_TASK_RUN_BUDGET_USD", Aliases: []string{"TASK_RUN_BUDGET_USD"}, Kind: Str, Default: "5", Help: "one run of an approved plan spends at most this (USD)"},
+	{Key: "ARGUS_TASK_INTAKE_MINUTES", Kind: Int, Default: "10", Min: 1, Max: 60, Help: "one planning run takes at most this long"},
+	{Key: "ARGUS_TASK_RUN_MINUTES", Kind: Int, Default: "60", Min: 1, Max: 180, Help: "one run of an approved plan takes at most this long"},
+	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
+	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},

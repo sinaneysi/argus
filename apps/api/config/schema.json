@@ -1008,6 +1008,66 @@
       "help": "the final result of each model call as JSON (redacted), one file per call"
     },
     {
+      "key": "ARGUS_TASK_AGENT_DIR",
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/task-agent",
+      "help": "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"
+    },
+    {
+      "key": "ARGUS_TASK_INTAKE_BUDGET_USD",
+      "aliases": [
+        "TASK_INTAKE_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "0.5",
+      "help": "one planning run (intake) spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_RUN_BUDGET_USD",
+      "aliases": [
+        "TASK_RUN_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "5",
+      "help": "one run of an approved plan spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_INTAKE_MINUTES",
+      "type": "int",
+      "default": "10",
+      "min": 1,
+      "max": 60,
+      "help": "one planning run takes at most this long"
+    },
+    {
+      "key": "ARGUS_TASK_RUN_MINUTES",
+      "type": "int",
+      "default": "60",
+      "min": 1,
+      "max": 180,
+      "help": "one run of an approved plan takes at most this long"
+    },
+    {
+      "key": "ARGUS_TASK_BUDGET_USD",
+      "aliases": [
+        "TASK_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "8",
+      "help": "all planning and runs of one task together spend at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_PLAN_DEBOUNCE_SEC",
+      "aliases": [
+        "TASK_PLAN_DEBOUNCE_SEC"
+      ],
+      "type": "int",
+      "default": "120",
+      "min": 0,
+      "max": 1800,
+      "help": "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"
+    },
+    {
       "key": "ARGUS_KUBE_DIR",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/kube",

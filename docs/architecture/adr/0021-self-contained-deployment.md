@@ -217,6 +217,18 @@ state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a 
 (kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
 evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
 
+As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
+Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
+map, else the same name): it writes a job file to `task-agent/jobs/`, the worker job `task-agent` runs it through
+the model runtime (a working folder with only the task file; the cli provider gets Read, Glob and Grep) and writes
+the plan or the result, its meta file and the live progress file to `task-agent/out/`, the files and `agent_tasks`
+rows the task page already reads. Plan again, the answers, Spin up and Stop are the board requests `agent-*`; the
+error classes go to `agent_tasks.error_detail`; a tested token replacement plans again the tasks that failed on the
+login or the network. Never executed: production (a proposal) and every WRITE step (no fixer in this version: a
+read-only run reports the steps for a person). Limits: `ARGUS_TASK_INTAKE_BUDGET_USD` / `_RUN_BUDGET_USD`,
+`ARGUS_TASK_INTAKE_MINUTES` / `_RUN_MINUTES`, `ARGUS_TASK_BUDGET_USD` per task, `ARGUS_TASK_PLAN_DEBOUNCE_SEC`, 20
+intakes and 3 runs a day, one job at a time.
+
 ## Consequences
 
 - An image moved to another company starts with empty databases of the right shape, a working sign-in, Settings

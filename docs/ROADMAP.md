@@ -159,7 +159,10 @@ Marketing is an optional module from P0 on: hidden from the navigation and the A
    inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
    the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
-3. **Task-agent port requirement** (the intake/run dispatcher and runner; the web side above already reads these):
+3. **Task-agent port requirement** (built 2026-11-08 in the volume worker: `internal/board` agent.go plans and
+   dispatches inside the board sync, `internal/taskagent` runs the model jobs through `internal/model`; not ported:
+   the fixer (WRITE steps on develop / pre-release get a read-only report for a person), task secrets, lessons, the
+   QA intake; the task text comes from board.db, so attachments and links are not in the task file):
    - Handle the board request `agent-replan` exactly like `agent-answers`: admins only; refuse with a clear reason when
      the task is not in the agent column for an agent-enabled user, a job is already running for it, Claude usage is
      off, the egress guard blocks, the task budget is spent or the daily planning cap is reached; keep the saved
