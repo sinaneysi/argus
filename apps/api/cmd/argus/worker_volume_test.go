@@ -170,7 +170,7 @@ func TestVolumeWorkerConsumers(t *testing.T) {
 		jobs[j.Name] = j
 	}
 	for _, n := range []string{"settings-apply", "writing-style-apply", "claude-requests", "sources-requests", "sources-check", "kube-requests",
-		"source-actions", "sources-discover", "board-sync", "board-requests"} {
+		"source-actions", "sources-discover", "board-sync", "board-requests", "today", "today-actions"} {
 		if _, ok := jobs[n]; !ok {
 			t.Errorf("no %s job", n)
 		}
@@ -179,7 +179,7 @@ func TestVolumeWorkerConsumers(t *testing.T) {
 		t.Fatalf("discovery without a source: %v %q", ok, why)
 	}
 	// nothing waiting: the request jobs return at once
-	for _, n := range []string{"kube-requests", "source-actions", "board-requests"} {
+	for _, n := range []string{"kube-requests", "source-actions", "board-requests", "today-actions"} {
 		if err := jobs[n].Run(context.Background()); err != nil {
 			t.Fatalf("%s: %v", n, err)
 		}
@@ -187,6 +187,16 @@ func TestVolumeWorkerConsumers(t *testing.T) {
 	// the board works locally without Jira: one sync run in the volume
 	if err := jobs["board-sync"].Run(context.Background()); err != nil {
 		t.Fatalf("board sync: %v", err)
+	}
+	// Today off (FEATURE_TODAY=0): the tick only writes the status file the page reads
+	if err := jobs["today"].Run(context.Background()); err != nil {
+		t.Fatalf("today: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(c.DB), "today-status.json")); err != nil {
+		t.Fatalf("today status: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(c.SettingsIn, "today-actions")); err != nil {
+		t.Fatalf("today request folder: %v", err)
 	}
 }
 

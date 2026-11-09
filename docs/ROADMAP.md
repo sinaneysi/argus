@@ -184,6 +184,16 @@ the SEO suggestions (`seo-suggest`), their model summary (`seo-summary`, through
 installation (it switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN) is not
 ported: Argus data sources only read.
 
+Today planner (P4, 2026-11-09): `argus today tick|plan|apply|show|status`, the worker jobs `today` (every 30 minutes:
+the day's plan once `ARGUS_TODAY_PLAN_AT` has passed, a refresh after that) and `today-actions` (the page's requests
+within seconds). Local data only: the open problems, incidents, CI/CD findings, CVE groups, QA reports, proposals,
+task-agent questions, the operator's tracker tasks, failing backups, expiring certificates, credentials
+(`credentials.json`), the self-check, new ideas and the optional decisions file; one item per root cause, scored,
+filled into the focus time, the rest to Later with its reason; carry-over and learned estimates. Same rows, status
+file and output as the reference planner over a 16-step synthetic scenario (`internal/today/testdata/parity.json`).
+Not ported: the optional model pass that only shortened the titles. Budget keys out of range are a configuration
+error (the reference clamped them).
+
 ## Next
 
 1. More collectors: credential expiry; the backup plans status for backups. Host estate: the host shell part of the

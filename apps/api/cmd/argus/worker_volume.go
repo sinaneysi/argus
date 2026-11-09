@@ -100,7 +100,8 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
-	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
+	jobs = append(jobs, todayJobs(c, stderr)...) // the Today planner: tick every 30 minutes, the page's requests within seconds
+	jobs = append(jobs, credJobs(c, stderr)...)  // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, the
 	// capacity daily, once a Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus
 	// entry, ARGUS_PROM_SOURCES)
