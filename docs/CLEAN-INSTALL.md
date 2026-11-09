@@ -12,29 +12,16 @@ An action counts as `works` when it answers below 500 (an empty form is usually 
 
 | kind | works | not-configured | broken |
 |---|---|---|---|
-| page | 52 | 6 | 1 |
-| api | 68 | 6 | 0 |
-| action | 62 | 0 | 0 |
+| page | 60 | 0 | 0 |
+| api | 75 | 0 | 0 |
+| action | 63 | 0 | 0 |
 
 ## Broken (the backlog)
 
 | kind | item | state | detail |
 |---|---|---|---|
-| page | `/cicd` | broken | no stub data (shop/checkout missing) |
 
 ## Not configured
 
 | kind | item |
 |---|---|
-| page | `/admin/fix` |
-| page | `/admin/fix/review` |
-| page | `/admin/fix/run` |
-| page | `/incidents/rca` |
-| page | `/rca` |
-| page | `/rca/view` |
-| api | `GET /api/v1/fix` |
-| api | `GET /api/v1/fix/review` |
-| api | `GET /api/v1/fix/run` |
-| api | `GET /api/v1/incidents/report` |
-| api | `GET /api/v1/rca` |
-| api | `GET /api/v1/rca/item` |

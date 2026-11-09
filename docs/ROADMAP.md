@@ -151,6 +151,14 @@ sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Out
 (purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
 builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
 
+CI/CD watcher (P2, 2026-11-08): `internal/cicd`, `argus cicd scan|watch`; the worker runs `cicd-scan` daily and
+`cicd-watch` every 5 minutes once Settings → Data sources has a GitLab entry with purpose agent (read-only; Argus
+never writes to GitLab, every fix is a proposal). Without `CICD_GROUPS`/`CICD_ENGINE_PROJECT` every project the token
+reads with a `.gitlab-ci.yml` is watched. Same rows and `cicd-status.json` as the earlier installation (parity on
+synthetic logs: class, rule, key line, signature, excerpt, proposals). Still open: post-deploy verification (needs the
+access broker for host checks) and the model triage of unclassified logs (next: through `internal/model`, with
+`style.Prepend`).
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
 ## Next

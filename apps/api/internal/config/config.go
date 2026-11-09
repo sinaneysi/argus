@@ -153,6 +153,12 @@ var Fields = []Field{
 	{Key: "CICD_GROUPS", Kind: List, Default: "example", Help: "GitLab groups of the company's projects"},
 	{Key: "CICD_ENGINE_PROJECT", Kind: Str, Default: "example/deployment", Help: "the shared CI engine project"},
 	{Key: "CICD_ENGINE_PROJECT_ID", Kind: Str, Default: "100"},
+	{Key: "CICD_DEPLOY_BRIDGE", Kind: Str, Default: "trigger_deploy", Help: "the CI bridge job that triggers the deploy pipeline in the engine project (the deploy lock)"},
+	{Key: "CICD_DEPLOY_JOBS", Kind: List, Default: "deploy_systemd,deploy", Help: "deploy job names in the engine's deploy pipeline (their PLAY RECAP gives the hosts)"},
+	{Key: "CICD_INVENTORY_FILE", Kind: Str, Help: "path of the Ansible inventory inside the engine project (empty: deploy target groups are not named)"},
+	{Key: "CICD_INVENTORY_REF", Kind: Str, Default: "main", Help: "branch of the engine project the inventory is read from"},
+	{Key: "CICD_HOST_ENVS", Kind: List, Help: "env=regex, ...: environment of a deploy host by its name or address, first match wins (release=^prod-,develop=^stage-); a develop or pre-release deploy that reaches a release host is a finding"},
+	{Key: "CICD_RR_PER_CYCLE", Kind: Int, Default: "15", Help: "projects the CI/CD watcher polls per run besides the active ones"},
 	{Key: "BACKUP_TEMPLATES_REPO", Kind: Str, Default: "ops/backup-templates", Help: "group/project of the backup templates"},
 	{Key: "OUTLINE_URL", Kind: Str, Default: "https://docs.example.com", Help: "the default Outline server"},
 	{Key: "OUTLINE_PARENT", Kind: Str, Default: "Argus", Help: "title of the top-level Outline document every service page is published under (never the collection root)"},
@@ -515,7 +521,9 @@ const ImportedFile = "imported.env"
 // integrations' addresses, rooms and project keys. Never a secret, a path, a listen address or a sign-in setting.
 var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARGUS_TZ_LABEL", "ENV_LABELS", "PUBLIC_DOMAIN",
 	"OBS_SITES", "OBS_SITE_*_LABEL", "GITLAB_URL", "CICD_GROUPS", "CICD_ENGINE_PROJECT", "CICD_ENGINE_PROJECT_ID",
-	"CICD_STUCK_MINUTES", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
+	"CICD_STUCK_MINUTES", "CICD_DEPLOY_BRIDGE", "CICD_DEPLOY_JOBS", "CICD_INVENTORY_FILE", "CICD_INVENTORY_REF",
+	"CICD_HOST_ENVS", "CICD_RR_PER_CYCLE", "BACKUP_TEMPLATES_REPO", "OUTLINE_URL", "OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER",
+	"JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
 	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER", "ARGUS_CRED_WARN_DAYS", "ARGUS_CRED_CRIT_DAYS", "ARGUS_CRED_ROTATE_DAYS", "ARGUS_CRED_TODAY_DAYS"}

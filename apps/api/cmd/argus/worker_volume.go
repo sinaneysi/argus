@@ -125,6 +125,31 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "outline-publish", Every: 24 * time.Hour, Run: func(context.Context) error {
 		return outlineRun(c, "publish", io.Discard)
 	}})
+	// CI/CD: the estate once a day (and at start), the pipelines every 5 minutes, once GitLab is connected with
+	// purpose agent (read-only)
+	for _, cj := range []struct {
+		task  string
+		every time.Duration
+	}{{"scan", 24 * time.Hour}, {"watch", 5 * time.Minute}} {
+		cj := cj
+		jobs = append(jobs, worker.Job{Name: "cicd-" + cj.task, Every: cj.every, Sources: needs.Jobs["cicd-"+cj.task],
+			Ready: func() (bool, string) {
+				if cicdSource(c) == nil {
+					return false, "not configured: connect GitLab in Settings -> Data sources (purpose agent, read-only)"
+				}
+				return true, ""
+			},
+			Run: func(ctx context.Context) error {
+				ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
+				defer cancel()
+				if err := cicdRun(ctx, c, cj.task, cicdBudgets[cj.task], io.Discard); err != nil || cj.task == "watch" {
+					return err
+				}
+				// after the estate run, the pipelines at once (the first scan of a new installation would
+				// otherwise wait 5 minutes for its first watch)
+				return cicdRun(ctx, c, "watch", cicdBudgets["watch"], io.Discard)
+			}})
+	}
 	// the task agent's model jobs (planning, runs): the board sync above decides what runs; one job at a time
 	jobs = append(jobs, worker.Job{Name: "task-agent", Every: 15 * time.Second, Sources: needs.Jobs["task-agent"],
 		Ready: func() (bool, string) {

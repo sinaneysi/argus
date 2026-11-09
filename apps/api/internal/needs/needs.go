@@ -90,6 +90,8 @@ var Jobs = map[string][]string{
 	"incidents":      {"alertmanager"},
 	"inventory":      {"grafana", "alertmanager"},
 	"vm-pulse":       {"grafana", "alertmanager"},
+	"cicd-watch":     {"gitlab"},
+	"cicd-scan":      {"gitlab"},
 	"task-agent":     {"claude"},
 }
 
