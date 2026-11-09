@@ -78,6 +78,8 @@ var Types = map[string]Type{
 	"jira":          {Label: "Jira", Purposes: []string{"tracker"}, Username: true},
 	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
 	"anthropic":     {Label: "Anthropic API", Purposes: []string{"model"}},
+	"s3":            {Label: "S3 / MinIO", Purposes: []string{"backups"}, Username: true},
+	"google":        {Label: "Google Search Console", Purposes: []string{"marketing"}},
 }
 
 var (
@@ -241,6 +243,27 @@ func NetError(err error) string { return netError(err) }
 
 func fetch(method, base, path string, hdr map[string]string, body []byte, maxBody int64, strict bool,
 	callTimeout time.Duration) (int, any, http.Header, error) {
+	return fetchTo(method, base, path, hdr, body, maxBody, strict, callTimeout, nil)
+}
+
+// GetRaw is Get without the JSON parse: (status, body) of one guarded read-only GET, for answers too large to hold
+// twice (a job's log reads). A body over maxBody is ErrTooLarge.
+func GetRaw(base, path string, hdr map[string]string, maxBody int64, timeout time.Duration) (int, []byte, error) {
+	var raw []byte
+	st, _, _, err := fetchTo("GET", base, path, hdr, nil, maxBody, true, timeout, &raw)
+	return st, raw, err
+}
+
+// PostRead is one guarded read that needs a body (an Elasticsearch / OpenSearch search): (status, body). The same
+// guard as Get; the body is a query, never a change.
+func PostRead(base, path string, hdr map[string]string, body []byte, maxBody int64, timeout time.Duration) (int, []byte, error) {
+	var raw []byte
+	st, _, _, err := fetchTo("POST", base, path, hdr, body, maxBody, true, timeout, &raw)
+	return st, raw, err
+}
+
+func fetchTo(method, base, path string, hdr map[string]string, body []byte, maxBody int64, strict bool,
+	callTimeout time.Duration, rawOut *[]byte) (int, any, http.Header, error) {
 	u, err := url.Parse(strings.TrimRight(base, "/") + path)
 	if err != nil {
 		return 0, nil, nil, refusal("bad URL")
@@ -295,6 +318,10 @@ func fetch(method, base, path string, hdr map[string]string, body []byte, maxBod
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
 	if strict && int64(len(raw)) > maxBody {
 		return resp.StatusCode, nil, resp.Header, ErrTooLarge
+	}
+	if rawOut != nil {
+		*rawOut = raw
+		return resp.StatusCode, nil, resp.Header, nil
 	}
 	var data any
 	if len(raw) > 0 && int64(len(raw)) <= maxBody && json.Unmarshal(raw, &data) != nil {

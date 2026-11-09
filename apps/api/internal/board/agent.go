@@ -53,6 +53,7 @@ type AgentOptions struct {
 	TaskBudget   float64               // USD per task: intake + run (default 8)
 	IntakeTO     time.Duration         // a job without a result after this fails (default 12 min)
 	RunTO        time.Duration         // the same for a run (default 65 min)
+	ChatReqDir   string                // the task page's chat messages (settings-in/task-chat; "": no chat)
 }
 
 const (
@@ -1390,7 +1391,7 @@ func (r *run) agentStatus(tick string, old json.RawMessage) object {
 	}
 	return object{{"settings", r.agentSettings().object()}, {"tick", tick}, {"error", r.getState("agent_error", "")},
 		{"qa_created", int64(0)}, {"rw_users", []any{}}, {"fixer_tasks", []any{}},
-		{"debounce", int64(r.o.Agent.Debounce / time.Second)}, {"task_budget", r.o.Agent.TaskBudget}, {"chat", chat}}
+		{"debounce", int64(r.o.Agent.Debounce / time.Second)}, {"task_budget", r.o.Agent.TaskBudget}, {"chat", r.chatBlock(chat)}}
 }
 
 func (r *run) agentBlock(old json.RawMessage) any {
@@ -1398,4 +1399,11 @@ func (r *run) agentBlock(old json.RawMessage) any {
 		return rawOr(old, object{})
 	}
 	return r.agentStatus(r.agentTick, old)
+}
+
+func (r *run) chatBlock(old any) any {
+	if r.chatTickS == "" {
+		return old
+	}
+	return r.chatStatus(r.chatTickS)
 }

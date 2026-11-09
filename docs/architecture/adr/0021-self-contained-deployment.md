@@ -165,7 +165,7 @@ that list.
 | P3 | port the decision jobs (board, proposals, review, notices, chat intake) | documented |
 | P4 | the model inside the worker: the runner, the prompt store, the budget and egress guards, no host user; every prompt through `style.Prepend` | documented |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020), no host SSH scripts | documented |
-| P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | documented |
+| P6 | the optional modules' jobs (marketing first) and the removal of `ARGUS_LAYOUT=legacy` after the cut-over | in progress |
 
 As built (P1): `argus import [-dry-run] [-force] [-etc DIR] [-env FILE]... [-reports DIR] [-totp-legacy-label L]
 <state dir>` copies `ops.db`, `board/board.db` and `auth/auth.db` consistently (`VACUUM INTO` from a scratch copy; the
@@ -216,6 +216,10 @@ state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a 
 (services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
 (kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
 evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+The capacity job (`argus estate capacity`, worker job `capacity`, daily) ports the earlier capacity forecast:
+`capacity.json` (and `capacity-prev.json`) byte for byte on synthetic fixtures (`internal/estate/testdata/capacity`),
+apart from three texts that named the earlier installation. The shared `insights-status.json` scan-bar file of the
+earlier daily job is not written.
 
 As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
 Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
@@ -228,6 +232,82 @@ login or the network. Never executed: production (a proposal) and every WRITE st
 read-only run reports the steps for a person). Limits: `ARGUS_TASK_INTAKE_BUDGET_USD` / `_RUN_BUDGET_USD`,
 `ARGUS_TASK_INTAKE_MINUTES` / `_RUN_MINUTES`, `ARGUS_TASK_BUDGET_USD` per task, `ARGUS_TASK_PLAN_DEBOUNCE_SEC`, 20
 intakes and 3 runs a day, one job at a time.
+
+As built (P3, the task chat): the task page's chat messages (`settings/in/task-chat/`) are applied by the board sync
+(an enabled admin, chat on in Settings -> Task agent, the agent works the task, 1..4000 characters, one post per 10
+s, secret-scanned); one read-only model turn per queued batch (`task-agent/jobs/<key>.chat.json`, the worker job
+`task-agent`), none while the task's own intake or run is in flight; the reply, the rolling summary, answers to the
+plan's questions and `replan` (the task plans again) as in the earlier job. Limits: `ARGUS_TASK_CHAT_BUDGET_USD`,
+`ARGUS_TASK_CHAT_MINUTES`, the task budget, 30 replies per task and 100 a day. Not ported: the board-level Ask
+threads and proposed tasks from the chat.
+
+As built (P2): `internal/selfcheck` ports the self-check job: the worker job `selfcheck` (every 5 minutes, always on)
+checks every worker job against its interval (a job without its source is "not configured", never a failure), the
+API's health address (`ARGUS_SELFCHECK_API_URL`), the alerts snapshot while its collector runs, the credential
+status and expiry files once they are written, the volume's free space, the databases' integrity (`PRAGMA
+quick_check`, hourly), the master key (present, opens every sealed secret; plaintext secrets are a warning), the
+data sources whose last check failed, the state backup (when `backup-status.json` exists), own failures of the last
+24 h and the Claude usage switch. It writes `selfcheck.json`. After `ARGUS_SELFCHECK_PAGE_AFTER` (default 1 h) of
+FAIL it sends one notice through `internal/notify` and one at recovery; while not failing it pings
+`ARGUS_DEADMAN_PUSH_URL` (an external push monitor, the dead-man switch). Differences from the earlier job: worker
+jobs replace systemd timers; the chat bridge, Matrix proxy and incident queue checks are gone (not Argus parts); the database,
+key and data-source checks are new; a missing backup status is not a failure (no backup job yet).
+
+As built (P2): `internal/credexpiry` ports the credential expiry job. Worker jobs: `cred-expiry` (daily) and
+`cred-requests` ("Check now" of Settings -> Credentials, `settings-in/requests/cred-expiry.req`, state in
+`settings-out/run-requests.json`) check every Settings -> Data sources entry with a credential and Argus's own
+credentials (the Claude token, the Matrix token file, the GitLab issues token, the sign-in client secret, the push
+monitor address) with one read-only call where the service can tell (GitLab, Grafana, Jira, Matrix, Outline). Only
+metadata goes to `credentials.json` (scrubbed for every value read); expired, rejected and close (`ARGUS_CRED_CRIT_DAYS`)
+credentials get an incident (`CRED|<id>|cred-expiry`, table `credential_alerts`, migration ops 0003) and one notice
+per band; the incident resolves when the credential is OK again. Thresholds: `ARGUS_CRED_WARN_DAYS`, `_CRIT_DAYS`,
+`_ROTATE_DAYS`, `_TODAY_DAYS`. `credcheck` (hourly) writes `cred-status.json` from the data sources' last checks, the
+Claude login and the notify switch. Differences from the earlier jobs: the list comes from the data sources, not from
+a hand-kept file; a credential's set date is its file's change time (no env-file backups); neutral how-to steps; no
+`credentials` snapshot table, rotation proposals or Today items yet; credcheck makes no calls of its own (the
+`sources-check` job does).
+
+As built (P6, marketing): `internal/marketing/googlebot` and `argus marketing googlebot` port the crawler traffic job
+(parity with the earlier job on synthetic fixtures: `internal/marketing/googlebot/testdata/golden.json`). The worker runs
+`googlebot-watch` every minute, `googlebot-sitemaps` once a day and `seo-check` every minute, only while the module
+is on; "not configured" names what is missing (the module, a Grafana data source, the edge groups file
+`etc/googlebot-edges.tsv`, `ARGUS_GOOGLEBOT_SITEMAP`). The job reads the edge access lines with a Google crawler user
+agent from Loki through the Grafana data source (`ARGUS_GOOGLEBOT_GRAFANA`, GET only, the address guard of the data
+sources), one bucket at a time in chunks of at most 5,000 lines, and writes its own database `googlebot.db`
+(`ARGUS_GOOGLEBOT_DB`; migrations `migrate.Googlebot`, applied by the job and by `argus import -with-googlebot`, never at
+start). Google's crawler ranges are fetched daily into `googlebot-ranges.json` (direct, or through `HTTPS_PROXY`). The
+SEO page's Googlebot table (`seo_snapshots`, `seo_errors`) is derived from `googlebot.db`, so Loki is read once.
+Company specifics are configuration: the edge groups and their log formats, the path classes
+(`etc/googlebot-paths.tsv`, a generic built-in list without it), the site's sitemap, the hosts on the page
+(`ARGUS_SEO_HOSTS`), the Loki host label; the service map (`ARGUS_SERVICE_MAP_FILE`) names a backend. Listed differences from the earlier job:
+upstream kinds have neutral names (origin, edge, local, external, cache); the primary edge group is the first line of the
+groups file; days are in `ARGUS_TZ`; the page's verified share uses the full range lists and its p50/p95 the histogram.
+
+As built (P6, marketing search): `internal/marketing/google` and `internal/marketing/seo` port the Search Console job
+and the SEO suggestions (parity of the rules with the earlier job: `internal/marketing/seo/testdata`). Data-source
+type `google` (Settings -> Data sources, purpose marketing): address `https://www.googleapis.com`, credential the
+service-account key's JSON (sealed with the master key); its check signs in with the read-only Search Console scope and
+lists the properties the key reads. The key signs a JWT (RS256) in the process; the earlier installation's openssl
+call and its SSH tunnel are gone: the worker reaches Google directly, or through `HTTPS_PROXY` / `NO_PROXY` in its
+environment when the installation has no direct way out. Jobs, only while the module is on: `gsc` every 6 hours
+(`gsc_daily`, `gsc_urls`, `gsc_sitemaps`; property `ARGUS_GSC_SITE`, key URLs `ARGUS_GSC_URLS_FILE`), `seo-suggest` once a
+day (`seo_suggestions`; `ARGUS_SEO_BRAND`, GA4 bounce rule with `ARGUS_GA_PROPERTY`), `seo-send` for the page's Send
+requests (consumed before the send; one notice for all of them). `argus import` turns the earlier `gsc-key.json` (or
+`GSC_KEY`) into the `google/main` data source and copies `seo-urls.txt`. `seo-summary` (once a day, when the
+model runtime is configured) writes the model's short summary of the newest suggestions to `seo_summary` through
+`internal/model` (the writing style, the Claude usage switch, the egress guard, a $0.15 budget, one turn, a `runs`
+row); a call that did not run is stored with its reason and no text, and is not retried the same day.
+
+As built (P6, marketing CDN): `internal/marketing/cdn` ports the CDN log job (parity of the search body and the rows
+with the earlier job: `internal/marketing/cdn/testdata`). Job `cdn-watch` every 5 minutes, only while the module is on,
+with an Elasticsearch / OpenSearch data source (`ARGUS_CDN_SOURCE`, else the first; the search is a guarded POST that
+only reads) and `ARGUS_CDN_INDEX`: the counts of the finished 5-minute buckets of the last 55 minutes into `cdn_gbot`
+and `cdn_buckets` (ops migration 0003; the same tables as before, so an imported `ops.db` is adopted). The index's
+documents need the keyword fields `remote_addr`, `http_user_agent`, `is_known_bot`, `request_host`, `status`,
+`fw_rule_name`, `fw_rule_action`, `fw_blocked`, `upstream_status`, `cache_status`. Not ported: the earlier CDN log
+sampling job. It switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN, and
+Argus data sources only read. Without it, a bucket with no documents is a gap (`ok=0`); rows stored as "off by plan"
+(`ok=2`) by the earlier installation are kept and not read again.
 
 ## Consequences
 

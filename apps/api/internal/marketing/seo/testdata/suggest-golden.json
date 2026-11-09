@@ -1,0 +1,332 @@
+[
+[
+"ctr",
+0,
+"https://www.example.com/p/13",
+"phone 17",
+"Low CTR for «phone 17»",
+"90000 impressions, CTR 1.0% at position 3.0 (usual ~10%): ~8100 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+8100.000000000001
+],
+[
+"ctr",
+1,
+"https://www.example.com/p/17",
+"laptop 16",
+"Low CTR for «laptop 16»",
+"90000 impressions, CTR 0.2% at position 8.0 (usual ~2%): ~2070 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+2070.0
+],
+[
+"ctr",
+2,
+"https://www.example.com/p/16",
+"case‌ 0",
+"Low CTR for «case‌ 0»",
+"20000 impressions, CTR 0.2% at position 5.9 (usual ~4%): ~760 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+760.0
+],
+[
+"ctr",
+3,
+"https://www.example.com/p/2",
+"phone 5",
+"Low CTR for «phone 5»",
+"5000 impressions, CTR 3.0% at position 2.9 (usual ~10%): ~350 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+350.00000000000006
+],
+[
+"ctr",
+4,
+"https://www.example.com/p/13",
+"phone 28",
+"Low CTR for «phone 28»",
+"5000 impressions, CTR 0.4% at position 9.0 (usual ~2%): ~80 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+80.0
+],
+[
+"ctr",
+5,
+"https://www.example.com/p/16",
+"phone 22",
+"Low CTR for «phone 22»",
+"2000 impressions, CTR 0.4% at position 6.1 (usual ~4%): ~72 clicks/28 d missed",
+"Rewrite the title and meta description to match this query; add price/stock/offer if true.",
+72.00000000000001
+],
+[
+"striking",
+0,
+"https://www.example.com/p/17",
+"laptop 16",
+"Close to top 3: «laptop 16»",
+"position 8.0, 90000 impressions, 180 clicks: top 3 would add ~8820 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+8820.0
+],
+[
+"striking",
+1,
+"https://www.example.com/p/22",
+"laptop 19",
+"Close to top 3: «laptop 19»",
+"position 9.8, 90000 impressions, 2700 clicks: top 3 would add ~6300 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+6300.000000000001
+],
+[
+"striking",
+2,
+"https://www.example.com/p/16",
+"case‌ 0",
+"Close to top 3: «case‌ 0»",
+"position 5.9, 20000 impressions, 40 clicks: top 3 would add ~1960 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+1960.0
+],
+[
+"striking",
+3,
+"https://www.example.com/p/6",
+"laptop 2",
+"Close to top 3: «laptop 2»",
+"position 10.2, 5000 impressions, 10 clicks: top 3 would add ~490 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+490.0
+],
+[
+"striking",
+4,
+"https://www.example.com/p/19",
+"laptop 4",
+"Close to top 3: «laptop 4»",
+"position 12.1, 5000 impressions, 10 clicks: top 3 would add ~490 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+490.0
+],
+[
+"striking",
+5,
+"https://www.example.com/p/13",
+"phone 28",
+"Close to top 3: «phone 28»",
+"position 9.0, 5000 impressions, 20 clicks: top 3 would add ~480 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+480.0
+],
+[
+"striking",
+6,
+"https://www.example.com/p/16",
+"phone 22",
+"Close to top 3: «phone 22»",
+"position 6.1, 2000 impressions, 8 clicks: top 3 would add ~192 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+192.0
+],
+[
+"striking",
+7,
+"https://www.example.com/p/11",
+"laptop 13",
+"Close to top 3: «laptop 13»",
+"position 9.9, 2000 impressions, 20 clicks: top 3 would add ~180 clicks/28 d",
+"Add internal links from strong pages, improve the content for this query, check page speed.",
+180.00000000000003
+],
+[
+"falling",
+0,
+"https://www.example.com/p/19",
+"",
+"Clicks falling: /p/19",
+"0 clicks in the last 7 days vs 429/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+428.57142857142856
+],
+[
+"falling",
+1,
+"https://www.example.com/p/16",
+"",
+"Clicks falling: /p/16",
+"10 clicks/day now vs 429 before (-98%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+418.57142857142856
+],
+[
+"falling",
+2,
+"https://www.example.com/p/14",
+"",
+"Clicks falling: /p/14",
+"100 clicks/day now vs 429 before (-77%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+328.57142857142856
+],
+[
+"falling",
+3,
+"https://www.example.com/p/24",
+"",
+"Clicks falling: /p/24",
+"0 clicks in the last 7 days vs 200/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+200.0
+],
+[
+"falling",
+4,
+"https://www.example.com/p/17",
+"",
+"Clicks falling: /p/17",
+"0 clicks/day now vs 200 before (-100%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+200.0
+],
+[
+"falling",
+5,
+"https://www.example.com/p/10",
+"",
+"Clicks falling: /p/10",
+"0 clicks/day now vs 200 before (-100%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+200.0
+],
+[
+"falling",
+6,
+"https://www.example.com/p/6",
+"",
+"Clicks falling: /p/6",
+"10 clicks/day now vs 143 before (-93%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+132.85714285714286
+],
+[
+"falling",
+7,
+"https://www.example.com/p/21",
+"",
+"Clicks falling: /p/21",
+"0 clicks in the last 7 days vs 100/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+100.0
+],
+[
+"falling",
+8,
+"https://www.example.com/p/18",
+"",
+"Clicks falling: /p/18",
+"0 clicks in the last 7 days vs 100/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+100.0
+],
+[
+"falling",
+9,
+"https://www.example.com/p/15",
+"",
+"Clicks falling: /p/15",
+"0 clicks/day now vs 100 before (-100%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+100.0
+],
+[
+"falling",
+10,
+"https://www.example.com/p/13",
+"",
+"Clicks falling: /p/13",
+"100 clicks/day now vs 200 before (-50%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+100.0
+],
+[
+"falling",
+11,
+"https://www.example.com/p/23",
+"",
+"Clicks falling: /p/23",
+"0 clicks in the last 7 days vs 50/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+50.0
+],
+[
+"falling",
+12,
+"https://www.example.com/p/22",
+"",
+"Clicks falling: /p/22",
+"0 clicks in the last 7 days vs 50/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+50.0
+],
+[
+"falling",
+13,
+"https://www.example.com/p/20",
+"",
+"Clicks falling: /p/20",
+"0 clicks in the last 7 days vs 50/day before",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+50.0
+],
+[
+"falling",
+14,
+"https://www.example.com/p/11",
+"",
+"Clicks falling: /p/11",
+"0 clicks/day now vs 50 before (-100%)",
+"Check recent changes (deploy, title, redirects), its index state and 5xx on /seo; compare competitors.",
+50.0
+],
+[
+"bounce",
+0,
+"/",
+"",
+"High bounce from Google: /",
+"900 organic sessions, bounce 75%, 3 key events (28 d)",
+"Check the page matches the search intent, its load time (p95 on /seo) and the first screen.",
+675.0
+],
+[
+"bounce",
+1,
+"/c",
+"",
+"High bounce from Google: /c",
+"900 organic sessions, bounce 75%, 3 key events (28 d)",
+"Check the page matches the search intent, its load time (p95 on /seo) and the first screen.",
+675.0
+],
+[
+"bounce",
+2,
+"/e",
+"",
+"High bounce from Google: /e",
+"500 organic sessions, bounce 75%, 0 key events (28 d)",
+"Check the page matches the search intent, its load time (p95 on /seo) and the first screen.",
+375.0
+],
+[
+"bounce",
+3,
+"/a",
+"",
+"High bounce from Google: /a",
+"500 organic sessions, bounce 60%, 40 key events (28 d)",
+"Check the page matches the search intent, its load time (p95 on /seo) and the first screen.",
+300.0
+]
+]

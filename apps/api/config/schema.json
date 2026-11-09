@@ -129,6 +129,31 @@
       "default": "${ARGUS_STATE_DIR}/selfcheck.json"
     },
     {
+      "key": "ARGUS_SELFCHECK_PAGE_AFTER",
+      "aliases": [
+        "SELF_PAGE_AFTER"
+      ],
+      "type": "int",
+      "default": "3600",
+      "min": 300,
+      "max": 604800,
+      "help": "worker job selfcheck: seconds Argus must be failing before one notice is sent"
+    },
+    {
+      "key": "ARGUS_SELFCHECK_API_URL",
+      "type": "str",
+      "help": "worker job selfcheck: the API's health address it checks (empty: not checked; deploy/compose.yml sets it)"
+    },
+    {
+      "key": "ARGUS_DEADMAN_PUSH_URL",
+      "aliases": [
+        "KUMA_PUSH_URL"
+      ],
+      "type": "url",
+      "secret": true,
+      "help": "worker job selfcheck: a push monitor https://<host>/api/push/<token> pinged while Argus is not failing (external dead-man switch)"
+    },
+    {
       "key": "ARGUS_READINESS_FILE",
       "aliases": [
         "OPS_READINESS_DATA"
@@ -143,6 +168,50 @@
       ],
       "type": "path",
       "help": "credential expiry file (empty: the app's default)"
+    },
+    {
+      "key": "ARGUS_CRED_WARN_DAYS",
+      "aliases": [
+        "CRED_WARN_DAYS"
+      ],
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "worker job cred-expiry: a credential expiring within this many days is a warning"
+    },
+    {
+      "key": "ARGUS_CRED_CRIT_DAYS",
+      "aliases": [
+        "CRED_CRIT_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 90,
+      "help": "worker job cred-expiry: within this many days it is an incident and a notice"
+    },
+    {
+      "key": "ARGUS_CRED_ROTATE_DAYS",
+      "aliases": [
+        "CRED_ROTATE_DAYS"
+      ],
+      "type": "int",
+      "default": "180",
+      "min": 7,
+      "max": 3650,
+      "help": "worker job cred-expiry: a credential without an expiry date older than this is due for rotation"
+    },
+    {
+      "key": "ARGUS_CRED_TODAY_DAYS",
+      "aliases": [
+        "CRED_TODAY_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 0,
+      "max": 365,
+      "help": "worker job cred-expiry: within this many days it is on Today"
     },
     {
       "key": "ARGUS_BACKUP_PLANS_DIR",
@@ -435,6 +504,81 @@
       "help": "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"
     },
     {
+      "key": "ARGUS_GOOGLEBOT_DB",
+      "aliases": [
+        "GW_DB"
+      ],
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/googlebot.db",
+      "help": "crawler traffic database of the marketing module (its own file: several GB)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_EDGES_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-edges.tsv",
+      "help": "edge groups to read from Loki: label<TAB>json|cache<TAB>{stream selector}[<TAB>site host of a cache group]; the first is the primary group"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_PATHS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-paths.tsv",
+      "help": "path classes: class<TAB>regex, first match wins (missing: a built-in generic list)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_SITEMAP",
+      "aliases": [
+        "GW_SITEMAP"
+      ],
+      "type": "str",
+      "help": "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_INTERVAL",
+      "aliases": [
+        "GW_INTERVAL"
+      ],
+      "type": "int",
+      "default": "300",
+      "min": 60,
+      "max": 600,
+      "help": "bucket width of a new crawler database, seconds (60, 300 or 600; it adapts itself afterwards)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_STORE_LIMIT_MB",
+      "type": "int",
+      "default": "6144",
+      "min": 0,
+      "max": 10000000,
+      "help": "above this size of the crawler database the per-URL rows stop and an alert opens (0: no limit)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_GRAFANA",
+      "type": "str",
+      "help": "the Grafana data source (its name in Settings -> Data sources) whose Loki holds the edge logs (empty: the first Grafana)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_LOKI_UID",
+      "type": "str",
+      "help": "the Loki data source uid in that Grafana (empty: its first Loki data source)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_HOST_LABEL",
+      "type": "str",
+      "default": "hostname",
+      "help": "the Loki stream label that names the edge host"
+    },
+    {
+      "key": "ARGUS_GOOGLE_RANGES_URLS",
+      "type": "list",
+      "default": "https://developers.google.com/static/crawling/ipranges/common-crawlers.json,https://developers.google.com/static/crawling/ipranges/special-crawlers.json,https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers.json",
+      "help": "Google's crawler address lists, fetched once a day (HTTPS_PROXY applies)"
+    },
+    {
+      "key": "ARGUS_SEO_HOSTS",
+      "type": "list",
+      "help": "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"
+    },
+    {
       "key": "FEATURE_TODAY",
       "type": "bool",
       "default": "0",
@@ -529,6 +673,77 @@
       "key": "CICD_ENGINE_PROJECT_ID",
       "type": "str",
       "default": "100"
+    },
+    {
+      "key": "CICD_DEPLOY_BRIDGE",
+      "type": "str",
+      "default": "trigger_deploy",
+      "help": "the CI bridge job that triggers the deploy pipeline in the engine project (the deploy lock)"
+    },
+    {
+      "key": "CICD_DEPLOY_JOBS",
+      "type": "list",
+      "default": "deploy_systemd,deploy",
+      "help": "deploy job names in the engine's deploy pipeline (their PLAY RECAP gives the hosts)"
+    },
+    {
+      "key": "CICD_INVENTORY_FILE",
+      "type": "str",
+      "help": "path of the Ansible inventory inside the engine project (empty: deploy target groups are not named)"
+    },
+    {
+      "key": "CICD_INVENTORY_REF",
+      "type": "str",
+      "default": "main",
+      "help": "branch of the engine project the inventory is read from"
+    },
+    {
+      "key": "CICD_HOST_ENVS",
+      "type": "list",
+      "help": "env=regex, ...: environment of a deploy host by its name or address, first match wins (release=^prod-,develop=^stage-); a develop or pre-release deploy that reaches a release host is a finding"
+    },
+    {
+      "key": "CICD_DRIFT_ALLOW",
+      "type": "str",
+      "help": "regex of commit titles that may land on a higher branch only (not reported as drift)"
+    },
+    {
+      "key": "CICD_TARGET_PREFIXES",
+      "type": "list",
+      "help": "env=prefix|prefix, ...: inventory group prefixes TARGET_HOSTS@env must start with (release=prod-,pre-release=pre-,develop=stage-); empty: not checked"
+    },
+    {
+      "key": "CICD_GROUP_SECRET_KEYS",
+      "type": "list",
+      "default": "SSH_PRIVATE_KEY*",
+      "help": "group CI variables that must be protected: NAME or PREFIX*"
+    },
+    {
+      "key": "CICD_VAR_SCOPES",
+      "type": "str",
+      "help": "regex of the known environment scopes (empty: *, the env branches, main, master, review/*)"
+    },
+    {
+      "key": "CICD_PROD_MARKERS",
+      "type": "list",
+      "help": "name=regex, ...: a CI variable value that matches names production (the value is never kept); no commas in a regex"
+    },
+    {
+      "key": "CICD_NOTIFY_AUDIT",
+      "type": "bool",
+      "default": "0",
+      "help": "1: the daily audit posts its new findings to chat (default: shown on /cicd only)"
+    },
+    {
+      "key": "CICD_VARS_SOURCE",
+      "type": "str",
+      "help": "Settings -> Data sources key (gitlab/<name>) of a token that may read CI variables (role Maintainer, scope read_api) for ci-vars-meta; empty: the variable audit stays inferred"
+    },
+    {
+      "key": "CICD_RR_PER_CYCLE",
+      "type": "int",
+      "default": "15",
+      "help": "projects the CI/CD watcher polls per run besides the active ones"
     },
     {
       "key": "BACKUP_TEMPLATES_REPO",
@@ -675,6 +890,52 @@
       "help": "seconds per TLS probe"
     },
     {
+      "key": "ARGUS_CERT_PAGE_DAYS",
+      "aliases": [
+        "CERT_PAGE_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 365,
+      "help": "fewer days left (or expired): the certificate notice pings"
+    },
+    {
+      "key": "ARGUS_CERT_STALE_DAYS",
+      "aliases": [
+        "CERT_STALE_EXPIRED_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 1,
+      "max": 3650,
+      "help": "expired longer ago than this: a stale name, a warning, not a page"
+    },
+    {
+      "key": "ARGUS_CERT_DOMAINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/domains.txt",
+      "help": "names to probe: one host[:port] per line, # comments"
+    },
+    {
+      "key": "ARGUS_CERT_FROM_SERVICE_MAP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: also probe every public TLS name of ARGUS_SERVICE_MAP_FILE that resolves in DNS"
+    },
+    {
+      "key": "ARGUS_CERT_PINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-pins.tsv",
+      "help": "pinned names (host, pinned expiry, label, note; TSV): a notice line until renewed"
+    },
+    {
+      "key": "ARGUS_CERT_EXPECT_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-expect.tsv",
+      "help": "expected name mismatches (host, san-mismatch, reason; TSV)"
+    },
+    {
       "key": "ARGUS_COLLECT_BACKUPS",
       "type": "bool",
       "default": "0",
@@ -684,7 +945,13 @@
       "key": "ARGUS_BACKUP_SETS_FILE",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/backup-sets.json",
-      "help": "the backup sets to check (JSON)"
+      "help": "the backup sets to check (JSON; a .tsv file: name, <S3 source>/<bucket>/<prefix>, max age in hours, min size)"
+    },
+    {
+      "key": "ARGUS_BACKUP_S3_REGION",
+      "type": "str",
+      "default": "us-east-1",
+      "help": "the signing region of the S3 data sources of the backup check (an entry's region fact wins)"
     },
     {
       "key": "ARGUS_PROM_SOURCES",
@@ -719,7 +986,7 @@
       "key": "ARGUS_SERVICE_MAP_FILE",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/service-map.json",
-      "help": "the service map (domains, edges, backends) the inventory and VM state read"
+      "help": "the service map (domains, edges, backends) the inventory, the VM state and the certificate check read"
     },
     {
       "key": "ARGUS_INCIDENT_AUTORESOLVE_HOURS",
@@ -1056,6 +1323,23 @@
       "help": "one run of an approved plan takes at most this long"
     },
     {
+      "key": "ARGUS_TASK_CHAT_BUDGET_USD",
+      "aliases": [
+        "TASK_CHAT_BUDGET_USD"
+      ],
+      "type": "str",
+      "default": "0.15",
+      "help": "one task-chat reply spends at most this (USD)"
+    },
+    {
+      "key": "ARGUS_TASK_CHAT_MINUTES",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 30,
+      "help": "one task-chat reply takes at most this long"
+    },
+    {
       "key": "ARGUS_TASK_BUDGET_USD",
       "aliases": [
         "TASK_BUDGET_USD"
@@ -1210,6 +1494,46 @@
       "type": "str",
       "pattern": true,
       "help": "the Grafana of one monitoring site; with the grafana-<id>-token secret it is listed as data source grafana/<id>"
+    },
+    {
+      "key": "ARGUS_GSC_SITE",
+      "aliases": [
+        "GSC_SITE"
+      ],
+      "type": "str",
+      "help": "the Search Console property (sc-domain:example.com or https://www.example.com/)"
+    },
+    {
+      "key": "ARGUS_GSC_URLS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/seo-urls.txt",
+      "help": "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"
+    },
+    {
+      "key": "ARGUS_SEO_BRAND",
+      "aliases": [
+        "SEO_BRAND"
+      ],
+      "type": "str",
+      "help": "brand words, | separated: a brand query gets no low-CTR suggestion"
+    },
+    {
+      "key": "ARGUS_GA_PROPERTY",
+      "aliases": [
+        "GA_PROPERTY"
+      ],
+      "type": "str",
+      "help": "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"
+    },
+    {
+      "key": "ARGUS_CDN_INDEX",
+      "type": "str",
+      "help": "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"
+    },
+    {
+      "key": "ARGUS_CDN_SOURCE",
+      "type": "str",
+      "help": "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"
     },
     {
       "key": "DEMO_MODE",

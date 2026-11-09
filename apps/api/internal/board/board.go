@@ -205,6 +205,7 @@ type run struct {
 	glResults map[string]object // Settings -> Integrations (GitLab issues) results, by request id
 	agentTick string            // the task agent's summary of this run
 	jcResults map[string]any    // Jira connection request results, by request id
+	chatTickS string            // the task chat's summary of this run
 }
 
 func (r *run) now() int64 { return r.o.Now().Unix() }

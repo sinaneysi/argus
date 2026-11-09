@@ -1,0 +1,2 @@
+# Edge groups of the clean-install test: the fake Loki answers every selector with the same lines.
+edges	json	{job="nginx"}

@@ -67,6 +67,7 @@ func agentBoardOptions(c *config.Config) *board.AgentOptions {
 		TaskBudget: cfgFloat(c, "ARGUS_TASK_BUDGET_USD", 8),
 		IntakeTO:   cfgMinutes(c, "ARGUS_TASK_INTAKE_MINUTES", 10) + 2*time.Minute,
 		RunTO:      cfgMinutes(c, "ARGUS_TASK_RUN_MINUTES", 60) + 5*time.Minute,
+		ChatReqDir: filepath.Join(c.SettingsIn, "task-chat"),
 	}
 }
 
@@ -77,6 +78,7 @@ func taskAgentJob(c *config.Config) func(context.Context) error {
 		o := taskagent.Options{JobsDir: filepath.Join(dir, "jobs"), OutDir: filepath.Join(dir, "out"),
 			Intake: taskagent.Limits{BudgetUSD: cfgFloat(c, "ARGUS_TASK_INTAKE_BUDGET_USD", 0.5), Timeout: cfgMinutes(c, "ARGUS_TASK_INTAKE_MINUTES", 10), MaxTurns: 40},
 			Run:    taskagent.Limits{BudgetUSD: cfgFloat(c, "ARGUS_TASK_RUN_BUDGET_USD", 5), Timeout: cfgMinutes(c, "ARGUS_TASK_RUN_MINUTES", 60), MaxTurns: 200},
+			Chat:   taskagent.Limits{BudgetUSD: cfgFloat(c, "ARGUS_TASK_CHAT_BUDGET_USD", 0.15), Timeout: cfgMinutes(c, "ARGUS_TASK_CHAT_MINUTES", 5), MaxTurns: 12},
 			Log:    collect.Logger}
 		if _, _, ok := o.Pending(); !ok {
 			return nil

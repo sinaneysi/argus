@@ -20,6 +20,7 @@ import (
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/board"
 	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/secret"
 )
 
@@ -32,10 +33,11 @@ const (
 	fxMatrix   = "fake-matrix-00000000000005"
 	fxGrafana  = "fake-grafana-0000000000006"
 	fxClaude   = "fake-claude-00000000000007"
+	fxS3       = "fake-s3-secret-00000000008"
 	fxLabel    = "earlier-totp"
 )
 
-var fxSecrets = []string{fxGitLabRO, fxTracker, fxJira, fxOutline, fxMatrix, fxGrafana, fxClaude}
+var fxSecrets = []string{fxGitLabRO, fxTracker, fxJira, fxOutline, fxMatrix, fxGrafana, fxClaude, fxS3}
 
 func must(t *testing.T, err error) {
 	t.Helper()
@@ -107,6 +109,7 @@ INSERT INTO users VALUES ('alex.admin', 'x', 'admin', 0, 0, 0);`)
 	write(t, envFile, strings.Join([]string{"GITLAB_URL=https://gitlab.example.com", "GITLAB_RO_TOKEN=" + fxGitLabRO,
 		"MATRIX_HOMESERVER=https://matrix.example.com", "MATRIX_ACCESS_TOKEN=" + fxMatrix, "PROM_URL=https://prometheus.example.com",
 		"GRAFANA_SITE1_URL=https://grafana.example.com", "GRAFANA_SITE1_TOKEN=" + fxGrafana, "CLAUDE_CODE_OAUTH_TOKEN=" + fxClaude,
+		"MC_HOST_backup=https://ro-key:" + fxS3 + "@objects.example.com",
 		"MATRIX_NOTIFY_ROOM=!notices:example.com", "MATRIX_NOTIFY_ENABLED=1", "MATRIX_WATCH_ROOMS=!watch:example.com",
 		"APP_TZ=Europe/Berlin", "OPS_ADMIN_USER=root.admin", "OPS_DB=/srv/old/ops.db", "OIDC_ISSUER=https://sso.example.com"}, "\n")+"\n", 0o600)
 	write(t, filepath.Join(src, "googlebot.db"), strings.Repeat("x", 3000), 0o640)
@@ -199,10 +202,13 @@ func TestImport(t *testing.T) {
 	// Data sources: entries, sealed credentials that open
 	so := sourcesOptions(c)
 	reg := so.Registry()
-	for _, k := range []string{"gitlab/main", "jira/main", "outline/wiki", "matrix/main", "alertmanager/main", "grafana/site1"} {
+	for _, k := range []string{"gitlab/main", "jira/main", "outline/wiki", "matrix/main", "alertmanager/main", "grafana/site1", "s3/backup"} {
 		if reg[k] == nil {
 			t.Fatal("missing source", k)
 		}
+	}
+	if e := reg["s3/backup"]; e.URL != "https://objects.example.com" || e.Username != "ro-key" || so.Credential(e) != fxS3 || e.Purpose != "backups" {
+		t.Fatalf("s3 source %+v", e)
 	}
 	if reg["jira/main"].Purpose != "tracker" || so.Credential(reg["jira/main"]) != fxJira || so.Credential(reg["matrix/main"]) != fxMatrix {
 		t.Fatal("credentials do not open")
@@ -314,6 +320,9 @@ func TestImportSettingsOnlyAndGooglebot(t *testing.T) {
 	}
 	if n := countRows(filepath.Join(vol, "googlebot.db"), "hits"); n != 3 {
 		t.Fatalf("googlebot.db: %d rows", n)
+	}
+	if v, _, err := migrate.StatusFile(context.Background(), filepath.Join(vol, "googlebot.db"), migrate.Googlebot); err != nil || v != migrate.Latest(migrate.Googlebot) {
+		t.Fatalf("googlebot.db not adopted into the module's schema: version %d %v", v, err)
 	}
 	// the earlier version's import: no imported.env, no allowed hosts
 	os.Remove(filepath.Join(c.EtcDir, config.ImportedFile))
