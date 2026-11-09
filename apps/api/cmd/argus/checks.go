@@ -127,6 +127,28 @@ func certTargets(ctx context.Context, c *config.Config) []string {
 	return out
 }
 
+// registryS3 are the S3 entries of Settings -> Data sources by name: the access key is the entry's user name, the
+// secret key its credential.
+func registryS3(c *config.Config) map[string]collect.S3Lister {
+	o := sourcesOptions(c)
+	out := map[string]collect.S3Lister{}
+	for _, e := range o.Registry() {
+		if e.Type != "s3" || e.Username == "" {
+			continue
+		}
+		u, err := sources.CleanURL(e.URL)
+		if err != nil {
+			continue
+		}
+		region := c.Values["ARGUS_BACKUP_S3_REGION"].Raw
+		if r, ok := e.Facts["region"].(string); ok && r != "" {
+			region = r
+		}
+		out[e.Name] = &collect.S3{Endpoint: u, Region: region, AccessKey: e.Username, SecretKey: o.Credential(e)}
+	}
+	return out
+}
+
 // certNotice posts the grouped certificate notice (best effort) after a run that is not OK.
 func certNotice(c *config.Config) func(string, collect.CertNotice, bool) {
 	return func(level string, n collect.CertNotice, untrusted bool) {
@@ -157,6 +179,11 @@ func enabled(c *config.Config, name string) bool {
 		_, err := os.Stat(c.Values["ARGUS_CERT_DOMAINS_FILE"].Raw)
 		if err == nil || len(list(c, "ARGUS_CERT_TARGETS")) > 0 || len(list(c, "ARGUS_CERT_FILES")) > 0 || c.Values["ARGUS_CERT_FROM_SERVICE_MAP"].Raw == "1" {
 			return true // the volume layout checks the certificates once there is something to probe
+		}
+	}
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && name == "backups" {
+		if _, err := os.Stat(c.Values["ARGUS_BACKUP_SETS_FILE"].Raw); err == nil {
+			return true // the volume layout checks the backups once a sets file is there
 		}
 	}
 	return c.Values["ARGUS_COLLECT_"+strings.ToUpper(name)].Raw == "1"
@@ -215,7 +242,7 @@ func runCollector(ctx context.Context, c *config.Config, name string) error {
 	case "backups":
 		cctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
-		res, err = collect.Backups(cctx, collect.BackupsOptions{SetsFile: c.Values["ARGUS_BACKUP_SETS_FILE"].Raw, DB: c.DB})
+		res, err = collect.Backups(cctx, collect.BackupsOptions{SetsFile: c.Values["ARGUS_BACKUP_SETS_FILE"].Raw, DB: c.DB, S3: registryS3(c)})
 	default:
 		return fmt.Errorf("unknown collector %q", name)
 	}

@@ -44,7 +44,7 @@ board/board.db, auth/auth.db, the *.json state files, settings-in/ and settings-
                 outline.json/.token, kube/ (clusters.json and kubeconfigs)
   -env FILE     a KEY=value file of the earlier installation (repeatable; the first file that sets a key wins):
                 GITLAB_URL + GITLAB_RO_TOKEN, MATRIX_HOMESERVER + MATRIX_ACCESS_TOKEN, PROM_URL, GRAFANA_<ID>_URL +
-                GRAFANA_<ID>_TOKEN, CLAUDE_CODE_OAUTH_TOKEN
+                GRAFANA_<ID>_TOKEN, MC_HOST_<alias> (S3 of the backup check), CLAUDE_CODE_OAUTH_TOKEN
   -reports DIR  its reports folder (the RCA reports)
   -auth DB      the users database to import instead of <state dir>/auth/auth.db
   -totp-legacy-label L  the label the 2FA secrets were written under (default: TOTP_LEGACY_LABEL); they are
@@ -517,7 +517,10 @@ func (im *importer) totp(context.Context) error {
 
 // --- integrations: Settings -> Data sources ----------------------------------------------------------------------------
 
-var grafanaURLRe = regexp.MustCompile(`^GRAFANA_([A-Z0-9_]{1,20})_URL$`)
+var (
+	grafanaURLRe = regexp.MustCompile(`^GRAFANA_([A-Z0-9_]{1,20})_URL$`)
+	mcHostRe     = regexp.MustCompile(`^MC_HOST_([A-Za-z0-9_]{1,20})$`)
+)
 
 func (im *importer) etcFile(name string) string {
 	if im.etc == "" {
@@ -655,6 +658,27 @@ func (im *importer) integrations(context.Context) error {
 			continue
 		}
 		if err := im.source(sources.Entry{Type: "grafana", Name: name, Env: "shared", URL: env[k], Purpose: "agent"}, tok, im.envSrc[k]); err != nil {
+			return err
+		}
+	}
+	// S3 / MinIO of the backup check: MC_HOST_<alias>=https://<access key>:<secret key>@<host>
+	var mks []string
+	for k := range env {
+		if mcHostRe.MatchString(k) {
+			mks = append(mks, k)
+		}
+	}
+	sort.Strings(mks)
+	for _, k := range mks {
+		name := strings.Trim(strings.ReplaceAll(strings.ToLower(mcHostRe.FindStringSubmatch(k)[1]), "_", "-"), "-")
+		u, err := url.Parse(env[k])
+		if err != nil || u.User == nil || u.Host == "" || !sources.NameRe.MatchString(name) {
+			im.skip_("data source s3/%s: %s is not https://<access key>:<secret key>@<host>", name, k)
+			continue
+		}
+		secretKey, _ := u.User.Password()
+		if err := im.source(sources.Entry{Type: "s3", Name: name, Env: "shared", URL: u.Scheme + "://" + u.Host, Purpose: "backups",
+			Username: u.User.Username()}, secretKey, im.envSrc[k]); err != nil {
 			return err
 		}
 	}

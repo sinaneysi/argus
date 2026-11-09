@@ -216,6 +216,56 @@ state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a 
 (services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
 (kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
 evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+The capacity job (`argus estate capacity`, worker job `capacity`, daily) ports the earlier capacity forecast:
+`capacity.json` (and `capacity-prev.json`) byte for byte on synthetic fixtures (`internal/estate/testdata/capacity`),
+apart from three texts that named the earlier installation. The shared `insights-status.json` scan-bar file of the
+earlier daily job is not written.
+
+As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
+Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
+map, else the same name): it writes a job file to `task-agent/jobs/`, the worker job `task-agent` runs it through
+the model runtime (a working folder with only the task file; the cli provider gets Read, Glob and Grep) and writes
+the plan or the result, its meta file and the live progress file to `task-agent/out/`, the files and `agent_tasks`
+rows the task page already reads. Plan again, the answers, Spin up and Stop are the board requests `agent-*`; the
+error classes go to `agent_tasks.error_detail`; a tested token replacement plans again the tasks that failed on the
+login or the network. Never executed: production (a proposal) and every WRITE step (no fixer in this version: a
+read-only run reports the steps for a person). Limits: `ARGUS_TASK_INTAKE_BUDGET_USD` / `_RUN_BUDGET_USD`,
+`ARGUS_TASK_INTAKE_MINUTES` / `_RUN_MINUTES`, `ARGUS_TASK_BUDGET_USD` per task, `ARGUS_TASK_PLAN_DEBOUNCE_SEC`, 20
+intakes and 3 runs a day, one job at a time.
+
+As built (P3, the task chat): the task page's chat messages (`settings/in/task-chat/`) are applied by the board sync
+(an enabled admin, chat on in Settings -> Task agent, the agent works the task, 1..4000 characters, one post per 10
+s, secret-scanned); one read-only model turn per queued batch (`task-agent/jobs/<key>.chat.json`, the worker job
+`task-agent`), none while the task's own intake or run is in flight; the reply, the rolling summary, answers to the
+plan's questions and `replan` (the task plans again) as in the earlier job. Limits: `ARGUS_TASK_CHAT_BUDGET_USD`,
+`ARGUS_TASK_CHAT_MINUTES`, the task budget, 30 replies per task and 100 a day. Not ported: the board-level Ask
+threads and proposed tasks from the chat.
+
+As built (P2): `internal/selfcheck` ports the self-check job: the worker job `selfcheck` (every 5 minutes, always on)
+checks every worker job against its interval (a job without its source is "not configured", never a failure), the
+API's health address (`ARGUS_SELFCHECK_API_URL`), the alerts snapshot while its collector runs, the credential
+status and expiry files once they are written, the volume's free space, the databases' integrity (`PRAGMA
+quick_check`, hourly), the master key (present, opens every sealed secret; plaintext secrets are a warning), the
+data sources whose last check failed, the state backup (when `backup-status.json` exists), own failures of the last
+24 h and the Claude usage switch. It writes `selfcheck.json`. After `ARGUS_SELFCHECK_PAGE_AFTER` (default 1 h) of
+FAIL it sends one notice through `internal/notify` and one at recovery; while not failing it pings
+`ARGUS_DEADMAN_PUSH_URL` (an external push monitor, the dead-man switch). Differences from the earlier job: worker
+jobs replace systemd timers; the chat bridge, Matrix proxy and incident queue checks are gone (not Argus parts); the database,
+key and data-source checks are new; a missing backup status is not a failure (no backup job yet).
+
+As built (P2): `internal/credexpiry` ports the credential expiry job. Worker jobs: `cred-expiry` (daily) and
+`cred-requests` ("Check now" of Settings -> Credentials, `settings-in/requests/cred-expiry.req`, state in
+`settings-out/run-requests.json`) check every Settings -> Data sources entry with a credential and Argus's own
+credentials (the Claude token, the Matrix token file, the GitLab issues token, the sign-in client secret, the push
+monitor address) with one read-only call where the service can tell (GitLab, Grafana, Jira, Matrix, Outline). Only
+metadata goes to `credentials.json` (scrubbed for every value read); expired, rejected and close (`ARGUS_CRED_CRIT_DAYS`)
+credentials get an incident (`CRED|<id>|cred-expiry`, table `credential_alerts`, migration ops 0003) and one notice
+per band; the incident resolves when the credential is OK again. Thresholds: `ARGUS_CRED_WARN_DAYS`, `_CRIT_DAYS`,
+`_ROTATE_DAYS`, `_TODAY_DAYS`. `credcheck` (hourly) writes `cred-status.json` from the data sources' last checks, the
+Claude login and the notify switch. Differences from the earlier jobs: the list comes from the data sources, not from
+a hand-kept file; a credential's set date is its file's change time (no env-file backups); neutral how-to steps; no
+`credentials` snapshot table, rotation proposals or Today items yet; credcheck makes no calls of its own (the
+`sources-check` job does).
 
 ## Consequences
 
