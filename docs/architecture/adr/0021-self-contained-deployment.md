@@ -204,6 +204,39 @@ exit 124 at the time limit), the secret scan over the error, the record and the 
 log file in `ARGUS_MODEL_LOG_DIR`. `argus claude run` makes one call to check the provider. The clean-install test
 uses the api provider against the stub's `/anthropic/v1/messages`; the unit tests use a fake CLI.
 
+As built (P2, host estate): `internal/estate` and `argus estate inventory|vmstate|pulse|all|sites` port the VM
+inventory, the VM state and the 5-minute pulse from Prometheus only (parity with the earlier jobs on synthetic
+fixtures, two rounds: `internal/estate/testdata/parity`, the same files byte for byte and the same `vms`,
+`vm_changes` and `vm_state` rows). A site is a Grafana entry of Settings -> Data sources enabled for the agent (its
+first Prometheus data source, through Grafana's proxy), a Prometheus entry of type Alertmanager / Prometheus, or
+`ARGUS_PROM_SOURCES`; the site's name is the VM's "dc". In the volume the worker runs `inventory` (inventory, then VM
+state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a site. Company specifics are keys:
+`ARGUS_INVENTORY_ENV_PREFIXES` (environment by address), `ARGUS_VM_APP_UNITS` (application unit prefixes),
+`ARGUS_SERVICE_MAP_FILE`. Not ported, waiting for the access broker (P5): the read-only host facts and snapshots
+(services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
+(kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
+evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+
+As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
+Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
+map, else the same name): it writes a job file to `task-agent/jobs/`, the worker job `task-agent` runs it through
+the model runtime (a working folder with only the task file; the cli provider gets Read, Glob and Grep) and writes
+the plan or the result, its meta file and the live progress file to `task-agent/out/`, the files and `agent_tasks`
+rows the task page already reads. Plan again, the answers, Spin up and Stop are the board requests `agent-*`; the
+error classes go to `agent_tasks.error_detail`; a tested token replacement plans again the tasks that failed on the
+login or the network. Never executed: production (a proposal) and every WRITE step (no fixer in this version: a
+read-only run reports the steps for a person). Limits: `ARGUS_TASK_INTAKE_BUDGET_USD` / `_RUN_BUDGET_USD`,
+`ARGUS_TASK_INTAKE_MINUTES` / `_RUN_MINUTES`, `ARGUS_TASK_BUDGET_USD` per task, `ARGUS_TASK_PLAN_DEBOUNCE_SEC`, 20
+intakes and 3 runs a day, one job at a time.
+
+As built (P3, the task chat): the task page's chat messages (`settings/in/task-chat/`) are applied by the board sync
+(an enabled admin, chat on in Settings -> Task agent, the agent works the task, 1..4000 characters, one post per 10
+s, secret-scanned); one read-only model turn per queued batch (`task-agent/jobs/<key>.chat.json`, the worker job
+`task-agent`), none while the task's own intake or run is in flight; the reply, the rolling summary, answers to the
+plan's questions and `replan` (the task plans again) as in the earlier job. Limits: `ARGUS_TASK_CHAT_BUDGET_USD`,
+`ARGUS_TASK_CHAT_MINUTES`, the task budget, 30 replies per task and 100 a day. Not ported: the board-level Ask
+threads and proposed tasks from the chat.
+
 As built (P2): `internal/selfcheck` ports the self-check job: the worker job `selfcheck` (every 5 minutes, always on)
 checks every worker job against its interval (a job without its source is "not configured", never a failure), the
 API's health address (`ARGUS_SELFCHECK_API_URL`), the alerts snapshot while its collector runs, the credential
