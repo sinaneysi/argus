@@ -142,6 +142,14 @@ the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MOD
 `style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
 Every ported model job calls it (ADR-0021 "As built (P3/P4)").
 
+Ideas, the decision side (P3, 2026-11-09): `internal/ideas`, `argus ideas apply|status`; the worker applies the
+Ideas review's requests (explore, accept, reject, built) within 3 s and rewrites `ideas-status.json` every hour. An
+accepted idea gets its deterministic build prompt from the template `ARGUS_ETC_DIR/ideas-build.md` (built-in neutral
+default) and the advisers and build values of `ARGUS_ETC_DIR/ideas.json` (built-in default). Same rows, events, build
+prompts and status file as the reference job on synthetic ideas. Not ported yet: the advisers' weekly model run (the
+workspace of facts, the run through `internal/model`, the validation and dedupe of the answer) and the optional
+model refinement of the build prompt.
+
 Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
 the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
 the parent document `OUTLINE_PARENT` only: a missing, trashed, archived or moved parent stops the run with the reason

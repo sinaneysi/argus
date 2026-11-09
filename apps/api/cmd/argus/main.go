@@ -57,6 +57,7 @@ var commands = []command{
 	{"estate", "host estate from Prometheus: VM inventory, VM state, the 5-minute pulse", runEstate},
 	{"outline", "documentation publisher: apply the Outline requests, publish the service pages under the parent document", runOutline},
 	{"cicd", "CI/CD watcher: scan the GitLab estate, watch pipelines (failures, stuck pipelines, deploys)", runCicd},
+	{"ideas", "Ideas: apply the review's requests and write the build prompts (apply); the status file (status)", runIdeas},
 	{"incidents", "incident records: apply the incident page's requests and auto-resolve (tick); attach, backfill", runIncidents},
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},

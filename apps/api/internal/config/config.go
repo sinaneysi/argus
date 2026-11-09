@@ -137,6 +137,8 @@ var Fields = []Field{
 	{Key: "ARGUS_MODULES", Kind: List, Help: "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"},
 	{Key: "FEATURE_TODAY", Kind: Bool, Default: "0", Help: "show the Today page without the root switch"},
 	{Key: "FEATURE_PROBLEMS", Kind: Bool, Default: "0", Help: "show Problems without the root switch"},
+	{Key: "FEATURE_IDEAS", Kind: Bool, Default: "0", Help: "Ideas: the advisers and the Ideas review are on"},
+	{Key: "IDEAS_*", Kind: Str, Pattern: true, Help: "Ideas: IDEAS_SCHEDULE, IDEAS_MAX_TURNS, IDEAS_BUDGET_USD, IDEAS_TIMEOUT_MIN, IDEAS_MODEL, IDEAS_MAX_PER_RUN, IDEAS_DAILY_USD (out of range: clamped)"},
 	{Key: "CICD_STUCK_MINUTES", Kind: Int, Default: "10", Help: "a pipeline waiting longer than this is stuck"},
 	// site display values (internal/app/site.go): names and links shown on the pages
 	{Key: "ARGUS_SSH_ALIAS", Kind: Str, Default: "argus-01", Help: "the operator's SSH alias of the Argus server"},
