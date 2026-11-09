@@ -273,6 +273,9 @@ func (r *run) handle(req map[string]any, rid string) (string, any) {
 	if role == "" {
 		panic(refused("unknown or disabled user"))
 	}
+	if strings.HasPrefix(kind, "agent-") && r.o.Agent != nil {
+		return r.agentHandle(req, by, role)
+	}
 	tracker := "jira"
 	switch kind {
 	case "create":

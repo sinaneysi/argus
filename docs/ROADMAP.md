@@ -111,7 +111,7 @@ Goal: the images work at another company after the data sources are set; nothing
 |---|---|---|
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
-| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity |
+| P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity, selfcheck, credentials |
 | P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
@@ -126,7 +126,7 @@ jobs that name the missing source. Secrets in the volume are encrypted
 with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
 the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
 and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
-connections (`jira-connect`), the Outline publisher (`outline-requests`) and the GitLab issues tracker
+connections (`jira-connect`) and the GitLab issues tracker
 (`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
@@ -142,6 +142,24 @@ the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MOD
 `style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
 Every ported model job calls it (ADR-0021 "As built (P3/P4)").
 
+Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
+the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
+the parent document `OUTLINE_PARENT` only: a missing, trashed, archived or moved parent stops the run with the reason
+in the status, the collection root is never used, a lost page is found again by title among the parent's children
+only, and a person's text outside the block is kept (merge parity with the earlier installation). The API key is
+sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Outline entry of Settings → Data sources
+(purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
+builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
+
+CI/CD watcher (P2, 2026-11-08): `internal/cicd`, `argus cicd scan|watch`; the worker runs `cicd-daily` (the scan, then the branch and
+variable audit) daily and `cicd-watch` every 5 minutes once Settings → Data sources has a GitLab entry with purpose agent (read-only; Argus
+never writes to GitLab, every fix is a proposal). Without `CICD_GROUPS`/`CICD_ENGINE_PROJECT` every project the token
+reads with a `.gitlab-ci.yml` is watched. Same rows and `cicd-status.json` as the earlier installation (parity on
+synthetic logs: class, rule, key line, signature, excerpt, proposals). `ci-vars-meta` (`argus cicd vars-meta`) writes the CI variable metadata (keys, scopes, flags, marker classes;
+never a value) with the token of `CICD_VARS_SOURCE`; the audit uses it when it is under 3 days old. Still open: post-deploy verification (needs the
+access broker for host checks) and the model triage of unclassified logs (next: through `internal/model`, with
+`style.Prepend`).
+
 Marketing is an optional module from P0 on: hidden from the navigation and the API unless `ARGUS_MODULES` names it.
 
 ## Next
@@ -150,7 +168,10 @@ Marketing is an optional module from P0 on: hidden from the navigation and the A
    inventory and VM state (facts, snapshots, unit memory samples, live nginx maps, the VM refresh request) waits for
    the access broker (ADR-0019, ADR-0020).
 2. Knowledge promotion as a Review kind, with the eval harness (ADR-0016 D8).
-3. **Task-agent port requirement** (the intake/run dispatcher and runner; the web side above already reads these):
+3. **Task-agent port requirement** (built 2026-11-08 in the volume worker: `internal/board` agent.go plans and
+   dispatches inside the board sync, `internal/taskagent` runs the model jobs through `internal/model`; not ported:
+   the fixer (WRITE steps on develop / pre-release get a read-only report for a person), task secrets, lessons, the
+   QA intake; the task text comes from board.db, so attachments and links are not in the task file):
    - Handle the board request `agent-replan` exactly like `agent-answers`: admins only; refuse with a clear reason when
      the task is not in the agent column for an agent-enabled user, a job is already running for it, Claude usage is
      off, the egress guard blocks, the task budget is spent or the daily planning cap is reached; keep the saved
