@@ -216,6 +216,10 @@ state) every 6 hours and `vm-pulse` every 5 minutes, "not configured" without a 
 (services then come from `node_systemd_unit_state`, an upstream's "listening" stays unknown), the live nginx maps
 (kept from `proxy-live.json` while younger than 3 days), the unit memory samples, the VM refresh request and the
 evidence file of the model's VM analysis; the data-platform roles of a host are not carried.
+The capacity job (`argus estate capacity`, worker job `capacity`, daily) ports the earlier capacity forecast:
+`capacity.json` (and `capacity-prev.json`) byte for byte on synthetic fixtures (`internal/estate/testdata/capacity`),
+apart from three texts that named the earlier installation. The shared `insights-status.json` scan-bar file of the
+earlier daily job is not written.
 
 As built (P3, the task agent): in the volume layout the board sync plans the tasks in the agent column (Settings ->
 Task agent; default In Progress) assigned to an admin (Jira tasks by the Jira user map, GitLab tasks by the user
