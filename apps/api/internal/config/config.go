@@ -264,6 +264,7 @@ var Fields = []Field{
 	{Key: "ARGUS_MODEL_API_URL", Kind: Str, Help: "the Messages API address when no anthropic data source gives one (empty: https://api.anthropic.com)"},
 	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
 	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
+	{Key: "ARGUS_MODEL_SANDBOX", Kind: Str, Default: "landlock", Choices: []string{"landlock", "off"}, Help: "landlock: the cli provider's Claude CLI can open only its working folder, HOME, programs and CA files (Linux 5.13+; without Landlock a call fails instead of running unconfined); off: only the CLI's own rules"},
 	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
 	// the task agent (internal/board agent.go plans, internal/taskagent runs the model jobs; volume layout)
 	{Key: "ARGUS_TASK_AGENT_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/task-agent", Help: "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"},
