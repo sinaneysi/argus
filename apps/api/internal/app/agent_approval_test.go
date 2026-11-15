@@ -22,9 +22,10 @@ func TestAgentApprovalSigned(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(rand.Reader)
 	SetApprovalKey(priv)
 	t.Cleanup(func() { SetApprovalKey(nil) })
-	mode := ACTIONS_MODE
-	ACTIONS_MODE = "on"
-	t.Cleanup(func() { ACTIONS_MODE = mode })
+	mode, kdir := ACTIONS_MODE, APPROVAL_KEY_DIR
+	ACTIONS_MODE, APPROVAL_KEY_DIR = "on", filepath.Join(t.TempDir(), "approve")
+	t.Cleanup(func() { ACTIONS_MODE, APPROVAL_KEY_DIR = mode, kdir })
+	os.Mkdir(APPROVAL_KEY_DIR, 0o700)
 	plan := `{"classification": {"environment": "develop", "kind": "change"}, "summary": "s", "plan": [` +
 		`{"n": 1, "text": "check", "mode": "read-only", "capability": "http.check", "args": {"url": "https://svc.example.test/", "expect_status": 200}},` +
 		`{"n": 2, "text": "start the pipeline", "mode": "operator"}]}`
@@ -113,6 +114,33 @@ func TestAgentApprovalSigned(t *testing.T) {
 	if p.S("action_id") != id || capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal(p.PyRepr())
 	}
+
+	// checked: only for an action whose outcome is unknown; the verdict is in the signature
+	if c, _ := AgentPostChecked(e.ctx(e.admin), boardForm("key", "gl-4", "action_id", id, "step", "1", "verdict", "applied"), e.admin); c != 409 {
+		t.Fatal("checked without an unknown outcome")
+	}
+	e.board.Exec(`UPDATE agent_tasks SET action_state='outcome-unknown' WHERE key='gl-4'`)
+	if c, _ := AgentPostChecked(e.ctx(e.admin), boardForm("key", "gl-4", "action_id", id, "step", "1", "verdict", "maybe"), e.admin); c != 400 {
+		t.Fatal("a bad verdict")
+	}
+	if c, _ := AgentPostChecked(e.ctx(e.view), boardForm("key", "gl-4", "action_id", id, "step", "1", "verdict", "applied"), e.view); c != 403 {
+		t.Fatal("viewer")
+	}
+	c, loc = AgentPostChecked(e.ctx(e.admin), boardForm("key", "gl-4", "action_id", id, "step", "1", "verdict", "not-applied"), e.admin)
+	if c != 303 {
+		t.Fatal(c, loc)
+	}
+	p, _ = boardReadRequest(t, loc)
+	ck := claim
+	ck.Kind, ck.Step, ck.At, ck.Verdict = capability.SignChecked, 1, int64(py.Num(p.Get("signed_at"))), "not-applied"
+	if p.S("kind") != "agent-checked" || capability.VerifyApproval(pub, ck, p.S("signature")) != nil {
+		t.Fatal(p.PyRepr())
+	}
+	ck.Verdict = "applied"
+	if capability.VerifyApproval(pub, ck, p.S("signature")) == nil {
+		t.Fatal("the verdict is not in the signature")
+	}
+	e.board.Exec(`UPDATE agent_tasks SET action_state=NULL WHERE key='gl-4'`)
 
 	// stop is signed, so actd can revoke the task's earlier approvals
 	c, loc = AgentPost(e.ctx(e.admin), boardForm("key", "gl-4", "action", "stop"), e.admin)
@@ -207,6 +235,26 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 		At: int64(py.Num(p.Get("signed_at"))), SealedSHA256: capability.SealedSHA256(sealed)}
 	if capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal("the start is not signed over the sealed inputs")
+	}
+	// a start that is not sent leaves no record
+	if os.Geteuid() != 0 {
+		e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-6', 'ready', 1, ?)`, plan)
+		sha6 := agentPlanSHA(agentRow("gl-6"))
+		rq := filepath.Join(SET_IN, "board-requests")
+		os.Chmod(rq, 0o500)
+		c6, _ := AgentPostSpinUp(e.ctx(e.admin), boardForm("key", "gl-6", "plan_version", "1", "plan_sha256", sha6, "input_NEW_TOKEN", value), e.admin)
+		os.Chmod(rq, 0o755)
+		if _, ok := approvalkey.StartSealed(APPROVAL_KEY_DIR, "gl-6", capability.ActionID("gl-6", 1, sha6), 1, sha6); c6 != 500 || ok {
+			t.Fatal("a start that was not sent was recorded", c6)
+		}
+	}
+	// the record is per action: another action's start does not replace it
+	if err := approvalkey.RecordStart(APPROVAL_KEY_DIR, "gl-5", capability.ActionID("gl-5", 2, strings.Repeat("d", 64)), 2, strings.Repeat("d", 64),
+		capability.SealedSHA256(nil)); err != nil {
+		t.Fatal(err)
+	}
+	if h, ok := approvalkey.StartSealed(APPROVAL_KEY_DIR, "gl-5", id, 1, sha); !ok || h != capability.SealedSHA256(sealed) {
+		t.Fatal("the action's start record was replaced")
 	}
 	// a continue is signed over the sealed inputs the api signed at the start, never over board.db's copy (the
 	// worker could swap a ciphertext there)

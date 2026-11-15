@@ -1367,6 +1367,8 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		return "approved; spinning up", nil
 	case "agent-continue":
 		return r.agentContinue(row, req, by), nil
+	case "agent-checked":
+		return r.agentChecked(row, req, by), nil
 	case "agent-rollback":
 		return r.agentRollback(row, req, by), nil
 	case "agent-stop":

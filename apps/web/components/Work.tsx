@@ -2,7 +2,7 @@ import "./work.css";
 import { Fragment } from "react";
 import { EnvPill, Pill } from "./Pills";
 import { Segs, tone } from "./Section";
-import { agentAct, agentChat, agentContinue, agentRollback, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
+import { agentAct, agentChat, agentChecked, agentContinue, agentRollback, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
 import { full, iso } from "@/lib/format";
 import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, QaMsg, Seg, SecretForm, Secrets, TaskPage } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -230,7 +230,7 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
 export function ActionBox({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
   const x = a.action;
   if (!x) return null;
-  const tones: Record<string, "ok" | "warn" | "neutral" | "fail"> = { ok: "ok", unchanged: "ok", "done by the operator": "ok", "rolled-back": "warn", "needs the operator": "warn", waiting: "neutral", planned: "neutral" };
+  const tones: Record<string, "ok" | "warn" | "neutral" | "fail"> = { ok: "ok", unchanged: "ok", "done by the operator": "ok", "rolled-back": "warn", "needs the operator": "warn", "outcome-unknown": "warn", waiting: "neutral", planned: "neutral" };
   return (
     <>
       <h3>Capability steps <span className="muted small">run by Argus, not by the model · {x.state || "running"}</span></h3>
@@ -243,6 +243,14 @@ export function ActionBox({ a, csrf, ret }: { a: Agent; csrf: string; ret: strin
             <form action={agentRollback} className="actionbar">
               <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
               <Button variant="outline" size="sm">Roll back step {s.step}</Button>
+            </form>
+          ) : null}
+          {s.checked ? (
+            <form action={agentChecked} className="actionbar">
+              <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
+              <span className="muted small">The write answered an error and the read-back does not show it. Check the target, then say what you found. Argus reads it again before it goes on.</span>
+              <Button variant="outline" size="sm" name="verdict" value="applied">I checked the target: applied</Button>
+              <Button variant="outline" size="sm" name="verdict" value="not-applied">I checked the target: not applied</Button>
             </form>
           ) : null}
         </li>

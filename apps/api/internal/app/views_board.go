@@ -980,6 +980,8 @@ func BoardPost(c *Ctx, path string, form py.QS, sess *Session) (int, string) {
 		return AgentPostContinue(c, form, sess)
 	case "/board/agent/rollback":
 		return AgentPostRollback(c, form, sess)
+	case "/board/agent/checked":
+		return AgentPostChecked(c, form, sess)
 	case "/board/agent/chat":
 		return AgentPostChat(c, form, sess)
 	case "/board/task/secret":

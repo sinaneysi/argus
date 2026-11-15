@@ -66,6 +66,7 @@ type Request struct {
 	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
 	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
 	Stop         *Signed           `json:"stop,omitempty"`          // agent-stop: revoke the task's approvals signed before it
+	Checked      *Signed           `json:"checked,omitempty"`       // agent-checked: an admin checked step Checked.Step's target
 }
 
 // Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
@@ -74,6 +75,7 @@ type Signed struct {
 	Approver  string `json:"approver"`
 	At        int64  `json:"at"`
 	Signature string `json:"signature"`
+	Verdict   string `json:"verdict,omitempty"` // checked only: applied | not-applied
 }
 
 // ReqStep is one step of a request.
@@ -579,7 +581,7 @@ func (d *Daemon) approver(ctx context.Context, by string) (bool, bool, error) {
 // version and hash, the sealed inputs and the step; an enabled admin; not older than the approval TTL.
 func (d *Daemon) checkSigned(ctx context.Context, kind string, t *task, req Request, s *Signed) *capability.Refusal {
 	c := capability.ApprovalClaim{Kind: kind, TaskKey: t.key, PlanVersion: t.approval.PlanVersion, PlanSHA256: t.approval.StoredSHA256,
-		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step}
+		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step, Verdict: s.Verdict}
 	if err := capability.VerifyApproval(d.o.ApprovalPub, c, s.Signature); err != nil {
 		return capability.Refuse(3, capability.CodeApproval, "%s: %s", kind, err.Error())
 	}
@@ -728,13 +730,13 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	t, terr := d.loadTask(ctx, req.TaskKey)
 	c := t.confirmed()
 	kinds := 0
-	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop} {
+	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop, req.Checked} {
 		if x != nil {
 			kinds++
 		}
 	}
 	if kinds > 1 {
-		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, rollback or stop"), true)
+		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, checked, rollback or stop"), true)
 	}
 	if req.Stop != nil { // recorded even while the mode or the switch refuses everything else
 		if want := capability.ActionID(req.TaskKey, req.PlanVersion, req.PlanSHA256); want == "" || want != id || terr != nil {
@@ -776,10 +778,10 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	case startAt <= rec.RevokedAt:
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task at %s, after (or in the same second as) this approval of %s: approve again",
 			stamp(rec.RevokedAt), stamp(startAt)), true)
-	case req.Continue == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
+	case req.Continue == nil && req.Checked == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval (%s) is not newer than the last accepted start (%s): an approval starts the action once; approve again",
 			stamp(startAt), stamp(rec.StartAt)), true)
-	case req.Continue != nil && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
+	case (req.Continue != nil || req.Checked != nil) && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
 	}
 	if req.Continue != nil {
@@ -793,6 +795,21 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: signed before the start or before a stop"), true)
 		}
 		t.approval.TTLFrom = time.Unix(req.Continue.At, 0) // a continue has its own TTL; the start TTL bounds the start only
+	}
+	if req.Checked != nil { // the same cross-checks as a continue; checkSigned runs in every mode
+		if d.o.Mode == capability.ModeOn && (rec.StartAction != id || rec.StartSealed != sealed) {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "checked: the sealed inputs are not the ones the start approval of this action covered"), true)
+		}
+		if r := d.checkSigned(ctx, capability.SignChecked, t, req, req.Checked); r != nil {
+			return d.refuseAll(c, id, r, true)
+		}
+		if req.Checked.At <= rec.RevokedAt || req.Checked.At < startAt {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "checked: signed before the start or before a stop"), true)
+		}
+		if d.o.Mode != capability.ModeOn {
+			return d.refuseAll(c, id, capability.Refuse(1, capability.CodeModeOff, "checked: an unknown outcome is resolved only with ARGUS_ACTIONS_MODE=on"), true)
+		}
+		t.approval.TTLFrom = time.Unix(req.Checked.At, 0)
 	}
 	if r := capability.CheckApproval(t.approval, d.o.TTL, d.now()); r != nil {
 		return d.refuseAll(c, id, r, true)
@@ -862,6 +879,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	switch {
 	case !on:
+	case req.Checked != nil: // consumed by clearing the step's interrupted marker (applyChecked)
 	case req.Continue == nil:
 		rec.StartAt, rec.StartAction, rec.StartSealed = startAt, id, sealed
 		if err := d.putTaskRecord(t.key, rec); err != nil {
@@ -904,6 +922,23 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		}
 		resp.State, resp.Refusal = StateRefused, r
 		resp.Steps = append(resp.Steps, sr)
+	}
+	if req.Checked != nil {
+		sr, r := d.applyChecked(ctx, id, t, req, base, audit)
+		switch {
+		case r != nil:
+			refuseStep(planStep{N: req.Checked.Step, Capability: sr.Capability}, r)
+		case sr.Status != "ok":
+			resp.Steps, resp.State = append(resp.Steps, sr), StateFailed
+		}
+		if r != nil || sr.Status != "ok" {
+			if d.audit != nil {
+				resp.AuditHead, _ = d.audit.Head()
+			}
+			d.finish(resp, c, events)
+			d.log().Info("checked", "action", id, "step", req.Checked.Step, "state", resp.State)
+			return resp
+		}
 	}
 	for i, s := range t.steps {
 		if s.Mode == "operator" && opDone[s.N] {
@@ -974,6 +1009,13 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				d.log().Error("step result not stored", "action", id, "step", s.N, "error", err.Error())
 			} else if err := d.store.ClearApplying(id, s.N); err != nil {
 				d.log().Error("apply marker not removed", "action", id, "step", s.N, "error", err.Error())
+			}
+		}
+		// refused after its backup was written (e.g. the audit record of the apply could not be written): stored as
+		// refused, so a retry does not apply again and the prune can age the backup out
+		if on && sr.Refusal != nil && sr.BackupRef != "" {
+			if err := d.store.Put(id, sr); err != nil {
+				d.log().Error("refused step not stored", "action", id, "step", s.N, "error", err.Error())
 			}
 		}
 		if stop {

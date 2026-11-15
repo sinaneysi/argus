@@ -83,6 +83,11 @@ export async function agentContinue(fd: FormData): Promise<void> {
   await send("/api/v1/board/agent/continue", { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256"), step: field(fd, "step") }, fd);
 }
 
+/** An admin checked the target of a write step whose outcome was unknown: applied or not-applied (recent 2FA code). */
+export async function agentChecked(fd: FormData): Promise<void> {
+  await send("/api/v1/board/agent/checked", { key: field(fd, "key"), action_id: field(fd, "action_id"), step: field(fd, "step"), verdict: field(fd, "verdict") }, fd);
+}
+
 /** An admin rolls back one write step of the task's last action (recent 2FA code). */
 export async function agentRollback(fd: FormData): Promise<void> {
   await send("/api/v1/board/agent/rollback", { key: field(fd, "key"), action_id: field(fd, "action_id"), step: field(fd, "step") }, fd);

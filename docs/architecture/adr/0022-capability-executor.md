@@ -269,6 +269,16 @@ Design items for PR 2 (not built in PR 1):
   `protected` is a mismatch and is rolled back. A write that answers an error after its backup is read back: when
   the read-back matches, the step is ok; otherwise its state is `outcome-unknown`, the result is not stored and
   the interrupted marker stays, so a retry is refused until a person checks.
+- **Checked** (new signed kind `checked`, its message carries the verdict as a tenth line; the other kinds keep the
+  PR 2 message). For a step in `outcome-unknown` the task page offers "I checked the target: applied / not
+  applied" (admin, CSRF, sensitive MFA policy like Continue; `POST /api/v1/board/agent/checked`). The worker passes
+  it as `agent-checked`; actd verifies the signature and the same cross-checks as a continue. `applied`: actd reads
+  the target back (expected state = backup + arguments); only a match stores the step as ok, clears the marker and
+  goes on with the remaining steps (the step can be rolled back from its backup); otherwise it is refused and the
+  marker stays. `not-applied`: the step is stored as failed, the marker is cleared, the action ends. A replay finds
+  no marker and is refused.
+- A step refused after its backup was written (e.g. the audit record of the apply could not be written) is stored
+  as refused: a retry does not apply again, and the prune can age its backup out.
   Rollback restores the value and all attributes (`variable_type`, `protected`, `masked`, `raw`, `description`, scope), or deletes
   a variable that did not exist, and reads back. A variable GitLab hides (no value in the API) is refused for set and
   delete: it cannot be backed up. GitLab's error bodies are never kept (they could hold a value): a result says
@@ -289,11 +299,14 @@ Design items for PR 2 (not built in PR 1):
   start over `SealedSHA256` of the sealed map (PR 2's signature already covered the hash; it was always `{}`). The
   worker checks only the form, stores the map in `agent_tasks.sealed_inputs` (board migration `0003_sealed_inputs`)
   and passes it unopened in every start, continue and rollback request. The worker can rewrite that column, so
-  neither side trusts it after the start: the api records the sealed hash it signed for the start in its own folder
-  (`ARGUS_APPROVAL_KEY_DIR/starts/<task>.json`) and signs a continue or rollback over that hash only; actd records
+  neither side trusts it after the start: once the start request is written, the api records the sealed hash it
+  signed, per action, in its own folder (`ARGUS_APPROVAL_KEY_DIR/starts/<task>/<action-id>.json`; a failed write
+  is an HTTP 500) and signs a continue, rollback or checked of that action over that hash only; actd records
   the action and the sealed hash of the start it accepted (`argus-act/approvals/<task>.json`) and refuses a
   continue or rollback whose sealed inputs differ (a swapped ciphertext, e.g. a guess for a `matches` read, would
-  otherwise be a value oracle). A stop is signed over `{}` and carries none. actd refuses (rule 3) when the hash does not
+  otherwise be a value oracle). A stop is signed over `{}` and carries none. The signature of a continue, rollback
+  or checked is verified in every mode; the cross-check against actd's start record runs only with mode `on`,
+  because dry-run records no start. actd refuses (rule 3) when the hash does not
   match the signature, when a step's `input:<NAME>` has no sealed value for that step, when an extra one is there,
   or when one does not open for this action, step and name. It opens a step's inputs just before the step and
   clears them after it.

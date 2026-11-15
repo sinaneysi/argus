@@ -368,6 +368,51 @@ func (r *run) agentContinue(row row, req map[string]any, by string) string {
 	return fmt.Sprintf("continuing after step %d", step)
 }
 
+// agentChecked is agent-checked {key, action_id, step, verdict, signed_at, signature}: an admin checked the target
+// of a write step whose outcome was unknown and signed the verdict (applied | not-applied); actd checks it, reads the
+// target back for "applied", and goes on or ends the action.
+func (r *run) agentChecked(row row, req map[string]any, by string) string {
+	key, id := row.s("key"), orStr(req["action_id"])
+	if r.o.Agent.ActionsDir == "" {
+		panic(refused("no capability executor in this installation"))
+	}
+	if id == "" || id != row.s("action_id") || row.s("action_state") != actd.StateUnknown {
+		panic(refused("the task's last action has no step with an unknown outcome"))
+	}
+	if contains([]string{"planning", "running", "approved"}, row.s("state")) || !row.null("rollback_started") {
+		panic(refused("a job is running for this task; wait for it to finish"))
+	}
+	step, ok := asInt(req["step"])
+	if !ok || r.one(`SELECT step FROM agent_actions WHERE action_id=? AND step=? AND status=?`, id, step, actd.StatusUnknown) == nil {
+		panic(refused("that step's outcome is not unknown"))
+	}
+	verdict := orStr(req["verdict"])
+	if verdict != capability.VerdictApplied && verdict != capability.VerdictNotApplied {
+		panic(refused("the verdict is applied or not-applied"))
+	}
+	var plan map[string]any
+	json.Unmarshal([]byte(row.s("plan")), &plan)
+	sha := storedPlanSHA(row.s("plan"))
+	if sha == "" || capability.ActionID(key, int(row.i("plan_version")), sha) != id {
+		panic(refused("the plan changed since the action"))
+	}
+	at, sig := r.signedAt(req), signature(req)
+	areq := actRequest(row, plan, id, sha)
+	areq.Checked = &actd.Signed{Step: int(step), Approver: by, At: at, Verdict: verdict, Signature: sig}
+	b, _ := json.MarshalIndent(areq, "", " ")
+	os.Remove(r.actPath("out", id))
+	err := os.MkdirAll(filepath.Dir(r.actPath("in", id)), 0o700)
+	if err == nil {
+		err = writeAtomic(r.actPath("in", id), b, 0o600)
+	}
+	if err != nil {
+		panic(refused("the request cannot be written"))
+	}
+	r.must(`UPDATE agent_tasks SET state='running', phase='act', action_state=NULL, job_started=?, error=NULL, updated=? WHERE key=?`, r.now(), r.now(), key)
+	r.alog(key, "checked", fmt.Sprintf("Step %d checked by %s: %s; the executor reads the target again", step, by, verdict))
+	return fmt.Sprintf("step %d checked: %s", step, verdict)
+}
+
 // agentRollback is agent-rollback {key, action_id, step, signed_at, signature} (ADR-0022 D7): the request goes to
 // actd, which runs the capability's Rollback of that step under the refusal rules.
 func (r *run) agentRollback(row row, req map[string]any, by string) string {

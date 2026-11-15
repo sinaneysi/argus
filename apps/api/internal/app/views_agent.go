@@ -423,15 +423,17 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan), capability.SealedSHA256(sealed)); err != nil {
 		return 500, "Not started: " + err.Error()
 	}
-	// remembered in the api's own folder: a later continue or rollback is signed over these sealed inputs only
-	if p.Has("signature") {
-		if err := approvalkey.RecordStart(APPROVAL_KEY_DIR, key, int(n), sha, capability.SealedSHA256(sealed)); err != nil && len(sealed) > 0 {
-			return 500, "Not started: the approval cannot be recorded: " + err.Error()
-		}
-	}
 	rid, err := BoardWriteRequest(p, sess)
 	if err != nil {
 		return boardCouldNotSave(c, err)
+	}
+	// remembered in the api's own folder, per action, once the start was sent: a later continue or rollback of this
+	// action is signed over these sealed inputs only (without the record they are signed over none, and actd refuses)
+	if p.Has("signature") {
+		if err := approvalkey.RecordStart(APPROVAL_KEY_DIR, key, capability.ActionID(key, int(n), sha), int(n), sha, capability.SealedSHA256(sealed)); err != nil {
+			logf("agent start %s: the approval record cannot be written: %v", key, err)
+			return 500, "Started, but the api cannot record the approval (" + err.Error() + "): a later Continue or rollback of this action will be refused; stop and approve again after fixing ARGUS_APPROVAL_KEY_DIR"
+		}
 	}
 	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
 }

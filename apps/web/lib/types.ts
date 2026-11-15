@@ -569,7 +569,7 @@ export type Agent = {
 /** The task's last capability action (ADR-0022): actd's step results, not the model's report. */
 export type AgentAction = {
   id: string; state: string;
-  steps: { step: number; capability: string; status: string; detail: string; audit: string; text: string; rollback?: boolean }[];
+  steps: { step: number; capability: string; status: string; detail: string; audit: string; text: string; rollback?: boolean; checked?: boolean }[];
   continue?: { step: number; text: string; can: boolean };
 };
 export type TaskPage = {

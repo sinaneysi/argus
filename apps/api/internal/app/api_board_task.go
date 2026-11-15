@@ -599,8 +599,13 @@ func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
 		}
 		st := map[string]any{"step": r.I("step"), "capability": r.Str("capability"), "status": r.Str("status"), "detail": py.OrS(r.Get("detail"), r.Str("summary")),
 			"audit": audit, "text": texts[r.I("step")]}
-		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" {
+		unknown := r.Str("status") == "outcome-unknown"
+		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" && !unknown {
 			st["rollback"] = true
+		}
+		// a write whose outcome is unknown: an admin checks the target and says applied or not-applied
+		if admin && !busy && unknown && a.Str("action_state") == "outcome-unknown" {
+			st["checked"] = true
 		}
 		steps = append(steps, st)
 	}

@@ -125,7 +125,9 @@ the approval over the hash of the sealed inputs; the worker and `board.db` (`age
 ciphertext only, and actd opens it just before the step. The api refuses to seal when no key is pinned or when
 `actions/actd.pub` is not the pinned key (actd got a new key: compare the fingerprints, then pin again). The review
 panel's one-click approval cannot carry inputs: approve such a plan on the task page. The api keeps the sealed hash
-of each start it signed in `ARGUS_APPROVAL_KEY_DIR/starts/` and signs Continue and rollback over it only.
+of each start it signed and sent in `ARGUS_APPROVAL_KEY_DIR/starts/<task>/<action-id>.json` and signs Continue,
+rollback and "I checked the target" over it only. A write whose outcome is unknown (`outcome-unknown`) waits for an
+admin's "I checked the target: applied / not applied" on the task page.
 Backups of applied writes are never pruned; only those of rolled-back, refused or failed steps older than
 `ARGUS_ACTIONS_BACKUP_DAYS`.
 Off again: empty `ARGUS_ACT_GITLAB_PROJECTS` (the capabilities leave the catalogue), or `ARGUS_ACTIONS_MODE=off`.

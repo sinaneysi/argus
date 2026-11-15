@@ -165,6 +165,15 @@ describe("task page", () => {
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     for (const w of ["Capability steps", "run by Argus, not by the model", "audit 0123456789ab", "Continue after step 2", "Roll back step 1", 'name="plan_sha256"', 'name="action_id"']) expect(h).toContain(w);
   });
+  it("offers the checked verdicts for a step whose outcome is unknown, and no rollback", async () => {
+    const a = { ...task.agent, planSha256: "ab".repeat(32), action: { id: "OPS-1.v2.abababababab", state: "outcome-unknown", steps: [
+      { step: 1, capability: "gitlab.ci-variable.set", status: "outcome-unknown", detail: "the outcome is unknown", audit: "0123456789ab", text: "rotate", checked: true }] } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["I checked the target: applied", "I checked the target: not applied", 'value="not-applied"']) expect(h).toContain(w);
+    expect(h).not.toContain("Roll back step 1");
+  });
   it("renders a write-only field per secret input of the plan, and no value", async () => {
     const a = { ...task.agent, planSha256: "ab".repeat(32), spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false, inputs: ["NEW_TOKEN"] } };
     answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
@@ -256,6 +265,7 @@ describe("writes", () => {
       [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }],
       [a.agentContinue, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }, "/api/v1/board/agent/continue", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }],
       [a.agentRollback, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }, "/api/v1/board/agent/rollback", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }],
+      [a.agentChecked, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1", verdict: "applied" }, "/api/v1/board/agent/checked", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1", verdict: "applied" }],
       [a.agentChat, { key: "OPS-1", text: "t".repeat(3000) }, "/api/v1/board/agent/chat", { key: "OPS-1", text: "t".repeat(3000) }],
     ];
     for (const [fn, f, path, body] of cases) {

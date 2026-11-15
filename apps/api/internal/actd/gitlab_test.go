@@ -1,6 +1,8 @@
 package actd
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -369,5 +371,130 @@ func TestPruneKeepsAppliedWrites(t *testing.T) {
 	v.Put(ref, "m", []byte("first"))
 	if err := v.Put(ref, "m", []byte("second")); err == nil {
 		t.Fatal("an interrupted step's backup was overwritten")
+	}
+}
+
+// unknownOutcome leaves step 1 of a set with an unknown outcome (the PUT answers 504 and is not applied).
+func unknownOutcome(t *testing.T, f *fx, stub *gitlabtest.Stub, d *Daemon, key string) Request {
+	t.Helper()
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old", Masked: true})
+	stub.Status["PUT"] = 504
+	req := f.task(key, "develop", []map[string]any{glSet(), glGet()})
+	f.sealFor(key, &req, glSecret, 1, 2)
+	if r := f.submit(d, req); r.State != StateUnknown {
+		t.Fatalf("%+v", r)
+	}
+	delete(stub.Status, "PUT")
+	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key=?`, key)
+	return req
+}
+
+func (f *fx) checked(req Request, verdict string, sig func(capability.ApprovalClaim) string) *Response {
+	f.t.Helper()
+	claim := capability.ApprovalClaim{Kind: capability.SignChecked, TaskKey: req.TaskKey, PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+		At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: 1, Verdict: verdict}
+	rq := req
+	rq.Checked = &Signed{Step: 1, Approver: "ada", At: claim.At, Verdict: verdict, Signature: sig(claim)}
+	return f.submit(f.cur, rq)
+}
+
+// TestCheckedApplied: the admin says applied; the step is ok only when the target reads back right, then the
+// action goes on, and the step can be rolled back from its backup.
+func TestCheckedApplied(t *testing.T) {
+	f, stub := newGLFx(t)
+	d := f.daemon()
+	req := unknownOutcome(t, f, stub, d, "GL-K")
+	// applied, but the target does not hold the value: refused, the marker stays
+	wantRefused(t, f.checked(req, capability.VerdictApplied, f.sign), 5, capability.CodeInterrupted)
+	if !d.store.Applying(req.ActionID, 1) {
+		t.Fatal("the marker was cleared")
+	}
+	// the person fixed it by hand: now applied holds
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: glSecret, Masked: true})
+	r := f.checked(req, capability.VerdictApplied, f.sign)
+	if r.State != StateDone || len(r.Steps) != 2 || r.Steps[0].Status != "ok" || r.Steps[1].Fields["matches"] != true {
+		t.Fatalf("%+v", r)
+	}
+	if d.store.Applying(req.ActionID, 1) {
+		t.Fatal("the marker stayed")
+	}
+	// a replay finds no unknown outcome
+	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key='GL-K'`)
+	if r := f.checked(req, capability.VerdictApplied, f.sign); r.State != StateRefused {
+		t.Fatalf("%+v", r)
+	}
+	// the step rolls back from its backup
+	f.exec(f.board, `UPDATE agent_tasks SET state='done' WHERE key='GL-K'`)
+	claim := capability.ApprovalClaim{Kind: capability.SignRollback, TaskKey: "GL-K", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+		At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: 1}
+	rq := req
+	rq.Rollback = &Signed{Step: 1, Approver: "ada", At: claim.At, Signature: f.sign(claim)}
+	if rr := f.submit(d, rq); rr.State != StateDone {
+		t.Fatalf("%+v", rr)
+	}
+	if v, _ := stub.Get(101, "API_TOKEN"); v.Value != "old" || !v.Masked {
+		t.Fatal("not rolled back:", v)
+	}
+}
+
+// TestCheckedNotApplied: the step fails, the action ends, the marker is gone; unsigned or forged verdicts are
+// refused.
+func TestCheckedNotApplied(t *testing.T) {
+	f, stub := newGLFx(t)
+	d := f.daemon()
+	req := unknownOutcome(t, f, stub, d, "GL-N")
+	_, wpriv, _ := ed25519.GenerateKey(rand.Reader)
+	for name, sig := range map[string]func(capability.ApprovalClaim) string{
+		"unsigned": func(capability.ApprovalClaim) string { return "" },
+		"forged":   func(c capability.ApprovalClaim) string { s, _ := capability.SignApproval(wpriv, c); return s },
+		"other verdict": func(c capability.ApprovalClaim) string {
+			c.Verdict = capability.VerdictApplied
+			return f.sign(c)
+		},
+	} {
+		if r := f.checked(req, capability.VerdictNotApplied, sig); r.State != StateRefused || r.Refusal.Rule != 3 {
+			t.Fatalf("%s: %+v", name, r)
+		}
+	}
+	stub.Reset()
+	r := f.checked(req, capability.VerdictNotApplied, f.sign)
+	if r.State != StateFailed || len(r.Steps) != 1 || r.Steps[0].Status != "failed" || r.Steps[0].Phase != PhaseChecked {
+		t.Fatalf("%+v", r)
+	}
+	if d.store.Applying(req.ActionID, 1) || len(stub.Writes()) != 0 {
+		t.Fatal("the marker stayed, or something was written")
+	}
+	last := f.auditLines()[len(f.auditLines())-1]
+	if last.Phase != PhaseChecked || last.Result != "failed" {
+		t.Fatalf("%+v", last)
+	}
+}
+
+// TestRefusedAfterBackupIsStored: the audit record of the apply cannot be written after the backup: the step is
+// stored as refused (a retry does not apply again) and its backup ages out.
+func TestRefusedAfterBackupIsStored(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores file modes")
+	}
+	f, stub := newGLFx(t)
+	d := f.daemon()
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old"})
+	stub.AfterW = func(*gitlabtest.Stub) { os.Chmod(AuditPath(f.act), 0o400) }
+	req := f.task("GL-R", "develop", []map[string]any{glSet()})
+	f.sealFor("GL-R", &req, glSecret, 1)
+	r := f.submit(d, req)
+	os.Chmod(AuditPath(f.act), 0o600)
+	if r.State != StateRefused || r.Steps[0].BackupRef == "" {
+		t.Fatalf("%+v", r)
+	}
+	got, ok := d.store.Get(req.ActionID, 1)
+	if !ok || got.Status != StateRefused {
+		t.Fatalf("not stored as refused: %+v %v", got, ok)
+	}
+	p := filepath.Join(f.act, "backups", req.ActionID, "1.enc")
+	old := f.now.Add(-40 * 24 * time.Hour)
+	os.Chtimes(p, old, old)
+	if removed, _, err := d.vault().Prune(30, f.now); err != nil || removed != 1 {
+		t.Fatal(removed, err)
 	}
 }
