@@ -456,9 +456,19 @@ func TestCheckedNotApplied(t *testing.T) {
 			t.Fatalf("%s: %+v", name, r)
 		}
 	}
+	// the target does hold the wanted state: "not applied" is contradicted by the read-back, the marker stays
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: glSecret, Masked: true})
+	if r := f.checked(req, capability.VerdictNotApplied, f.sign); r.State != StateRefused || !strings.Contains(r.Refusal.Reason, "contradicted") {
+		t.Fatalf("%+v", r.Refusal)
+	}
+	if !d.store.Applying(req.ActionID, 1) {
+		t.Fatal("the marker was cleared")
+	}
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old", Masked: true})
 	stub.Reset()
 	r := f.checked(req, capability.VerdictNotApplied, f.sign)
-	if r.State != StateFailed || len(r.Steps) != 1 || r.Steps[0].Status != "failed" || r.Steps[0].Phase != PhaseChecked {
+	if r.State != StateFailed || len(r.Steps) != 1 || r.Steps[0].Status != StatusFailedChecked || r.Steps[0].Phase != PhaseChecked ||
+		!strings.Contains(r.Steps[0].Detail, "read-back agrees") || strings.Contains(r.Steps[0].Detail, glSecret) {
 		t.Fatalf("%+v", r)
 	}
 	if d.store.Applying(req.ActionID, 1) || len(stub.Writes()) != 0 {
@@ -467,6 +477,13 @@ func TestCheckedNotApplied(t *testing.T) {
 	last := f.auditLines()[len(f.auditLines())-1]
 	if last.Phase != PhaseChecked || last.Result != "failed" {
 		t.Fatalf("%+v", last)
+	}
+	// a person's "not applied" may be wrong: its backup is never pruned
+	p := filepath.Join(f.act, "backups", req.ActionID, "1.enc")
+	old := f.now.Add(-400 * 24 * time.Hour)
+	os.Chtimes(p, old, old)
+	if removed, kept, err := d.vault().Prune(30, f.now); err != nil || removed != 0 || kept != 1 {
+		t.Fatal(removed, kept, err)
 	}
 }
 

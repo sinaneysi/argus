@@ -137,6 +137,7 @@ func (v Vault) Prune(days int, now time.Time) (removed, kept int, err error) {
 				continue
 			}
 			r, ok := st.Get(e.Name(), n)
+			// over: nothing of the step is left in place. Not "failed-checked": a person's verdict may be wrong
 			over := ok && (r.Status == "rolled-back" || r.Status == StateRefused || r.Status == "failed")
 			if v.Steps == "" || !over || now.Sub(fi.ModTime()) < time.Duration(days)*24*time.Hour {
 				left++

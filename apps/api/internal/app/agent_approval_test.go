@@ -30,6 +30,8 @@ func TestAgentApprovalSigned(t *testing.T) {
 		`{"n": 1, "text": "check", "mode": "read-only", "capability": "http.check", "args": {"url": "https://svc.example.test/", "expect_status": 200}},` +
 		`{"n": 2, "text": "start the pipeline", "mode": "operator"}]}`
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-4', 'ready', 2, ?)`, plan)
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (4, 't', 'todo', 1, 1, 0, 'gitlab')`)
+	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	sha := agentPlanSHA(agentRow("gl-4"))
 	if len(sha) != 64 {
 		t.Fatal(sha)
@@ -184,6 +186,8 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 		`{"n": 1, "text": "rotate", "mode": "WRITE", "capability": "gitlab.ci-variable.set", "args": {"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "value_ref": "input:NEW_TOKEN"}},` +
 		`{"n": 2, "text": "check", "mode": "read-only", "capability": "gitlab.ci-variable.get", "args": {"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "matches": "input:NEW_TOKEN"}}]}`
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-5', 'ready', 1, ?)`, plan)
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (5, 't', 'todo', 1, 1, 0, 'gitlab')`)
+	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	sha := agentPlanSHA(agentRow("gl-5"))
 	id := capability.ActionID("gl-5", 1, sha)
 	form := func(kv ...string) py.QS {
@@ -277,4 +281,32 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 func mustStep(k string) int {
 	n, _, _ := capability.ParseInputKey(k)
 	return n
+}
+
+// The write block comes from the task's own tracker field, never from the key's "gl-" form: a key that names no
+// GitLab task, or a GitLab task while GitLab issues is not connected, is refused.
+func TestAgentWriteBlockFromTracker(t *testing.T) {
+	e := boardSetup(t)
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (8, 't', 'todo', 1, 1, 0, 'jira')`)
+	if why := agentWriteBlock(e.admin, "gl-8"); why == "" {
+		t.Fatal("a gl- key of a Jira task passed")
+	}
+	if why := agentWriteBlock(e.admin, "gl-99"); why != "the task is not on the board" {
+		t.Fatal(why)
+	}
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (9, 't', 'todo', 1, 1, 0, 'gitlab')`)
+	if why := agentWriteBlock(e.admin, "gl-9"); !strings.Contains(why, "not connected") {
+		t.Fatal("GitLab not connected:", why)
+	}
+	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
+	if why := agentWriteBlock(e.admin, "gl-9"); why != "" {
+		t.Fatal(why)
+	}
+	for _, f := range []func(*Ctx, py.QS, *Session) (int, string){AgentPostContinue, AgentPostRollback, AgentPostChecked} {
+		e.board.Exec(`INSERT OR REPLACE INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-8', 'operator', 1, '{}')`)
+		if c, out := f(e.ctx(e.admin), boardForm("key", "gl-8", "plan_version", "1", "plan_sha256", strings.Repeat("a", 64), "step", "1",
+			"action_id", "gl-8.v1.aaaaaaaaaaaa", "verdict", "applied"), e.admin); c != 403 {
+			t.Fatal(c, out)
+		}
+	}
 }

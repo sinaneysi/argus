@@ -193,7 +193,7 @@ func AgentPostContinue(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not continued: " + why
 	}
 	n, _ := py.ParseInt(v)
@@ -233,7 +233,7 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not rolled back: " + why
 	}
 	step, _ := py.ParseInt(st)
@@ -361,7 +361,7 @@ func AgentPostChecked(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not sent: " + why
 	}
 	step, _ := py.ParseInt(st)
@@ -383,4 +383,16 @@ func AgentPostChecked(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return boardCouldNotSave(c, err)
 	}
 	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
+}
+
+// agentWriteBlock is why this admin cannot act on the task of an agent key: the write block of the task's own
+// tracker (its tasks.tracker field, set when the task was taken in), never a guess from the key's form. A key that
+// names no task on the board is refused.
+func agentWriteBlock(sess *Session, key string) string {
+	for _, t := range BoardBQ("SELECT * FROM tasks WHERE (tracker='gitlab' AND 'gl-' || id = ?) OR (COALESCE(tracker,'jira') != 'gitlab' AND jira_key = ?)", key, key) {
+		if AgentKey(t) == key {
+			return TaskWriteBlock(sess, t)
+		}
+	}
+	return "the task is not on the board"
 }

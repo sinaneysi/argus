@@ -51,6 +51,9 @@ const (
 	StateUnknown = "outcome-unknown"
 	// StatusUnknown is that step's status
 	StatusUnknown = "outcome-unknown"
+	// StatusFailedChecked: a person checked the target and said not applied; its backup is never pruned (the
+	// person may be wrong, and the backup is the only way back)
+	StatusFailedChecked = "failed-checked"
 )
 
 // Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from

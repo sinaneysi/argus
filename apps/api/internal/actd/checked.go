@@ -55,8 +55,26 @@ func (d *Daemon) applyChecked(ctx context.Context, id string, t *task, req Reque
 		return err == nil
 	}
 	sr.Phase = PhaseChecked
+	// both verdicts read the target back first (expected state = the backup's plus the step's arguments)
+	inputs, r := d.openInputs(id, t.approval.StoredSHA256, cp, *step, req.SealedInputs)
+	if r != nil {
+		return sr, r
+	}
+	cctx, cancel := context.WithTimeout(capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: ck.Step, Inputs: inputs}), capability.MaxCall)
+	vres, verr := cp.Verify(cctx, step.Args, capability.Plan{Change: "updated"})
+	cancel()
+	clear(inputs)
+	matches := verr == nil && (vres.Status == "ok" || vres.Status == "unchanged")
 	if ck.Verdict == capability.VerdictNotApplied {
-		sr.Status, sr.Detail = "failed", fmt.Sprintf("%s checked the target: not applied; the action ends", clip(ck.Approver, 64))
+		if matches {
+			return sr, capability.Refuse(5, capability.CodeInterrupted, "checked: the verdict is contradicted by the read-back: step %d's target holds the wanted state; the marker stays", ck.Step)
+		}
+		readBack := vres.Detail
+		if verr != nil {
+			readBack = verr.Error()
+		}
+		sr.Status = StatusFailedChecked
+		sr.Detail = Clean(fmt.Sprintf("%s checked the target: not applied; the read-back agrees (%s); the action ends", clip(ck.Approver, 64), readBack))
 		if !record("failed", sr.Detail) {
 			return sr, capability.Refuse(1, capability.CodeAuditChain, "the audit record could not be written")
 		}
@@ -66,23 +84,14 @@ func (d *Daemon) applyChecked(ctx context.Context, id string, t *task, req Reque
 		d.store.ClearApplying(id, ck.Step)
 		return sr, nil
 	}
-	// applied: the admin's word is not enough, the target must read back as the step wants it
-	inputs, r := d.openInputs(id, t.approval.StoredSHA256, cp, *step, req.SealedInputs)
-	if r != nil {
-		return sr, r
-	}
-	cctx, cancel := context.WithTimeout(capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: ck.Step, Inputs: inputs}), capability.MaxCall)
-	// the expected state is the backup's plus the step's arguments (a plan of the change, not of the current state)
-	vres, verr := cp.Verify(cctx, step.Args, capability.Plan{Change: "updated"})
-	cancel()
-	clear(inputs)
-	if verr != nil || (vres.Status != "ok" && vres.Status != "unchanged") {
+	if !matches {
 		why := vres.Detail
 		if verr != nil {
 			why = verr.Error()
 		}
 		return sr, capability.Refuse(5, capability.CodeInterrupted, "checked: the read-back does not show step %d applied (%s); the marker stays", ck.Step, Clean(why))
 	}
+	// applied: the admin's word is not enough, the target read back as the step wants it (checked above)
 	sr.Status, sr.Detail, sr.Fields = "ok", Clean(fmt.Sprintf("%s checked the target: applied; the read-back matches. %s", clip(ck.Approver, 64), vres.Detail)), vres.Fields
 	if !record("ok", sr.Detail) {
 		return sr, capability.Refuse(1, capability.CodeAuditChain, "the audit record could not be written")

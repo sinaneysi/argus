@@ -275,8 +275,12 @@ Design items for PR 2 (not built in PR 1):
   it as `agent-checked`; actd verifies the signature and the same cross-checks as a continue. `applied`: actd reads
   the target back (expected state = backup + arguments); only a match stores the step as ok, clears the marker and
   goes on with the remaining steps (the step can be rolled back from its backup); otherwise it is refused and the
-  marker stays. `not-applied`: the step is stored as failed, the marker is cleared, the action ends. A replay finds
-  no marker and is refused.
+  marker stays. `not-applied`: actd reads the target back too; when it holds the wanted state the verdict is
+  refused as contradicted (the marker stays), otherwise the step is stored as `failed-checked` with the read-back's
+  summary (no value), the marker is cleared and the action ends. A replay finds no marker and is refused. The
+  backup of a `failed-checked` step is never pruned (the person may be wrong).
+- Continue, rollback and checked take the admin's write block from the task's own tracker field
+  (`tasks.tracker`), not from the form of the agent key.
 - A step refused after its backup was written (e.g. the audit record of the apply could not be written) is stored
   as refused: a retry does not apply again, and the prune can age its backup out.
   Rollback restores the value and all attributes (`variable_type`, `protected`, `masked`, `raw`, `description`, scope), or deletes
