@@ -405,6 +405,24 @@ func TestIntakeOutputIsStrict(t *testing.T) {
 	}
 }
 
+// TestUnsignedStopIsAnAlert: a stop that cannot reach actd for a task whose action reached it is never silent.
+func TestUnsignedStopIsAnAlert(t *testing.T) {
+	e := newActEnv(t, capability.ModeOn)
+	e.run(t)
+	e.out(t, "OPS-7", "intake", classified("develop", "change", httpStep("/a")), map[string]any{"cost_usd": 0.2, "is_error": false})
+	e.run(t)
+	e.req(t, e.signed(t, capability.SignStart, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1}))
+	e.run(t)
+	e.req(t, map[string]any{"kind": "agent-stop", "key": "OPS-7"}) // the api held no key
+	e.run(t)
+	if s := e.q(t, `SELECT state || ':' || COALESCE(error,'') FROM agent_tasks WHERE key='OPS-7'`); !strings.HasPrefix(s, "stopped:ALERT: the stop was not passed") {
+		t.Fatal(s)
+	}
+	if e.q(t, `SELECT count(*) FROM agent_log WHERE key='OPS-7' AND kind='alert'`) != "1" {
+		t.Fatal("no alert in the task log")
+	}
+}
+
 func (e *env) exec(t *testing.T, q string, a ...any) {
 	t.Helper()
 	db, err := sql.Open("sqlite", e.o.DB)

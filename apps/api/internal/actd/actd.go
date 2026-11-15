@@ -448,6 +448,9 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	if err := dec.Decode(&doc); err != nil || doc.Classification == nil {
 		return nil, errors.New("the stored plan is not readable")
 	}
+	if err := capability.StrictJSON([]byte(plan)); err != nil {
+		return nil, fmt.Errorf("the stored plan is refused: %v", err)
+	}
 	stored := capability.StoredPlanSHA256(plan)
 	if stored == "" {
 		return nil, errors.New("the stored plan is not readable")
@@ -524,7 +527,13 @@ func (d *Daemon) checkSigned(ctx context.Context, kind string, t *task, req Requ
 		return capability.Refuse(3, capability.CodeApproval, "%s: the approver is not an enabled admin", kind)
 	}
 	at := time.Unix(s.At, 0)
-	if at.After(d.now().Add(5*time.Minute)) || d.now().Sub(at) > d.o.TTL || d.o.TTL <= 0 {
+	if at.After(d.now().Add(5 * time.Minute)) {
+		return capability.Refuse(3, capability.CodeApproval, "%s: the signed time is in the future", kind)
+	}
+	if kind == capability.SignStop { // a stop only restricts: no TTL
+		return nil
+	}
+	if d.now().Sub(at) > d.o.TTL || d.o.TTL <= 0 {
 		return capability.Refuse(3, capability.CodeApproval, "%s: the signed request is older than %s or in the future", kind, d.o.TTL)
 	}
 	return nil
@@ -701,10 +710,12 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	switch {
 	case t.approval.ApprovedAt.IsZero():
 	case startAt <= rec.RevokedAt:
-		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task after this approval: approve again"), true)
-	case req.Continue == nil && startAt <= rec.StartAt:
-		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval was already used to start the action: approve again"), true)
-	case req.Continue != nil && startAt != rec.StartAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task at %s, after (or in the same second as) this approval of %s: approve again",
+			stamp(rec.RevokedAt), stamp(startAt)), true)
+	case req.Continue == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval (%s) is not newer than the last accepted start (%s): an approval starts the action once; approve again",
+			stamp(startAt), stamp(rec.StartAt)), true)
+	case req.Continue != nil && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
 	}
 	if req.Continue != nil {
@@ -743,11 +754,18 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeCapability, "the plan has no capability step"), true)
 	}
 	// the operator step the action waits for: the first one not yet confirmed for this start (actd's own record)
-	waitN := 0
+	waitN, opDone := 0, map[int]bool{}
 	for _, s := range t.steps {
-		if s.Mode == "operator" && !d.store.OperatorDone(id, s.N, startAt) {
+		if s.Mode != "operator" {
+			continue
+		}
+		done, err := d.store.OperatorDone(id, s.N, startAt)
+		if err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the operator record of step %d is not readable: %v", s.N, err), true)
+		}
+		opDone[s.N] = done
+		if !done && waitN == 0 {
 			waitN = s.N
-			break
 		}
 	}
 	if req.Continue != nil && (waitN == 0 || req.Continue.Step != waitN) {
@@ -765,14 +783,22 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 			return d.refuseAll(c, id, capability.Refuse(6, capability.CodeLimit, "the start could not be recorded: %v", err), true)
 		}
 	}
-	// the approval is consumed before any step runs: a replay of this start or this continue is refused
-	if req.Continue == nil {
+	// the approval is consumed before any step runs: a replay of this start or this continue is refused. Dry-run
+	// consumes nothing: it only shows what would run.
+	if req.Continue != nil {
+		opDone[req.Continue.Step] = true
+	}
+	switch {
+	case !on:
+	case req.Continue == nil:
 		rec.StartAt = startAt
 		if err := d.putTaskRecord(t.key, rec); err != nil {
 			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the start could not be recorded: %v", err), true)
 		}
-	} else if err := d.store.MarkOperatorDone(id, req.Continue.Step, operatorRecord{StartAt: startAt, ContinueAt: req.Continue.At, Approver: req.Continue.Approver}); err != nil {
-		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the continue could not be recorded: %v", err), true)
+	default:
+		if err := d.store.MarkOperatorDone(id, req.Continue.Step, operatorRecord{StartAt: startAt, ContinueAt: req.Continue.At, Approver: req.Continue.Approver}); err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the continue could not be recorded: %v", err), true)
+		}
 	}
 	resp := &Response{ActionID: id, TaskKey: c.TaskKey, Mode: string(d.o.Mode), State: StateDone, Steps: []StepResult{}, Started: d.now().Unix()}
 	if !on {
@@ -808,7 +834,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		resp.Steps = append(resp.Steps, sr)
 	}
 	for i, s := range t.steps {
-		if s.Mode == "operator" && d.store.OperatorDone(id, s.N, startAt) {
+		if s.Mode == "operator" && opDone[s.N] {
 			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "done by the operator", At: d.now().Unix()})
 			continue
 		}
@@ -885,6 +911,9 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	d.log().Info("action", "action", id, "state", resp.State, "steps", len(resp.Steps))
 	return resp
 }
+
+// stamp is a unix time for a refusal reason (UTC, seconds: approvals are compared at one-second granularity).
+func stamp(t int64) string { return time.Unix(t, 0).UTC().Format("2006-01-02 15:04:05Z") }
 
 func clip(s string, n int) string {
 	s = Clean(s)

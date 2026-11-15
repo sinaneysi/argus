@@ -124,6 +124,12 @@ Without the key the api refuses to approve a plan that would execute, a continue
 reason); read-only and proposal runs and Stop still work unsigned. A signed Stop is passed to `actd`, which then
 refuses every approval of the task signed before it. `actd` keeps its approval records in `argus-act/approvals/`
 and `argus-act/steps/<action-id>/` (back them up with the volume).
+Approval times are unix seconds from the api's clock, compared at one-second granularity: a start approval must be
+strictly newer than the last accepted start, and a stop revokes every approval signed in the same second or before.
+Two approvals in the same second count as one (approve again a second later). A clock stepped back on the api host
+makes new approvals look older: they are refused with both times in the reason until the clock passes the last
+accepted time; keep the api's clock synchronised (NTP) and avoid large steps. The refusal reason is shown on the task
+page. A dry-run consumes no approval and confirms no operator step.
 
 ## 1. Files
 

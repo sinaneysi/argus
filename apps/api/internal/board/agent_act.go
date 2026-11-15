@@ -273,6 +273,11 @@ func (r *run) actIngest(row row) {
 		return
 	}
 	r.must(`UPDATE agent_tasks SET phase='run', action_state=?, job_started=?, updated=? WHERE key=?`, resp.State, r.now(), r.now(), key)
+	if resp.Refusal != nil { // the executor's reason, on the task page
+		reason, _ := notify.Redact(head("The executor refused: "+resp.Refusal.Reason, 300), r.o.Allow)
+		r.must(`UPDATE agent_tasks SET error=? WHERE key=?`, reason, key)
+		r.alog(key, "refused", reason)
+	}
 	r.alog(key, "act", fmt.Sprintf("Capability steps: %s (%d steps); a read-only run writes the report", resp.State, len(resp.Steps)))
 }
 
@@ -409,14 +414,31 @@ func (r *run) stopAct(row row) {
 // (the worker could otherwise set the task to approved again and replay the old approval).
 func (r *run) forwardStop(row row, req map[string]any, by string) {
 	a := r.o.Agent
+	if a.ActionsDir == "" {
+		return
+	}
+	key := row.s("key")
+	// never silent: a stop that cannot reach actd for a task whose action reached it is an alert on the task and in
+	// the log. The task stays stopped here, so this worker does no more work on it.
+	alert := func(why string) {
+		if row.s("action_id") == "" {
+			return
+		}
+		msg := "ALERT: the stop was not passed to the executor (" + why + "); its earlier approval stays valid there until it is used or expires. " +
+			"Check the approval key of the api, then stop again."
+		r.alog(key, "alert", msg)
+		r.must(`UPDATE agent_tasks SET error=? WHERE key=?`, head(msg, 300), key)
+		r.log().Warn("task agent: stop not passed to actd", "task", key, "reason", why)
+	}
 	sig, _ := req["signature"].(string)
-	if a.ActionsDir == "" || sig == "" {
+	if sig == "" {
+		alert("the api did not sign it")
 		return
 	}
 	at, ok := asInt(req["signed_at"])
 	sha := storedPlanSHA(row.s("plan"))
 	if !ok || sha == "" || orStr(req["plan_sha256"]) != sha {
-		r.alog(row.s("key"), "stopped", "The signed stop is not for the stored plan: not passed to the executor")
+		alert("it is not for the stored plan")
 		return
 	}
 	id := capability.ActionID(row.s("key"), int(row.i("plan_version")), sha)
@@ -434,6 +456,6 @@ func (r *run) forwardStop(row row, req map[string]any, by string) {
 		err = writeAtomic(r.actPath("in", id), b, 0o600)
 	}
 	if err != nil {
-		r.alog(row.s("key"), "stopped", "The signed stop could not be passed to the executor: "+err.Error())
+		alert("the request file cannot be written: " + err.Error())
 	}
 }

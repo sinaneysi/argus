@@ -66,14 +66,21 @@ func (s Store) operatorPath(id string, n int) string {
 	return filepath.Join(s.actionDir(id), fmt.Sprintf("operator-%d.json", n))
 }
 
-// OperatorDone reports whether operator step n was confirmed for the start approved at startAt.
-func (s Store) OperatorDone(id string, n int, startAt int64) bool {
+// OperatorDone reports whether operator step n was confirmed for the start approved at startAt. A missing record is
+// "not done"; any other read error is returned (the caller refuses).
+func (s Store) OperatorDone(id string, n int, startAt int64) (bool, error) {
 	b, err := os.ReadFile(s.operatorPath(id, n))
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
 	if err != nil {
-		return false
+		return false, err
 	}
 	var r operatorRecord
-	return json.Unmarshal(b, &r) == nil && r.StartAt == startAt
+	if err := json.Unmarshal(b, &r); err != nil {
+		return false, fmt.Errorf("operator record of step %d is not JSON", n)
+	}
+	return r.StartAt == startAt, nil
 }
 
 // MarkOperatorDone records a consumed continue.

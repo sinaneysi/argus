@@ -238,6 +238,11 @@ Design items for PR 2 (not built in PR 1):
 - **One reading of a plan:** the intake output must be valid UTF-8, without duplicate keys, with integers within
   ±2^53; the worker, the api and actd hash the stored plan decoded with exact numbers, and actd runs those numbers.
 - The review panel's approval pins the plan hash like the task page.
+- Decisions after the security review (2026-11-15): a rollback after a stop is allowed (it is signed by an admin of
+  its own). Read-tier capability steps are allowed for every classification (O8). A stop has no TTL (it only
+  restricts). Dry-run consumes no approval. A worker that drops a stop is a known residual risk: the worker shares
+  the data volume, so the api cannot deliver a stop the worker cannot delete; it is bounded by the single-use start
+  approval and the 24 h TTL, and a stop that cannot be passed on is an alert on the task and in the worker log.
 - **B, done for the hash.** The sealed inputs' hash is in the signature; no capability opens sealed inputs before PR 3.
 - Board migration `0002_plan_hash`: `plan_sha256` (at intake), `approved_sha256`, `approval_sig`, `action_id`,
   `action_state`, the signed continue, `rollback_started`; table `agent_actions` (step results from `actions/out`).

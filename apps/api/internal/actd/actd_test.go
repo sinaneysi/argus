@@ -1273,3 +1273,83 @@ func TestWriteStepsOnlyForDevelop(t *testing.T) {
 		t.Fatalf("read tier on release: %+v", r.Refusal)
 	}
 }
+
+// TestStopHasNoTTL: a stop delivered after the TTL still revokes, so a later continue of the stopped action is refused.
+func TestStopHasNoTTL(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("SN-1", "develop", []map[string]any{check("/ok", 200), {"mode": "operator", "text": "op"}, check("/ok", 200)})
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatal(r.State)
+	}
+	at := t0.Unix()
+	stop := req
+	stop.Stop = &Signed{Approver: "ada", At: at, Signature: f.sign(capability.ApprovalClaim{Kind: capability.SignStop, TaskKey: "SN-1",
+		PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada", At: at, SealedSHA256: capability.SealedSHA256(nil)})}
+	f.now = t0.Add(30 * time.Hour)
+	d = f.daemon()
+	if r := f.submit(d, stop); r.State != StateStopped {
+		t.Fatalf("a stop older than the TTL was not recorded: %+v", r.Refusal)
+	}
+	r := f.submit(d, f.continueReq(req, 2, f.now.Unix()))
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "stopped") || f.calls.Load() != 1 {
+		t.Fatal(r.Refusal.Reason, f.calls.Load())
+	}
+}
+
+// TestDryRunConsumesNothing: a dry-run neither uses up the start approval nor marks an operator step done.
+func TestDryRunConsumesNothing(t *testing.T) {
+	f := newFx(t)
+	f.mode = capability.ModeDryRun
+	d := f.daemon()
+	req := f.task("DN-1", "develop", []map[string]any{check("/ok", 200), {"mode": "operator", "text": "op"}, check("/ok", 200)})
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatal(r.State)
+	}
+	if r := f.submit(d, f.continueReq(req, 2, f.now.Unix())); r.State != StateDryRun || r.Steps[1].Status != "done by the operator" {
+		t.Fatalf("%+v", r)
+	}
+	// on: the same start approval still starts the action, and step 2 still waits for its continue
+	f.mode = capability.ModeOn
+	d = f.daemon()
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatalf("the dry-run used up the approval or the operator step: %+v", r.Refusal)
+	}
+	if _, err := os.Stat(filepath.Join(f.act, "steps", req.ActionID, "operator-2.json")); err == nil {
+		t.Fatal("dry-run wrote an operator record")
+	}
+}
+
+// TestUnreadableOperatorRecordRefuses: an operator record that cannot be read is not "not done": the action is refused.
+func TestUnreadableOperatorRecordRefuses(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("UR-1", "develop", []map[string]any{check("/ok", 200), {"mode": "operator", "text": "op"}, check("/ok", 200)})
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatal(r.State)
+	}
+	p := filepath.Join(f.act, "steps", req.ActionID, "operator-2.json")
+	os.WriteFile(p, []byte("{not json"), 0o600)
+	r := f.submit(d, f.continueReq(req, 2, f.now.Unix()))
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "not readable") {
+		t.Fatal(r.Refusal.Reason)
+	}
+	os.Remove(p)
+	os.Mkdir(p, 0o700) // a read error other than "does not exist"
+	wantRefused(t, f.submit(d, f.continueReq(req, 2, f.now.Unix())), 3, capability.CodeApproval)
+}
+
+// TestStoredPlanIsStrict: a stored plan with a duplicate key (written to board.db by someone else) is refused.
+func TestStoredPlanIsStrict(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("SJ-1", "develop", []map[string]any{check("/ok", 200)})
+	f.exec(f.board, `UPDATE agent_tasks SET plan=replace(plan, '"summary":"s"', '"summary":"s","summary":"t"') WHERE key='SJ-1'`)
+	r := f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "twice") || f.calls.Load() != 0 {
+		t.Fatal(r.Refusal.Reason)
+	}
+}

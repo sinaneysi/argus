@@ -478,7 +478,10 @@ func (h *reqCtx) apiReviewAct(body map[string]any, sess *Session) (any, *apiErr)
 		if pv != I2S(it.row.I("plan_version")) {
 			return nil, &apiErr{409, "the plan changed: review the new version"}
 		}
-		// the hash the panel showed is pinned like on the task page (ADR-0022 D4)
+		// the hash the panel showed is pinned like on the task page (ADR-0022 D4); with a signing key it is required
+		if bodyStr(body, "plan_sha256") == "" && approvalSigner() != nil {
+			return nil, &apiErr{409, "the plan hash is missing: reload the review and approve again"}
+		}
 		return apiResult(BoardPost(c, route, py.NewQS("key", id, "plan_version", pv, "plan_sha256", bodyStr(body, "plan_sha256"), "return", ret), sess))
 	case "lessons":
 		return apiResult(LessonsPost(c, route, py.NewQS("action", act, "id", id, "return", ret), sess))
