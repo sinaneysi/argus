@@ -40,6 +40,10 @@ Implementation plan: [`../capability-executor-plan.md`](../capability-executor-p
   read every file the worker can read: the volume (`keys/master.key`, sealed secrets) and probably
   `/proc/1/environ`. Today that exposes read credentials. A write credential in the same place would be readable by
   the model. So the write credential must not live where the worker can read it.
+  Closed by PR 0 (plan): every CLI call carries `--restricted` and Read deny rules for the volume, `/proc`, `/sys`,
+  `/etc`, `/dev`, and `argus model-exec` applies Landlock before the CLI starts (only the working folder, HOME,
+  programs and CA files; other processes' `/proc` entries closed). Without Landlock a call fails closed unless
+  `ARGUS_MODEL_SANDBOX=off`. The write credential still stays out of the worker (D1): defence in depth.
 
 ## Decision
 

@@ -1269,6 +1269,16 @@
       "help": "one call never runs longer than this"
     },
     {
+      "key": "ARGUS_MODEL_SANDBOX",
+      "type": "str",
+      "default": "landlock",
+      "enum": [
+        "landlock",
+        "off"
+      ],
+      "help": "landlock: the cli provider's Claude CLI can open only its working folder, HOME, programs and CA files (Linux 5.13+; without Landlock a call fails instead of running unconfined); off: only the CLI's own rules"
+    },
+    {
       "key": "ARGUS_MODEL_LOG_DIR",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/model-runs",

@@ -196,7 +196,8 @@ known incident ("Known incident #N") are never candidates. Not ported: hub servi
 As built (P3/P4, the model runtime): `internal/model` is the one way a job calls a model. `ARGUS_MODEL_PROVIDER=cli`
 (the default) runs the Claude CLI that the `argus` image now holds (`/usr/local/bin/claude`, the pinned native musl
 build; `--build-arg CLAUDE_CODE_VERSION=` leaves it out) with the token of Settings -> Claude, a clean environment, a
-throwaway HOME and config folder in `/tmp` and no saved session; `api` sends one Messages API request with the key of
+throwaway HOME and config folder in `/tmp` and no saved session, its file tools confined to the working folder
+(`--restricted`, Read deny rules, and a Landlock sandbox applied by `argus model-exec`; `ARGUS_MODEL_SANDBOX`); `api` sends one Messages API request with the key of
 a Settings -> Data sources entry of type `anthropic` (its check looks at the key's shape only and never calls the API,
 so no call leaves a blocked egress country). Every call: `style.Prepend`, the Claude usage switch and the egress
 guard (a skip, not a failure), a budget, turn and time cap (`ARGUS_MODEL_MAX_BUDGET_USD`, `ARGUS_MODEL_MAX_MINUTES`;
