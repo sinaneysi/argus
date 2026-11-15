@@ -14,6 +14,7 @@
 //	backup       the last state backup's age (when a backup job writes backup-status.json)
 //	internal     own failures of the last 24 h: model run errors, sandbox denials, failed notices
 //	claude       the Claude usage switch (off is the admin's choice: shown, never a failure)
+//	actd         the capability executor, when ARGUS_ACTIONS_MODE is not off: heartbeat age and audit chain state
 //
 // It writes selfcheck.json (0644, no secrets), the file the Overview reads. OK / WARN / FAIL per check, the worst
 // wins. Only when Argus has been FAIL for longer than PageAfter does it send one notice ("<app>-internal",
@@ -414,6 +415,8 @@ type Options struct {
 	Client       *http.Client
 	Now          func() time.Time
 	IntegrityTTL time.Duration // how long an integrity result is kept (default 1 h)
+	ActionsMode  string        // ARGUS_ACTIONS_MODE; "" or off: the actd check is skipped
+	ActdStatus   string        // actions/actd-status.json
 
 	integrity   []Check
 	integrityAt time.Time
@@ -511,7 +514,26 @@ func (o *Options) Collect(ctx context.Context) []Check {
 	if o.ClaudeFile != "" {
 		checks = append(checks, claude(o.ClaudeFile))
 	}
+	if o.ActionsMode != "" && o.ActionsMode != "off" {
+		checks = append(checks, Actd(readMap(o.ActdStatus), mtimeAge(o.ActdStatus, now), o.ActionsMode))
+	}
 	return checks
+}
+
+// Actd checks the capability executor's status file: its heartbeat (WARN after 2 minutes, FAIL after 10) and the
+// audit chain (broken: FAIL, every step is refused until a person looks).
+func Actd(doc map[string]any, age int64, mode string) Check {
+	if age < 0 {
+		return mk("actd", "FAIL", "mode "+mode+" but actd never wrote its status (is the actions profile up?)", Group)
+	}
+	c := Age("actd", age, 120, 600, "heartbeat", "")
+	chain, _ := doc["chain"].(map[string]any)
+	if ok, _ := chain["ok"].(bool); !ok {
+		why, _ := chain["error"].(string)
+		return mk("actd", "FAIL", "audit chain broken: "+clip(why, 160), Group)
+	}
+	c.Detail = fmt.Sprintf("mode %s, %s, audit chain OK (%d records)", pyStr(doc["mode"]), c.Detail, int64(num(chain["records"])))
+	return c
 }
 
 func (o *Options) app() string {

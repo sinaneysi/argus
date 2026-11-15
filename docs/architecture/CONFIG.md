@@ -77,6 +77,31 @@ still the target design.
 - `ARGUS_MIGRATE=auto` (default): `argus-api` and `argus worker` apply `internal/migrate` at start; a read-only
   database is skipped; demo mode never migrates. `off`: only `argus migrate` does.
 
+### Capability executor (ADR-0022, PR 1, 2026-11-15)
+
+`argus actd` runs in the optional compose service `actd` (profile `actions`, its own volume `argus-act`). These keys
+replace the older `ACTIONS_*` / `ACTION_*` draft of §3.11 for this executor. Credentials are never configuration
+keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (value on stdin).
+
+| key | type | default | validation |
+|---|---|---|---|
+| `ARGUS_ACTIONS_MODE` | enum | `off` | `off` \| `dry-run` \| `on`; another value: `actd` does not start |
+| `ARGUS_ACT_DIR` | path | `/var/lib/argus-act` | mode ≠ off: exists, owned by the executor's user, 0700 |
+| `ARGUS_ACTIONS_APPROVAL_TTL` | dur | `24h` | 5m..168h |
+| `ARGUS_ACTIONS_PER_DAY` | int | `20` | 1..200 |
+| `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | 1..365 |
+| `ARGUS_ACT_HTTP_HOSTS` | list | empty (`http.check` off) | `[internal:]host[:port]`, `*.suffix` allowed; no IP literal, no bare `*` |
+| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only |
+
+Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
+`actions/actd-status.json` (the self-check reads it when the mode is not `off`); in `argus-act`: `audit/actions.jsonl`
+(hash chain, `argus actd verify-audit`), `steps/` (stored step results), `keys/`, `secrets/`, `backups/`. The admin
+switch "Stop all actions" is `auth_settings` key `actions.stopped` (read before every step; its UI comes in PR 5).
+The executor key is only `argus-act/keys/act.key` (no environment variable: `argus.env` is shared by every service).
+`ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with
+`ARGUS_ACT_HTTP_ALLOW_HTTP=1`); without `internal:` a name that resolves to a loopback, link-local, private, shared
+(100.64/10), unique local, multicast or unspecified address is refused.
+
 ## 1. Files
 
 | file | owner / mode | holds | read by |

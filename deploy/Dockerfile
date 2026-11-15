@@ -21,7 +21,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOFLAGS=-mod=vendor GOTOOLCHAIN=local \
     go build -trimpath -ldflags="-s -w" -o /out/argus-api ./cmd/argus-api \
  && CGO_ENABLED=0 GOOS=linux GOFLAGS=-mod=vendor GOTOOLCHAIN=local \
     go build -trimpath -ldflags="-s -w" -o /out/argus ./cmd/argus \
- && mkdir -p /out/tmp /out/var/lib/argus && chmod 1777 /out/tmp && chown 65534:65534 /out/var/lib/argus
+ && mkdir -p /out/tmp /out/var/lib/argus /out/var/lib/argus-act && chmod 1777 /out/tmp && chmod 0700 /out/var/lib/argus-act \
+ && chown 65534:65534 /out/var/lib/argus /out/var/lib/argus-act
 
 # --- the Claude CLI (and the musl loader it needs in the scratch image) ------------------------------------------------
 FROM ${GO_IMAGE} AS claude
@@ -43,6 +44,7 @@ COPY --from=build /out/argus-api /app/argus-api
 COPY --from=build /out/argus /app/argus
 COPY --from=build /out/tmp /tmp
 COPY --from=build --chown=65534:65534 /out/var/lib/argus /var/lib/argus
+COPY --from=build --chown=65534:65534 /out/var/lib/argus-act /var/lib/argus-act
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=claude /out/ /
 COPY packages/design/static /app/static

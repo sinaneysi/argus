@@ -14,11 +14,10 @@ Gates for every step (AGENTS.md): Go vet and tests with and without `-tags demo`
 |---|---|---|---|---|---|
 | `ARGUS_ACTIONS_MODE` | `off` \| `dry-run` \| `on` | `off` | no | `actd`, worker (spinUp) | other values: `actd` refuses to start |
 | `ARGUS_ACT_DIR` | path | `/var/lib/argus-act` | with mode ≠ off | `actd` | must exist, owner 65534, mode 0700 |
-| `ARGUS_ACT_KEY` | base64, 32 bytes | (key file `keys/act.key`) | no | `actd` | `secret.ParseKey` |
 | `ARGUS_ACTIONS_APPROVAL_TTL` | duration | `24h` | no | `actd` | 5m..168h |
 | `ARGUS_ACTIONS_PER_DAY` | int | `20` | no | `actd` | 1..200 |
 | `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | no | `actd` | 1..365 |
-| `ARGUS_ACT_HTTP_HOSTS` | comma list of host names, `*.suffix` allowed | empty (`http.check` off) | for `http.check` | `actd`, worker (catalogue) | no IP literals, no bare `*` |
+| `ARGUS_ACT_HTTP_HOSTS` | comma list of `[internal:]host[:port]`, `*.suffix` allowed | empty (`http.check` off) | for `http.check` | `actd`, worker (catalogue) | no IP literals, no bare `*` |
 | `ARGUS_ACT_HTTP_ALLOW_HTTP` | `0` \| `1` | `0` | no | `actd` | plain http for test installs only |
 | `ARGUS_ACT_GITLAB_URL` | https URL | the GitLab data source's address | for `gitlab.*` | `actd` | https, no path |
 | `ARGUS_ACT_GITLAB_PROJECTS` | comma list of project paths or numeric ids | empty (`gitlab.*` off) | for `gitlab.*` | `actd`, worker | each resolves to one project at start |
@@ -82,6 +81,11 @@ is useful without the executor.
   - `dispatchRun`: `execute` writes `actions/in/<action-id>.json`; `agentTick` reads `actions/out` and then writes the
     run job with `capability_results`; state `operator` and request `agent-continue`; request `agent-rollback`.
   - `finish`: the capability table appended by Go.
+- Security requirements from the PR 1 review (ADR-0022 amendment 1):
+  - approval signature: the api signs (task key, plan version, plan sha256, approver, approved at, sha256 of the
+    sealed inputs) with a key only the api holds. `actd` gets the public key in its own volume and refuses any step
+    without a valid signature. `approved_sha256` alone is not enough, because the worker can write `board.db`.
+  - the board migration adds `approved_sha256`. Until then `actd` refuses every step.
 - Tests (`agent_test.go`): `spinUp` table (every env × mode × step mix); the hash changes when one argument changes;
   approval with a stale hash is refused; an operator step stops the action and `agent-continue` resumes at the next
   step; a `release` plan with a valid capability step is still a proposal; the comment table comes from

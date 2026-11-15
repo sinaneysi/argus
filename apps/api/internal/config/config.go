@@ -276,6 +276,14 @@ var Fields = []Field{
 	{Key: "ARGUS_TASK_CHAT_MINUTES", Kind: Int, Default: "5", Min: 1, Max: 30, Help: "one task-chat reply takes at most this long"},
 	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
 	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
+	// the capability executor argus actd (ADR-0022; compose profile actions, its own volume argus-act)
+	{Key: "ARGUS_ACTIONS_MODE", Kind: Str, Default: "off", Choices: []string{"off", "dry-run", "on"}, Help: "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"},
+	{Key: "ARGUS_ACT_DIR", Kind: Path, Default: "/var/lib/argus-act", Help: "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"},
+	{Key: "ARGUS_ACTIONS_APPROVAL_TTL", Kind: Str, Default: "24h", Help: "an approval older than this is refused (5m..168h)"},
+	{Key: "ARGUS_ACTIONS_PER_DAY", Kind: Int, Default: "20", Min: 1, Max: 200, Help: "actions started a day at most (ARGUS_TZ days)"},
+	{Key: "ARGUS_ACTIONS_BACKUP_DAYS", Kind: Int, Default: "30", Min: 1, Max: 365, Help: "how long the sealed old values of write steps are kept"},
+	{Key: "ARGUS_ACT_HTTP_HOSTS", Kind: List, Help: "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"},
+	{Key: "ARGUS_ACT_HTTP_ALLOW_HTTP", Kind: Bool, Default: "0", Help: "1: http.check may use plain http:// (test installations only)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},
