@@ -624,6 +624,14 @@ func (r *run) agentIngest() {
 				continue
 			}
 			plan, err := validatePlanWith(d, a.Registry)
+			if err == nil {
+				// one reading for the page, the hash and actd: valid UTF-8, no duplicate keys, integers within ±2^53
+				if b, rerr := os.ReadFile(base + ".json"); rerr == nil {
+					if serr := capability.StrictJSON(b); serr != nil {
+						plan, err = nil, serr
+					}
+				}
+			}
 			if me != "" {
 				_, after, _ := strings.Cut(me, ": ")
 				plan, err = nil, fmt.Errorf("%s", after)
@@ -1365,6 +1373,7 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 			r.must(`UPDATE agent_tasks SET state='stopped', job_started=NULL, error=?, updated=? WHERE key=?`, "stopped by "+by, r.now(), key)
 			r.alog(key, "stopped", "Stopped by "+by)
 		}
+		r.forwardStop(row, req, by)
 		return "stopped", nil
 	}
 	panic(refused("unknown request kind"))

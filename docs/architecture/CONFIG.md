@@ -120,6 +120,10 @@ fingerprints with `argus approval-key show` (api) and `argus actd approval-key s
 carries it as `approval_key`. Rotation: stop `actd`, move `approval.key` away, restart the api (a new key is made),
 set the new public key in `actd`; approvals signed with the old key are refused from then on. Without the public key
 `actd` starts and refuses every step with the reason.
+Without the key the api refuses to approve a plan that would execute, a continue and a rollback (HTTP 500 with the
+reason); read-only and proposal runs and Stop still work unsigned. A signed Stop is passed to `actd`, which then
+refuses every approval of the task signed before it. `actd` keeps its approval records in `argus-act/approvals/`
+and `argus-act/steps/<action-id>/` (back them up with the volume).
 
 ## 1. Files
 

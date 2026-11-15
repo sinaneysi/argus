@@ -231,15 +231,29 @@ var (
 // execStmt runs one statement, adopting an existing table or index.
 func execStmt(ctx context.Context, q Q, scratch *sql.DB, st string) ([]string, error) {
 	if a := addColumnRe.FindStringSubmatch(strings.TrimSpace(st)); a != nil {
-		have, err := tableInfo(ctx, q, a[1])
+		have, ok, err := columnShape(ctx, q, a[1], a[2])
 		if err != nil {
 			return nil, err
 		}
-		if _, ok := have[a[2]]; ok {
-			return []string{a[1] + "." + a[2]}, nil
+		if !ok {
+			_, err = q.ExecContext(ctx, st)
+			return nil, err
 		}
-		_, err = q.ExecContext(ctx, st)
-		return nil, err
+		// the column exists: adopt it only when it is the column the statement defines (type, NOT NULL, default)
+		for _, x := range []string{`DROP TABLE IF EXISTS "` + a[1] + `"`, `CREATE TABLE "` + a[1] + `" (argus_adopt_placeholder INTEGER)`, st} {
+			if _, err := scratch.ExecContext(ctx, x); err != nil {
+				return nil, err
+			}
+		}
+		want, _, err := columnShape(ctx, scratch, a[1], a[2])
+		if err != nil {
+			return nil, err
+		}
+		if !strings.EqualFold(have.typ, want.typ) || have.notNull != want.notNull || have.dflt != want.dflt {
+			return nil, fmt.Errorf("adopt %s.%s: the existing column is %q (not null %v, default %v), the migration defines %q (not null %v, default %v)",
+				a[1], a[2], have.typ, have.notNull, have.dflt.String, want.typ, want.notNull, want.dflt.String)
+		}
+		return []string{a[1] + "." + a[2]}, nil
 	}
 	m := createRe.FindStringSubmatch(st)
 	if m == nil {
@@ -317,6 +331,18 @@ func columnsOf(ctx context.Context, scratch *sql.DB, name, st string) ([]column,
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// columnShape is one column's type, NOT NULL and default; ok is false when the table has no such column.
+func columnShape(ctx context.Context, q Q, table, col string) (column, bool, error) {
+	var c column
+	var nn int
+	err := q.QueryRowContext(ctx, `SELECT name, type, "notnull", dflt_value FROM pragma_table_info(?) WHERE name=?`, table, col).Scan(&c.name, &c.typ, &nn, &c.dflt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return c, false, nil
+	}
+	c.notNull = nn != 0
+	return c, err == nil, err
 }
 
 func tableInfo(ctx context.Context, q Q, name string) (map[string]bool, error) {

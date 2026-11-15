@@ -50,6 +50,7 @@ const (
 	PhaseVerify   = "verify"
 	PhaseRollback = "rollback"
 	PhaseRefused  = "refused"
+	PhaseStop     = "stop" // an admin's signed stop: approvals of the task signed before it are revoked
 )
 
 // DetailMax is the longest detail kept, after the secret scan.

@@ -26,6 +26,7 @@ const (
 	SignStart    = "start"    // Spin up agent: the plan version and hash, run the capability steps
 	SignContinue = "continue" // the operator did the operator step Step: run the steps after it
 	SignRollback = "rollback" // roll back step Step of the action
+	SignStop     = "stop"     // an admin stopped the task: actd refuses every approval of it signed before this time
 )
 
 // approvalDomain separates these signatures from any other use of the key.
@@ -52,7 +53,7 @@ var (
 // Message is the exact byte string that is signed: one field per line, fixed order, no field may hold a newline.
 func (c ApprovalClaim) Message() ([]byte, error) {
 	switch {
-	case c.Kind != SignStart && c.Kind != SignContinue && c.Kind != SignRollback:
+	case c.Kind != SignStart && c.Kind != SignContinue && c.Kind != SignRollback && c.Kind != SignStop:
 		return nil, errors.New("unknown approval kind")
 	case !claimKeyRe.MatchString(c.TaskKey):
 		return nil, errors.New("bad task key")
@@ -64,7 +65,7 @@ func (c ApprovalClaim) Message() ([]byte, error) {
 		return nil, errors.New("bad approver")
 	case c.At <= 0:
 		return nil, errors.New("bad approval time")
-	case c.Step < 0 || (c.Kind == SignStart) != (c.Step == 0):
+	case c.Step < 0 || (c.Kind == SignStart || c.Kind == SignStop) != (c.Step == 0):
 		return nil, errors.New("bad step")
 	}
 	return []byte(strings.Join([]string{approvalDomain, c.Kind, c.TaskKey, strconv.Itoa(c.PlanVersion), c.PlanSHA256, c.Approver,

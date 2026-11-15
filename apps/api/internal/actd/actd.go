@@ -45,6 +45,7 @@ const (
 	StateRefused  = "refused"
 	StateFailed   = "failed"
 	StateOperator = "operator" // an operator step stopped the run: "needs the operator"
+	StateStopped  = "stopped"  // a signed stop was recorded
 )
 
 // Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from
@@ -59,6 +60,7 @@ type Request struct {
 	SealedInputs map[string]string `json:"sealed_inputs,omitempty"` // opened by a later capability; ciphertext only
 	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
 	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
+	Stop         *Signed           `json:"stop,omitempty"`          // agent-stop: revoke the task's approvals signed before it
 }
 
 // Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
@@ -217,7 +219,7 @@ func New(o Options) (*Daemon, error) {
 	}
 	d.lock = lock
 	if actErr == nil {
-		for _, sub := range []string{"audit", "steps", "keys", "secrets", "backups"} {
+		for _, sub := range []string{"audit", "steps", "keys", "secrets", "backups", "approvals"} {
 			if err := os.MkdirAll(filepath.Join(o.ActDir, sub), 0o700); err != nil {
 				d.Close()
 				return nil, err
@@ -441,17 +443,14 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 		Classification map[string]any   `json:"classification"`
 		Plan           []map[string]any `json:"plan"`
 	}
-	if err := json.Unmarshal([]byte(plan), &doc); err != nil || doc.Classification == nil {
+	dec := json.NewDecoder(strings.NewReader(plan))
+	dec.UseNumber() // exact numbers: the arguments that run are the ones the hash covers
+	if err := dec.Decode(&doc); err != nil || doc.Classification == nil {
 		return nil, errors.New("the stored plan is not readable")
 	}
-	var raw struct {
-		Classification any `json:"classification"`
-		Plan           any `json:"plan"`
-	}
-	json.Unmarshal([]byte(plan), &raw)
-	stored, err := capability.PlanSHA256(raw.Classification, raw.Plan)
-	if err != nil {
-		return nil, err
+	stored := capability.StoredPlanSHA256(plan)
+	if stored == "" {
+		return nil, errors.New("the stored plan is not readable")
 	}
 	env, _ := doc.Classification["environment"].(string)
 	t := &task{key: key, env: capability.Env(env)}
@@ -655,11 +654,27 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	id := req.ActionID
 	t, terr := d.loadTask(ctx, req.TaskKey)
 	c := t.confirmed()
-	// Write-tier steps for release and pre-release are refused before any other check (rule 2).
+	kinds := 0
+	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop} {
+		if x != nil {
+			kinds++
+		}
+	}
+	if kinds > 1 {
+		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, rollback or stop"), true)
+	}
+	if req.Stop != nil { // recorded even while the mode or the switch refuses everything else
+		if want := capability.ActionID(req.TaskKey, req.PlanVersion, req.PlanSHA256); want == "" || want != id || terr != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "stop: the request is not for the stored plan"), d.audit != nil)
+		}
+		return d.stop(ctx, req, t, c)
+	}
+	// a write step (write-tier capability or WRITE mode) runs only for develop; refused before any other check (rule 2)
 	if terr == nil {
 		for _, s := range t.steps {
-			if cp, ok := d.o.Registry.Get(s.Capability); ok && cp.Tier() == capability.Write && (t.env == capability.Release || t.env == capability.PreRelease) {
-				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write-tier capability never runs for %s", s.N, t.env), true)
+			cp, ok := d.o.Registry.Get(s.Capability)
+			if (ok && cp.Tier() == capability.Write || s.Mode == "WRITE") && t.env != capability.Develop {
+				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write step runs only for develop, the task is %q", s.N, clip(string(t.env), 20)), true)
 			}
 		}
 	}
@@ -675,10 +690,31 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	sealed := capability.SealedSHA256(req.SealedInputs)
 	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover, t.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
 	if req.Rollback != nil {
-		if req.Continue != nil {
-			return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is a continue or a rollback, not both"), true)
-		}
 		return d.rollback(ctx, req, t, c)
+	}
+	// what actd remembers: a start approval starts the action once; a stop revokes older approvals (amendment 1)
+	rec, err := d.taskRecord(t.key)
+	if err != nil {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "%s", err.Error()), true)
+	}
+	startAt := t.approval.ApprovedAt.Unix()
+	switch {
+	case t.approval.ApprovedAt.IsZero():
+	case startAt <= rec.RevokedAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task after this approval: approve again"), true)
+	case req.Continue == nil && startAt <= rec.StartAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval was already used to start the action: approve again"), true)
+	case req.Continue != nil && startAt != rec.StartAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
+	}
+	if req.Continue != nil {
+		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
+			return d.refuseAll(c, id, r, true)
+		}
+		if req.Continue.At <= rec.RevokedAt || req.Continue.At < startAt {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: signed before the start or before a stop"), true)
+		}
+		t.approval.TTLFrom = time.Unix(req.Continue.At, 0) // a continue has its own TTL; the start TTL bounds the start only
 	}
 	if r := capability.CheckApproval(t.approval, d.o.TTL, d.now()); r != nil {
 		return d.refuseAll(c, id, r, true)
@@ -706,20 +742,16 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if ncap == 0 {
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeCapability, "the plan has no capability step"), true)
 	}
-	// agent-continue: the operator steps up to the signed one are done; the steps after it run
-	doneUpTo := -1
-	if req.Continue != nil {
-		for i, s := range t.steps {
-			if s.Mode == "operator" && s.N == req.Continue.Step {
-				doneUpTo = i
-			}
+	// the operator step the action waits for: the first one not yet confirmed for this start (actd's own record)
+	waitN := 0
+	for _, s := range t.steps {
+		if s.Mode == "operator" && !d.store.OperatorDone(id, s.N, startAt) {
+			waitN = s.N
+			break
 		}
-		if doneUpTo < 0 {
-			return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "continue: step %d is not an operator step of the plan", req.Continue.Step), true)
-		}
-		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
-			return d.refuseAll(c, id, r, true)
-		}
+	}
+	if req.Continue != nil && (waitN == 0 || req.Continue.Step != waitN) {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: step %d is not the operator step the action waits for", req.Continue.Step), true)
 	}
 	on := d.o.Mode == capability.ModeOn
 	newAction := !d.store.Started(id)
@@ -732,6 +764,15 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		if err := d.store.MarkStarted(id, d.now()); err != nil {
 			return d.refuseAll(c, id, capability.Refuse(6, capability.CodeLimit, "the start could not be recorded: %v", err), true)
 		}
+	}
+	// the approval is consumed before any step runs: a replay of this start or this continue is refused
+	if req.Continue == nil {
+		rec.StartAt = startAt
+		if err := d.putTaskRecord(t.key, rec); err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the start could not be recorded: %v", err), true)
+		}
+	} else if err := d.store.MarkOperatorDone(id, req.Continue.Step, operatorRecord{StartAt: startAt, ContinueAt: req.Continue.At, Approver: req.Continue.Approver}); err != nil {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the continue could not be recorded: %v", err), true)
 	}
 	resp := &Response{ActionID: id, TaskKey: c.TaskKey, Mode: string(d.o.Mode), State: StateDone, Steps: []StepResult{}, Started: d.now().Unix()}
 	if !on {
@@ -767,7 +808,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		resp.Steps = append(resp.Steps, sr)
 	}
 	for i, s := range t.steps {
-		if s.Mode == "operator" && i <= doneUpTo {
+		if s.Mode == "operator" && d.store.OperatorDone(id, s.N, startAt) {
 			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "done by the operator", At: d.now().Unix()})
 			continue
 		}
@@ -791,6 +832,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover, nt.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+			nt.approval.TTLFrom = t.approval.TTLFrom
 			t.approval = nt.approval
 		}
 		if r := argsSecretRule(s.N, s.Args); r != nil {

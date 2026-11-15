@@ -257,4 +257,12 @@ func TestAddColumnAdopted(t *testing.T) {
 	if !found || r.To != Latest(Board) {
 		t.Fatalf("%+v", r)
 	}
+	// a column of the same name but another shape is not adopted
+	p2 := filepath.Join(t.TempDir(), "board.db")
+	db, _ = sql.Open("sqlite", p2)
+	db.Exec(`CREATE TABLE agent_tasks (key TEXT PRIMARY KEY, plan_sha256 INTEGER NOT NULL DEFAULT 0)`)
+	db.Close()
+	if _, err := ApplyFile(ctx, p2, Board); err == nil || !strings.Contains(err.Error(), "plan_sha256") {
+		t.Fatal("a column of another type was adopted:", err)
+	}
 }

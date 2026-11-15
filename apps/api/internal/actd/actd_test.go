@@ -158,6 +158,19 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 	return req
 }
 
+// reapprove is a new signed start approval of the stored plan, later than the last one (the same action id).
+func (f *fx) reapprove(key string, req Request) {
+	f.t.Helper()
+	f.exec(f.board, `UPDATE agent_tasks SET approved_at=approved_at+1, state='approved' WHERE key=?`, key)
+	db, _ := sql.Open("sqlite", f.board)
+	var at int64
+	db.QueryRow(`SELECT approved_at FROM agent_tasks WHERE key=?`, key).Scan(&at)
+	db.Close()
+	sig := f.sign(capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: key, PlanVersion: req.PlanVersion, PlanSHA256: req.PlanSHA256,
+		Approver: "ada", At: at, SealedSHA256: capability.SealedSHA256(req.SealedInputs)})
+	f.exec(f.board, `UPDATE agent_tasks SET approval_sig=? WHERE key=?`, sig, key)
+}
+
 // sign is the api's signature of a claim.
 func (f *fx) sign(c capability.ApprovalClaim) string {
 	f.t.Helper()
@@ -263,6 +276,8 @@ func TestIdempotentRepeat(t *testing.T) {
 	d := f.daemon()
 	req := f.task("OPS-2", "develop", []map[string]any{check("/ok", 200)})
 	a := f.submit(d, req)
+	wantRefused(t, f.submit(d, req), 3, capability.CodeApproval) // the same approval starts an action once
+	f.reapprove("OPS-2", req)
 	b := f.submit(d, req)
 	if f.calls.Load() != 1 {
 		t.Fatalf("%d calls for a repeated request, want 1", f.calls.Load())
@@ -1050,7 +1065,7 @@ func TestContinueAfterOperatorStep(t *testing.T) {
 	}
 	rq := req
 	rq.Continue = &Signed{Step: 3, Approver: "ada", At: claim.At, Signature: f.sign(func() capability.ApprovalClaim { c := claim; c.Step = 3; return c }())}
-	wantRefused(t, f.submit(d, rq), 4, capability.CodeArguments) // step 3 is not an operator step
+	wantRefused(t, f.submit(d, rq), 3, capability.CodeApproval) // step 3 is not the operator step it waits for
 	if f.calls.Load() != 1 {
 		t.Fatal("a refused continue ran a step")
 	}
@@ -1127,5 +1142,134 @@ func TestApprovalPubFile(t *testing.T) {
 	}
 	if _, err := SetApprovalPub(dir, []byte("not a key")); err == nil {
 		t.Fatal("junk stored as the key")
+	}
+}
+
+func (f *fx) continueReq(req Request, step int, at int64) Request {
+	rq := req
+	rq.Continue = &Signed{Step: step, Approver: "ada", At: at, Signature: f.sign(capability.ApprovalClaim{Kind: capability.SignContinue,
+		TaskKey: req.TaskKey, PlanVersion: req.PlanVersion, PlanSHA256: req.PlanSHA256, Approver: "ada", At: at,
+		SealedSHA256: capability.SealedSHA256(nil), Step: step})}
+	return rq
+}
+
+// TestStopIsDurable: after a signed stop, the stopped approval never starts the action again, even when the worker
+// sets the task to approved; a newer approval does.
+func TestStopIsDurable(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("SP-1", "develop", []map[string]any{check("/ok", 200)})
+	stop := req
+	at := f.now.Add(-time.Minute).Unix()
+	stop.Stop = &Signed{Approver: "ada", At: at, Signature: f.sign(capability.ApprovalClaim{Kind: capability.SignStop, TaskKey: "SP-1",
+		PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada", At: at, SealedSHA256: capability.SealedSHA256(nil)})}
+	forged := req
+	forged.Stop = &Signed{Approver: "ada", At: f.now.Unix(), Signature: "AAAA"}
+	wantRefused(t, f.submit(d, forged), 3, capability.CodeApproval)
+	if r := f.submit(d, stop); r.State != StateStopped {
+		t.Fatalf("%+v", r)
+	}
+	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key='SP-1'`) // the worker approves again by itself
+	r := f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "stopped") || f.calls.Load() != 0 {
+		t.Fatalf("%s, %d calls", r.Refusal.Reason, f.calls.Load())
+	}
+	// an admin approves again after the stop: it runs once, and its replay is refused
+	f.exec(f.board, `UPDATE agent_tasks SET approved_at=? WHERE key='SP-1'`, at)
+	f.reapprove("SP-1", req)
+	if r := f.submit(d, req); r.State != StateDone {
+		t.Fatalf("%+v", r.Refusal)
+	}
+	wantRefused(t, f.submit(d, req), 3, capability.CodeApproval)
+	if f.calls.Load() != 1 {
+		t.Fatal(f.calls.Load())
+	}
+	found := false
+	for _, l := range f.auditLines() {
+		found = found || l.Phase == PhaseStop
+	}
+	if !found {
+		t.Fatal("the stop is not audited")
+	}
+}
+
+// TestOperatorStepsInOrder: a continue (even validly signed) for a later operator step, or a replayed continue, is
+// refused; each operator step is confirmed once, in order.
+func TestOperatorStepsInOrder(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("OS-1", "develop", []map[string]any{check("/ok", 200), {"mode": "operator", "text": "op a"}, check("/ok", 200),
+		{"mode": "operator", "text": "op b"}, check("/ok", 200)})
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatalf("%+v", r)
+	}
+	at := f.now.Unix()
+	wantRefused(t, f.submit(d, f.continueReq(req, 4, at)), 3, capability.CodeApproval) // skips step 2
+	r := f.submit(d, f.continueReq(req, 2, at))
+	if r.State != StateOperator || r.Steps[3].Status != "needs the operator" || f.calls.Load() != 2 {
+		t.Fatalf("%+v %d", r, f.calls.Load())
+	}
+	wantRefused(t, f.submit(d, f.continueReq(req, 2, at)), 3, capability.CodeApproval) // replay
+	wantRefused(t, f.submit(d, f.continueReq(req, 2, at+1)), 3, capability.CodeApproval)
+	if r := f.submit(d, f.continueReq(req, 4, at+2)); r.State != StateDone || f.calls.Load() != 3 {
+		t.Fatalf("%+v %d", r, f.calls.Load())
+	}
+	wantRefused(t, f.submit(d, f.continueReq(req, 4, at+3)), 3, capability.CodeApproval)
+}
+
+// TestContinueHasItsOwnTTL: an operator step that waits more than the start TTL resumes with a fresh continue.
+func TestContinueHasItsOwnTTL(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("TT-1", "develop", []map[string]any{check("/ok", 200), {"mode": "operator", "text": "op"}, check("/ok", 200)})
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatal(r.State)
+	}
+	f.now = t0.Add(30 * time.Hour)
+	d = f.daemon()
+	wantRefused(t, f.submit(d, f.continueReq(req, 2, t0.Unix())), 3, capability.CodeApproval) // the continue itself is too old
+	if r := f.submit(d, f.continueReq(req, 2, f.now.Unix())); r.State != StateDone {
+		t.Fatalf("%+v", r.Refusal)
+	}
+}
+
+func TestRollbackNeedsTheApprovedPlan(t *testing.T) {
+	w := &fakeWrite{}
+	f := newFx(t, w)
+	d := f.daemon()
+	req := f.task("RA-1", "develop", []map[string]any{writeStep()})
+	if r := f.submit(d, req); r.State != StateDone {
+		t.Fatal(r.State)
+	}
+	rb := req
+	rb.Rollback = &Signed{Step: 1, Approver: "ada", At: f.now.Unix(), Signature: f.sign(capability.ApprovalClaim{Kind: capability.SignRollback,
+		TaskKey: "RA-1", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada", At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(nil), Step: 1})}
+	wantRefused(t, f.submit(d, rb), 3, capability.CodeApproval) // still approved: a job may run
+	f.exec(f.board, `UPDATE agent_tasks SET state='done', approved_sha256=? WHERE key='RA-1'`, strings.Repeat("e", 64))
+	wantRefused(t, f.submit(d, rb), 3, capability.CodeApproval)
+	f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=? WHERE key='RA-1'`, req.PlanSHA256)
+	if r := f.submit(d, rb); r.State != StateDone || w.rollbacks != 1 {
+		t.Fatalf("%+v", r.Refusal)
+	}
+}
+
+// TestWriteStepsOnlyForDevelop: read tier runs for every classification (O8); a write-tier capability or a WRITE
+// step is refused unless the classification is develop.
+func TestWriteStepsOnlyForDevelop(t *testing.T) {
+	w := &fakeWrite{}
+	f := newFx(t, w)
+	d := f.daemon()
+	for _, env := range []string{"release", "pre-release", "none", "moon"} {
+		wantRefused(t, f.submit(d, f.task("WD-"+env, env, []map[string]any{writeStep()})), 2, capability.CodeEnvironment)
+		ws := check("/ok", 200)
+		ws["mode"] = "WRITE"
+		wantRefused(t, f.submit(d, f.task("WM-"+env, env, []map[string]any{ws})), 2, capability.CodeEnvironment)
+	}
+	if w.applies != 0 || f.calls.Load() != 0 {
+		t.Fatal("a write step ran outside develop")
+	}
+	if r := f.submit(d, f.task("WR-1", "release", []map[string]any{check("/ok", 200)})); r.State != StateDone {
+		t.Fatalf("read tier on release: %+v", r.Refusal)
 	}
 }

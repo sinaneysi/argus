@@ -159,6 +159,8 @@ type Approval struct {
 	RequestSealed   string // SealedSHA256 of the request's sealed inputs
 
 	PublicKey ed25519.PublicKey // the api's approval public key (argus-act/keys/approval.pub); nil: every step refused
+	// TTLFrom, when set, is the time the TTL counts from instead of ApprovedAt: a signed continue has its own TTL
+	TTLFrom time.Time
 }
 
 // Claim is the start approval this approval says the api signed.
@@ -169,6 +171,13 @@ func (a Approval) Claim() ApprovalClaim {
 	}
 	return ApprovalClaim{Kind: SignStart, TaskKey: a.TaskKey, PlanVersion: a.ApprovedVersion, PlanSHA256: a.ApprovedSHA256,
 		Approver: a.ApprovedBy, At: at, SealedSHA256: a.RequestSealed}
+}
+
+func (a Approval) ttlFrom() time.Time {
+	if !a.TTLFrom.IsZero() {
+		return a.TTLFrom
+	}
+	return a.ApprovedAt
 }
 
 // ApprovedStates are the task states in which an approved plan may execute.
@@ -198,9 +207,9 @@ func CheckApproval(a Approval, ttl time.Duration, now time.Time) *Refusal {
 		return Refuse(3, CodeApproval, "the approver is not an admin")
 	case !a.ApproverEnabled:
 		return Refuse(3, CodeApproval, "the approver is disabled")
-	case a.ApprovedAt.After(now.Add(clockSkew)):
+	case a.ApprovedAt.After(now.Add(clockSkew)) || a.TTLFrom.After(now.Add(clockSkew)):
 		return Refuse(3, CodeApproval, "the approval time is in the future")
-	case ttl <= 0 || now.Sub(a.ApprovedAt) > ttl:
+	case ttl <= 0 || now.Sub(a.ttlFrom()) > ttl:
 		return Refuse(3, CodeApproval, "the approval is older than %s", ttl)
 	}
 	return nil

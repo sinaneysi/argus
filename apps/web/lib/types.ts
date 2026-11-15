@@ -163,6 +163,7 @@ export type Action = {
 
 export type Plan = {
   version: number;
+  sha256?: string;
   steps: { text: string; mode: string; targets: string[] }[];
   writes: number;
   estimate: string;

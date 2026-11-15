@@ -63,7 +63,14 @@ func Load(dir string, create bool) (ed25519.PrivateKey, error) {
 		if err := writeExcl(p, priv, 0o600); err != nil {
 			return nil, err
 		}
-		if err := os.WriteFile(filepath.Join(dir, PubFile), pub, 0o644); err != nil {
+		// the public half: a new temporary file (O_EXCL, no link followed), then a rename over the name
+		tmp := filepath.Join(dir, "."+PubFile+".tmp")
+		os.Remove(tmp)
+		if err := writeExcl(tmp, pub, 0o644); err != nil {
+			return nil, err
+		}
+		if err := os.Rename(tmp, filepath.Join(dir, PubFile)); err != nil {
+			os.Remove(tmp)
 			return nil, err
 		}
 		b, err = readNoFollow(p)

@@ -588,10 +588,13 @@ func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
 		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" {
 			st["rollback"] = true
 		}
-		if r.Str("status") == "needs the operator" && a.Str("state") == "operator" {
-			wait = map[string]any{"step": r.I("step"), "text": texts[r.I("step")], "can": admin}
-		}
 		steps = append(steps, st)
+	}
+	// the step to continue after comes from actd's result file, not from board.db (the worker writes that)
+	if a.Str("state") == "operator" {
+		if n := agentWaitingStep(id); n > 0 {
+			wait = map[string]any{"step": n, "text": texts[n], "can": admin}
+		}
 	}
 	out := map[string]any{"id": id, "state": a.Str("action_state"), "steps": steps}
 	if wait != nil {

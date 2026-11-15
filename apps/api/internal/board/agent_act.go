@@ -24,20 +24,7 @@ import (
 
 // storedPlanSHA is the plan hash of a stored plan (capability.PlanSHA256 of its classification and steps); "" when
 // the plan is not readable. The api and actd compute it the same way from the same text.
-func storedPlanSHA(plan string) string {
-	var raw struct {
-		Classification any `json:"classification"`
-		Plan           any `json:"plan"`
-	}
-	if plan == "" || json.Unmarshal([]byte(plan), &raw) != nil {
-		return ""
-	}
-	s, err := capability.PlanSHA256(raw.Classification, raw.Plan)
-	if err != nil {
-		return ""
-	}
-	return s
-}
+func storedPlanSHA(plan string) string { return capability.StoredPlanSHA256(plan) }
 
 // executable: at least one capability step, and every WRITE step has a valid capability (validatePlanWith kept it).
 func executable(plan map[string]any) bool {
@@ -416,4 +403,37 @@ func (r *run) stopAct(row row) {
 		return
 	}
 	os.Remove(r.actPath("in", row.s("action_id")))
+}
+
+// forwardStop passes an admin's signed stop to actd, which then refuses every approval of the task signed before it
+// (the worker could otherwise set the task to approved again and replay the old approval).
+func (r *run) forwardStop(row row, req map[string]any, by string) {
+	a := r.o.Agent
+	sig, _ := req["signature"].(string)
+	if a.ActionsDir == "" || sig == "" {
+		return
+	}
+	at, ok := asInt(req["signed_at"])
+	sha := storedPlanSHA(row.s("plan"))
+	if !ok || sha == "" || orStr(req["plan_sha256"]) != sha {
+		r.alog(row.s("key"), "stopped", "The signed stop is not for the stored plan: not passed to the executor")
+		return
+	}
+	id := capability.ActionID(row.s("key"), int(row.i("plan_version")), sha)
+	if id == "" {
+		return
+	}
+	var plan map[string]any
+	json.Unmarshal([]byte(row.s("plan")), &plan)
+	areq := actRequest(row, plan, id, sha)
+	areq.Approver = by
+	areq.Stop = &actd.Signed{Approver: by, At: at, Signature: signature(req)}
+	b, _ := json.MarshalIndent(areq, "", " ")
+	err := os.MkdirAll(filepath.Dir(r.actPath("in", id)), 0o700)
+	if err == nil {
+		err = writeAtomic(r.actPath("in", id), b, 0o600)
+	}
+	if err != nil {
+		r.alog(row.s("key"), "stopped", "The signed stop could not be passed to the executor: "+err.Error())
+	}
 }

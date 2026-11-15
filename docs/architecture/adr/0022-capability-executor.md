@@ -227,6 +227,17 @@ Design items for PR 2 (not built in PR 1):
   plan version, plan sha256, approver, time, sealed-inputs sha256, step). `actd` loads `argus-act/keys/approval.pub`
   and refuses (rule 3) an approval that is unsigned, signed by another key, re-dated, moved to another task or made
   over other sealed inputs. Continue and rollback are refused unless signed by an enabled admin within the TTL.
+- **What actd remembers** (its own volume, not `board.db`): per task the approval time of the last accepted start
+  and of the last signed stop (`approvals/<task key>.json`); per action each operator step confirmed by a continue
+  (`steps/<action-id>/operator-<n>.json`). A start approval starts the action once (a repeat needs a newer
+  approval); a signed stop revokes every approval of the task signed before it; a continue must name the first
+  operator step not yet confirmed for that start, and is consumed. A continue has its own TTL (from its signature);
+  the start TTL bounds only the start. A rollback needs the action's signed approval of the stored plan and a task
+  with no job running. Any write step (write-tier capability or WRITE mode) is refused unless the classification is
+  `develop`; read-tier steps run for every classification (O8).
+- **One reading of a plan:** the intake output must be valid UTF-8, without duplicate keys, with integers within
+  ±2^53; the worker, the api and actd hash the stored plan decoded with exact numbers, and actd runs those numbers.
+- The review panel's approval pins the plan hash like the task page.
 - **B, done for the hash.** The sealed inputs' hash is in the signature; no capability opens sealed inputs before PR 3.
 - Board migration `0002_plan_hash`: `plan_sha256` (at intake), `approved_sha256`, `approval_sig`, `action_id`,
   `action_state`, the signed continue, `rollback_started`; table `agent_actions` (step results from `actions/out`).

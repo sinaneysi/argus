@@ -353,6 +353,12 @@ func AgentPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		payload = py.NewOMap("kind", "agent-answers", "key", key, "instructions", ins, "answers", answers, "post_jira", get("post_jira") == "1")
 	default:
 		payload = py.NewOMap("kind", "agent-stop", "key", key)
+		// a signed stop: actd revokes every approval of the task signed before it (ADR-0022 amendment 1)
+		if sha := agentPlanSHA(a); sha != "" && a.I("plan_version") > 0 {
+			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true); err != nil {
+				return 500, "Not stopped: " + err.Error()
+			}
+		}
 	}
 	rid, err := BoardWriteRequest(payload, sess)
 	if err != nil {
@@ -392,7 +398,7 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "The plan changed: review v" + I2S(a.I("plan_version")) + " (its hash is pinned when you spin up)"
 	}
 	p := py.NewOMap("kind", "agent-start", "key", key, "plan_version", n)
-	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0); err != nil {
+	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan)); err != nil {
 		return 500, "Not started: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)

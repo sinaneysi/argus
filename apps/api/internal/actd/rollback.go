@@ -17,6 +17,18 @@ func (d *Daemon) rollback(ctx context.Context, req Request, t *task, c *confirme
 	if r := d.checkSigned(ctx, capability.SignRollback, t, req, rb); r != nil {
 		return d.refuseAll(c, id, r, true)
 	}
+	// the action must have been started by a signed approval of exactly this stored plan, and be over
+	a := t.approval
+	switch {
+	case a.ApprovedVersion != a.PlanVersion || a.ApprovedSHA256 == "" || a.ApprovedSHA256 != a.StoredSHA256:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: the approved plan hash is not the stored plan's"), true)
+	case capability.VerifyApproval(a.PublicKey, a.Claim(), a.Signature) != nil:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: the action's approval is not signed by the api"), true)
+	case !a.ApproverAdmin || !a.ApproverEnabled:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: the action's approver is not an enabled admin"), true)
+	case a.State == "planning" || a.State == "running" || a.State == "approved":
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: a job runs for this task (%s)", clip(a.State, 20)), true)
+	}
 	var step *planStep
 	for i := range t.steps {
 		if t.steps[i].N == rb.Step && t.steps[i].Capability != "" {

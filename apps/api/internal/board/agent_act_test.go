@@ -251,13 +251,7 @@ func TestExecuteOperatorContinue(t *testing.T) {
 	e.actd(t)
 	e.run(t)
 	if s := e.q(t, `SELECT state FROM agent_tasks WHERE key='OPS-7'`); s != "operator" || e.calls.Load() != 1 {
-		m, _ := filepath.Glob(filepath.Join(e.o.Agent.ActionsDir, "*", "*"))
-		var outs []string
-		for _, f := range m {
-			b, _ := os.ReadFile(f)
-			outs = append(outs, f+": "+string(b))
-		}
-		t.Fatalf("%s, %d calls, %s; %s", s, e.calls.Load(), e.q(t, `SELECT COALESCE(error,'') || action_id FROM agent_tasks WHERE key='OPS-7'`), strings.Join(outs, "\n"))
+		t.Fatalf("%s, %d calls", s, e.calls.Load())
 	}
 	body := e.q(t, `SELECT payload FROM outbox WHERE kind='comment' ORDER BY id DESC LIMIT 1`)
 	if !strings.Contains(body, "needs the operator: step 2: Start the deploy pipeline") || !strings.Contains(body, "| 1 | http.check | ok") {
@@ -351,6 +345,63 @@ func TestReleaseCapabilityIsProposal(t *testing.T) {
 	}
 	if m, _ := filepath.Glob(filepath.Join(e.o.Agent.ActionsDir, "in", "*")); len(m) != 0 {
 		t.Fatal("a release plan was sent to the executor")
+	}
+}
+
+// TestSignedStopIsDurable: after a signed stop reached actd, the worker setting the task to approved again does not
+// run the stopped approval; a new approval does.
+func TestSignedStopIsDurable(t *testing.T) {
+	e := newActEnv(t, capability.ModeOn)
+	e.run(t)
+	e.out(t, "OPS-7", "intake", classified("develop", "change", httpStep("/a")), map[string]any{"cost_usd": 0.2, "is_error": false})
+	e.run(t)
+	e.req(t, e.signed(t, capability.SignStart, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1}))
+	e.run(t)
+	time.Sleep(1100 * time.Millisecond) // the stop is signed after the approval
+	e.req(t, e.signed(t, capability.SignStop, map[string]any{"kind": "agent-stop", "key": "OPS-7", "plan_version": 1}))
+	e.run(t)
+	if s := e.q(t, `SELECT state FROM agent_tasks WHERE key='OPS-7'`); s != "stopped" {
+		t.Fatal(s)
+	}
+	e.actd(t) // the stop replaced the pending start in actions/in
+	// the worker sets the task to approved again by itself: the old approval is refused
+	e.exec(t, `UPDATE agent_tasks SET state='approved' WHERE key='OPS-7'`)
+	e.run(t)
+	e.actd(t)
+	e.run(t)
+	if e.calls.Load() != 0 || e.q(t, `SELECT action_state FROM agent_tasks WHERE key='OPS-7'`) != "refused" {
+		t.Fatalf("the stopped approval ran: %d calls", e.calls.Load())
+	}
+	if d := e.q(t, `SELECT detail FROM agent_actions WHERE step=0`); !strings.Contains(d, "stopped") {
+		t.Fatal(d)
+	}
+	time.Sleep(1100 * time.Millisecond)
+	e.exec(t, `UPDATE agent_tasks SET state='ready', phase='intake', job_started=NULL WHERE key='OPS-7'`)
+	e.req(t, e.signed(t, capability.SignStart, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1}))
+	e.run(t)
+	e.actd(t)
+	e.run(t)
+	if e.calls.Load() != 1 {
+		t.Fatalf("a new approval after the stop did not run: %d calls", e.calls.Load())
+	}
+}
+
+// TestIntakeOutputIsStrict: duplicate keys, integers outside ±2^53 and invalid UTF-8 fail the intake, so the page,
+// the hash and actd read the same plan.
+func TestIntakeOutputIsStrict(t *testing.T) {
+	for name, raw := range map[string]string{
+		"duplicate key": `{"classification": {"environment": "develop", "kind": "change"}, "plan": [{"text": "a", "mode": "read-only", "mode": "WRITE"}]}`,
+		"big integer":   `{"classification": {"environment": "develop", "kind": "change"}, "plan": [{"text": "a", "mode": "read-only", "n": 9007199254740993}]}`,
+		"invalid utf-8": "{\"classification\": {\"environment\": \"develop\", \"kind\": \"change\"}, \"plan\": [{\"text\": \"a\xff\", \"mode\": \"read-only\"}]}",
+	} {
+		e := agentEnv(t)
+		e.run(t)
+		e.out(t, "OPS-7", "intake", nil, map[string]any{"cost_usd": 0.1, "is_error": false})
+		os.WriteFile(filepath.Join(e.o.Agent.OutDir, "OPS-7.intake.json"), []byte(raw), 0o644)
+		e.run(t)
+		if s := e.q(t, `SELECT state || ':' || COALESCE(error,'') FROM agent_tasks WHERE key='OPS-7'`); !strings.HasPrefix(s, "failed:intake:") {
+			t.Errorf("%s: %s", name, s)
+		}
 	}
 }
 
