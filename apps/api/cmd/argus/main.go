@@ -16,6 +16,7 @@
 //	argus sources list [type]     the data sources the agent may read (apply, check: root; record: the agent's DB copy)
 //	argus sources routes|unmapped where each service lives (discover, catalogue, actions: the agent's user, ADR-0017 P2)
 //	argus sources find ...        which instance to read for a service or a question (ADR-0017 P3)
+//	argus actd                    the capability executor (ADR-0022): its own service, profile actions
 //
 // Exit codes: 0 success, 1 failure (for config check: invalid configuration), 2 usage error.
 package main
@@ -64,6 +65,7 @@ var commands = []command{
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"marketing", "the marketing module's jobs: crawler logs, sitemaps, the SEO page's Googlebot table (googlebot ...)", runMarketing},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
+	{"actd", "the capability executor: approved capability steps, refusal rules, audit chain (credential, verify-audit)", runActd},
 	{"ingest", "read alerts and chat messages", nil},
 	{"dispatch", "act on request files written by the web app", nil},
 }

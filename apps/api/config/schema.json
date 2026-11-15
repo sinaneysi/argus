@@ -1362,6 +1362,62 @@
       "help": "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"
     },
     {
+      "key": "ARGUS_ACTIONS_MODE",
+      "type": "str",
+      "default": "off",
+      "enum": [
+        "off",
+        "dry-run",
+        "on"
+      ],
+      "help": "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"
+    },
+    {
+      "key": "ARGUS_ACT_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-act",
+      "help": "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"
+    },
+    {
+      "key": "ARGUS_ACT_KEY",
+      "type": "str",
+      "secret": true,
+      "help": "32 bytes, base64: the executor's key; wins over ARGUS_ACT_DIR/keys/act.key (created at the first start)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_APPROVAL_TTL",
+      "type": "str",
+      "default": "24h",
+      "help": "an approval older than this is refused (5m..168h)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_PER_DAY",
+      "type": "int",
+      "default": "20",
+      "min": 1,
+      "max": 200,
+      "help": "actions started a day at most (ARGUS_TZ days)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_BACKUP_DAYS",
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "how long the sealed old values of write steps are kept"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_HOSTS",
+      "type": "list",
+      "help": "http.check: the host names it may GET, *.suffix allowed, no IP address, no bare * (empty: http.check is not offered)"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: http.check may use plain http:// (test installations only)"
+    },
+    {
       "key": "ARGUS_KUBE_DIR",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/kube",

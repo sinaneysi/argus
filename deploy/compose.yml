@@ -3,6 +3,8 @@
 #   docker compose -f deploy/compose.yml up -d --build
 # Then open the web port behind your TLS proxy, sign in as ARGUS_ADMIN_USER and connect the data sources in Settings.
 # Back up the volume (and ARGUS_MASTER_KEY when you set it from outside): it holds every database, setting and secret.
+# Optional fourth service (ADR-0022): the capability executor `actd`, only with `--profile actions`. It has its own
+# volume argus-act that no other service mounts (its key, credentials, backups and the audit chain); back it up too.
 name: argus
 x-hardening: &hardening
   read_only: true
@@ -38,6 +40,20 @@ services:
     volumes:
       - argus-data:/var/lib/argus
     <<: *hardening
+  actd:
+    image: ${ARGUS_IMAGE:-argus:latest}
+    profiles: [actions]
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }   # the api creates and migrates the databases first
+    env_file: ${ARGUS_ENV_FILE:-argus.env}
+    entrypoint: ["/app/argus", "actd"]
+    healthcheck: { disable: true }          # the worker's self-check reads actd's heartbeat
+    networks: [argus]
+    volumes:
+      - argus-data:/var/lib/argus
+      - argus-act:/var/lib/argus-act        # mounted by actd only
+    <<: *hardening
   web:
     build: { context: .., dockerfile: deploy/Dockerfile, target: web }
     image: ${ARGUS_WEB_IMAGE:-argus-web:latest}
@@ -61,3 +77,4 @@ networks:
         - subnet: 172.30.240.0/24
 volumes:
   argus-data:
+  argus-act:
