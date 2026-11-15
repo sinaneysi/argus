@@ -165,6 +165,17 @@ describe("task page", () => {
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     for (const w of ["Capability steps", "run by Argus, not by the model", "audit 0123456789ab", "Continue after step 2", "Roll back step 1", 'name="plan_sha256"', 'name="action_id"']) expect(h).toContain(w);
   });
+  it("renders a write-only field per secret input of the plan, and no value", async () => {
+    const a = { ...task.agent, planSha256: "ab".repeat(32), spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false, inputs: ["NEW_TOKEN"] } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    const field = h.match(/<input[^>]*name="input_NEW_TOKEN"[^>]*>/)?.[0] ?? "";
+    expect(field).toContain('type="password"');
+    expect(field).toContain('autoComplete="off"');
+    expect(field).not.toMatch(/value=/);
+    expect(h).toMatch(/<form[^>]*autoComplete="off"/);
+  });
   it("renders the fixer form on a task Argus does not work", async () => {
     answers["/api/v1/board/task"] = { status: 200, data: { ...taskPlain, fixer: { heading: "Send to the fixer", notes: [], envLabel: "develop", hosts: [{ alias: "web-1", checked: true }] } } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
@@ -264,6 +275,18 @@ describe("writes", () => {
     expect((posted[0]!.body as { value: string }).value.length).toBe(4000);
     expect(to).toBe("REDIRECT /board/task?key=OPS-1");
     expect(flashes.join()).not.toContain("vvvv");
+  });
+  it("passes the secret inputs to the API only, never to a flash", async () => {
+    const { agentSpin } = await import("@/app/(app)/board/actions");
+    const value = "S3cret-" + "x".repeat(2500);
+    posted.length = 0;
+    answer = { status: 409, data: { error: "Not started: type the value of OTHER" } };
+    const to = await thrown(agentSpin(form({ key: "OPS-1", plan_version: "2", input_NEW_TOKEN: value, input_bad: "no", return: "/board/task?key=OPS-1" })));
+    expect(to).toBe("REDIRECT /board/task?key=OPS-1");
+    expect((posted[0]!.body as Record<string, string>).input_NEW_TOKEN).toBe(value);
+    expect(posted[0]!.body).not.toHaveProperty("input_bad");
+    expect(flashes.join()).not.toContain("S3cret");
+    expect(to).not.toContain("S3cret");
   });
   it("sends a stale session to the step-up page and back", async () => {
     const { agentSpin } = await import("@/app/(app)/board/actions");

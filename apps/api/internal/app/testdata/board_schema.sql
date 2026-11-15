@@ -52,7 +52,7 @@ CREATE TABLE agent_tasks (
   error TEXT, updated INTEGER, plan_entered_at INTEGER, spent_usd REAL DEFAULT 0,
   retry_at INTEGER, limit_since INTEGER, error_detail TEXT,
   plan_sha256 TEXT, approved_sha256 TEXT, approval_sig TEXT, action_id TEXT, action_state TEXT,
-  continue_step INTEGER, continue_by TEXT, continue_at INTEGER, continue_sig TEXT, rollback_started INTEGER
+  continue_step INTEGER, continue_by TEXT, continue_at INTEGER, continue_sig TEXT, rollback_started INTEGER, sealed_inputs TEXT
 );
 CREATE TABLE agent_actions (
   action_id TEXT NOT NULL, step INTEGER NOT NULL, key TEXT NOT NULL, capability TEXT, phase TEXT, status TEXT,

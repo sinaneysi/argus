@@ -9,6 +9,7 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ecdh"
 	"crypto/ed25519"
 	"database/sql"
 	"encoding/json"
@@ -113,6 +114,11 @@ type Options struct {
 	Version     string
 	// Credentials lists the stored credentials for the status file (names and last four characters only).
 	Credentials func() []Credential
+	// SealKey is the X25519 key the api seals secret inputs to (keys/act-x25519.key); its public half is published
+	// to actions/actd.pub. nil: a step with a sealed input is refused.
+	SealKey *ecdh.PrivateKey
+	// BackupDays is ARGUS_ACTIONS_BACKUP_DAYS (0: 30)
+	BackupDays int
 }
 
 // Daemon is one executor. New takes an exclusive lock, so two processes never run at once; Close releases it.
@@ -125,6 +131,9 @@ type Daemon struct {
 	checked time.Time
 	lock    *os.File
 	inbox   []time.Time // audit records written for unreadable request files in the last minute
+	prepAt  time.Time   // the last try of the registry's Prepare
+	prepOK  bool
+	pruned  time.Time
 }
 
 type lastAction struct {
@@ -226,6 +235,12 @@ func New(o Options) (*Daemon, error) {
 			}
 		}
 		d.store = Store{Dir: filepath.Join(o.ActDir, "steps")}
+		if o.SealKey != nil {
+			if err := PublishSealPub(o.ActionsDir, o.SealKey); err != nil {
+				d.Close()
+				return nil, fmt.Errorf("actions/actd.pub: %v", err)
+			}
+		}
 		if len(o.Key) == 32 {
 			a, err := OpenAudit(o.ActDir, o.Key)
 			if a == nil {
@@ -281,6 +296,8 @@ func (d *Daemon) Tick(ctx context.Context) {
 			d.log().Error("audit chain broken: every step is refused", "error", err.Error())
 		}
 	}
+	d.prepare(ctx)
+	d.prune()
 	m, _ := filepath.Glob(filepath.Join(d.o.ActionsDir, "in", "*.json"))
 	sort.Strings(m)
 	for _, p := range m {
@@ -293,6 +310,41 @@ func (d *Daemon) Tick(ctx context.Context) {
 		d.log().Warn("status file not written", "error", err.Error())
 	}
 }
+
+// prepare resolves the families' allow-lists (GitLab projects) once, retried every minute until it succeeds.
+func (d *Daemon) prepare(ctx context.Context) {
+	if d.prepOK || d.o.Registry == nil || (!d.prepAt.IsZero() && d.now().Sub(d.prepAt) < time.Minute) {
+		return
+	}
+	d.prepAt = d.now()
+	cctx, cancel := context.WithTimeout(ctx, capability.MaxCall)
+	defer cancel()
+	if err := d.o.Registry.Prepare(cctx); err != nil {
+		d.log().Warn("allow-list not resolved yet (retried every minute)", "error", Clean(err.Error()))
+		return
+	}
+	d.prepOK = true
+}
+
+// prune removes backups older than ARGUS_ACTIONS_BACKUP_DAYS, once an hour.
+func (d *Daemon) prune() {
+	if d.o.ActDir == "" || d.audit == nil || (!d.pruned.IsZero() && d.now().Sub(d.pruned) < time.Hour) {
+		return
+	}
+	d.pruned = d.now()
+	days := d.o.BackupDays
+	if days <= 0 {
+		days = 30
+	}
+	if n, err := d.vault().Prune(days, d.now()); err != nil {
+		d.log().Warn("backups not pruned", "error", err.Error())
+	} else if n > 0 {
+		d.log().Info("backups pruned", "actions", n, "days", days)
+	}
+}
+
+// vault is the backup store of the executor volume.
+func (d *Daemon) vault() Vault { return Vault{Dir: filepath.Join(d.o.ActDir, "backups"), Key: d.o.Key} }
 
 // readRequest opens the file without following a link and without blocking on a FIFO, checks the open file (not
 // the name), and reads at most MaxRequestBytes+1 bytes.
@@ -744,6 +796,11 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if !sameSteps(req.Steps, t.steps) {
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the request's steps are not the approved plan's steps"), true)
 	}
+	// the sealed inputs: the signature covers their hash (CheckApproval); here every input a step refers to must be
+	// there, and nothing else
+	if r := d.checkInputs(t, req.SealedInputs); r != nil {
+		return d.refuseAll(c, id, r, true)
+	}
 	ncap := 0
 	for _, s := range t.steps {
 		if s.Capability != "" {
@@ -887,7 +944,14 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 		}
-		sr, stop := d.runStep(ctx, id, cp, s, base, audit, on)
+		inputs, r := d.openInputs(id, cp, s, req.SealedInputs)
+		if r != nil {
+			refuseStep(s, r)
+			break
+		}
+		sctx := capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: s.N, Inputs: inputs})
+		sr, stop := d.runStep(sctx, id, cp, s, base, audit, on)
+		clear(inputs)
 		resp.Steps = append(resp.Steps, sr)
 		if on && sr.Refusal == nil {
 			if err := d.store.Put(id, sr); err != nil {

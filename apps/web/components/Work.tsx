@@ -202,6 +202,20 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
   const s = a.spin;
   if (!s) return <p className="muted small">{a.chatOn ? "Admins spin up the agent." : "Admins answer, instruct and spin up the agent."}</p>;
   if (!s.can) return <div className="actionbar"><Button  disabled title={s.reason}>{s.label}</Button>{s.reason ? <span className="muted small">{s.reason}</span> : null}</div>;
+  const inputs = s.inputs ?? [];
+  if (inputs.length) {
+    // secret inputs: write-only fields, sealed to the executor by the API; never echoed, never stored in clear
+    return (
+      <form action={agentSpin} className="ag-f" autoComplete="off">
+        <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
+        {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
+        <p className="muted small">The plan needs {inputs.length === 1 ? "a secret value" : "secret values"}. Type {inputs.length === 1 ? "it" : "them"} here: Argus seals each value to its executor at approval. The model, the page and the logs never see {inputs.length === 1 ? "it" : "them"}.</p>
+        {inputs.map((n) => <label key={n} className="field"><span className="mono">{n}</span><input type="password" name={`input_${n}`} autoComplete="off" spellCheck={false} maxLength={8192} required /></label>)}
+        <div className="actionbar"><Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
+          <span className="muted small">Pinned to plan v{a.planVersion}; if the plan changes, review the new version and spin up again.</span></div>
+      </form>
+    );
+  }
   return (
     <form action={agentSpin} className="actionbar">
       <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />

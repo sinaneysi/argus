@@ -383,7 +383,21 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		if path == "refused" {
 			spin = "Spin up agent"
 		}
-		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal"}
+		// the secret inputs of the capability steps: one write-only field each, sealed to actd at approval
+		inputs := []string{}
+		if agentExecutes(plan) {
+			inputs = agentInputNames(agentPlanInputs(a))
+			if len(inputs) > 0 && can {
+				if _, err := agentSealKey(); err != nil {
+					can, reason = false, "The plan needs secret inputs, but "+err.Error()
+				}
+			}
+		}
+		if inputs == nil {
+			inputs = []string{}
+		}
+		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal",
+			"inputs": inputs}
 	}
 	out["planSha256"] = agentPlanSHA(a)
 	if act := apiAgentAction(a, plan, admin); act != nil {

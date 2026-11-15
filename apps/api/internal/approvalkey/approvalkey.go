@@ -5,6 +5,7 @@
 package approvalkey
 
 import (
+	"crypto/ecdh"
 	"crypto/ed25519"
 	"errors"
 	"fmt"
@@ -19,7 +20,62 @@ import (
 const (
 	KeyFile = "approval.key" // PKCS#8 PEM, 0600
 	PubFile = "approval.pub" // PKIX PEM, 0644: copy it to actd
+	// ActdFile is actd's sealing public key as pinned by the operator (argus approval-key trust-actd): the api seals
+	// secret inputs only to this key, never to the copy in the shared volume (the worker could replace that one)
+	ActdFile = "actd-seal.pub"
 )
+
+// TrustActd pins actd's sealing public key (PEM) in the key folder.
+func TrustActd(dir string, pemText []byte) (*ecdh.PublicKey, error) {
+	if err := CheckDir(dir); err != nil {
+		return nil, err
+	}
+	if len(pemText) > 4096 {
+		return nil, errors.New("the public key is longer than 4096 bytes")
+	}
+	p, err := capability.ParseSealPublic(pemText)
+	if err != nil {
+		return nil, err
+	}
+	out, err := capability.SealPublicPEM(p)
+	if err != nil {
+		return nil, err
+	}
+	tmp := filepath.Join(dir, "."+ActdFile+".tmp")
+	os.Remove(tmp)
+	if err := writeExcl(tmp, out, 0o644); err != nil {
+		return nil, err
+	}
+	if err := os.Rename(tmp, filepath.Join(dir, ActdFile)); err != nil {
+		os.Remove(tmp)
+		return nil, err
+	}
+	return p, nil
+}
+
+// LoadActd is the pinned sealing key; (nil, nil) when none is pinned.
+func LoadActd(dir string) (*ecdh.PublicKey, error) {
+	if err := CheckDir(dir); err != nil {
+		return nil, err
+	}
+	f, err := os.OpenFile(filepath.Join(dir, ActdFile), os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil || !fi.Mode().IsRegular() || fi.Size() > 4096 {
+		return nil, errors.New("the pinned sealing key is not a small regular file")
+	}
+	b := make([]byte, fi.Size())
+	if _, err := f.Read(b); err != nil {
+		return nil, err
+	}
+	return capability.ParseSealPublic(b)
+}
 
 // ErrNoDir: the key folder does not exist; the api then signs nothing and actd refuses every step.
 var ErrNoDir = errors.New("no approval key folder")

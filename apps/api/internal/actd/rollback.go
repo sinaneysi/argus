@@ -53,7 +53,7 @@ func (d *Daemon) rollback(ctx context.Context, req Request, t *task, c *confirme
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "rollback: step %d is already rolled back (%s)", rb.Step, prev.Status), true)
 	}
 	resp := &Response{ActionID: id, TaskKey: c.TaskKey, Mode: string(d.o.Mode), State: StateDone, Steps: []StepResult{}, Started: d.now().Unix()}
-	cctx, cancel := context.WithTimeout(ctx, capability.MaxCall)
+	cctx, cancel := context.WithTimeout(capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: rb.Step}), capability.MaxCall)
 	res, err := cp.Rollback(cctx, capability.BackupRef(prev.BackupRef))
 	cancel()
 	result, detail := res.Status, res.Detail

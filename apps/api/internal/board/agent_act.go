@@ -108,10 +108,46 @@ func (r *run) actPath(dir, id string) string {
 	return filepath.Join(r.o.Agent.ActionsDir, dir, id+".json")
 }
 
+// sealedInputs are the approval's sealed inputs ("<step>/<NAME>" -> ciphertext, sealed by the api to actd's key)
+// as JSON for agent_tasks.sealed_inputs; nil (NULL) when there are none. The worker checks only their form: it
+// cannot open them, and the api's signature covers their hash.
+func sealedInputs(req map[string]any) any {
+	raw, ok := req["sealed_inputs"]
+	if !ok || raw == nil {
+		return nil
+	}
+	m, ok := raw.(map[string]any)
+	if !ok || len(m) > capability.MaxSealedInputs {
+		panic(refused("bad sealed inputs"))
+	}
+	out := map[string]string{}
+	for k, v := range m {
+		s, ok := v.(string)
+		if _, _, kok := capability.ParseInputKey(k); !ok || !kok || !capability.ValidSealed(s) {
+			panic(refused("bad sealed inputs"))
+		}
+		out[k] = s
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	b, _ := json.Marshal(out)
+	return string(b)
+}
+
+// storedSealed reads agent_tasks.sealed_inputs; an empty map when there are none.
+func storedSealed(row row) map[string]string {
+	out := map[string]string{}
+	if s := row.s("sealed_inputs"); s != "" {
+		json.Unmarshal([]byte(s), &out)
+	}
+	return out
+}
+
 // actRequest is the request file of the task's action: the stored plan's capability and operator steps, in order.
 func actRequest(row row, plan map[string]any, id, sha string) actd.Request {
 	req := actd.Request{ActionID: id, TaskKey: row.s("key"), PlanVersion: int(row.i("plan_version")), PlanSHA256: sha,
-		Approver: row.s("approved_by"), Steps: []actd.ReqStep{}, SealedInputs: map[string]string{}}
+		Approver: row.s("approved_by"), Steps: []actd.ReqStep{}, SealedInputs: storedSealed(row)}
 	for _, x := range asList(plan["plan"]) {
 		s := asMap(x)
 		n, _ := capability.AsInt(s["n"])
@@ -449,6 +485,7 @@ func (r *run) forwardStop(row row, req map[string]any, by string) {
 	json.Unmarshal([]byte(row.s("plan")), &plan)
 	areq := actRequest(row, plan, id, sha)
 	areq.Approver = by
+	areq.SealedInputs = map[string]string{} // a stop is signed over no sealed inputs: it only revokes
 	areq.Stop = &actd.Signed{Approver: by, At: at, Signature: signature(req)}
 	b, _ := json.MarshalIndent(areq, "", " ")
 	err := os.MkdirAll(filepath.Dir(r.actPath("in", id)), 0o700)

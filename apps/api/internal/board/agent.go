@@ -100,7 +100,9 @@ var agentCols = [][2]string{{"argus_user", "TEXT"}, {"plan_entered_at", "INTEGER
 	{"retry_at", "INTEGER"}, {"limit_since", "INTEGER"}, {"error_detail", "TEXT"},
 	// board migration 0002 (ADR-0022): the plan hash, the signed approval, the action and the signed continue
 	{"plan_sha256", "TEXT"}, {"approved_sha256", "TEXT"}, {"approval_sig", "TEXT"}, {"action_id", "TEXT"}, {"action_state", "TEXT"},
-	{"continue_step", "INTEGER"}, {"continue_by", "TEXT"}, {"continue_at", "INTEGER"}, {"continue_sig", "TEXT"}, {"rollback_started", "INTEGER"}}
+	{"continue_step", "INTEGER"}, {"continue_by", "TEXT"}, {"continue_at", "INTEGER"}, {"continue_sig", "TEXT"}, {"rollback_started", "INTEGER"},
+	// board migration 0003 (ADR-0022 PR 3): the approval's sealed inputs, ciphertext only
+	{"sealed_inputs", "TEXT"}}
 
 func (a *AgentOptions) defaults() {
 	if a.Debounce <= 0 {
@@ -1352,9 +1354,10 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		if f64(row["spent_usd"]) >= r.o.Agent.TaskBudget {
 			panic(refused(r.budgetNote()))
 		}
+		sealed := sealedInputs(req)
 		r.must(`UPDATE agent_tasks SET state='approved', approved_version=?, approved_by=?, approved_at=?, approved_sha256=?, approval_sig=?,
-			action_id=NULL, action_state=NULL, continue_step=NULL, continue_by=NULL, continue_at=NULL, continue_sig=NULL, error=NULL, updated=? WHERE key=?`,
-			ver, by, at, sha, sig, r.now(), key)
+			sealed_inputs=?, action_id=NULL, action_state=NULL, continue_step=NULL, continue_by=NULL, continue_at=NULL, continue_sig=NULL,
+			error=NULL, updated=? WHERE key=?`, ver, by, at, sha, sig, sealed, r.now(), key)
 		what := map[string]string{"proposal": "write proposal for the operator", "write-report": "a read-only run that reports the WRITE steps",
 			"run": "spin up a read-only run", "execute": "run the capability steps, then a read-only report"}[path]
 		r.alog(key, "approved", fmt.Sprintf("Plan v%d approved by %s: %s", ver, by, what))

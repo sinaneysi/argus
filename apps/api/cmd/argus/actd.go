@@ -29,6 +29,8 @@ const actdHelp = `usage: argus actd [-once] [-file F]
        argus actd verify-audit [-file F]
        argus actd approval-key [-file F] set     (the api's approval public key, PEM on stdin)
        argus actd approval-key [-file F] show
+       argus actd seal-key [-file F] public     (actd's sealing public key, PEM, for the api's pin)
+       argus actd seal-key [-file F] show       (its fingerprint)
 
 actd           the capability executor (ADR-0022): reads action requests from ARGUS_STATE_DIR/actions/in, checks
                the fixed refusal rules before every step, runs the approved capability steps, appends one
@@ -41,6 +43,10 @@ verify-audit   check the audit chain: exit 0 and "OK" when it verifies, 1 when i
 approval-key   store or show the api's approval public key (keys/approval.pub in ARGUS_ACT_DIR). Without it every
                step is refused. Copy it from the api once:
                docker compose exec api /app/argus approval-key public | docker compose exec -T actd /app/argus actd approval-key set
+seal-key       actd's X25519 sealing key (keys/act-x25519.key, created at the first start; the public half is
+               published to actions/actd.pub). The api seals the secret inputs of an approval to it, after the key is
+               pinned once:
+               docker compose exec -T actd /app/argus actd seal-key public | docker compose exec -T api /app/argus approval-key trust-actd
 `
 
 func runActd(args []string, stdout, stderr io.Writer) int {
@@ -96,6 +102,8 @@ func runActdIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return runActdCredential(fs.Args(), actDir, stdin, stdout, stderr)
 	case "approval-key":
 		return runActdApprovalKey(fs.Args(), actDir, stdin, stdout, stderr)
+	case "seal-key":
+		return runActdSealKey(fs.Args(), actDir, stdout, stderr)
 	case "":
 	default:
 		fmt.Fprint(stderr, actdHelp)
@@ -152,22 +160,20 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 	if err := capability.ValidPerDay(perDay); err != nil {
 		return actd.Options{}, err
 	}
-	reg, err := capability.Default(capability.Options{HTTPHosts: splitList(v("ARGUS_ACT_HTTP_HOSTS")), HTTPAllowPlain: v("ARGUS_ACT_HTTP_ALLOW_HTTP") == "1"})
-	if err != nil {
-		return actd.Options{}, err
-	}
+	backupDays, _ := strconv.Atoi(v("ARGUS_ACTIONS_BACKUP_DAYS"))
 	loc, err := time.LoadLocation(c.TZ)
 	if err != nil {
 		loc = time.UTC
 	}
 	actDir := v("ARGUS_ACT_DIR")
 	o := actd.Options{Mode: mode, ActDir: actDir, ActionsDir: actionsDir(c), BoardDB: c.BoardDB, AuthDB: c.AuthDB, OpsDB: c.DB,
-		Registry: reg, TTL: ttl, PerDay: perDay, Location: loc, Version: version,
+		TTL: ttl, PerDay: perDay, Location: loc, Version: version, BackupDays: backupDays,
 		Log: slog.New(slog.NewTextHandler(stderr, nil)).With("job", "actd")}
 	dirErr := actd.CheckActDir(actDir)
 	if dirErr != nil && mode != capability.ModeOff {
 		return o, dirErr
 	}
+	ro := registryOptions(c)
 	if dirErr == nil {
 		key, _, err := secret.Load(actd.KeySource(actDir, true))
 		if err != nil {
@@ -183,8 +189,54 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 			fmt.Fprintln(stderr, "argus actd: no approval public key (argus actd approval-key set): every step is refused")
 		}
 		o.ApprovalPub = pub
+		if o.SealKey, err = actd.LoadSealKey(actDir, true); err != nil {
+			return o, fmt.Errorf("%s: %v", actd.SealKeyPath(actDir), err)
+		}
+		// the GitLab token is opened for each call, from argus-act only; the old values go to argus-act/backups
+		ro.GitLab.Token = func() (string, error) { return actd.OpenCredential(actDir, key, capability.GitLabCredential) }
+		ro.GitLab.Backups = actd.Vault{Dir: filepath.Join(actDir, "backups"), Key: key}
 	}
+	reg, err := capability.Default(ro)
+	if err != nil {
+		return o, err
+	}
+	o.Registry = reg
 	return o, nil
+}
+
+// registryOptions are the capabilities' allow-lists from the configuration (the worker and actd use the same).
+func registryOptions(c *config.Config) capability.Options {
+	v := func(k string) string { return c.Values[k].Raw }
+	plain := v("ARGUS_ACT_HTTP_ALLOW_HTTP") == "1"
+	return capability.Options{HTTPHosts: splitList(v("ARGUS_ACT_HTTP_HOSTS")), HTTPAllowPlain: plain,
+		GitLab: capability.GitLabOptions{URL: v("ARGUS_ACT_GITLAB_URL"), Projects: splitList(v("ARGUS_ACT_GITLAB_PROJECTS")), AllowPlain: plain}}
+}
+
+func runActdSealKey(args []string, actDir string, stdout, stderr io.Writer) int {
+	if len(args) != 1 || (args[0] != "public" && args[0] != "show") {
+		fmt.Fprint(stderr, actdHelp)
+		return 2
+	}
+	if err := actd.CheckActDir(actDir); err != nil {
+		fmt.Fprintln(stderr, "argus actd seal-key:", err)
+		return 1
+	}
+	k, err := actd.LoadSealKey(actDir, true)
+	if err != nil {
+		fmt.Fprintln(stderr, "argus actd seal-key:", err)
+		return 1
+	}
+	if args[0] == "show" {
+		fmt.Fprintln(stdout, capability.SealFingerprint(k.PublicKey()))
+		return 0
+	}
+	b, err := capability.SealPublicPEM(k.PublicKey())
+	if err != nil {
+		fmt.Fprintln(stderr, "argus actd seal-key:", err)
+		return 1
+	}
+	stdout.Write(b)
+	return 0
 }
 
 func runActdApprovalKey(args []string, actDir string, stdin io.Reader, stdout, stderr io.Writer) int {

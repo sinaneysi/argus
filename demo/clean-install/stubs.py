@@ -2,11 +2,15 @@
 """Fake data sources for the clean-install test: GitLab, Jira, Alertmanager and Matrix behind one HTTP port, each
 under its own path prefix, and for the marketing module: Grafana with Loki (edge access lines of Google crawlers),
 Google's token and search APIs, an OpenSearch with a CDN log index, the site's sitemaps and Google's crawler ranges.
-Synthetic data only; every write is answered and forgotten. Standard library only.
+Synthetic data only; every write is answered and forgotten, except the GitLab project CI/CD variables (scope develop),
+which the gitlab.ci-variable capabilities of actd read and change: they are kept in memory and every call is
+recorded (GET /gitlab/_calls). Pipeline, job and trigger calls are answered 403 and recorded, so a test can show
+none was made. Standard library only.
 
   python3 -I stubs.py [port]      # default 8099
 """
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -153,6 +157,70 @@ def model_answer(body):
             "usage": {"input_tokens": len(body) // 4, "output_tokens": 5}}
 
 
+# GitLab project CI/CD variables (ADR-0022 PR 3): "<project id>/<key>" -> variable; scope develop only
+GL_VARS = {}
+GL_CALLS = []
+GL_PROJECTS = {101: "shop/checkout", 102: "shop/catalog"}
+GL_VAR_RE = re.compile(r"^/gitlab/api/v4/projects/([0-9]+)/variables(?:/([A-Za-z0-9_]+))?$")
+GL_DENIED = re.compile(r"/(pipeline|pipelines|jobs|trigger|triggers|deployments)(/|$)")
+
+
+def gl_var_json(key, v):
+    return {"key": key, "value": v["value"], "variable_type": v.get("variable_type", "env_var"), "protected": v.get("protected", False),
+            "masked": v.get("masked", False), "raw": v.get("raw", False), "environment_scope": "develop", "hidden": False}
+
+
+def gitlab_vars(method, raw_path, query, body):
+    """The variables API of the stub GitLab: (code, body) or None when the path is not a variables call."""
+    path = raw_path.rstrip("/")
+    if not path.startswith("/gitlab/api/v4/projects/"):
+        return None
+    if method != "GET" and GL_DENIED.search(path):  # reads of pipelines and jobs are the CI collectors' and pass on
+        GL_CALLS.append({"method": method, "path": path})
+        return 403, {"message": "the stub refuses to start pipelines and jobs: Argus never starts them"}
+    rest = path[len("/gitlab/api/v4/projects/"):]
+    if "/" not in rest and method == "GET":  # a project lookup by id or URL-encoded path
+        ref = urllib.parse.unquote(rest).lower()
+        for pid, p in GL_PROJECTS.items():
+            if ref in (str(pid), p):
+                GL_CALLS.append({"method": method, "path": path})
+                return 200, {"id": pid, "path_with_namespace": p}
+        return None
+    m = GL_VAR_RE.match(path)
+    if not m:
+        return None
+    GL_CALLS.append({"method": method, "path": path})
+    pid, key = int(m.group(1)), m.group(2)
+    try:
+        data = json.loads(body or b"{}")
+    except ValueError:
+        data = {}
+    if key is None:
+        if method != "POST":
+            return 405, {"message": "method"}
+        key = data.get("key", "")
+        if data.get("environment_scope") != "develop" or not re.match(r"^[A-Za-z0-9_]{1,255}$", key):
+            return 400, {"message": "bad request"}
+        if "%d/%s" % (pid, key) in GL_VARS:
+            return 400, {"message": "key has already been taken"}
+        GL_VARS["%d/%s" % (pid, key)] = {k: data[k] for k in ("value", "variable_type", "protected", "masked", "raw") if k in data}
+        return 201, gl_var_json(key, GL_VARS["%d/%s" % (pid, key)])
+    if query.get("filter[environment_scope]") != ["develop"]:
+        return 409, {"message": "the scope filter is missing"}
+    cur = GL_VARS.get("%d/%s" % (pid, key))
+    if cur is None:
+        return 404, {"message": "404 Variable Not Found"}
+    if method == "GET":
+        return 200, gl_var_json(key, cur)
+    if method == "PUT":
+        cur.update({k: data[k] for k in ("value", "variable_type", "protected", "masked", "raw") if k in data})
+        return 200, gl_var_json(key, cur)
+    if method == "DELETE":
+        del GL_VARS["%d/%s" % (pid, key)]
+        return 204, None
+    return 405, {"message": "method"}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "stubs/1"
 
@@ -160,6 +228,11 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("stubs %s %s\n" % (self.command, self.path))
 
     def send(self, code, body):
+        if body is None:
+            self.send_response(code)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         data = json.dumps(body).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
@@ -180,6 +253,11 @@ class Handler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
         if path == "/healthz":
             return self.send(200, {"ok": True})
+        if path == "/gitlab/_calls":
+            return self.send(200, GL_CALLS)
+        out = gitlab_vars("GET", path, query, b"")
+        if out is not None:
+            return self.send(*out)
         if path == "/grafana/api/datasources/proxy/uid/loki-1/loki/api/v1/query_range":
             return self.send(200, loki(query))
         if path == "/google/webmasters/v3/sites":
@@ -221,6 +299,10 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(min(n, 1 << 20))
         path = self.path.split("?", 1)[0]
+        query = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+        out = gitlab_vars(self.command, path, query, body)
+        if out is not None:
+            return self.send(*out)
         if path.startswith("/google/"):
             out = google_post(path, body)
             return self.send(200, out) if out is not None else self.send(404, {"error": "not in the stub"})
@@ -233,6 +315,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(200, {"ok": True})
 
     do_PUT = do_POST
+    do_DELETE = do_POST
 
 
 if __name__ == "__main__":
