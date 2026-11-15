@@ -72,12 +72,20 @@ export async function agentAct(fd: FormData): Promise<void> {
 
 /** An admin approves exactly the plan version and hash on the page (recent 2FA code). */
 export async function agentSpin(fd: FormData): Promise<void> {
-  await send("/api/v1/board/agent/spinup", { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256") || undefined }, fd);
+  const body: Body = { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256") || undefined };
+  // secret inputs (input_<NAME>): passed to the API, which seals them; never a flash, a URL or a log
+  for (const k of fd.keys()) if (/^input_[A-Z][A-Z0-9_]{0,31}$/.test(k)) body[k] = long(fd, k);
+  await send("/api/v1/board/agent/spinup", body, fd);
 }
 
 /** The operator did the operator step: an admin continues the action with the steps after it (recent 2FA code). */
 export async function agentContinue(fd: FormData): Promise<void> {
   await send("/api/v1/board/agent/continue", { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256"), step: field(fd, "step") }, fd);
+}
+
+/** An admin checked the target of a write step whose outcome was unknown: applied or not-applied (recent 2FA code). */
+export async function agentChecked(fd: FormData): Promise<void> {
+  await send("/api/v1/board/agent/checked", { key: field(fd, "key"), action_id: field(fd, "action_id"), step: field(fd, "step"), verdict: field(fd, "verdict") }, fd);
 }
 
 /** An admin rolls back one write step of the task's last action (recent 2FA code). */

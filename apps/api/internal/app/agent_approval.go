@@ -5,6 +5,7 @@ package app
 // approval the api did not sign. The worker passes the signature on but cannot make one.
 
 import (
+	"crypto/ecdh"
 	"crypto/ed25519"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -111,10 +113,16 @@ func agentExecutes(plan *py.OMap) bool {
 // agentSignedPayload adds the api's signature to a request payload: kind start, continue, rollback or stop. With
 // optional, a missing key leaves the request unsigned (a plan that does not execute, a stop); otherwise it is an
 // error and nothing is sent.
-func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool) error {
+// sealedSHA is the hash of the sealed inputs the request carries to actd (capability.SealedSHA256): the start's own,
+// for a continue or rollback the one the api signed at the start (agentStartSealed), {} for a stop.
+func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA string, verdict ...string) error {
 	at := NowInt()
-	sig, err := agentSign(capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(version), PlanSHA256: sha, Approver: by,
-		At: at, SealedSHA256: capability.SealedSHA256(nil), Step: int(step)})
+	c := capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(version), PlanSHA256: sha, Approver: by,
+		At: at, SealedSHA256: sealedSHA, Step: int(step)}
+	if len(verdict) == 1 {
+		c.Verdict = verdict[0]
+	}
+	sig, err := agentSign(c)
 	if errors.Is(err, errNoApprovalKey) && optional {
 		p.Set("plan_sha256", sha)
 		return nil
@@ -185,7 +193,7 @@ func AgentPostContinue(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not continued: " + why
 	}
 	n, _ := py.ParseInt(v)
@@ -201,7 +209,7 @@ func AgentPostContinue(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "Not continued: the executor does not wait for step " + I2S(step)
 	}
 	p := py.NewOMap("kind", "agent-continue", "key", key, "plan_version", n, "step", step)
-	if err := agentSignedPayload(p, capability.SignContinue, key, n, sha, sess.Username, step, false); err != nil {
+	if err := agentSignedPayload(p, capability.SignContinue, key, n, sha, sess.Username, step, false, agentStartSealed(key, id, n, sha)); err != nil {
 		return 500, "Not continued: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)
@@ -225,7 +233,7 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not rolled back: " + why
 	}
 	step, _ := py.ParseInt(st)
@@ -236,7 +244,7 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "Not rolled back: that is not the task's last action, or the plan changed since"
 	}
 	p := py.NewOMap("kind", "agent-rollback", "key", key, "action_id", id, "plan_version", a.I("plan_version"), "step", step)
-	if err := agentSignedPayload(p, capability.SignRollback, key, a.I("plan_version"), sha, sess.Username, step, false); err != nil {
+	if err := agentSignedPayload(p, capability.SignRollback, key, a.I("plan_version"), sha, sess.Username, step, false, agentStartSealed(key, id, a.I("plan_version"), sha)); err != nil {
 		return 500, "Not rolled back: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)
@@ -244,4 +252,147 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return boardCouldNotSave(c, err)
 	}
 	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
+}
+
+// agentStartSealed is the sealed inputs' hash of the start the api signed for this plan (kept in the api's own key
+// folder, not in the worker-writable board.db): a continue or a rollback is signed over it, so a ciphertext the
+// worker swapped in board.db is refused by actd. No record: the hash of no inputs.
+func agentStartSealed(key, actionID string, version int64, sha string) string {
+	if h, ok := approvalkey.StartSealed(APPROVAL_KEY_DIR, key, actionID, int(version), sha); ok {
+		return h
+	}
+	return capability.SealedSHA256(nil)
+}
+
+// errNoSealKey: no sealing key of actd is pinned in the api's key folder.
+var errNoSealKey = errors.New("no sealing key of the executor is pinned: run `actd seal-key public | api approval-key trust-actd` (CONFIG.md, sealed inputs)")
+
+// agentSealKey is actd's sealing public key as the operator pinned it (ARGUS_APPROVAL_KEY_DIR/actd-seal.pub). The
+// copy actd publishes in the shared volume (actions/actd.pub) must be the same key: a different one means actd
+// has a new key (pin it again) or someone replaced the shared copy; either way nothing is sealed.
+func agentSealKey() (*ecdh.PublicKey, error) {
+	pin, err := approvalkey.LoadActd(APPROVAL_KEY_DIR)
+	if err != nil && !errors.Is(err, approvalkey.ErrNoDir) {
+		return nil, err
+	}
+	if pin == nil {
+		return nil, errNoSealKey
+	}
+	if b, err := os.ReadFile(filepath.Join(ACTIONS_DIR, "actd.pub")); err == nil {
+		pub, perr := capability.ParseSealPublic(b)
+		if perr != nil || !pub.Equal(pin) {
+			return nil, errors.New("actd's published sealing key is not the pinned one: compare `actd seal-key show` with the pin, then pin again")
+		}
+	}
+	return pin, nil
+}
+
+// agentPlanInputs are the sealed inputs the stored plan's capability steps refer to (step -> names).
+func agentPlanInputs(a Row) map[int][]string {
+	_, p, err := capability.DecodePlan([]byte(a.S("plan")))
+	if err != nil {
+		return nil
+	}
+	return capability.PlanInputs(p)
+}
+
+// agentInputNames are the distinct names of agentPlanInputs, sorted, for the approval form.
+func agentInputNames(in map[int][]string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, names := range in {
+		for _, n := range names {
+			if !seen[n] {
+				seen[n] = true
+				out = append(out, n)
+			}
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// agentSealInputs seals each value the admin typed (form field input_<NAME>) once per step that refers to it, for
+// this action. The values are never stored, logged or echoed; an error names the input, never its value.
+func agentSealInputs(form py.QS, in map[int][]string, actionID, planSHA string) (map[string]string, error) {
+	out := map[string]string{}
+	if len(in) == 0 {
+		return out, nil
+	}
+	pub, err := agentSealKey()
+	if err != nil {
+		return nil, err
+	}
+	for step, names := range in {
+		for _, n := range names {
+			v := form.Get("input_" + n)
+			if v == "" {
+				return nil, fmt.Errorf("type the value of %s", n)
+			}
+			if len(v) > capability.MaxInputBytes {
+				return nil, fmt.Errorf("the value of %s is longer than %d bytes", n, capability.MaxInputBytes)
+			}
+			sv, err := capability.SealInput(pub, actionID, planSHA, step, n, v)
+			if err != nil {
+				return nil, fmt.Errorf("the value of %s cannot be sealed", n)
+			}
+			out[capability.InputKey(step, n)] = sv
+		}
+	}
+	if len(out) > capability.MaxSealedInputs {
+		return nil, fmt.Errorf("more than %d sealed inputs", capability.MaxSealedInputs)
+	}
+	return out, nil
+}
+
+// AgentPostChecked is POST /board/agent/checked (sensitive): an admin checked the target of a write step whose
+// outcome was unknown and signs the verdict, applied or not-applied, for exactly that action and step. actd reads the
+// target back for "applied" and refuses when it does not hold the step's state.
+func AgentPostChecked(c *Ctx, form py.QS, sess *Session) (int, string) {
+	if sess.Role != "admin" {
+		return 403, "Only admins confirm a checked step"
+	}
+	key, id, st, verdict := form.Get("key"), form.Get("action_id"), form.Get("step"), form.Get("verdict")
+	if !agentKeyRe.MatchString(key) || !capability.ValidActionID(id) || !py.IsDigit(st) || len(st) > 4 ||
+		(verdict != capability.VerdictApplied && verdict != capability.VerdictNotApplied) {
+		return 400, "Bad request"
+	}
+	a := agentRow(key)
+	if a == nil {
+		return 404, "Argus is not working this task"
+	}
+	if why := agentWriteBlock(sess, key); why != "" {
+		return 403, "Not sent: " + why
+	}
+	step, _ := py.ParseInt(st)
+	sha := a.Str("approved_sha256")
+	if a.Str("action_id") != id || sha == "" || sha != agentPlanSHA(a) || a.I("approved_version") != a.I("plan_version") ||
+		capability.ActionID(key, int(a.I("plan_version")), sha) != id || step <= 0 {
+		return 409, "Not sent: that is not the task's last action, or the plan changed since"
+	}
+	if a.Str("action_state") != "outcome-unknown" {
+		return 409, "Not sent: the action has no step with an unknown outcome"
+	}
+	p := py.NewOMap("kind", "agent-checked", "key", key, "action_id", id, "plan_version", a.I("plan_version"), "step", step, "verdict", verdict)
+	if err := agentSignedPayload(p, capability.SignChecked, key, a.I("plan_version"), sha, sess.Username, step, false,
+		agentStartSealed(key, id, a.I("plan_version"), sha), verdict); err != nil {
+		return 500, "Not sent: " + err.Error()
+	}
+	rid, err := BoardWriteRequest(p, sess)
+	if err != nil {
+		return boardCouldNotSave(c, err)
+	}
+	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
+}
+
+// agentWriteBlock is why this admin cannot act on the task of an agent key: the write block of the task's own
+// tracker (its tasks.tracker field, set when the task was taken in), never a guess from the key's form. A key that
+// names no task on the board is refused.
+func agentWriteBlock(sess *Session, key string) string {
+	for _, t := range BoardBQ("SELECT * FROM tasks WHERE (tracker='gitlab' AND 'gl-' || id = ?) OR (COALESCE(tracker,'jira') != 'gitlab' AND jira_key = ?)", key, key) {
+		if AgentKey(t) == key {
+			return TaskWriteBlock(sess, t)
+		}
+	}
+	return "the task is not on the board"
 }

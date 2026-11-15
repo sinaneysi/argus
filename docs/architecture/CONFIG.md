@@ -91,7 +91,9 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 | `ARGUS_ACTIONS_PER_DAY` | int | `20` | 1..200 |
 | `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | 1..365 |
 | `ARGUS_ACT_HTTP_HOSTS` | list | empty (`http.check` off) | `[internal:]host[:port]`, `*.suffix` allowed; no IP literal, no bare `*` |
-| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only |
+| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only (`http.check` and `ARGUS_ACT_GITLAB_URL`) |
+| `ARGUS_ACT_GITLAB_URL` | str | empty | `gitlab.ci-variable.*`: the GitLab, `https://gitlab.example.com` (a path prefix is kept); no credentials, no query. Needed when `ARGUS_ACT_GITLAB_PROJECTS` is set |
+| `ARGUS_ACT_GITLAB_PROJECTS` | list | empty (`gitlab.ci-variable.*` off) | numeric project ids or `group/project` paths; an id and the path of the same project are one project (actd resolves the list at start, retried every minute) |
 | `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
 
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
@@ -102,6 +104,33 @@ The executor key is only `argus-act/keys/act.key` (no environment variable: `arg
 `ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with
 `ARGUS_ACT_HTTP_ALLOW_HTTP=1`); without `internal:` a name that resolves to a loopback, link-local, private, shared
 (100.64/10), unique local, multicast or unspecified address is refused.
+
+GitLab CI/CD variables (ADR-0022 PR 3). `gitlab.ci-variable.get|set|delete` read and change the project variables
+of environment scope `develop` (exactly; `*`, empty, another environment or another case are refused before any
+call) of the projects on `ARGUS_ACT_GITLAB_PROJECTS`. Every write seals the old value and attributes to
+`argus-act/backups/<action-id>/<step>.enc` first; `set` and `delete` roll back from it. The HTTP client allows only
+`GET|POST|PUT|DELETE /api/v4/projects/:id/variables[/:key]` and the lookup of the listed projects; pipeline, job,
+trigger and deployment paths are refused even if a capability asked (Argus never starts a pipeline or plays a job).
+
+| what | where | how |
+|---|---|---|
+| the GitLab token: one group access token, role Maintainer, scope `api`, short expiry | `argus-act/secrets/gitlab/token.enc` (sealed with `act.key`), never in `argus.env` | `docker compose exec -T actd /app/argus actd credential set gitlab/token` (the token on stdin); `credential list` shows its last four characters |
+| actd's sealing key (X25519) | `argus-act/keys/act-x25519.key` (0600); public half `ARGUS_STATE_DIR/actions/actd.pub` | created at actd's first start; `argus actd seal-key show` prints its fingerprint |
+| the api's pin of that key | `ARGUS_APPROVAL_KEY_DIR/actd-seal.pub` | once: `docker compose exec -T actd /app/argus actd seal-key public \| docker compose exec -T api /app/argus approval-key trust-actd` |
+
+Secret inputs: a plan never holds a value, only `"value_ref": "input:<NAME>"` (or `"matches": "input:<NAME>"` for a
+read). The approval form shows one write-only field per name (`autocomplete=off`, never echoed). The api seals the
+value to the pinned key (X25519 + HKDF-SHA256 + AES-256-GCM, bound to the action, the step and the name) and signs
+the approval over the hash of the sealed inputs; the worker and `board.db` (`agent_tasks.sealed_inputs`) hold the
+ciphertext only, and actd opens it just before the step. The api refuses to seal when no key is pinned or when
+`actions/actd.pub` is not the pinned key (actd got a new key: compare the fingerprints, then pin again). The review
+panel's one-click approval cannot carry inputs: approve such a plan on the task page. The api keeps the sealed hash
+of each start it signed and sent in `ARGUS_APPROVAL_KEY_DIR/starts/<task>/<action-id>.json` and signs Continue,
+rollback and "I checked the target" over it only. A write whose outcome is unknown (`outcome-unknown`) waits for an
+admin's "I checked the target: applied / not applied" on the task page.
+Backups of applied writes are never pruned; only those of rolled-back, refused or failed steps older than
+`ARGUS_ACTIONS_BACKUP_DAYS`.
+Off again: empty `ARGUS_ACT_GITLAB_PROJECTS` (the capabilities leave the catalogue), or `ARGUS_ACTIONS_MODE=off`.
 
 Signed approvals (ADR-0022 amendment 1, PR 2). The worker shares the data volume and the uid with the api, so an
 `approved_*` row in `board.db` proves nothing. The api signs every Spin up, every Continue after an operator step and

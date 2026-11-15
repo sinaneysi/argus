@@ -12,6 +12,9 @@ type Rule struct {
 	Method string
 	Path   string
 	Host   func(host string) bool // nil: no host passes
+	// Match, when set, decides on the escaped path instead of Path (an exact list of paths, e.g. a project
+	// looked up by its URL-encoded path)
+	Match func(escapedPath string) bool
 }
 
 // Guard is the RoundTripper every capability's HTTP client wraps (ADR-0022 D3): a request that matches no rule is
@@ -21,6 +24,9 @@ type Guard struct {
 	Base          http.RoundTripper
 	Rules         []Rule
 	NoCredentials bool
+	// Deny, when set, refuses a path before any rule is looked at (a family's fixed deny list, e.g. GitLab
+	// pipelines and jobs): even a wrong rule cannot let it through
+	Deny func(escapedPath string) bool
 }
 
 // ErrGuard marks a request the guard refused.
@@ -43,9 +49,19 @@ func (g *Guard) Allowed(req *http.Request) bool {
 	if path == "" {
 		path = "/"
 	}
+	if g.Deny != nil && g.Deny(path) {
+		return false
+	}
 	host := strings.ToLower(req.URL.Hostname())
 	for _, r := range g.Rules {
-		if r.Method == req.Method && r.Host != nil && r.Host(host) && MatchPath(r.Path, path) {
+		if r.Method != req.Method || r.Host == nil || !r.Host(host) {
+			continue
+		}
+		if r.Match != nil {
+			if r.Match(path) {
+				return true
+			}
+		} else if MatchPath(r.Path, path) {
 			return true
 		}
 	}

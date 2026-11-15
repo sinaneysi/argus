@@ -1406,10 +1406,20 @@
       "help": "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"
     },
     {
+      "key": "ARGUS_ACT_GITLAB_URL",
+      "type": "str",
+      "help": "gitlab.ci-variable: the GitLab the variables are in, https://gitlab.example.com (a path prefix is allowed); the group access token is stored only in actd's volume (argus actd credential set gitlab/token), never here"
+    },
+    {
+      "key": "ARGUS_ACT_GITLAB_PROJECTS",
+      "type": "list",
+      "help": "gitlab.ci-variable: the projects whose CI/CD variables of scope develop may be read and changed, numeric ids or group/project paths (an id and the path of the same project are one project); empty: the capabilities are not offered"
+    },
+    {
       "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
       "type": "bool",
       "default": "0",
-      "help": "1: http.check may use plain http:// (test installations only)"
+      "help": "1: http.check and ARGUS_ACT_GITLAB_URL may use plain http:// (test installations only)"
     },
     {
       "key": "ARGUS_APPROVAL_KEY_DIR",

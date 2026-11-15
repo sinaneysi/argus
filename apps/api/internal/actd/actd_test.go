@@ -3,12 +3,14 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ecdh"
 	"crypto/ed25519"
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -45,6 +47,8 @@ type fx struct {
 	cur              *Daemon
 	priv             ed25519.PrivateKey // the api's approval key; the daemon gets the public half
 	pub              ed25519.PublicKey
+	seal             *ecdh.PrivateKey // actd's sealing key
+	logs             *bytes.Buffer    // the daemon's log
 }
 
 func newFx(t *testing.T, extra ...capability.Capability) *fx {
@@ -63,6 +67,8 @@ func newFx(t *testing.T, extra ...capability.Capability) *fx {
 	}
 	f.pub, f.priv, _ = ed25519.GenerateKey(rand.Reader)
 	f.key, _ = secret.ParseKey(secret.NewKeyText())
+	f.seal, _ = ecdh.X25519().GenerateKey(rand.Reader)
+	f.logs = &bytes.Buffer{}
 	f.exec(f.auth, `INSERT INTO users (username, hash, role, disabled, must_change) VALUES ('ada','x','admin',0,0), ('vic','x','viewer',0,0), ('dis','x','admin',1,0)`)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.calls.Add(1)
@@ -108,7 +114,8 @@ func (f *fx) daemon() *Daemon {
 		f.cur.Close()
 	}
 	d, err := New(Options{Mode: f.mode, ActDir: f.act, Key: f.key, ActionsDir: f.actions, BoardDB: f.board, AuthDB: f.auth, OpsDB: f.ops,
-		Registry: f.reg, TTL: 24 * time.Hour, PerDay: f.perDay, Now: func() time.Time { return f.now }, ApprovalPub: f.pub})
+		Registry: f.reg, TTL: 24 * time.Hour, PerDay: f.perDay, Now: func() time.Time { return f.now }, ApprovalPub: f.pub,
+		SealKey: f.seal, Log: slog.New(slog.NewTextHandler(f.logs, &slog.HandlerOptions{Level: slog.LevelDebug}))})
 	if err != nil {
 		f.t.Fatal(err)
 	}

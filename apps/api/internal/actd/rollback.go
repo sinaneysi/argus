@@ -14,6 +14,9 @@ func (d *Daemon) rollback(ctx context.Context, req Request, t *task, c *confirme
 	if t.approval.PlanVersion != req.PlanVersion || t.approval.StoredSHA256 != req.PlanSHA256 {
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: the stored plan is not the plan of this action"), true)
 	}
+	if rec, err := d.taskRecord(t.key); err != nil || rec.StartAction != id || rec.StartSealed != capability.SealedSHA256(req.SealedInputs) {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "rollback: the action is not the task's last started action, or the sealed inputs are not the ones its start covered"), true)
+	}
 	if r := d.checkSigned(ctx, capability.SignRollback, t, req, rb); r != nil {
 		return d.refuseAll(c, id, r, true)
 	}
@@ -53,7 +56,7 @@ func (d *Daemon) rollback(ctx context.Context, req Request, t *task, c *confirme
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "rollback: step %d is already rolled back (%s)", rb.Step, prev.Status), true)
 	}
 	resp := &Response{ActionID: id, TaskKey: c.TaskKey, Mode: string(d.o.Mode), State: StateDone, Steps: []StepResult{}, Started: d.now().Unix()}
-	cctx, cancel := context.WithTimeout(ctx, capability.MaxCall)
+	cctx, cancel := context.WithTimeout(capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: rb.Step}), capability.MaxCall)
 	res, err := cp.Rollback(cctx, capability.BackupRef(prev.BackupRef))
 	cancel()
 	result, detail := res.Status, res.Detail

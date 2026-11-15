@@ -383,7 +383,21 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		if path == "refused" {
 			spin = "Spin up agent"
 		}
-		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal"}
+		// the secret inputs of the capability steps: one write-only field each, sealed to actd at approval
+		inputs := []string{}
+		if agentExecutes(plan) {
+			inputs = agentInputNames(agentPlanInputs(a))
+			if len(inputs) > 0 && can {
+				if _, err := agentSealKey(); err != nil {
+					can, reason = false, "The plan needs secret inputs, but "+err.Error()
+				}
+			}
+		}
+		if inputs == nil {
+			inputs = []string{}
+		}
+		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal",
+			"inputs": inputs}
 	}
 	out["planSha256"] = agentPlanSHA(a)
 	if act := apiAgentAction(a, plan, admin); act != nil {
@@ -585,8 +599,13 @@ func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
 		}
 		st := map[string]any{"step": r.I("step"), "capability": r.Str("capability"), "status": r.Str("status"), "detail": py.OrS(r.Get("detail"), r.Str("summary")),
 			"audit": audit, "text": texts[r.I("step")]}
-		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" {
+		unknown := r.Str("status") == "outcome-unknown"
+		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" && !unknown {
 			st["rollback"] = true
+		}
+		// a write whose outcome is unknown: an admin checks the target and says applied or not-applied
+		if admin && !busy && unknown && a.Str("action_state") == "outcome-unknown" {
+			st["checked"] = true
 		}
 		steps = append(steps, st)
 	}

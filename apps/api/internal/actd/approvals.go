@@ -23,6 +23,11 @@ type taskRecord struct {
 	RevokedAt     int64  `json:"revoked_at"` // the time of the last signed stop
 	RevokedAction string `json:"revoked_action,omitempty"`
 	RevokedBy     string `json:"revoked_by,omitempty"`
+	// StartAction and StartSealed are the action and the sealed inputs' hash of the last accepted start, as its
+	// verified signature covered them: a continue or a rollback must carry exactly those sealed inputs (the worker
+	// could otherwise swap a ciphertext, e.g. a matches oracle, before it)
+	StartAction string `json:"start_action,omitempty"`
+	StartSealed string `json:"start_sealed,omitempty"`
 }
 
 func (d *Daemon) recordPath(key string) string {

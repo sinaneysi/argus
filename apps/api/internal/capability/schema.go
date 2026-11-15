@@ -42,15 +42,17 @@ func (t Type) String() string {
 
 // Field is one argument of a capability.
 type Field struct {
-	Name      string         `json:"name"`
-	Type      Type           `json:"-"`
-	TypeName  string         `json:"type"`
-	Required  bool           `json:"required,omitempty"`
-	Pattern   *regexp.Regexp `json:"-"`
-	MaxLen    int            `json:"max_length,omitempty"` // String: runes; IntOrList: list items
-	Min, Max  int            `json:"-"`                    // Int, IntOrList: the allowed range when Max > 0
-	Secret    bool           `json:"secret,omitempty"`     // never in a plan, the audit, a result or a log
-	AllowList string         `json:"allow_list,omitempty"` // the configuration key that limits the value
+	Name     string         `json:"name"`
+	Type     Type           `json:"-"`
+	TypeName string         `json:"type"`
+	Required bool           `json:"required,omitempty"`
+	Pattern  *regexp.Regexp `json:"-"`
+	MaxLen   int            `json:"max_length,omitempty"` // String: runes; IntOrList: list items
+	Min, Max int            `json:"-"`                    // Int, IntOrList: the allowed range when Max > 0
+	Secret   bool           `json:"secret,omitempty"`     // never in a plan, the audit, a result or a log
+	// Input: the value is a reference "input:<NAME>" to a secret the admin types at approval (sealed to actd)
+	Input     bool   `json:"input,omitempty"`
+	AllowList string `json:"allow_list,omitempty"` // the configuration key that limits the value
 }
 
 // Schema is the argument list of a capability.
@@ -135,6 +137,9 @@ func (f Field) check(v any) error {
 		if f.Pattern != nil && !f.Pattern.MatchString(s) {
 			return bad("does not match %s", f.Pattern.String())
 		}
+		if f.Input && !InputRefRe.MatchString(s) {
+			return bad("must be a reference input:<NAME> (A-Z, 0-9, _), never a literal value")
+		}
 	case Int:
 		n, ok := AsInt(v)
 		if !ok {
@@ -167,13 +172,20 @@ func (f Field) check(v any) error {
 }
 
 // Redacted is a copy of args with every secret field replaced by "<redacted>". A key the schema does not know is
-// redacted too: only known, non-secret fields leave the capability.
+// redacted too: only known, non-secret fields leave the capability. An input field keeps its reference
+// ("input:<NAME>", which names the input and is no secret) and is redacted when it holds anything else (a literal
+// value the model wrote by mistake).
 func (s Schema) Redacted(a Args) Args {
 	out := Args{}
 	for k, v := range a {
-		if f, ok := s.field(k); ok && !f.Secret {
+		f, ok := s.field(k)
+		ref, isStr := v.(string)
+		switch {
+		case ok && f.Input && isStr && InputRefRe.MatchString(ref):
 			out[k] = v
-		} else {
+		case ok && !f.Secret && !f.Input:
+			out[k] = v
+		default:
 			out[clipName(k)] = Redacted
 		}
 	}
@@ -245,4 +257,26 @@ func clipName(k string) string {
 		k = k[:40]
 	}
 	return strings.ToValidUTF8(k, "?")
+}
+
+// InputRefRe is a reference to a sealed input: "input:<NAME>".
+var InputRefRe = regexp.MustCompile(`^input:[A-Z][A-Z0-9_]{0,31}$`)
+
+// InputNames are the names of the sealed inputs the arguments refer to (fields marked Input), sorted, no repeats.
+func (s Schema) InputNames(a Args) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, f := range s.Fields {
+		v, ok := a[f.Name].(string)
+		if !f.Input || !ok || !InputRefRe.MatchString(v) {
+			continue
+		}
+		n := strings.TrimPrefix(v, "input:")
+		if !seen[n] {
+			seen[n] = true
+			out = append(out, n)
+		}
+	}
+	sort.Strings(out)
+	return out
 }

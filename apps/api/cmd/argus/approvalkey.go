@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/sinaneysi/argus/internal/approvalkey"
 	"github.com/sinaneysi/argus/internal/capability"
@@ -18,9 +19,16 @@ const approvalKeyHelp = `usage: argus approval-key [-file F] init     create the
        argus approval-key [-file F] public   print the public key (PEM), for actd:
          docker compose exec api /app/argus approval-key public | docker compose exec -T actd /app/argus actd approval-key set
        argus approval-key [-file F] show     print the key's fingerprint (compare with argus actd approval-key show)
+       argus approval-key [-file F] trust-actd   pin actd's sealing public key (PEM on stdin); the api seals the secret
+         inputs of an approval only to the pinned key:
+         docker compose exec -T actd /app/argus actd seal-key public | docker compose exec -T api /app/argus approval-key trust-actd
 `
 
 func runApprovalKey(args []string, stdout, stderr io.Writer) int {
+	return runApprovalKeyIO(args, os.Stdin, stdout, stderr)
+}
+
+func runApprovalKeyIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if isHelp(args) || len(args) == 0 {
 		fmt.Fprint(stdout, approvalKeyHelp)
 		if len(args) == 0 {
@@ -45,6 +53,19 @@ func runApprovalKey(args []string, stdout, stderr io.Writer) int {
 	case "init":
 		create = true
 	case "public", "show":
+	case "trust-actd":
+		b, err := io.ReadAll(io.LimitReader(stdin, 4097))
+		if err != nil {
+			fmt.Fprintln(stderr, "argus approval-key: read stdin:", err)
+			return 1
+		}
+		p, err := approvalkey.TrustActd(dir, b)
+		if err != nil {
+			fmt.Fprintln(stderr, "argus approval-key:", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "pinned actd's sealing key %s (compare with argus actd seal-key show)\n", capability.SealFingerprint(p))
+		return 0
 	default:
 		fmt.Fprint(stderr, approvalKeyHelp)
 		return 2

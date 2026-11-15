@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/approvalkey"
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
@@ -355,7 +356,7 @@ func AgentPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		payload = py.NewOMap("kind", "agent-stop", "key", key)
 		// a signed stop: actd revokes every approval of the task signed before it (ADR-0022 amendment 1)
 		if sha := agentPlanSHA(a); sha != "" && a.I("plan_version") > 0 {
-			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true); err != nil {
+			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true, capability.SealedSHA256(nil)); err != nil {
 				return 500, "Not stopped: " + err.Error()
 			}
 		}
@@ -381,7 +382,7 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not started: " + why
 	}
 	n, _ := py.ParseInt(v)
@@ -398,12 +399,41 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "The plan changed: review v" + I2S(a.I("plan_version")) + " (its hash is pinned when you spin up)"
 	}
 	p := py.NewOMap("kind", "agent-start", "key", key, "plan_version", n)
-	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan)); err != nil {
+	// the secret inputs the capability steps refer to: sealed here to actd's pinned key, for this action and step;
+	// only the ciphertext goes on (ADR-0022 D4)
+	var sealed map[string]string
+	if agentExecutes(plan) {
+		var err error
+		if sealed, err = agentSealInputs(form, agentPlanInputs(a), capability.ActionID(key, int(n), sha), sha); err != nil {
+			return 409, "Not started: " + err.Error()
+		}
+		if len(sealed) > 0 {
+			sm := py.NewOMap()
+			ks := make([]string, 0, len(sealed))
+			for k := range sealed {
+				ks = append(ks, k)
+			}
+			sort.Strings(ks)
+			for _, k := range ks {
+				sm.Set(k, sealed[k])
+			}
+			p.Set("sealed_inputs", sm)
+		}
+	}
+	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan), capability.SealedSHA256(sealed)); err != nil {
 		return 500, "Not started: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)
 	if err != nil {
 		return boardCouldNotSave(c, err)
+	}
+	// remembered in the api's own folder, per action, once the start was sent: a later continue or rollback of this
+	// action is signed over these sealed inputs only (without the record they are signed over none, and actd refuses)
+	if p.Has("signature") {
+		if err := approvalkey.RecordStart(APPROVAL_KEY_DIR, key, capability.ActionID(key, int(n), sha), int(n), sha, capability.SealedSHA256(sealed)); err != nil {
+			logf("agent start %s: the approval record cannot be written: %v", key, err)
+			return 500, "Started, but the api cannot record the approval (" + err.Error() + "): a later Continue or rollback of this action will be refused; stop and approve again after fixing ARGUS_APPROVAL_KEY_DIR"
+		}
 	}
 	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
 }

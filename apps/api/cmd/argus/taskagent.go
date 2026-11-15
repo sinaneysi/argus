@@ -73,8 +73,7 @@ func agentBoardOptions(c *config.Config) *board.AgentOptions {
 	// the capability executor (ADR-0022): the worker validates each step with the same allow-lists actd uses
 	mode, err := capability.ParseMode(c.Values["ARGUS_ACTIONS_MODE"].Raw)
 	if err == nil && mode != capability.ModeOff {
-		reg, rerr := capability.Default(capability.Options{HTTPHosts: splitList(c.Values["ARGUS_ACT_HTTP_HOSTS"].Raw),
-			HTTPAllowPlain: c.Values["ARGUS_ACT_HTTP_ALLOW_HTTP"].Raw == "1"})
+		reg, rerr := capability.Default(registryOptions(c)) // no token and no backups here: the worker only validates
 		if rerr == nil {
 			o.ActionsDir, o.ActionsMode, o.Registry = actionsDir(c), string(mode), reg
 		}

@@ -108,10 +108,46 @@ func (r *run) actPath(dir, id string) string {
 	return filepath.Join(r.o.Agent.ActionsDir, dir, id+".json")
 }
 
+// sealedInputs are the approval's sealed inputs ("<step>/<NAME>" -> ciphertext, sealed by the api to actd's key)
+// as JSON for agent_tasks.sealed_inputs; nil (NULL) when there are none. The worker checks only their form: it
+// cannot open them, and the api's signature covers their hash.
+func sealedInputs(req map[string]any) any {
+	raw, ok := req["sealed_inputs"]
+	if !ok || raw == nil {
+		return nil
+	}
+	m, ok := raw.(map[string]any)
+	if !ok || len(m) > capability.MaxSealedInputs {
+		panic(refused("bad sealed inputs"))
+	}
+	out := map[string]string{}
+	for k, v := range m {
+		s, ok := v.(string)
+		if _, _, kok := capability.ParseInputKey(k); !ok || !kok || !capability.ValidSealed(s) {
+			panic(refused("bad sealed inputs"))
+		}
+		out[k] = s
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	b, _ := json.Marshal(out)
+	return string(b)
+}
+
+// storedSealed reads agent_tasks.sealed_inputs; an empty map when there are none.
+func storedSealed(row row) map[string]string {
+	out := map[string]string{}
+	if s := row.s("sealed_inputs"); s != "" {
+		json.Unmarshal([]byte(s), &out)
+	}
+	return out
+}
+
 // actRequest is the request file of the task's action: the stored plan's capability and operator steps, in order.
 func actRequest(row row, plan map[string]any, id, sha string) actd.Request {
 	req := actd.Request{ActionID: id, TaskKey: row.s("key"), PlanVersion: int(row.i("plan_version")), PlanSHA256: sha,
-		Approver: row.s("approved_by"), Steps: []actd.ReqStep{}, SealedInputs: map[string]string{}}
+		Approver: row.s("approved_by"), Steps: []actd.ReqStep{}, SealedInputs: storedSealed(row)}
 	for _, x := range asList(plan["plan"]) {
 		s := asMap(x)
 		n, _ := capability.AsInt(s["n"])
@@ -332,6 +368,51 @@ func (r *run) agentContinue(row row, req map[string]any, by string) string {
 	return fmt.Sprintf("continuing after step %d", step)
 }
 
+// agentChecked is agent-checked {key, action_id, step, verdict, signed_at, signature}: an admin checked the target
+// of a write step whose outcome was unknown and signed the verdict (applied | not-applied); actd checks it, reads the
+// target back for "applied", and goes on or ends the action.
+func (r *run) agentChecked(row row, req map[string]any, by string) string {
+	key, id := row.s("key"), orStr(req["action_id"])
+	if r.o.Agent.ActionsDir == "" {
+		panic(refused("no capability executor in this installation"))
+	}
+	if id == "" || id != row.s("action_id") || row.s("action_state") != actd.StateUnknown {
+		panic(refused("the task's last action has no step with an unknown outcome"))
+	}
+	if contains([]string{"planning", "running", "approved"}, row.s("state")) || !row.null("rollback_started") {
+		panic(refused("a job is running for this task; wait for it to finish"))
+	}
+	step, ok := asInt(req["step"])
+	if !ok || r.one(`SELECT step FROM agent_actions WHERE action_id=? AND step=? AND status=?`, id, step, actd.StatusUnknown) == nil {
+		panic(refused("that step's outcome is not unknown"))
+	}
+	verdict := orStr(req["verdict"])
+	if verdict != capability.VerdictApplied && verdict != capability.VerdictNotApplied {
+		panic(refused("the verdict is applied or not-applied"))
+	}
+	var plan map[string]any
+	json.Unmarshal([]byte(row.s("plan")), &plan)
+	sha := storedPlanSHA(row.s("plan"))
+	if sha == "" || capability.ActionID(key, int(row.i("plan_version")), sha) != id {
+		panic(refused("the plan changed since the action"))
+	}
+	at, sig := r.signedAt(req), signature(req)
+	areq := actRequest(row, plan, id, sha)
+	areq.Checked = &actd.Signed{Step: int(step), Approver: by, At: at, Verdict: verdict, Signature: sig}
+	b, _ := json.MarshalIndent(areq, "", " ")
+	os.Remove(r.actPath("out", id))
+	err := os.MkdirAll(filepath.Dir(r.actPath("in", id)), 0o700)
+	if err == nil {
+		err = writeAtomic(r.actPath("in", id), b, 0o600)
+	}
+	if err != nil {
+		panic(refused("the request cannot be written"))
+	}
+	r.must(`UPDATE agent_tasks SET state='running', phase='act', action_state=NULL, job_started=?, error=NULL, updated=? WHERE key=?`, r.now(), r.now(), key)
+	r.alog(key, "checked", fmt.Sprintf("Step %d checked by %s: %s; the executor reads the target again", step, by, verdict))
+	return fmt.Sprintf("step %d checked: %s", step, verdict)
+}
+
 // agentRollback is agent-rollback {key, action_id, step, signed_at, signature} (ADR-0022 D7): the request goes to
 // actd, which runs the capability's Rollback of that step under the refusal rules.
 func (r *run) agentRollback(row row, req map[string]any, by string) string {
@@ -449,6 +530,7 @@ func (r *run) forwardStop(row row, req map[string]any, by string) {
 	json.Unmarshal([]byte(row.s("plan")), &plan)
 	areq := actRequest(row, plan, id, sha)
 	areq.Approver = by
+	areq.SealedInputs = map[string]string{} // a stop is signed over no sealed inputs: it only revokes
 	areq.Stop = &actd.Signed{Approver: by, At: at, Signature: signature(req)}
 	b, _ := json.MarshalIndent(areq, "", " ")
 	err := os.MkdirAll(filepath.Dir(r.actPath("in", id)), 0o700)

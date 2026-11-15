@@ -3,6 +3,7 @@ package actd
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 
 	"github.com/sinaneysi/argus/internal/capability"
 )
@@ -19,6 +20,12 @@ type Status struct {
 	Last         *lastAction  `json:"last,omitempty"`
 	// ApprovalKey is the fingerprint of the api's approval public key; "" when none is stored (every step refused)
 	ApprovalKey string `json:"approval_key"`
+	// SealKey is the fingerprint of actd's sealing public key (actions/actd.pub); compare with the api's pin
+	SealKey string `json:"seal_key"`
+	// GitLabProjects is the resolved project allow-list (id -> path); empty until it is resolved
+	GitLabProjects map[string]string `json:"gitlab_projects,omitempty"`
+	// BackupsKept is the number of sealed old values kept (an applied, not rolled-back write keeps its backup)
+	BackupsKept int `json:"backups_kept"`
 }
 
 // ChainStatus is the audit chain's state.
@@ -44,9 +51,20 @@ func ReadStatus(path string) (Status, bool) {
 
 // CurrentStatus is the daemon's state now.
 func (d *Daemon) CurrentStatus() Status {
-	s := Status{TS: d.now().Unix(), Version: d.o.Version, Mode: string(d.o.Mode), Capabilities: d.o.Registry.Names(), Last: d.last}
+	s := Status{BackupsKept: d.backupsKept, TS: d.now().Unix(), Version: d.o.Version, Mode: string(d.o.Mode), Capabilities: d.o.Registry.Names(), Last: d.last}
 	if s.Capabilities == nil {
 		s.Capabilities = []string{}
+	}
+	if d.o.SealKey != nil {
+		s.SealKey = capability.SealFingerprint(d.o.SealKey.PublicKey())
+	}
+	if d.o.Registry != nil && d.o.Registry.GitLab != nil {
+		if p := d.o.Registry.GitLab.Projects(); len(p) > 0 {
+			s.GitLabProjects = map[string]string{}
+			for id, path := range p {
+				s.GitLabProjects[strconv.FormatInt(id, 10)] = path
+			}
+		}
 	}
 	if len(d.o.ApprovalPub) > 0 {
 		s.ApprovalKey = capability.KeyFingerprint(d.o.ApprovalPub)
@@ -61,8 +79,11 @@ func (d *Daemon) CurrentStatus() Status {
 			s.Chain.OK = true
 		}
 	}
-	if d.o.Credentials != nil {
-		s.Credentials = d.o.Credentials()
+	if d.o.Credentials != nil { // names and times only: the status is readable by the other services
+		for _, c := range d.o.Credentials() {
+			c.Last4 = ""
+			s.Credentials = append(s.Credentials, c)
+		}
 	}
 	if s.Credentials == nil {
 		s.Credentials = []Credential{}

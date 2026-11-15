@@ -9,6 +9,7 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ecdh"
 	"crypto/ed25519"
 	"database/sql"
 	"encoding/json"
@@ -46,6 +47,13 @@ const (
 	StateFailed   = "failed"
 	StateOperator = "operator" // an operator step stopped the run: "needs the operator"
 	StateStopped  = "stopped"  // a signed stop was recorded
+	// StateUnknown: a write answered an error and its read-back does not show it applied; a person checks
+	StateUnknown = "outcome-unknown"
+	// StatusUnknown is that step's status
+	StatusUnknown = "outcome-unknown"
+	// StatusFailedChecked: a person checked the target and said not applied; its backup is never pruned (the
+	// person may be wrong, and the backup is the only way back)
+	StatusFailedChecked = "failed-checked"
 )
 
 // Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from
@@ -61,6 +69,7 @@ type Request struct {
 	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
 	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
 	Stop         *Signed           `json:"stop,omitempty"`          // agent-stop: revoke the task's approvals signed before it
+	Checked      *Signed           `json:"checked,omitempty"`       // agent-checked: an admin checked step Checked.Step's target
 }
 
 // Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
@@ -69,6 +78,7 @@ type Signed struct {
 	Approver  string `json:"approver"`
 	At        int64  `json:"at"`
 	Signature string `json:"signature"`
+	Verdict   string `json:"verdict,omitempty"` // checked only: applied | not-applied
 }
 
 // ReqStep is one step of a request.
@@ -113,6 +123,11 @@ type Options struct {
 	Version     string
 	// Credentials lists the stored credentials for the status file (names and last four characters only).
 	Credentials func() []Credential
+	// SealKey is the X25519 key the api seals secret inputs to (keys/act-x25519.key); its public half is published
+	// to actions/actd.pub. nil: a step with a sealed input is refused.
+	SealKey *ecdh.PrivateKey
+	// BackupDays is ARGUS_ACTIONS_BACKUP_DAYS (0: 30)
+	BackupDays int
 }
 
 // Daemon is one executor. New takes an exclusive lock, so two processes never run at once; Close releases it.
@@ -125,6 +140,11 @@ type Daemon struct {
 	checked time.Time
 	lock    *os.File
 	inbox   []time.Time // audit records written for unreadable request files in the last minute
+	prepAt  time.Time   // the last try of the registry's Prepare
+	prepOK  bool
+	pruned  time.Time
+	// backupsKept is the number of backups the last prune kept (applied writes are never pruned)
+	backupsKept int
 }
 
 type lastAction struct {
@@ -226,6 +246,12 @@ func New(o Options) (*Daemon, error) {
 			}
 		}
 		d.store = Store{Dir: filepath.Join(o.ActDir, "steps")}
+		if o.SealKey != nil {
+			if err := PublishSealPub(o.ActionsDir, o.SealKey); err != nil {
+				d.Close()
+				return nil, fmt.Errorf("actions/actd.pub: %v", err)
+			}
+		}
 		if len(o.Key) == 32 {
 			a, err := OpenAudit(o.ActDir, o.Key)
 			if a == nil {
@@ -281,6 +307,8 @@ func (d *Daemon) Tick(ctx context.Context) {
 			d.log().Error("audit chain broken: every step is refused", "error", err.Error())
 		}
 	}
+	d.prepare(ctx)
+	d.prune()
 	m, _ := filepath.Glob(filepath.Join(d.o.ActionsDir, "in", "*.json"))
 	sort.Strings(m)
 	for _, p := range m {
@@ -292,6 +320,47 @@ func (d *Daemon) Tick(ctx context.Context) {
 	if err := d.WriteStatus(); err != nil {
 		d.log().Warn("status file not written", "error", err.Error())
 	}
+}
+
+// prepare resolves the families' allow-lists (GitLab projects) once, retried every minute until it succeeds.
+func (d *Daemon) prepare(ctx context.Context) {
+	if d.prepOK || d.o.Registry == nil || (!d.prepAt.IsZero() && d.now().Sub(d.prepAt) < time.Minute) {
+		return
+	}
+	d.prepAt = d.now()
+	cctx, cancel := context.WithTimeout(ctx, capability.MaxCall)
+	defer cancel()
+	if err := d.o.Registry.Prepare(cctx); err != nil {
+		d.log().Warn("allow-list not resolved yet (retried every minute)", "error", Clean(err.Error()))
+		return
+	}
+	d.prepOK = true
+}
+
+// prune removes backups older than ARGUS_ACTIONS_BACKUP_DAYS, once an hour.
+func (d *Daemon) prune() {
+	if d.o.ActDir == "" || d.audit == nil || (!d.pruned.IsZero() && d.now().Sub(d.pruned) < time.Hour) {
+		return
+	}
+	d.pruned = d.now()
+	days := d.o.BackupDays
+	if days <= 0 {
+		days = 30
+	}
+	n, kept, err := d.vault().Prune(days, d.now())
+	if err != nil {
+		d.log().Warn("backups not pruned", "error", err.Error())
+		return
+	}
+	d.backupsKept = kept
+	if n > 0 {
+		d.log().Info("backups pruned", "steps", n, "kept", kept, "days", days)
+	}
+}
+
+// vault is the backup store of the executor volume.
+func (d *Daemon) vault() Vault {
+	return Vault{Dir: filepath.Join(d.o.ActDir, "backups"), Key: d.o.Key, Steps: filepath.Join(d.o.ActDir, "steps")}
 }
 
 // readRequest opens the file without following a link and without blocking on a FIFO, checks the open file (not
@@ -515,7 +584,7 @@ func (d *Daemon) approver(ctx context.Context, by string) (bool, bool, error) {
 // version and hash, the sealed inputs and the step; an enabled admin; not older than the approval TTL.
 func (d *Daemon) checkSigned(ctx context.Context, kind string, t *task, req Request, s *Signed) *capability.Refusal {
 	c := capability.ApprovalClaim{Kind: kind, TaskKey: t.key, PlanVersion: t.approval.PlanVersion, PlanSHA256: t.approval.StoredSHA256,
-		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step}
+		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step, Verdict: s.Verdict}
 	if err := capability.VerifyApproval(d.o.ApprovalPub, c, s.Signature); err != nil {
 		return capability.Refuse(3, capability.CodeApproval, "%s: %s", kind, err.Error())
 	}
@@ -664,13 +733,13 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	t, terr := d.loadTask(ctx, req.TaskKey)
 	c := t.confirmed()
 	kinds := 0
-	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop} {
+	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop, req.Checked} {
 		if x != nil {
 			kinds++
 		}
 	}
 	if kinds > 1 {
-		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, rollback or stop"), true)
+		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, checked, rollback or stop"), true)
 	}
 	if req.Stop != nil { // recorded even while the mode or the switch refuses everything else
 		if want := capability.ActionID(req.TaskKey, req.PlanVersion, req.PlanSHA256); want == "" || want != id || terr != nil {
@@ -712,13 +781,16 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	case startAt <= rec.RevokedAt:
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task at %s, after (or in the same second as) this approval of %s: approve again",
 			stamp(rec.RevokedAt), stamp(startAt)), true)
-	case req.Continue == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
+	case req.Continue == nil && req.Checked == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval (%s) is not newer than the last accepted start (%s): an approval starts the action once; approve again",
 			stamp(startAt), stamp(rec.StartAt)), true)
-	case req.Continue != nil && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
+	case (req.Continue != nil || req.Checked != nil) && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
 	}
 	if req.Continue != nil {
+		if d.o.Mode == capability.ModeOn && (rec.StartAction != id || rec.StartSealed != sealed) {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the sealed inputs are not the ones the start approval of this action covered"), true)
+		}
 		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
 			return d.refuseAll(c, id, r, true)
 		}
@@ -726,6 +798,21 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: signed before the start or before a stop"), true)
 		}
 		t.approval.TTLFrom = time.Unix(req.Continue.At, 0) // a continue has its own TTL; the start TTL bounds the start only
+	}
+	if req.Checked != nil { // the same cross-checks as a continue; checkSigned runs in every mode
+		if d.o.Mode == capability.ModeOn && (rec.StartAction != id || rec.StartSealed != sealed) {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "checked: the sealed inputs are not the ones the start approval of this action covered"), true)
+		}
+		if r := d.checkSigned(ctx, capability.SignChecked, t, req, req.Checked); r != nil {
+			return d.refuseAll(c, id, r, true)
+		}
+		if req.Checked.At <= rec.RevokedAt || req.Checked.At < startAt {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "checked: signed before the start or before a stop"), true)
+		}
+		if d.o.Mode != capability.ModeOn {
+			return d.refuseAll(c, id, capability.Refuse(1, capability.CodeModeOff, "checked: an unknown outcome is resolved only with ARGUS_ACTIONS_MODE=on"), true)
+		}
+		t.approval.TTLFrom = time.Unix(req.Checked.At, 0)
 	}
 	if r := capability.CheckApproval(t.approval, d.o.TTL, d.now()); r != nil {
 		return d.refuseAll(c, id, r, true)
@@ -743,6 +830,11 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	if !sameSteps(req.Steps, t.steps) {
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the request's steps are not the approved plan's steps"), true)
+	}
+	// the sealed inputs: the signature covers their hash (CheckApproval); here every input a step refers to must be
+	// there, and nothing else
+	if r := d.checkInputs(t, req.SealedInputs); r != nil {
+		return d.refuseAll(c, id, r, true)
 	}
 	ncap := 0
 	for _, s := range t.steps {
@@ -790,8 +882,9 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	switch {
 	case !on:
+	case req.Checked != nil: // consumed by clearing the step's interrupted marker (applyChecked)
 	case req.Continue == nil:
-		rec.StartAt = startAt
+		rec.StartAt, rec.StartAction, rec.StartSealed = startAt, id, sealed
 		if err := d.putTaskRecord(t.key, rec); err != nil {
 			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the start could not be recorded: %v", err), true)
 		}
@@ -832,6 +925,23 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		}
 		resp.State, resp.Refusal = StateRefused, r
 		resp.Steps = append(resp.Steps, sr)
+	}
+	if req.Checked != nil {
+		sr, r := d.applyChecked(ctx, id, t, req, base, audit)
+		switch {
+		case r != nil:
+			refuseStep(planStep{N: req.Checked.Step, Capability: sr.Capability}, r)
+		case sr.Status != "ok":
+			resp.Steps, resp.State = append(resp.Steps, sr), StateFailed
+		}
+		if r != nil || sr.Status != "ok" {
+			if d.audit != nil {
+				resp.AuditHead, _ = d.audit.Head()
+			}
+			d.finish(resp, c, events)
+			d.log().Info("checked", "action", id, "step", req.Checked.Step, "state", resp.State)
+			return resp
+		}
 	}
 	for i, s := range t.steps {
 		if s.Mode == "operator" && opDone[s.N] {
@@ -887,17 +997,35 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 		}
-		sr, stop := d.runStep(ctx, id, cp, s, base, audit, on)
+		inputs, r := d.openInputs(id, t.approval.StoredSHA256, cp, s, req.SealedInputs)
+		if r != nil {
+			refuseStep(s, r)
+			break
+		}
+		sctx := capability.WithStep(ctx, capability.StepInfo{ActionID: id, Step: s.N, Inputs: inputs})
+		sr, stop := d.runStep(sctx, id, cp, s, base, audit, on)
+		clear(inputs)
 		resp.Steps = append(resp.Steps, sr)
-		if on && sr.Refusal == nil {
+		// an unknown outcome is not stored: the interrupted marker stays, so a retry is refused until a person checks
+		if on && sr.Refusal == nil && sr.Status != StatusUnknown {
 			if err := d.store.Put(id, sr); err != nil {
 				d.log().Error("step result not stored", "action", id, "step", s.N, "error", err.Error())
 			} else if err := d.store.ClearApplying(id, s.N); err != nil {
 				d.log().Error("apply marker not removed", "action", id, "step", s.N, "error", err.Error())
 			}
 		}
+		// refused after its backup was written (e.g. the audit record of the apply could not be written): stored as
+		// refused, so a retry does not apply again and the prune can age the backup out
+		if on && sr.Refusal != nil && sr.BackupRef != "" {
+			if err := d.store.Put(id, sr); err != nil {
+				d.log().Error("refused step not stored", "action", id, "step", s.N, "error", err.Error())
+			}
+		}
 		if stop {
 			resp.State = StateFailed
+			if sr.Status == StatusUnknown {
+				resp.State = StateUnknown
+			}
 			if sr.Refusal != nil {
 				resp.State, resp.Refusal = StateRefused, sr.Refusal
 			}
@@ -1003,7 +1131,30 @@ func (d *Daemon) runStep(ctx context.Context, id string, c capability.Capability
 	if c.Tier() == capability.Read {
 		return sr, err != nil || (res.Status != "ok" && res.Status != "unchanged")
 	}
+	if err != nil && ref == "" { // nothing was backed up, so nothing was written
+		return sr, true
+	}
 	if err != nil {
+		// the write may have reached the target although its answer is an error or a timeout: read it back
+		cctx, cancel = call()
+		vres, verr := c.Verify(cctx, s.Args, plan)
+		cancel()
+		if verr == nil && (vres.Status == "ok" || vres.Status == "unchanged") {
+			sr.Phase, sr.Status, sr.Detail = PhaseVerify, "ok", Clean("the write answered an error, but the read-back matches: applied. "+vres.Detail)
+			if vres.Fields != nil {
+				sr.Fields = vres.Fields
+			}
+			if !rec(PhaseVerify, "ok", sr.Detail, string(ref)) {
+				return chainFail(PhaseVerify)
+			}
+			return sr, false
+		}
+		sr.Phase, sr.Status = PhaseVerify, StatusUnknown
+		sr.Detail = Clean("the write answered an error and the read-back does not show it applied: the outcome is unknown. " +
+			"A person checks the target; the step stays marked as interrupted (backup " + string(ref) + ")")
+		if !rec(PhaseVerify, StatusUnknown, sr.Detail, string(ref)) {
+			return chainFail(PhaseVerify)
+		}
 		return sr, true
 	}
 	cctx, cancel = call()

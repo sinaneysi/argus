@@ -562,14 +562,14 @@ export type Agent = {
   progress?: { label: string; cur: number; bar: boolean; now: Seg[]; meta: Seg[][]; fix: boolean; steps?: string[] };
   result: AgentResult | null; plan?: AgentPlan; questions: { id: string; text: string; blocking: boolean; answer: string }[]; emptyDesc: boolean; running: boolean;
   inputs?: { instructions: string; postJira: boolean; tracker: string; paused: boolean }; pause?: Seg;
-  spin?: { can: boolean; label: string; reason: string; primary: boolean; proposal: boolean }; chat: Chat | null; secrets: Secrets | null;
+  spin?: { can: boolean; label: string; reason: string; primary: boolean; proposal: boolean; inputs?: string[] }; chat: Chat | null; secrets: Secrets | null;
   planSha256?: string; action?: AgentAction;
   log: { at: number; kind: string; text: string }[];
 };
 /** The task's last capability action (ADR-0022): actd's step results, not the model's report. */
 export type AgentAction = {
   id: string; state: string;
-  steps: { step: number; capability: string; status: string; detail: string; audit: string; text: string; rollback?: boolean }[];
+  steps: { step: number; capability: string; status: string; detail: string; audit: string; text: string; rollback?: boolean; checked?: boolean }[];
   continue?: { step: number; text: string; can: boolean };
 };
 export type TaskPage = {
