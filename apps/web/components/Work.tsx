@@ -210,7 +210,7 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
         <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
         {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
         <p className="muted small">The plan needs {inputs.length === 1 ? "a secret value" : "secret values"}. Type {inputs.length === 1 ? "it" : "them"} here: Argus seals each value to its executor at approval. The model, the page and the logs never see {inputs.length === 1 ? "it" : "them"}.</p>
-        {inputs.map((n) => <label key={n} className="field"><span className="mono">{n}</span><input type="password" name={`input_${n}`} autoComplete="off" spellCheck={false} maxLength={8192} required /></label>)}
+        {inputs.map((n) => <label key={n} className="field"><span className="mono">{n}</span><input type="password" name={`input_${n}`} autoComplete="new-password" spellCheck={false} maxLength={8192} required /></label>)}
         <div className="actionbar"><Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
           <span className="muted small">Pinned to plan v{a.planVersion}; if the plan changes, review the new version and spin up again.</span></div>
       </form>

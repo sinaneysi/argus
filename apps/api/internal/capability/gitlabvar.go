@@ -340,14 +340,16 @@ type glVar struct {
 	Raw          bool    `json:"raw"`
 	Scope        string  `json:"environment_scope"`
 	Hidden       bool    `json:"hidden"`
+	Description  *string `json:"description"`
 }
 
 // glAttrs are the attributes set and rollback restore.
 type glAttrs struct {
-	Type      string `json:"variable_type"`
-	Protected bool   `json:"protected"`
-	Masked    bool   `json:"masked"`
-	Raw       bool   `json:"raw"`
+	Type        string `json:"variable_type"`
+	Protected   bool   `json:"protected"`
+	Masked      bool   `json:"masked"`
+	Raw         bool   `json:"raw"`
+	Description string `json:"description,omitempty"` // kept and restored; never set from a plan
 }
 
 func (v *glVar) attrs() glAttrs {
@@ -355,7 +357,11 @@ func (v *glVar) attrs() glAttrs {
 	if t == "" {
 		t = "env_var"
 	}
-	return glAttrs{Type: t, Protected: v.Protected, Masked: v.Masked, Raw: v.Raw}
+	a := glAttrs{Type: t, Protected: v.Protected, Masked: v.Masked, Raw: v.Raw}
+	if v.Description != nil {
+		a.Description = *v.Description
+	}
+	return a
 }
 
 func (a glAttrs) fields() map[string]any {
@@ -384,7 +390,7 @@ func (g *GitLab) getVar(ctx context.Context, id int64, key string) (*glVar, erro
 		return nil, fmt.Errorf("GitLab answered %d to the read of the variable", code)
 	}
 	var v glVar
-	if json.Unmarshal(b, &v) != nil || v.Key != key || (v.Scope != "" && v.Scope != GitLabScope) {
+	if json.Unmarshal(b, &v) != nil || v.Key != key || v.Scope != GitLabScope {
 		return nil, errors.New("the GitLab answer is not the variable of scope develop")
 	}
 	if v.Hidden {
@@ -396,7 +402,7 @@ func (g *GitLab) getVar(ctx context.Context, id int64, key string) (*glVar, erro
 // write creates (POST) or updates (PUT, with the scope filter) the variable.
 func (g *GitLab) write(ctx context.Context, id int64, key string, create bool, value string, a glAttrs) error {
 	body := map[string]any{"value": value, "variable_type": a.Type, "protected": a.Protected, "masked": a.Masked, "raw": a.Raw,
-		"environment_scope": GitLabScope}
+		"environment_scope": GitLabScope, "description": a.Description}
 	method, path, q := http.MethodPut, varPath(g.prefix, id, key), scopeQuery()
 	if create {
 		body["key"] = key
@@ -467,11 +473,11 @@ func gitLabFields(input bool, write bool) []Field {
 		{Name: "environment_scope", Type: String, Required: true, MaxLen: 64},
 	}
 	if input && write {
-		f = append(f, Field{Name: "value_ref", Type: String, Required: true, MaxLen: 40, Input: true},
+		f = append(f, Field{Name: "value_ref", Type: String, Required: true, MaxLen: 40, Input: true, Secret: true},
 			Field{Name: "protected", Type: Bool}, Field{Name: "masked", Type: Bool}, Field{Name: "raw", Type: Bool},
 			Field{Name: "variable_type", Type: String, MaxLen: 10, Pattern: glTypeRe})
 	} else if input {
-		f = append(f, Field{Name: "matches", Type: String, MaxLen: 40, Input: true})
+		f = append(f, Field{Name: "matches", Type: String, MaxLen: 40, Input: true, Secret: true})
 	}
 	return f
 }
@@ -613,6 +619,11 @@ func wanted(cur *glVar, args Args) glAttrs {
 	if cur != nil {
 		a = cur.attrs()
 	}
+	return wantedFrom(a, args)
+}
+
+// wantedFrom is the attributes after the set, from the state before it.
+func wantedFrom(a glAttrs, args Args) glAttrs {
 	if v, ok := args["protected"].(bool); ok {
 		a.Protected = v
 	}
@@ -723,7 +734,32 @@ func (c *GitLabSet) Apply(ctx context.Context, args Args, plan Plan) (Result, Ba
 	return Result{Status: "ok", Detail: fmt.Sprintf("variable %s %s (scope develop); the old state is backed up", st.key, st.change), Fields: f}, ref, nil
 }
 
-func (c *GitLabSet) Verify(ctx context.Context, args Args, _ Plan) (Result, error) {
+// expected is the attributes the variable must have after the step: unchanged steps wrote nothing, so the current
+// ones; otherwise the backed-up old ones (none: GitLab's defaults) with the step's arguments over them.
+func (c *GitLabSet) expected(ctx context.Context, cur *glVar, args Args, plan Plan) (glAttrs, error) {
+	if plan.Change == "unchanged" {
+		return wanted(cur, args), nil
+	}
+	info, ok := StepFrom(ctx)
+	if !ok || c.g.backups == nil {
+		return glAttrs{}, errors.New("no backup of the step: the expected attributes are not known")
+	}
+	_, plain, err := c.g.backups.Get(BackupRefOf(info.ActionID, info.Step))
+	if err != nil {
+		return glAttrs{}, fmt.Errorf("the backup of the step is not readable: %v", err)
+	}
+	var b glBackup
+	if json.Unmarshal(plain, &b) != nil {
+		return glAttrs{}, errors.New("the backup of the step is damaged")
+	}
+	base := glAttrs{Type: "env_var"}
+	if b.Existed {
+		base = b.Attrs
+	}
+	return wantedFrom(base, args), nil
+}
+
+func (c *GitLabSet) Verify(ctx context.Context, args Args, plan Plan) (Result, error) {
 	id, key, err := c.g.target(ctx, c.Schema(), Write, args)
 	if err != nil {
 		return failed(err), err
@@ -739,7 +775,12 @@ func (c *GitLabSet) Verify(ctx context.Context, args Args, _ Plan) (Result, erro
 	if v == nil || v.Value == nil {
 		return Result{Status: "mismatch", Detail: fmt.Sprintf("variable %s is not readable after the write", key)}, nil
 	}
-	want := wanted(v, args)
+	// the expected attributes come from the state before the write (the backup) plus the step's arguments, never
+	// from what GitLab answers now: an attribute dropped by the write (masked, protected) is a mismatch
+	want, err := c.expected(ctx, v, args, plan)
+	if err != nil {
+		return failed(err), err
+	}
 	f := v.attrs().fields()
 	if !c.g.sameValue(*v.Value, val) || v.attrs() != want {
 		return Result{Status: "mismatch", Detail: fmt.Sprintf("variable %s does not hold the input and the attributes after the write", key), Fields: f}, nil
@@ -857,6 +898,9 @@ func (g *GitLab) backup(info StepInfo, id int64, key string, cur *glVar) (Backup
 	}
 	b := glBackup{Existed: cur != nil}
 	if cur != nil {
+		if cur.Value == nil {
+			return "", errors.New("the variable's value is hidden: it cannot be backed up, nothing is changed")
+		}
 		b.Value, b.Attrs = *cur.Value, cur.attrs()
 	}
 	plain, err := json.Marshal(b)

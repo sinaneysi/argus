@@ -194,7 +194,7 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 		}
 		// the GitLab token is opened for each call, from argus-act only; the old values go to argus-act/backups
 		ro.GitLab.Token = func() (string, error) { return actd.OpenCredential(actDir, key, capability.GitLabCredential) }
-		ro.GitLab.Backups = actd.Vault{Dir: filepath.Join(actDir, "backups"), Key: key}
+		ro.GitLab.Backups = actd.Vault{Dir: filepath.Join(actDir, "backups"), Key: key, Steps: filepath.Join(actDir, "steps")}
 	}
 	reg, err := capability.Default(ro)
 	if err != nil {

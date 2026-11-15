@@ -383,3 +383,72 @@ func TestGitLabGuardRefusesPipelinesAndJobs(t *testing.T) {
 		t.Fatal(r, err)
 	}
 }
+
+// An attribute the step does not name must keep its old value: a write that drops masked is a mismatch.
+func TestGitLabVerifyAttributeDrift(t *testing.T) {
+	f := newGL(t)
+	set := f.cap(t, capability.GitLabVarSet)
+	ctx := stepCtx(1, map[string]string{"NEW_TOKEN": secretValue})
+	f.stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old-" + secretValue, Masked: true, Protected: true})
+	p, _ := set.Plan(ctx, setArgs())
+	f.stub.AfterW = func(s *gitlabtest.Stub) {
+		s.AfterW = nil
+		v, _ := s.Get(101, "API_TOKEN")
+		v.Masked = false // GitLab (or someone) dropped masked; the value is right
+		s.Put(101, "API_TOKEN", v)
+	}
+	if _, _, err := set.Apply(ctx, setArgs(), p); err != nil {
+		t.Fatal(err)
+	}
+	if vr, err := set.Verify(ctx, setArgs(), p); err != nil || vr.Status != "mismatch" {
+		t.Fatal("drift not seen:", vr, err)
+	}
+	// without drift the same step verifies
+	f.stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old2", Masked: true, Protected: true})
+	ctx2 := stepCtx(2, map[string]string{"NEW_TOKEN": secretValue})
+	p2, _ := set.Plan(ctx2, setArgs())
+	set.Apply(ctx2, setArgs(), p2)
+	if vr, err := set.Verify(ctx2, setArgs(), p2); err != nil || vr.Status != "ok" {
+		t.Fatal(vr, err)
+	}
+}
+
+// The description is kept by a set and restored by a rollback of a delete.
+func TestGitLabDescriptionRestored(t *testing.T) {
+	f := newGL(t)
+	del := f.cap(t, capability.GitLabVarDelete)
+	f.stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: secretValue, Desc: "the deploy token of the app"})
+	a := capability.Args{"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop"}
+	ctx := stepCtx(1, nil)
+	p, _ := del.Plan(ctx, a)
+	_, ref, err := del.Apply(ctx, a, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rb, err := del.Rollback(ctx, ref); err != nil || rb.Status != "ok" {
+		t.Fatal(rb, err)
+	}
+	if v, _ := f.stub.Get(101, "API_TOKEN"); v.Desc != "the deploy token of the app" || v.Value != secretValue {
+		t.Fatal("not restored:", v.Desc)
+	}
+	set := f.cap(t, capability.GitLabVarSet)
+	sctx := stepCtx(2, map[string]string{"NEW_TOKEN": "new-" + secretValue})
+	sp, _ := set.Plan(sctx, setArgs())
+	set.Apply(sctx, setArgs(), sp)
+	if v, _ := f.stub.Get(101, "API_TOKEN"); v.Desc != "the deploy token of the app" {
+		t.Fatal("a set dropped the description:", v.Desc)
+	}
+}
+
+// A literal where an input reference belongs is redacted in the audit form of the arguments.
+func TestGitLabLiteralRedacted(t *testing.T) {
+	f := newGL(t)
+	set := f.cap(t, capability.GitLabVarSet)
+	red := set.Schema().Redacted(setArgs("value_ref", secretValue))
+	if red["value_ref"] != capability.Redacted || red["key"] != "API_TOKEN" {
+		t.Fatal(red)
+	}
+	if r := set.Schema().Redacted(setArgs()); r["value_ref"] != "input:NEW_TOKEN" {
+		t.Fatal("a reference is kept:", r)
+	}
+}

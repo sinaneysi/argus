@@ -24,6 +24,8 @@ type Status struct {
 	SealKey string `json:"seal_key"`
 	// GitLabProjects is the resolved project allow-list (id -> path); empty until it is resolved
 	GitLabProjects map[string]string `json:"gitlab_projects,omitempty"`
+	// BackupsKept is the number of sealed old values kept (an applied, not rolled-back write keeps its backup)
+	BackupsKept int `json:"backups_kept"`
 }
 
 // ChainStatus is the audit chain's state.
@@ -49,7 +51,7 @@ func ReadStatus(path string) (Status, bool) {
 
 // CurrentStatus is the daemon's state now.
 func (d *Daemon) CurrentStatus() Status {
-	s := Status{TS: d.now().Unix(), Version: d.o.Version, Mode: string(d.o.Mode), Capabilities: d.o.Registry.Names(), Last: d.last}
+	s := Status{BackupsKept: d.backupsKept, TS: d.now().Unix(), Version: d.o.Version, Mode: string(d.o.Mode), Capabilities: d.o.Registry.Names(), Last: d.last}
 	if s.Capabilities == nil {
 		s.Capabilities = []string{}
 	}
@@ -77,8 +79,11 @@ func (d *Daemon) CurrentStatus() Status {
 			s.Chain.OK = true
 		}
 	}
-	if d.o.Credentials != nil {
-		s.Credentials = d.o.Credentials()
+	if d.o.Credentials != nil { // names and times only: the status is readable by the other services
+		for _, c := range d.o.Credentials() {
+			c.Last4 = ""
+			s.Credentials = append(s.Credentials, c)
+		}
 	}
 	if s.Credentials == nil {
 		s.Credentials = []Credential{}

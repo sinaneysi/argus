@@ -172,7 +172,7 @@ describe("task page", () => {
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     const field = h.match(/<input[^>]*name="input_NEW_TOKEN"[^>]*>/)?.[0] ?? "";
     expect(field).toContain('type="password"');
-    expect(field).toContain('autoComplete="off"');
+    expect(field).toContain('autoComplete="new-password"');
     expect(field).not.toMatch(/value=/);
     expect(h).toMatch(/<form[^>]*autoComplete="off"/);
   });

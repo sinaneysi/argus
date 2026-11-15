@@ -35,6 +35,7 @@ type Var struct {
 	Masked    bool
 	Raw       bool
 	Hidden    bool
+	Desc      string
 }
 
 // Call is one recorded request.
@@ -44,18 +45,19 @@ type Call struct {
 
 // Stub is the fake GitLab.
 type Stub struct {
-	Srv      *httptest.Server
-	mu       sync.Mutex
-	Projects map[int64]string // id -> path
-	Vars     map[string]Var   // "<id>/<key>"
-	calls    []Call           // every request
-	AfterW   func(s *Stub)    // runs after a successful write (e.g. to change the value behind the capability)
-	Status   map[string]int   // "<METHOD>" -> forced status for writes
+	Srv       *httptest.Server
+	mu        sync.Mutex
+	Projects  map[int64]string // id -> path
+	Vars      map[string]Var   // "<id>/<key>"
+	calls     []Call           // every request
+	AfterW    func(s *Stub)    // runs after a successful write (e.g. to change the value behind the capability)
+	Status    map[string]int   // "<METHOD>" -> forced status for writes (nothing applied)
+	FailAfter map[string]int   // "<METHOD>" -> the write is applied, then this status is answered
 }
 
 // New starts the stub with two projects: 101 shop/checkout and 102 shop/catalog.
 func New(t *testing.T) *Stub {
-	s := &Stub{Projects: map[int64]string{101: "shop/checkout", 102: "shop/catalog"}, Vars: map[string]Var{}, Status: map[string]int{}}
+	s := &Stub{Projects: map[int64]string{101: "shop/checkout", 102: "shop/catalog"}, Vars: map[string]Var{}, Status: map[string]int{}, FailAfter: map[string]int{}}
 	s.Srv = httptest.NewServer(http.HandlerFunc(s.serve))
 	t.Cleanup(s.Srv.Close)
 	return s
@@ -122,7 +124,7 @@ func send(w http.ResponseWriter, code int, v any) {
 
 func varJSON(key string, v Var) map[string]any {
 	m := map[string]any{"key": key, "variable_type": v.Type, "protected": v.Protected, "masked": v.Masked, "raw": v.Raw,
-		"environment_scope": "develop", "hidden": v.Hidden}
+		"environment_scope": "develop", "hidden": v.Hidden, "description": v.Desc}
 	if !v.Hidden {
 		m["value"] = v.Value
 	} else {
@@ -180,6 +182,9 @@ func (s *Stub) serve(w http.ResponseWriter, r *http.Request) {
 		if x, ok := in["variable_type"].(string); ok {
 			v.Type = x
 		}
+		if x, ok := in["description"].(string); ok {
+			v.Desc = x
+		}
 		for k, p := range map[string]*bool{"protected": &v.Protected, "masked": &v.Masked, "raw": &v.Raw} {
 			if x, ok := in[k].(bool); ok {
 				*p = x
@@ -191,62 +196,71 @@ func (s *Stub) serve(w http.ResponseWriter, r *http.Request) {
 		send(w, c, map[string]any{"message": "forced"})
 		return
 	}
+	// FailAfter: the write is applied, then the answer is an error (a timeout behind a proxy)
+	var rw http.ResponseWriter = w
+	late := s.FailAfter[r.Method]
+	if late != 0 {
+		rw = httptest.NewRecorder()
+	}
 	switch {
 	case len(seg) == 2 && r.Method == http.MethodPost:
 		key, _ := in["key"].(string)
 		if in["environment_scope"] != "develop" {
-			send(w, 400, map[string]any{"message": "scope"})
+			send(rw, 400, map[string]any{"message": "scope"})
 			return
 		}
 		if _, ok := s.Get(id, key); ok {
-			send(w, 400, map[string]any{"message": "key has already been taken"})
+			send(rw, 400, map[string]any{"message": "key has already been taken"})
 			return
 		}
 		v := attrs(Var{Type: "env_var"})
 		s.Put(id, key, v)
-		send(w, 201, varJSON(key, v))
+		send(rw, 201, varJSON(key, v))
 	case len(seg) == 3:
 		key := seg[2]
 		if r.URL.Query().Get("filter[environment_scope]") != "develop" {
-			send(w, 409, map[string]any{"message": "no scope filter"})
+			send(rw, 409, map[string]any{"message": "no scope filter"})
 			return
 		}
 		v, ok := s.Get(id, key)
 		switch r.Method {
 		case http.MethodGet:
 			if !ok {
-				send(w, 404, map[string]any{"message": "404 Variable Not Found"})
+				send(rw, 404, map[string]any{"message": "404 Variable Not Found"})
 				return
 			}
-			send(w, 200, varJSON(key, v))
+			send(rw, 200, varJSON(key, v))
 			return
 		case http.MethodPut:
 			if !ok {
-				send(w, 404, map[string]any{"message": "404 Variable Not Found"})
+				send(rw, 404, map[string]any{"message": "404 Variable Not Found"})
 				return
 			}
 			v = attrs(v)
 			s.Put(id, key, v)
-			send(w, 200, varJSON(key, v))
+			send(rw, 200, varJSON(key, v))
 		case http.MethodDelete:
 			if !ok {
-				send(w, 404, map[string]any{"message": "404 Variable Not Found"})
+				send(rw, 404, map[string]any{"message": "404 Variable Not Found"})
 				return
 			}
 			s.mu.Lock()
 			delete(s.Vars, fmt.Sprintf("%d/%s", id, key))
 			s.mu.Unlock()
-			w.WriteHeader(204)
+			rw.WriteHeader(204)
 		default:
-			send(w, 405, nil)
+			send(rw, 405, nil)
 			return
 		}
 	default:
-		send(w, 405, nil)
+		send(rw, 405, nil)
 		return
 	}
 	if s.AfterW != nil {
 		s.AfterW(s)
+	}
+	if late != 0 {
+		send(w, late, map[string]any{"message": "gateway timeout after the write"})
 	}
 }
 

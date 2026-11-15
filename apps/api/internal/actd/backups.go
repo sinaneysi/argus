@@ -23,8 +23,9 @@ import (
 
 // Vault is capability.Backups over the executor volume.
 type Vault struct {
-	Dir string     // argus-act/backups
-	Key secret.Key // the executor key
+	Dir   string     // argus-act/backups
+	Key   secret.Key // the executor key
+	Steps string     // argus-act/steps: a backup that exists without a stored step result is not overwritten
 }
 
 func (v Vault) path(ref capability.BackupRef) (string, error) {
@@ -39,8 +40,9 @@ func vaultName(ref capability.BackupRef, meta string) string {
 	return "act-backup/" + string(ref) + "\n" + meta
 }
 
-// Put seals plain under ref with meta as additional data; an existing backup of the same step is kept (the first
-// backup of a step holds the state before the action).
+// Put seals plain under ref with meta as additional data. An existing backup of the same step is kept (the first
+// backup of a step holds the state before the action); when that step has no stored result, an earlier apply
+// stopped in the middle, and Put refuses: a person checks the target first.
 func (v Vault) Put(ref capability.BackupRef, meta string, plain []byte) error {
 	if len(v.Key) != 32 {
 		return errors.New("no executor key")
@@ -53,7 +55,13 @@ func (v Vault) Put(ref capability.BackupRef, meta string, plain []byte) error {
 		return err
 	}
 	if _, err := os.Lstat(p); err == nil {
-		return nil
+		id, n, _ := capability.ParseBackupRef(ref)
+		if v.Steps != "" {
+			if _, ok := (Store{Dir: v.Steps}).Get(id, n); ok {
+				return nil
+			}
+		}
+		return errors.New("a backup of this step exists without a stored result: an earlier apply was interrupted")
 	}
 	enc, err := v.Key.Seal(vaultName(ref, meta), base64.StdEncoding.EncodeToString(plain))
 	if err != nil {
@@ -99,30 +107,52 @@ func (v Vault) Get(ref capability.BackupRef) (string, []byte, error) {
 	return lines[0], bytes.Clone(plain), nil
 }
 
-// Prune removes the backups of actions whose folder is older than days.
-func (v Vault) Prune(days int, now time.Time) (int, error) {
+// Prune removes the backups older than days whose step is over without a change left in place: rolled back, refused
+// or failed. A backup of an applied write that was not rolled back is kept (it is the only way back). It returns
+// the number removed and the number kept.
+func (v Vault) Prune(days int, now time.Time) (removed, kept int, err error) {
 	if days <= 0 {
-		return 0, fmt.Errorf("bad retention")
+		return 0, 0, fmt.Errorf("bad retention")
 	}
 	ents, err := os.ReadDir(v.Dir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return 0, nil
+			return 0, 0, nil
 		}
-		return 0, err
+		return 0, 0, err
 	}
-	n := 0
+	st := Store{Dir: v.Steps}
 	for _, e := range ents {
 		if !e.IsDir() || !capability.ValidActionID(e.Name()) {
 			continue
 		}
-		fi, err := e.Info()
-		if err != nil || now.Sub(fi.ModTime()) < time.Duration(days)*24*time.Hour {
-			continue
+		dir := filepath.Join(v.Dir, e.Name())
+		files, _ := os.ReadDir(dir)
+		left := 0
+		for _, fe := range files {
+			n, err := strconv.Atoi(strings.TrimSuffix(fe.Name(), ".enc"))
+			fi, ierr := fe.Info()
+			if err != nil || ierr != nil || !strings.HasSuffix(fe.Name(), ".enc") {
+				left++
+				continue
+			}
+			r, ok := st.Get(e.Name(), n)
+			over := ok && (r.Status == "rolled-back" || r.Status == StateRefused || r.Status == "failed")
+			if v.Steps == "" || !over || now.Sub(fi.ModTime()) < time.Duration(days)*24*time.Hour {
+				left++
+				kept++
+				continue
+			}
+			if os.Remove(filepath.Join(dir, fe.Name())) == nil {
+				removed++
+			} else {
+				left++
+				kept++
+			}
 		}
-		if os.RemoveAll(filepath.Join(v.Dir, e.Name())) == nil {
-			n++
+		if left == 0 {
+			os.Remove(dir)
 		}
 	}
-	return n, nil
+	return removed, kept, nil
 }

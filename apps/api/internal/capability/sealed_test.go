@@ -22,28 +22,31 @@ func TestHKDFVector(t *testing.T) {
 
 func TestSealedInputs(t *testing.T) {
 	k, _ := ecdh.X25519().GenerateKey(rand.Reader)
+	sha := "abcdefabcdef" + strings.Repeat("0", 52)
 	id := "OPS-9.v1.abcdefabcdef"
 	value := "v@lue-" + "with-symbols"
-	s, err := SealInput(k.PublicKey(), id, 2, "NEW_TOKEN", value)
+	s, err := SealInput(k.PublicKey(), id, sha, 2, "NEW_TOKEN", value)
 	if err != nil || !ValidSealed(s) || strings.Contains(s, value) {
 		t.Fatal(s, err)
 	}
-	if v, err := OpenInput(k, id, 2, "NEW_TOKEN", s); err != nil || v != value {
+	if v, err := OpenInput(k, id, sha, 2, "NEW_TOKEN", s); err != nil || v != value {
 		t.Fatal(v, err)
 	}
 	// bound to the action, the step and the name, and to the key
 	other, _ := ecdh.X25519().GenerateKey(rand.Reader)
+	otherSHA := "abcdefabcdef" + strings.Repeat("1", 52) // same action id prefix, another plan
 	for _, c := range []struct {
 		k    *ecdh.PrivateKey
 		id   string
+		sha  string
 		step int
 		name string
-	}{{k, "OPS-9.v2.abcdefabcdef", 2, "NEW_TOKEN"}, {k, id, 3, "NEW_TOKEN"}, {k, id, 2, "OTHER"}, {other, id, 2, "NEW_TOKEN"}} {
-		if _, err := OpenInput(c.k, c.id, c.step, c.name, s); err == nil {
+	}{{k, "OPS-9.v2.abcdefabcdef", sha, 2, "NEW_TOKEN"}, {k, id, otherSHA, 2, "NEW_TOKEN"}, {k, id, sha, 3, "NEW_TOKEN"}, {k, id, sha, 2, "OTHER"}, {other, id, sha, 2, "NEW_TOKEN"}} {
+		if _, err := OpenInput(c.k, c.id, c.sha, c.step, c.name, s); err == nil {
 			t.Fatalf("opened for %+v", c)
 		}
 	}
-	if _, err := SealInput(k.PublicKey(), id, 2, "bad-name", value); err == nil {
+	if _, err := SealInput(k.PublicKey(), id, sha, 2, "bad-name", value); err == nil {
 		t.Fatal("a bad name was sealed")
 	}
 	pemText, _ := SealPublicPEM(k.PublicKey())

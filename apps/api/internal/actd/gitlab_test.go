@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/capability/gitlabtest"
@@ -20,7 +21,7 @@ func newGLFx(t *testing.T) (*fx, *gitlabtest.Stub) {
 	f := newFx(t)
 	stub := gitlabtest.New(t)
 	gl, err := capability.NewGitLab(capability.GitLabOptions{URL: gitlabtest.URL, Projects: []string{"shop/checkout"}, AllowPlain: true,
-		Token: func() (string, error) { return gitlabtest.Token, nil }, Backups: Vault{Dir: filepath.Join(f.act, "backups"), Key: f.key},
+		Token: func() (string, error) { return gitlabtest.Token, nil }, Backups: Vault{Dir: filepath.Join(f.act, "backups"), Key: f.key, Steps: filepath.Join(f.act, "steps")},
 		Transport: stub.Transport()})
 	if err != nil {
 		t.Fatal(err)
@@ -47,7 +48,7 @@ func (f *fx) sealFor(key string, req *Request, value string, steps ...int) {
 	f.t.Helper()
 	req.SealedInputs = map[string]string{}
 	for _, n := range steps {
-		s, err := capability.SealInput(f.seal.PublicKey(), req.ActionID, n, "NEW_TOKEN", value)
+		s, err := capability.SealInput(f.seal.PublicKey(), req.ActionID, req.PlanSHA256, n, "NEW_TOKEN", value)
 		if err != nil {
 			f.t.Fatal(err)
 		}
@@ -161,7 +162,7 @@ func TestSealedInputRules(t *testing.T) {
 	// replaced after approval: the signature covers the sealed inputs' hash
 	f.sealFor("GL-3", &req, glSecret, 1)
 	swapped := req
-	other, _ := capability.SealInput(f.seal.PublicKey(), req.ActionID, 1, "NEW_TOKEN", "attacker-value")
+	other, _ := capability.SealInput(f.seal.PublicKey(), req.ActionID, req.PlanSHA256, 1, "NEW_TOKEN", "attacker-value")
 	swapped.SealedInputs = map[string]string{capability.InputKey(1, "NEW_TOKEN"): other}
 	if r := f.submit(d, swapped); r.Refusal == nil || r.Refusal.Rule != 3 || !strings.Contains(r.Refusal.Reason, "sealed") {
 		t.Fatalf("%+v", r.Refusal)
@@ -169,7 +170,7 @@ func TestSealedInputRules(t *testing.T) {
 	// an input sealed for another step does not open for this one
 	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key='GL-3'`)
 	moved := req
-	s2, _ := capability.SealInput(f.seal.PublicKey(), req.ActionID, 2, "NEW_TOKEN", glSecret)
+	s2, _ := capability.SealInput(f.seal.PublicKey(), req.ActionID, req.PlanSHA256, 2, "NEW_TOKEN", glSecret)
 	moved.SealedInputs = map[string]string{capability.InputKey(1, "NEW_TOKEN"): s2}
 	f.reapprove("GL-3", moved)
 	if r := f.submit(d, moved); r.State != StateRefused || r.Refusal.Rule != 3 {
@@ -228,5 +229,145 @@ func TestSealKeyPublished(t *testing.T) {
 	}
 	if fi, _ := os.Stat(SealKeyPath(f.act)); fi.Mode().Perm() != 0o600 {
 		t.Fatal(fi.Mode())
+	}
+}
+
+// TestContinueKeepsTheStartsSealedInputs: the worker swaps a ciphertext before Continue (here a guess for the
+// matches read, a value oracle) and even gets a continue signed over the swapped set: refused, nothing read.
+func TestContinueKeepsTheStartsSealedInputs(t *testing.T) {
+	f, stub := newGLFx(t)
+	d := f.daemon()
+	steps := []map[string]any{glSet(), {"mode": "operator", "text": "start the develop pipeline"}, glGet()}
+	steps[2]["n"] = 3
+	req := f.task("GL-C", "develop", steps)
+	f.sealFor("GL-C", &req, glSecret, 1, 3)
+	if r := f.submit(d, req); r.State != StateOperator {
+		t.Fatalf("%+v", r)
+	}
+	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key='GL-C'`)
+	stub.Reset()
+	cont := func(in map[string]string) *Response {
+		rq := req
+		rq.SealedInputs = in
+		claim := capability.ApprovalClaim{Kind: capability.SignContinue, TaskKey: "GL-C", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+			At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(in), Step: 2}
+		rq.Continue = &Signed{Step: 2, Approver: "ada", At: claim.At, Signature: f.sign(claim)}
+		return f.submit(d, rq)
+	}
+	guess, _ := capability.SealInput(f.seal.PublicKey(), req.ActionID, req.PlanSHA256, 3, "NEW_TOKEN", "a-guess")
+	oracle := map[string]string{capability.InputKey(1, "NEW_TOKEN"): req.SealedInputs[capability.InputKey(1, "NEW_TOKEN")], capability.InputKey(3, "NEW_TOKEN"): guess}
+	if r := cont(oracle); r.State != StateRefused || r.Refusal.Rule != 3 || !strings.Contains(r.Refusal.Reason, "sealed inputs") {
+		t.Fatalf("%+v", r.Refusal)
+	}
+	if n := len(stub.Calls()); n != 0 {
+		t.Fatalf("%d GitLab calls after a swapped continue", n)
+	}
+	if r := cont(req.SealedInputs); r.State != StateDone || r.Steps[2].Fields["matches"] != true {
+		t.Fatalf("%+v", r)
+	}
+	// a rollback with swapped sealed inputs is refused too
+	f.exec(f.board, `UPDATE agent_tasks SET state='done' WHERE key='GL-C'`)
+	rq := req
+	rq.SealedInputs = oracle
+	claim := capability.ApprovalClaim{Kind: capability.SignRollback, TaskKey: "GL-C", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+		At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(oracle), Step: 1}
+	rq.Rollback = &Signed{Step: 1, Approver: "ada", At: claim.At, Signature: f.sign(claim)}
+	wantRefused(t, f.submit(d, rq), 3, capability.CodeApproval)
+}
+
+// TestWriteErrorReadsBack: the PUT reaches GitLab but its answer is a gateway timeout: the read-back shows it, the
+// step is ok. When the read-back does not show it, the outcome is unknown: not stored, the marker stays, a retry is
+// refused for a person to check.
+func TestWriteErrorReadsBack(t *testing.T) {
+	f, stub := newGLFx(t)
+	d := f.daemon()
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old"})
+	stub.FailAfter["PUT"] = 504
+	req := f.task("GL-T", "develop", []map[string]any{glSet()})
+	f.sealFor("GL-T", &req, glSecret, 1)
+	if r := f.submit(d, req); r.State != StateDone || r.Steps[0].Status != "ok" || !strings.Contains(r.Steps[0].Detail, "read-back matches") {
+		t.Fatalf("%+v", r)
+	}
+	delete(stub.FailAfter, "PUT")
+	stub.Status["PUT"] = 504 // not applied this time
+	stub.Put(101, "API_TOKEN", gitlabtest.Var{Value: "old"})
+	req2 := f.task("GL-U", "develop", []map[string]any{glSet()})
+	f.sealFor("GL-U", &req2, glSecret, 1)
+	r := f.submit(d, req2)
+	if r.State != StateUnknown || r.Steps[0].Status != StatusUnknown || !strings.Contains(r.Steps[0].Detail, "outcome is unknown") {
+		t.Fatalf("%+v", r)
+	}
+	if !d.store.Applying(req2.ActionID, 1) {
+		t.Fatal("the interrupted marker was removed")
+	}
+	if _, ok := d.store.Get(req2.ActionID, 1); ok {
+		t.Fatal("an unknown outcome was stored as a result")
+	}
+	f.reapprove("GL-U", req2)
+	wantRefused(t, f.submit(d, req2), 5, capability.CodeInterrupted)
+}
+
+// TestLiteralValueNeverInAudit: a plan with a literal where value_ref belongs is refused, and the audit and the
+// ops rows hold "<redacted>", not the literal.
+func TestLiteralValueNeverInAudit(t *testing.T) {
+	f, _ := newGLFx(t)
+	d := f.daemon()
+	s := glSet()
+	s["args"].(map[string]any)["value_ref"] = glSecret
+	req := f.task("GL-L", "develop", []map[string]any{s})
+	if r := f.submit(d, req); r.State != StateRefused {
+		t.Fatalf("%+v", r)
+	}
+	for _, dir := range []string{f.act, f.actions, filepath.Dir(f.ops)} {
+		if p := dirHas(t, dir, glSecret); p != "" && !strings.HasSuffix(p, "board.db") {
+			t.Fatal("the literal is in", p)
+		}
+	}
+}
+
+// TestStatusHasNoCredentialDigits: the shared-volume status names the credentials only.
+func TestStatusHasNoCredentialDigits(t *testing.T) {
+	f, _ := newGLFx(t)
+	if err := SetCredential(f.act, f.key, capability.GitLabCredential, "glx-"+"abcdefghijklmnop-WXYZ"); err != nil {
+		t.Fatal(err)
+	}
+	d := f.daemon()
+	d.o.Credentials = func() []Credential { return ListCredentials(f.act, f.key) }
+	st := d.CurrentStatus()
+	if len(st.Credentials) != 1 || st.Credentials[0].Name != capability.GitLabCredential || st.Credentials[0].Last4 != "" {
+		t.Fatalf("%+v", st.Credentials)
+	}
+}
+
+// TestPruneKeepsAppliedWrites: only backups of steps that are over without a change in place (rolled back, refused,
+// failed) and older than the retention are removed; the backup of an applied write stays.
+func TestPruneKeepsAppliedWrites(t *testing.T) {
+	f, _ := newGLFx(t)
+	v := Vault{Dir: filepath.Join(f.act, "backups"), Key: f.key, Steps: filepath.Join(f.act, "steps")}
+	st := Store{Dir: v.Steps}
+	id := "PR-1.v1.abcdefabcdef"
+	for n, status := range map[int]string{1: "ok", 2: "rolled-back", 3: "rolled-back"} {
+		ref := capability.BackupRefOf(id, n)
+		if err := v.Put(ref, "m", []byte("x")); err != nil {
+			t.Fatal(err)
+		}
+		st.Put(id, StepResult{N: n, Status: status})
+	}
+	old := f.now.Add(-40 * 24 * time.Hour)
+	for _, n := range []string{"1", "2"} {
+		os.Chtimes(filepath.Join(v.Dir, id, n+".enc"), old, old)
+	}
+	removed, kept, err := v.Prune(30, f.now)
+	if err != nil || removed != 1 || kept != 2 {
+		t.Fatal(removed, kept, err)
+	}
+	if _, _, err := v.Get(capability.BackupRefOf(id, 1)); err != nil {
+		t.Fatal("the applied write's backup was pruned")
+	}
+	// a backup that exists without a stored result is not overwritten
+	ref := capability.BackupRefOf(id, 4)
+	v.Put(ref, "m", []byte("first"))
+	if err := v.Put(ref, "m", []byte("second")); err == nil {
+		t.Fatal("an interrupted step's backup was overwritten")
 	}
 }

@@ -197,7 +197,7 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 	sealed := map[string]string{}
 	for _, k := range []string{"1/NEW_TOKEN", "2/NEW_TOKEN"} {
 		s := py.Str(py.AsMap(p.Get("sealed_inputs")).Get(k))
-		v, err := capability.OpenInput(seal, id, mustStep(k), "NEW_TOKEN", s)
+		v, err := capability.OpenInput(seal, id, sha, mustStep(k), "NEW_TOKEN", s)
 		if err != nil || v != value {
 			t.Fatal(k, err)
 		}
@@ -208,8 +208,9 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 	if capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal("the start is not signed over the sealed inputs")
 	}
-	// a continue is signed over the sealed inputs the worker stored with the approval
-	sb, _ := json.Marshal(sealed)
+	// a continue is signed over the sealed inputs the api signed at the start, never over board.db's copy (the
+	// worker could swap a ciphertext there)
+	sb, _ := json.Marshal(map[string]string{"1/NEW_TOKEN": "argus-sealed-v1:swapped", "2/NEW_TOKEN": "argus-sealed-v1:oracle"})
 	e.board.Exec(`UPDATE agent_tasks SET state='operator', approved_sha256=?, action_id=?, sealed_inputs=? WHERE key='gl-5'`, sha, id, string(sb))
 	os.MkdirAll(filepath.Join(ACTIONS_DIR, "out"), 0o700)
 	ob, _ := json.Marshal(map[string]any{"action_id": id, "state": "operator", "steps": []any{map[string]any{"n": 2, "status": "needs the operator"}}})
@@ -221,7 +222,7 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 	p, _ = boardReadRequest(t, loc)
 	claim.Kind, claim.Step, claim.At = capability.SignContinue, 2, int64(py.Num(p.Get("signed_at")))
 	if capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
-		t.Fatal("the continue is not signed over the stored sealed inputs")
+		t.Fatal("the continue is not signed over the start's sealed inputs")
 	}
 }
 

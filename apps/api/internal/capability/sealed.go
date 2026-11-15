@@ -59,8 +59,8 @@ func ValidSealed(s string) bool {
 	return err == nil && len(b) >= 32+12+16
 }
 
-func sealAD(actionID string, step int, name string) []byte {
-	return []byte(strings.Join([]string{sealDomain, actionID, strconv.Itoa(step), name}, "\n"))
+func sealAD(actionID, planSHA string, step int, name string) []byte {
+	return []byte(strings.Join([]string{sealDomain, actionID, planSHA, strconv.Itoa(step), name}, "\n"))
 }
 
 // hkdfSHA256 is HKDF (RFC 5869) with SHA-256: extract, then expand to n bytes (n <= 32 here).
@@ -90,12 +90,12 @@ func sealAEAD(shared, ephPub, recipPub []byte) (cipher.AEAD, error) {
 	return cipher.NewGCM(b)
 }
 
-// SealInput seals value to actd's public key for one step of one action.
-func SealInput(pub *ecdh.PublicKey, actionID string, step int, name, value string) (string, error) {
+// SealInput seals value to actd's public key for one step of one action of one plan (its full sha256).
+func SealInput(pub *ecdh.PublicKey, actionID, planSHA string, step int, name, value string) (string, error) {
 	switch {
 	case pub == nil:
 		return "", errors.New("no executor sealing key")
-	case !ValidActionID(actionID) || step <= 0 || !InputRefRe.MatchString("input:"+name):
+	case !ValidActionID(actionID) || !hex64Re.MatchString(planSHA) || !strings.HasSuffix(actionID, "."+planSHA[:12]) || step <= 0 || !InputRefRe.MatchString("input:"+name):
 		return "", errors.New("bad action, step or input name")
 	case value == "" || len(value) > MaxInputBytes:
 		return "", fmt.Errorf("the value is empty or longer than %d bytes", MaxInputBytes)
@@ -116,12 +116,12 @@ func SealInput(pub *ecdh.PublicKey, actionID string, step int, name, value strin
 	if _, err := rand.Read(nonce); err != nil {
 		return "", err
 	}
-	out := append(append(eph.PublicKey().Bytes(), nonce...), a.Seal(nil, nonce, []byte(value), sealAD(actionID, step, name))...)
+	out := append(append(eph.PublicKey().Bytes(), nonce...), a.Seal(nil, nonce, []byte(value), sealAD(actionID, planSHA, step, name))...)
 	return SealedPrefix + base64.StdEncoding.EncodeToString(out), nil
 }
 
-// OpenInput opens a sealed input with actd's private key; the action, step and name must be the sealed ones.
-func OpenInput(priv *ecdh.PrivateKey, actionID string, step int, name, sealed string) (string, error) {
+// OpenInput opens a sealed input with actd's private key; the action, plan, step and name must be the sealed ones.
+func OpenInput(priv *ecdh.PrivateKey, actionID, planSHA string, step int, name, sealed string) (string, error) {
 	if priv == nil {
 		return "", errors.New("no executor sealing key")
 	}
@@ -141,9 +141,9 @@ func OpenInput(priv *ecdh.PrivateKey, actionID string, step int, name, sealed st
 	if err != nil {
 		return "", err
 	}
-	plain, err := a.Open(nil, raw[32:32+a.NonceSize()], raw[32+a.NonceSize():], sealAD(actionID, step, name))
+	plain, err := a.Open(nil, raw[32:32+a.NonceSize()], raw[32+a.NonceSize():], sealAD(actionID, planSHA, step, name))
 	if err != nil {
-		return "", errors.New("the sealed input does not open for this action, step and name")
+		return "", errors.New("the sealed input does not open for this action, plan, step and name")
 	}
 	return string(plain), nil
 }

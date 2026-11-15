@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -58,7 +59,7 @@ func LoadSealKey(actDir string, create bool) (*ecdh.PrivateKey, error) {
 		return nil, fmt.Errorf("the sealing key %s has mode %04o, must be 0600", p, fi.Mode().Perm())
 	}
 	b := make([]byte, fi.Size())
-	if _, err := f.Read(b); err != nil {
+	if _, err := io.ReadFull(f, b); err != nil {
 		return nil, err
 	}
 	return capability.ParseSealPrivate(b)
@@ -115,10 +116,10 @@ func (d *Daemon) checkInputs(t *task, sealed map[string]string) *capability.Refu
 
 // openInputs opens the sealed inputs of one step (in memory only). An input that does not open for this action,
 // step and name refuses the step.
-func (d *Daemon) openInputs(id string, cp capability.Capability, s planStep, sealed map[string]string) (map[string]string, *capability.Refusal) {
+func (d *Daemon) openInputs(id, planSHA string, cp capability.Capability, s planStep, sealed map[string]string) (map[string]string, *capability.Refusal) {
 	out := map[string]string{}
 	for _, n := range cp.Schema().InputNames(s.Args) {
-		v, err := capability.OpenInput(d.o.SealKey, id, s.N, n, sealed[capability.InputKey(s.N, n)])
+		v, err := capability.OpenInput(d.o.SealKey, id, planSHA, s.N, n, sealed[capability.InputKey(s.N, n)])
 		if err != nil {
 			return nil, capability.Refuse(3, capability.CodeApproval, "step %d: the sealed input %s: %s", s.N, n, err.Error())
 		}

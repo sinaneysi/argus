@@ -124,7 +124,10 @@ value to the pinned key (X25519 + HKDF-SHA256 + AES-256-GCM, bound to the action
 the approval over the hash of the sealed inputs; the worker and `board.db` (`agent_tasks.sealed_inputs`) hold the
 ciphertext only, and actd opens it just before the step. The api refuses to seal when no key is pinned or when
 `actions/actd.pub` is not the pinned key (actd got a new key: compare the fingerprints, then pin again). The review
-panel's one-click approval cannot carry inputs: approve such a plan on the task page.
+panel's one-click approval cannot carry inputs: approve such a plan on the task page. The api keeps the sealed hash
+of each start it signed in `ARGUS_APPROVAL_KEY_DIR/starts/` and signs Continue and rollback over it only.
+Backups of applied writes are never pruned; only those of rolled-back, refused or failed steps older than
+`ARGUS_ACTIONS_BACKUP_DAYS`.
 Off again: empty `ARGUS_ACT_GITLAB_PROJECTS` (the capabilities leave the catalogue), or `ARGUS_ACTIONS_MODE=off`.
 
 Signed approvals (ADR-0022 amendment 1, PR 2). The worker shares the data volume and the uid with the api, so an

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/approvalkey"
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
@@ -355,7 +356,7 @@ func AgentPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		payload = py.NewOMap("kind", "agent-stop", "key", key)
 		// a signed stop: actd revokes every approval of the task signed before it (ADR-0022 amendment 1)
 		if sha := agentPlanSHA(a); sha != "" && a.I("plan_version") > 0 {
-			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true, nil); err != nil {
+			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true, capability.SealedSHA256(nil)); err != nil {
 				return 500, "Not stopped: " + err.Error()
 			}
 		}
@@ -403,7 +404,7 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 	var sealed map[string]string
 	if agentExecutes(plan) {
 		var err error
-		if sealed, err = agentSealInputs(form, agentPlanInputs(a), capability.ActionID(key, int(n), sha)); err != nil {
+		if sealed, err = agentSealInputs(form, agentPlanInputs(a), capability.ActionID(key, int(n), sha), sha); err != nil {
 			return 409, "Not started: " + err.Error()
 		}
 		if len(sealed) > 0 {
@@ -419,8 +420,14 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 			p.Set("sealed_inputs", sm)
 		}
 	}
-	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan), sealed); err != nil {
+	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan), capability.SealedSHA256(sealed)); err != nil {
 		return 500, "Not started: " + err.Error()
+	}
+	// remembered in the api's own folder: a later continue or rollback is signed over these sealed inputs only
+	if p.Has("signature") {
+		if err := approvalkey.RecordStart(APPROVAL_KEY_DIR, key, int(n), sha, capability.SealedSHA256(sealed)); err != nil && len(sealed) > 0 {
+			return 500, "Not started: the approval cannot be recorded: " + err.Error()
+		}
 	}
 	rid, err := BoardWriteRequest(p, sess)
 	if err != nil {

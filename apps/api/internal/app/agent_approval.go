@@ -113,12 +113,12 @@ func agentExecutes(plan *py.OMap) bool {
 // agentSignedPayload adds the api's signature to a request payload: kind start, continue, rollback or stop. With
 // optional, a missing key leaves the request unsigned (a plan that does not execute, a stop); otherwise it is an
 // error and nothing is sent.
-// sealed is the hash of the sealed inputs the request carries to actd (capability.SealedSHA256): the start's own,
-// the stored ones for a continue or rollback, none for a stop.
-func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealed map[string]string) error {
+// sealedSHA is the hash of the sealed inputs the request carries to actd (capability.SealedSHA256): the start's own,
+// for a continue or rollback the one the api signed at the start (agentStartSealed), {} for a stop.
+func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA string) error {
 	at := NowInt()
 	sig, err := agentSign(capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(version), PlanSHA256: sha, Approver: by,
-		At: at, SealedSHA256: capability.SealedSHA256(sealed), Step: int(step)})
+		At: at, SealedSHA256: sealedSHA, Step: int(step)})
 	if errors.Is(err, errNoApprovalKey) && optional {
 		p.Set("plan_sha256", sha)
 		return nil
@@ -205,7 +205,7 @@ func AgentPostContinue(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "Not continued: the executor does not wait for step " + I2S(step)
 	}
 	p := py.NewOMap("kind", "agent-continue", "key", key, "plan_version", n, "step", step)
-	if err := agentSignedPayload(p, capability.SignContinue, key, n, sha, sess.Username, step, false, agentStoredSealed(a)); err != nil {
+	if err := agentSignedPayload(p, capability.SignContinue, key, n, sha, sess.Username, step, false, agentStartSealed(key, n, sha)); err != nil {
 		return 500, "Not continued: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)
@@ -240,7 +240,7 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "Not rolled back: that is not the task's last action, or the plan changed since"
 	}
 	p := py.NewOMap("kind", "agent-rollback", "key", key, "action_id", id, "plan_version", a.I("plan_version"), "step", step)
-	if err := agentSignedPayload(p, capability.SignRollback, key, a.I("plan_version"), sha, sess.Username, step, false, agentStoredSealed(a)); err != nil {
+	if err := agentSignedPayload(p, capability.SignRollback, key, a.I("plan_version"), sha, sess.Username, step, false, agentStartSealed(key, a.I("plan_version"), sha)); err != nil {
 		return 500, "Not rolled back: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)
@@ -250,14 +250,14 @@ func AgentPostRollback(c *Ctx, form py.QS, sess *Session) (int, string) {
 	return 303, boardRedirect(form, rid, "agent", agentTaskURL(key)+"&req="+rid+"#agent")
 }
 
-// agentStoredSealed are the sealed inputs the worker keeps with the approval (agent_tasks.sealed_inputs, ciphertext
-// only): a continue or a rollback passes the same ones to actd, so their signature covers the same hash.
-func agentStoredSealed(a Row) map[string]string {
-	out := map[string]string{}
-	if s := a.Str("sealed_inputs"); s != "" {
-		json.Unmarshal([]byte(s), &out)
+// agentStartSealed is the sealed inputs' hash of the start the api signed for this plan (kept in the api's own key
+// folder, not in the worker-writable board.db): a continue or a rollback is signed over it, so a ciphertext the
+// worker swapped in board.db is refused by actd. No record: the hash of no inputs.
+func agentStartSealed(key string, version int64, sha string) string {
+	if h, ok := approvalkey.StartSealed(APPROVAL_KEY_DIR, key, int(version), sha); ok {
+		return h
 	}
-	return out
+	return capability.SealedSHA256(nil)
 }
 
 // errNoSealKey: no sealing key of actd is pinned in the api's key folder.
@@ -310,7 +310,7 @@ func agentInputNames(in map[int][]string) []string {
 
 // agentSealInputs seals each value the admin typed (form field input_<NAME>) once per step that refers to it, for
 // this action. The values are never stored, logged or echoed; an error names the input, never its value.
-func agentSealInputs(form py.QS, in map[int][]string, actionID string) (map[string]string, error) {
+func agentSealInputs(form py.QS, in map[int][]string, actionID, planSHA string) (map[string]string, error) {
 	out := map[string]string{}
 	if len(in) == 0 {
 		return out, nil
@@ -328,7 +328,7 @@ func agentSealInputs(form py.QS, in map[int][]string, actionID string) (map[stri
 			if len(v) > capability.MaxInputBytes {
 				return nil, fmt.Errorf("the value of %s is longer than %d bytes", n, capability.MaxInputBytes)
 			}
-			sv, err := capability.SealInput(pub, actionID, step, n, v)
+			sv, err := capability.SealInput(pub, actionID, planSHA, step, n, v)
 			if err != nil {
 				return nil, fmt.Errorf("the value of %s cannot be sealed", n)
 			}

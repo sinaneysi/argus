@@ -47,6 +47,10 @@ const (
 	StateFailed   = "failed"
 	StateOperator = "operator" // an operator step stopped the run: "needs the operator"
 	StateStopped  = "stopped"  // a signed stop was recorded
+	// StateUnknown: a write answered an error and its read-back does not show it applied; a person checks
+	StateUnknown = "outcome-unknown"
+	// StatusUnknown is that step's status
+	StatusUnknown = "outcome-unknown"
 )
 
 // Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from
@@ -134,6 +138,8 @@ type Daemon struct {
 	prepAt  time.Time   // the last try of the registry's Prepare
 	prepOK  bool
 	pruned  time.Time
+	// backupsKept is the number of backups the last prune kept (applied writes are never pruned)
+	backupsKept int
 }
 
 type lastAction struct {
@@ -336,15 +342,21 @@ func (d *Daemon) prune() {
 	if days <= 0 {
 		days = 30
 	}
-	if n, err := d.vault().Prune(days, d.now()); err != nil {
+	n, kept, err := d.vault().Prune(days, d.now())
+	if err != nil {
 		d.log().Warn("backups not pruned", "error", err.Error())
-	} else if n > 0 {
-		d.log().Info("backups pruned", "actions", n, "days", days)
+		return
+	}
+	d.backupsKept = kept
+	if n > 0 {
+		d.log().Info("backups pruned", "steps", n, "kept", kept, "days", days)
 	}
 }
 
 // vault is the backup store of the executor volume.
-func (d *Daemon) vault() Vault { return Vault{Dir: filepath.Join(d.o.ActDir, "backups"), Key: d.o.Key} }
+func (d *Daemon) vault() Vault {
+	return Vault{Dir: filepath.Join(d.o.ActDir, "backups"), Key: d.o.Key, Steps: filepath.Join(d.o.ActDir, "steps")}
+}
 
 // readRequest opens the file without following a link and without blocking on a FIFO, checks the open file (not
 // the name), and reads at most MaxRequestBytes+1 bytes.
@@ -771,6 +783,9 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
 	}
 	if req.Continue != nil {
+		if d.o.Mode == capability.ModeOn && (rec.StartAction != id || rec.StartSealed != sealed) {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the sealed inputs are not the ones the start approval of this action covered"), true)
+		}
 		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
 			return d.refuseAll(c, id, r, true)
 		}
@@ -848,7 +863,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	switch {
 	case !on:
 	case req.Continue == nil:
-		rec.StartAt = startAt
+		rec.StartAt, rec.StartAction, rec.StartSealed = startAt, id, sealed
 		if err := d.putTaskRecord(t.key, rec); err != nil {
 			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the start could not be recorded: %v", err), true)
 		}
@@ -944,7 +959,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 		}
-		inputs, r := d.openInputs(id, cp, s, req.SealedInputs)
+		inputs, r := d.openInputs(id, t.approval.StoredSHA256, cp, s, req.SealedInputs)
 		if r != nil {
 			refuseStep(s, r)
 			break
@@ -953,7 +968,8 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		sr, stop := d.runStep(sctx, id, cp, s, base, audit, on)
 		clear(inputs)
 		resp.Steps = append(resp.Steps, sr)
-		if on && sr.Refusal == nil {
+		// an unknown outcome is not stored: the interrupted marker stays, so a retry is refused until a person checks
+		if on && sr.Refusal == nil && sr.Status != StatusUnknown {
 			if err := d.store.Put(id, sr); err != nil {
 				d.log().Error("step result not stored", "action", id, "step", s.N, "error", err.Error())
 			} else if err := d.store.ClearApplying(id, s.N); err != nil {
@@ -962,6 +978,9 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		}
 		if stop {
 			resp.State = StateFailed
+			if sr.Status == StatusUnknown {
+				resp.State = StateUnknown
+			}
 			if sr.Refusal != nil {
 				resp.State, resp.Refusal = StateRefused, sr.Refusal
 			}
@@ -1067,7 +1086,30 @@ func (d *Daemon) runStep(ctx context.Context, id string, c capability.Capability
 	if c.Tier() == capability.Read {
 		return sr, err != nil || (res.Status != "ok" && res.Status != "unchanged")
 	}
+	if err != nil && ref == "" { // nothing was backed up, so nothing was written
+		return sr, true
+	}
 	if err != nil {
+		// the write may have reached the target although its answer is an error or a timeout: read it back
+		cctx, cancel = call()
+		vres, verr := c.Verify(cctx, s.Args, plan)
+		cancel()
+		if verr == nil && (vres.Status == "ok" || vres.Status == "unchanged") {
+			sr.Phase, sr.Status, sr.Detail = PhaseVerify, "ok", Clean("the write answered an error, but the read-back matches: applied. "+vres.Detail)
+			if vres.Fields != nil {
+				sr.Fields = vres.Fields
+			}
+			if !rec(PhaseVerify, "ok", sr.Detail, string(ref)) {
+				return chainFail(PhaseVerify)
+			}
+			return sr, false
+		}
+		sr.Phase, sr.Status = PhaseVerify, StatusUnknown
+		sr.Detail = Clean("the write answered an error and the read-back does not show it applied: the outcome is unknown. " +
+			"A person checks the target; the step stays marked as interrupted (backup " + string(ref) + ")")
+		if !rec(PhaseVerify, StatusUnknown, sr.Detail, string(ref)) {
+			return chainFail(PhaseVerify)
+		}
 		return sr, true
 	}
 	cctx, cancel = call()

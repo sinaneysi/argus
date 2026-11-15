@@ -172,13 +172,20 @@ func (f Field) check(v any) error {
 }
 
 // Redacted is a copy of args with every secret field replaced by "<redacted>". A key the schema does not know is
-// redacted too: only known, non-secret fields leave the capability.
+// redacted too: only known, non-secret fields leave the capability. An input field keeps its reference
+// ("input:<NAME>", which names the input and is no secret) and is redacted when it holds anything else (a literal
+// value the model wrote by mistake).
 func (s Schema) Redacted(a Args) Args {
 	out := Args{}
 	for k, v := range a {
-		if f, ok := s.field(k); ok && !f.Secret {
+		f, ok := s.field(k)
+		ref, isStr := v.(string)
+		switch {
+		case ok && f.Input && isStr && InputRefRe.MatchString(ref):
 			out[k] = v
-		} else {
+		case ok && !f.Secret && !f.Input:
+			out[k] = v
+		default:
 			out[clipName(k)] = Redacted
 		}
 	}

@@ -7,10 +7,13 @@ package approvalkey
 import (
 	"crypto/ecdh"
 	"crypto/ed25519"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"syscall"
 
 	"github.com/sinaneysi/argus/internal/capability"
@@ -71,7 +74,7 @@ func LoadActd(dir string) (*ecdh.PublicKey, error) {
 		return nil, errors.New("the pinned sealing key is not a small regular file")
 	}
 	b := make([]byte, fi.Size())
-	if _, err := f.Read(b); err != nil {
+	if _, err := io.ReadFull(f, b); err != nil {
 		return nil, err
 	}
 	return capability.ParseSealPublic(b)
@@ -163,7 +166,7 @@ func readNoFollow(p string) ([]byte, error) {
 		return nil, fmt.Errorf("the approval key %s has mode %04o, must be 0600", p, fi.Mode().Perm())
 	}
 	buf := make([]byte, fi.Size())
-	_, err = f.Read(buf)
+	_, err = io.ReadFull(f, buf)
 	return buf, err
 }
 
@@ -182,4 +185,53 @@ func writeExcl(p string, b []byte, mode os.FileMode) error {
 		return err
 	}
 	return f.Close()
+}
+
+// startRecord is what the api remembers of the last start it signed for a task (in its own folder, which the worker
+// cannot write): a continue or a rollback is signed over the same sealed inputs' hash, never over board.db's copy.
+type startRecord struct {
+	PlanVersion  int    `json:"plan_version"`
+	PlanSHA256   string `json:"plan_sha256"`
+	SealedSHA256 string `json:"sealed_sha256"`
+}
+
+var startKeyRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`)
+
+func startPath(dir, key string) string { return filepath.Join(dir, "starts", key+".json") }
+
+// RecordStart keeps the sealed inputs' hash of a signed start approval.
+func RecordStart(dir, key string, version int, planSHA, sealedSHA string) error {
+	if err := CheckDir(dir); err != nil {
+		return err
+	}
+	if !startKeyRe.MatchString(key) {
+		return errors.New("bad task key")
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "starts"), 0o700); err != nil {
+		return err
+	}
+	b, _ := json.Marshal(startRecord{PlanVersion: version, PlanSHA256: planSHA, SealedSHA256: sealedSHA})
+	tmp := startPath(dir, key) + ".tmp"
+	os.Remove(tmp)
+	if err := writeExcl(tmp, b, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, startPath(dir, key))
+}
+
+// StartSealed is the sealed inputs' hash of the last start the api signed for this task, plan version and hash.
+func StartSealed(dir, key string, version int, planSHA string) (string, bool) {
+	if CheckDir(dir) != nil || !startKeyRe.MatchString(key) {
+		return "", false
+	}
+	f, err := os.OpenFile(startPath(dir, key), os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	if err != nil {
+		return "", false
+	}
+	defer f.Close()
+	var r startRecord
+	if json.NewDecoder(io.LimitReader(f, 4096)).Decode(&r) != nil || r.PlanVersion != version || r.PlanSHA256 != planSHA || r.SealedSHA256 == "" {
+		return "", false
+	}
+	return r.SealedSHA256, true
 }

@@ -264,8 +264,12 @@ Design items for PR 2 (not built in PR 1):
   Apply reads again and returns `ErrPrecondition` when the digest differs (rule 5, nothing written), seals the old
   state to `argus-act/backups/<action-id>/<step>.enc` (sealed with `act.key`, additional data = the reference and
   `project=<id> key=<key> scope=develop`), then writes (`POST`, or `PUT` with `filter[environment_scope]=develop`).
-  `unchanged` writes nothing. Verify reads back and compares inside actd in constant time (over keyed digests).
-  Rollback restores the value and all attributes (`variable_type`, `protected`, `masked`, `raw`, scope), or deletes
+  `unchanged` writes nothing. Verify reads back and compares inside actd in constant time (over keyed digests);
+  the expected attributes are the backed-up old ones plus the step's arguments, so a write that drops `masked` or
+  `protected` is a mismatch and is rolled back. A write that answers an error after its backup is read back: when
+  the read-back matches, the step is ok; otherwise its state is `outcome-unknown`, the result is not stored and
+  the interrupted marker stays, so a retry is refused until a person checks.
+  Rollback restores the value and all attributes (`variable_type`, `protected`, `masked`, `raw`, `description`, scope), or deletes
   a variable that did not exist, and reads back. A variable GitLab hides (no value in the API) is refused for set and
   delete: it cannot be backed up. GitLab's error bodies are never kept (they could hold a value): a result says
   "GitLab answered <code>". `get` returns exists, the attributes and, with `matches = input:<NAME>`, true/false.
@@ -279,13 +283,17 @@ Design items for PR 2 (not built in PR 1):
   there); the operator pins it once into the api's own folder (`argus approval-key trust-actd` reads
   `argus actd seal-key public`), and the api refuses to seal when the pin is missing or `actions/actd.pub` differs
   from it. Scheme: X25519 ECDH with an ephemeral key, HKDF-SHA256 (written out, RFC 5869: the module's Go 1.22 has no
-  `crypto/hkdf`), AES-256-GCM, additional data = domain + action id + step + name. One ciphertext per step that
+  `crypto/hkdf`), AES-256-GCM, additional data = domain + action id + the full plan sha256 + step + name. One ciphertext per step that
   refers to a name; the request map key is `<step>/<NAME>`.
 - **Approval binds the sealed inputs.** Spin up seals each typed value (form field `input_<NAME>`) and signs the
   start over `SealedSHA256` of the sealed map (PR 2's signature already covered the hash; it was always `{}`). The
   worker checks only the form, stores the map in `agent_tasks.sealed_inputs` (board migration `0003_sealed_inputs`)
-  and passes it unopened in every start, continue and rollback request; the api signs a continue or rollback over
-  the same stored map. A stop is signed over `{}` and carries none. actd refuses (rule 3) when the hash does not
+  and passes it unopened in every start, continue and rollback request. The worker can rewrite that column, so
+  neither side trusts it after the start: the api records the sealed hash it signed for the start in its own folder
+  (`ARGUS_APPROVAL_KEY_DIR/starts/<task>.json`) and signs a continue or rollback over that hash only; actd records
+  the action and the sealed hash of the start it accepted (`argus-act/approvals/<task>.json`) and refuses a
+  continue or rollback whose sealed inputs differ (a swapped ciphertext, e.g. a guess for a `matches` read, would
+  otherwise be a value oracle). A stop is signed over `{}` and carries none. actd refuses (rule 3) when the hash does not
   match the signature, when a step's `input:<NAME>` has no sealed value for that step, when an extra one is there,
   or when one does not open for this action, step and name. It opens a step's inputs just before the step and
   clears them after it.
@@ -295,7 +303,13 @@ Design items for PR 2 (not built in PR 1):
 - **The UI.** The task page shows one write-only field per input name in the Spin up form (`type=password`,
   `autocomplete=off`, never echoed or stored by the web server). The review panel's one-click approval cannot carry
   inputs; such a plan is approved on the task page. The plan view of the inputs ("entered at approval") is PR 5.
-- **Backups** older than `ARGUS_ACTIONS_BACKUP_DAYS` are pruned by actd once an hour.
+- **Backups**: actd prunes, once an hour, only backups older than `ARGUS_ACTIONS_BACKUP_DAYS` whose step is over
+  without a change in place (rolled back, refused, failed); the backup of an applied write is kept, and
+  `actd-status.json` shows the kept count (`backups_kept`). A backup that exists without a stored step result is
+  never overwritten.
+- `value_ref` and `matches` are secret fields: the audit keeps an `input:<NAME>` reference and redacts anything
+  else. `actd-status.json` (readable by the other services) lists credential names and times, not their last
+  four characters (`argus actd credential list` still shows them).
 - The clean-install stubs (`demo/clean-install/stubs.py`) keep project variables in memory, record every call
   (`GET /gitlab/_calls`) and answer a pipeline, job or trigger start with 403.
 - Mode stays `off` by default; without `ARGUS_ACT_GITLAB_PROJECTS` nothing changes.

@@ -58,7 +58,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 	sha := e.q(t, `SELECT plan_sha256 FROM agent_tasks WHERE key='OPS-7'`)
 	id := capability.ActionID("OPS-7", 1, sha)
 	// what the api does at approval: seal the typed value to actd's key, sign over the sealed inputs' hash
-	sv, err := capability.SealInput(seal.PublicKey(), id, 1, "NEW_TOKEN", value)
+	sv, err := capability.SealInput(seal.PublicKey(), id, sha, 1, "NEW_TOKEN", value)
 	if err != nil {
 		t.Fatal(err)
 	}
