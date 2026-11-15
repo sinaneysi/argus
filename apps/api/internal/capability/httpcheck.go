@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strconv"
 	"strings"
@@ -17,10 +18,24 @@ import (
 // ARGUS_ACT_HTTP_HOSTS, compared with the expected status code. No credentials, no custom headers, no redirect to
 // another host. The result is the status, the latency and whether it matched; the body is read and dropped, never
 // kept.
+//
+// Allow-list entries are "[internal:]host[:port]" with host a name or "*.suffix". Without a port only 443 (and 80
+// when plain http is allowed) may be used. After the name is resolved, every address must be public: loopback,
+// link-local, private (RFC 1918), shared (CGNAT, 100.64/10), unique local (fc00::/7), multicast and unspecified
+// addresses are refused unless the entry starts with "internal:".
 type HTTPCheck struct {
-	hosts      []string // exact names and "*.suffix" entries, lower case
+	hosts      []hostEntry
 	allowPlain bool
 	client     *http.Client
+	// lookup resolves a host name (tests replace it); nil: the system resolver.
+	lookup func(ctx context.Context, host string) ([]netip.Addr, error)
+}
+
+type hostEntry struct {
+	name     string // lower case, without "*."
+	wildcard bool
+	internal bool
+	port     int // 0: the default ports
 }
 
 // HTTPCheckName is the capability's name.
@@ -32,26 +47,48 @@ const (
 	httpDrainBytes     = 64 << 10
 )
 
-// ParseHostList reads ARGUS_ACT_HTTP_HOSTS: host names, "*.suffix" allowed; no IP literal, no bare "*", no port.
+func parseHostEntry(raw string) (hostEntry, error) {
+	h := strings.ToLower(strings.TrimSpace(raw))
+	var e hostEntry
+	if rest, ok := strings.CutPrefix(h, "internal:"); ok {
+		e.internal, h = true, rest
+	}
+	if name, port, ok := strings.Cut(h, ":"); ok {
+		n, err := strconv.Atoi(port)
+		if err != nil || n < 1 || n > 65535 || strings.Contains(port, ":") {
+			return e, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: bad port", raw)
+		}
+		e.port, h = n, name
+	}
+	if rest, ok := strings.CutPrefix(h, "*."); ok {
+		e.wildcard, h = true, rest
+	}
+	e.name = h
+	switch {
+	case h == "*" || strings.Contains(h, "*") || h == "":
+		return e, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: only a leading \"*.\" is allowed", raw)
+	case net.ParseIP(strings.Trim(h, "[]")) != nil || strings.HasPrefix(h, "["):
+		return e, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: an IP address is not allowed, use a host name", raw)
+	case !hostNameRe(h):
+		return e, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q is not a host name", raw)
+	case e.wildcard && !strings.Contains(h, "."):
+		return e, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: a wildcard needs a suffix with a dot", raw)
+	}
+	return e, nil
+}
+
+// ParseHostList reads ARGUS_ACT_HTTP_HOSTS: "[internal:]host[:port]", host a name or "*.suffix"; no IP literal, no
+// bare "*".
 func ParseHostList(list []string) ([]string, error) {
 	var out []string
 	for _, h := range list {
-		h = strings.ToLower(strings.TrimSpace(h))
-		if h == "" {
+		if strings.TrimSpace(h) == "" {
 			continue
 		}
-		name := strings.TrimPrefix(h, "*.")
-		switch {
-		case h == "*" || strings.Contains(name, "*"):
-			return nil, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: only a leading \"*.\" is allowed", h)
-		case net.ParseIP(strings.Trim(name, "[]")) != nil:
-			return nil, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: an IP address is not allowed, use a host name", h)
-		case !hostNameRe(name):
-			return nil, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q is not a host name", h)
-		case strings.HasPrefix(h, "*.") && !strings.Contains(name, "."):
-			return nil, fmt.Errorf("ARGUS_ACT_HTTP_HOSTS: %q: a wildcard needs a suffix with a dot", h)
+		if _, err := parseHostEntry(h); err != nil {
+			return nil, err
 		}
-		out = append(out, h)
+		out = append(out, strings.ToLower(strings.TrimSpace(h)))
 	}
 	return out, nil
 }
@@ -73,20 +110,27 @@ func hostNameRe(h string) bool {
 	return true
 }
 
-// NewHTTPCheck builds http.check for an allow-list; base is the transport under the guard (nil: a direct one).
+// NewHTTPCheck builds http.check for an allow-list; base is the transport under the guard (nil: a direct one that
+// applies the address rules after resolution).
 func NewHTTPCheck(hosts []string, allowPlain bool, base http.RoundTripper) (*HTTPCheck, error) {
-	hs, err := ParseHostList(hosts)
-	if err != nil {
-		return nil, err
+	h := &HTTPCheck{allowPlain: allowPlain}
+	for _, raw := range hosts {
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		e, err := parseHostEntry(raw)
+		if err != nil {
+			return nil, err
+		}
+		h.hosts = append(h.hosts, e)
 	}
-	if len(hs) == 0 {
+	if len(h.hosts) == 0 {
 		return nil, errors.New("http.check: the host allow-list is empty")
 	}
-	h := &HTTPCheck{hosts: hs, allowPlain: allowPlain}
 	if base == nil {
 		base = &http.Transport{
-			Proxy:                  nil, // direct: a proxy would hide the host the allow-list checks
-			DialContext:            (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
+			Proxy:                  nil, // direct: a proxy would hide the address the rules check
+			DialContext:            h.dialContext,
 			TLSHandshakeTimeout:    10 * time.Second,
 			ResponseHeaderTimeout:  MaxCall,
 			DisableKeepAlives:      true,
@@ -98,22 +142,99 @@ func NewHTTPCheck(hosts []string, allowPlain bool, base http.RoundTripper) (*HTT
 	return h, nil
 }
 
-// HostAllowed reports whether host (no port) is on the allow-list. An IP literal never is.
+func (e hostEntry) matches(host string) bool {
+	if e.wildcard {
+		return strings.HasSuffix(host, "."+e.name)
+	}
+	return host == e.name
+}
+
+// entry is the allow-list entry for host and port, if one allows them.
+func (h *HTTPCheck) entry(host string, port int) (hostEntry, bool) {
+	host = strings.TrimSuffix(strings.ToLower(host), ".")
+	if host == "" || net.ParseIP(strings.Trim(host, "[]")) != nil {
+		return hostEntry{}, false
+	}
+	for _, e := range h.hosts {
+		if !e.matches(host) {
+			continue
+		}
+		if e.port != 0 && port == e.port || e.port == 0 && (port == 443 || port == 80 && h.allowPlain) {
+			return e, true
+		}
+	}
+	return hostEntry{}, false
+}
+
+// HostAllowed reports whether host (no port) is named by an allow-list entry. An IP literal never is.
 func (h *HTTPCheck) HostAllowed(host string) bool {
 	host = strings.TrimSuffix(strings.ToLower(host), ".")
 	if host == "" || net.ParseIP(strings.Trim(host, "[]")) != nil {
 		return false
 	}
-	for _, a := range h.hosts {
-		if suf, ok := strings.CutPrefix(a, "*."); ok {
-			if strings.HasSuffix(host, "."+suf) {
-				return true
-			}
-		} else if host == a {
+	for _, e := range h.hosts {
+		if e.matches(host) {
 			return true
 		}
 	}
 	return false
+}
+
+// blockedAddr reports an address that is not public.
+func blockedAddr(a netip.Addr) bool {
+	a = a.Unmap()
+	return !a.IsValid() || a.IsLoopback() || a.IsLinkLocalUnicast() || a.IsLinkLocalMulticast() || a.IsPrivate() ||
+		a.IsUnspecified() || a.IsMulticast() || a.IsInterfaceLocalMulticast() || cgnat.Contains(a) || thisNet.Contains(a) ||
+		a == netip.AddrFrom4([4]byte{255, 255, 255, 255})
+}
+
+var (
+	cgnat   = netip.MustParsePrefix("100.64.0.0/10")
+	thisNet = netip.MustParsePrefix("0.0.0.0/8")
+)
+
+// dialContext resolves the host, refuses non-public addresses (unless the entry is internal) and dials the first
+// address it checked, so a second lookup cannot change the answer.
+func (h *HTTPCheck) dialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, ps, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+	port, _ := strconv.Atoi(ps)
+	e, ok := h.entry(host, port)
+	if !ok {
+		return nil, Refuse(4, CodeAllowList, "%s is not on ARGUS_ACT_HTTP_HOSTS", clipName(addr))
+	}
+	lookup := h.lookup
+	if lookup == nil {
+		lookup = func(ctx context.Context, host string) ([]netip.Addr, error) {
+			return net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+		}
+	}
+	addrs, err := lookup(ctx, host)
+	if err != nil || len(addrs) == 0 {
+		return nil, fmt.Errorf("the name does not resolve")
+	}
+	if !e.internal {
+		for _, a := range addrs {
+			if blockedAddr(a) {
+				return nil, Refuse(4, CodeAllowList, "%s resolves to a non-public address; mark the entry internal: to allow it", clipName(host))
+			}
+		}
+	}
+	d := &net.Dialer{Timeout: 10 * time.Second}
+	return d.DialContext(ctx, "tcp", net.JoinHostPort(addrs[0].Unmap().String(), ps))
+}
+
+func defaultPort(u *url.URL) int {
+	if p := u.Port(); p != "" {
+		n, _ := strconv.Atoi(p)
+		return n
+	}
+	if u.Scheme == "http" {
+		return 80
+	}
+	return 443
 }
 
 func (h *HTTPCheck) checkRedirect(req *http.Request, via []*http.Request) error {
@@ -126,6 +247,9 @@ func (h *HTTPCheck) checkRedirect(req *http.Request, via []*http.Request) error 
 	}
 	if req.URL.Scheme != "https" && !h.allowPlain {
 		return Refuse(4, CodeAllowList, "redirect to plain http refused")
+	}
+	if _, ok := h.entry(req.URL.Hostname(), defaultPort(req.URL)); !ok {
+		return Refuse(4, CodeAllowList, "redirect to a port the allow-list does not allow refused")
 	}
 	return nil
 }
@@ -180,6 +304,14 @@ func (h *HTTPCheck) target(args Args) (*url.URL, error) {
 	}
 	if !h.HostAllowed(host) {
 		return nil, Refuse(4, CodeAllowList, "host %q is not on ARGUS_ACT_HTTP_HOSTS", clipName(host))
+	}
+	if _, ok := h.entry(host, defaultPort(u)); !ok {
+		return nil, Refuse(4, CodeAllowList, "port %d of %q is not allowed (443, 80 with plain http, or the entry's own port)", defaultPort(u), clipName(host))
+	}
+	for k := range u.Query() {
+		if credentialKey(k) {
+			return nil, Refuse(4, CodeArguments, "argument \"url\": the query parameter %q looks like a credential", clipName(k))
+		}
 	}
 	u.Fragment = ""
 	return u, nil
@@ -260,6 +392,25 @@ func (h *HTTPCheck) check(ctx context.Context, args Args) (Result, error) {
 	}
 	return Result{Status: st, Detail: fmt.Sprintf("status %d, expected %s", resp.StatusCode, joinInts(want)),
 		Fields: map[string]any{"status": resp.StatusCode, "latency_ms": latency, "matched": matched}}, nil
+}
+
+var credentialWords = map[string]bool{"token": true, "password": true, "passwd": true, "pwd": true, "secret": true, "key": true,
+	"apikey": true, "signature": true, "sig": true, "auth": true, "authorization": true, "credential": true, "credentials": true,
+	"session": true, "sessionid": true, "jwt": true, "otp": true}
+
+// credentialKey reports a query parameter name that looks like a credential: any of its parts (split at _ - . and
+// case changes ignored) is a credential word, e.g. token, private_token, access-token, api_key, password, signature.
+func credentialKey(k string) bool {
+	k = strings.ToLower(k)
+	if credentialWords[k] {
+		return true
+	}
+	for _, p := range strings.FieldsFunc(k, func(r rune) bool { return r == '_' || r == '-' || r == '.' || r == '[' || r == ']' }) {
+		if credentialWords[p] {
+			return true
+		}
+	}
+	return false
 }
 
 func joinInts(ns []int) string {

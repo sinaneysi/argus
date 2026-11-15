@@ -13,7 +13,7 @@ const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 func goodApproval() Approval {
 	return Approval{PlanVersion: 2, StoredSHA256: sha, ApprovedVersion: 2, HashColumn: true, ApprovedSHA256: sha,
-		ApprovedBy: "ada", ApprovedAt: now.Add(-time.Hour), ApproverAdmin: true, ApproverEnabled: true,
+		ApprovedBy: "ada", ApprovedAt: now.Add(-time.Hour), ApproverAdmin: true, ApproverEnabled: true, State: "approved",
 		RequestVersion: 2, RequestSHA256: sha, RequestApprover: "ada"}
 }
 
@@ -64,6 +64,9 @@ func TestRefusalRules(t *testing.T) {
 		{"approver not admin", func(s *Step) { s.Approval.ApproverAdmin = false }, 3, CodeApproval},
 		{"approver disabled", func(s *Step) { s.Approval.ApproverEnabled = false }, 3, CodeApproval},
 		{"approval too old", func(s *Step) { s.Approval.ApprovedAt = now.Add(-25 * time.Hour) }, 3, CodeApproval},
+		{"no approved hash column", func(s *Step) { s.Approval.HashColumn, s.Approval.ApprovedSHA256 = false, "" }, 3, CodeApproval},
+		{"task stopped", func(s *Step) { s.Approval.State = "stopped" }, 3, CodeApproval},
+		{"task re-planning", func(s *Step) { s.Approval.State = "planning" }, 3, CodeApproval},
 		{"approval in the future", func(s *Step) { s.Approval.ApprovedAt = now.Add(time.Hour) }, 3, CodeApproval},
 		{"unknown capability", func(s *Step) { s.Name = "shell.exec" }, 4, CodeCapability},
 		{"bad arguments", func(s *Step) { s.Args = Args{"url": 5, "expect_status": 200} }, 4, CodeArguments},
@@ -105,9 +108,9 @@ func TestStepAllowed(t *testing.T) {
 		t.Errorf("dry-run refused: %v", ref)
 	}
 	s = goodStep(r)
-	s.Approval.HashColumn, s.Approval.ApprovedSHA256 = false, "" // a board database before the plan-hash migration
+	s.Approval.State = "running"
 	if _, ref := CheckStep(s); ref != nil {
-		t.Errorf("approval without the hash column refused: %v", ref)
+		t.Errorf("a running task refused: %v", ref)
 	}
 }
 

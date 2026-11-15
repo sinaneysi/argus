@@ -76,6 +76,34 @@ func (s Store) StartedSince(t time.Time) int {
 	return n
 }
 
+func (s Store) applyingPath(id string, n int) string {
+	return filepath.Join(s.actionDir(id), fmt.Sprintf("step-%d.applying", n))
+}
+
+// MarkApplying is written (and synced) before a write step's Apply: when actd stops before the result is stored,
+// the marker stays and a retry is refused instead of applying a second time.
+func (s Store) MarkApplying(id string, n int, now time.Time) error {
+	if err := os.MkdirAll(s.actionDir(id), 0o700); err != nil {
+		return err
+	}
+	return writeFile(s.applyingPath(id, n), []byte(strconv.FormatInt(now.Unix(), 10)), 0o600)
+}
+
+// Applying reports whether an earlier Apply of the step may have run without a stored result.
+func (s Store) Applying(id string, n int) bool {
+	_, err := os.Stat(s.applyingPath(id, n))
+	return err == nil
+}
+
+// ClearApplying removes the marker once the step's result is stored (or nothing was written).
+func (s Store) ClearApplying(id string, n int) error {
+	err := os.Remove(s.applyingPath(id, n))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
+}
+
 // Get is a finished step's stored result.
 func (s Store) Get(id string, n int) (StepResult, bool) {
 	b, err := os.ReadFile(filepath.Join(s.actionDir(id), fmt.Sprintf("step-%d.json", n)))
@@ -143,7 +171,8 @@ func (o Ops) open() (*sql.DB, error) {
 	return sql.Open("sqlite", "file:"+o.Path+"?_pragma=busy_timeout(10000)&_txlock=immediate")
 }
 
-// Action is one actions row.
+// Action is one actions row. TaskKey, PlanVersion, PlanSHA256 and Approver are only ever the values confirmed
+// from board.db, never a request's claims (empty when the task could not be confirmed).
 type Action struct {
 	ID, TaskKey, PlanSHA256, Approver, Mode, State, Reason string
 	PlanVersion, Steps                                     int
@@ -170,7 +199,8 @@ func (o Ops) Write(ctx context.Context, a Action, events []Record) error {
 	}
 	defer tx.Rollback()
 	if _, err := tx.ExecContext(ctx, `INSERT INTO actions (action_id, task_key, plan_version, plan_sha256, approver, mode, state, reason, steps, started, finished)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(action_id) DO UPDATE SET mode=excluded.mode, state=excluded.state, reason=excluded.reason,
+		VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(action_id) DO UPDATE SET task_key=excluded.task_key, plan_version=excluded.plan_version,
+		plan_sha256=excluded.plan_sha256, approver=excluded.approver, mode=excluded.mode, state=excluded.state, reason=excluded.reason,
 		steps=excluded.steps, finished=excluded.finished`,
 		a.ID, a.TaskKey, a.PlanVersion, a.PlanSHA256, a.Approver, a.Mode, a.State, a.Reason, a.Steps, a.Started, a.Finished); err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/sinaneysi/argus/internal/actd"
+	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/migrate"
 )
 
@@ -54,6 +55,21 @@ func TestActdOnceCredentialAndVerify(t *testing.T) {
 	b, _ := os.ReadFile(filepath.Join(act, "secrets", "gitlab", "group-token.enc"))
 	if strings.Contains(string(b), "fake-token") {
 		t.Fatal("the credential is stored in plain text")
+	}
+	// -once takes the executor lock too: it never runs next to a running actd
+	held, err := actd.New(actd.Options{Mode: "on", ActDir: act, ActionsDir: filepath.Join(vol, "actions")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	errb.Reset()
+	if rc := runActd([]string{"-once", "-file", env}, &out, &errb); rc != 1 || !strings.Contains(errb.String(), "another actd") {
+		t.Fatalf("-once next to a running actd: %d %s", rc, errb.String())
+	}
+	held.Close()
+	for _, f := range config.Fields {
+		if f.Key == "ARGUS_ACT_KEY" {
+			t.Fatal("the executor key must not be a configuration key (argus.env is shared)")
+		}
 	}
 	out.Reset()
 	if rc := runActd([]string{"verify-audit", "-file", env}, &out, &errb); rc != 0 || !strings.HasPrefix(out.String(), "OK 0 records") {

@@ -186,6 +186,40 @@ before every step, so it acts within one step. (3) `docker compose stop actd`. A
   guess a value, never claim a change that is not in `capability_results`." Production stays a proposal.
 - `task-chat.md`: unchanged (chat never executes).
 
+## Amendment 1 (2026-11-15, security review of PR 1)
+
+As built in PR 1, these points change D2, D6 and D7:
+
+- **Executor key:** only `argus-act/keys/act.key`. `ARGUS_ACT_KEY` is dropped, because `argus.env` is shared by
+  every service.
+- **Audit chain:** an HMAC-SHA-256 chain keyed from `act.key`. The members keep the D7 names `prev_sha256` / `sha256`.
+  The head, the record count and the size are also kept in `argus-act/audit/anchor.json` (HMAC-tagged). A missing,
+  unreadable or non-matching anchor while records exist is a broken chain. The whole chain is verified at start and
+  every hour. Before each step a cheap check runs: same size, same last line, same anchor.
+- **Approval:** `actd` refuses (rule 3) when `agent_tasks.approved_sha256` does not exist, until PR 2 adds it. It
+  also refuses unless the task state is `approved` or `running`. The task is read again before every step.
+- **Steps:** an operator step names no capability. A Write-tier capability runs only in a WRITE step. Step numbers
+  must be positive and unique.
+- **Interrupted apply:** a marker is written before each write-tier Apply. A retry that finds the marker and no
+  stored result is refused (`interrupted`, rule 5): a person checks the target first.
+- **Daily cap:** dry-run actions count towards `ARGUS_ACTIONS_PER_DAY`.
+- **`http.check`:** allow-list entries are `[internal:]host[:port]`. Without a port, only 443 (and 80 with plain
+  http) is allowed. After resolution, loopback, link-local, private, shared (100.64/10), unique local, multicast and
+  unspecified addresses are refused unless the entry starts with `internal:`. Query parameters with credential-like
+  names are refused. Every step's arguments pass the secret scan.
+- **One executor:** `New` takes an exclusive lock on the executor volume, so `-once` and the daemon never run at the
+  same time.
+
+Design items for PR 2 (not built in PR 1):
+
+- **A. Approval authenticity.** The worker runs as the same uid as the api, and `board.db` and `auth.db` are
+  writable by it, so `approved_*` can be forged. The api signs each approval (task key, plan version, plan sha256,
+  approver, time) with a key that only the api holds. `actd` gets the public key, verifies the signature and
+  refuses a step without one. Until PR 2 lands, `actd` refuses every step: without `approved_sha256` the approval
+  check fails.
+- **B. Sealed inputs.** The hash of `sealed_inputs` is part of the signed approval (A), so a sealed input cannot be
+  replaced after approval.
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan

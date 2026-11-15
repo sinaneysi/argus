@@ -42,6 +42,8 @@ const (
 	CodePrecondition Code = "precondition"
 	CodeLimit        Code = "limit"
 	CodeLayout       Code = "layout"
+	CodeStepMode     Code = "step-mode"   // a step's mode does not fit its capability's tier
+	CodeInterrupted  Code = "interrupted" // an earlier apply stopped without a result: a person checks the target
 )
 
 // Refusal is a refused step or action: the D6 rule number, a code and a reason for the task page.
@@ -140,28 +142,36 @@ type Approval struct {
 	PlanVersion     int    // agent_tasks.plan_version
 	StoredSHA256    string // sha256 of the stored plan, computed by actd (PlanSHA256)
 	ApprovedVersion int    // agent_tasks.approved_version
-	HashColumn      bool   // the board database has agent_tasks.approved_sha256
+	HashColumn      bool   // the board database has agent_tasks.approved_sha256 (board migration, PR 2); false: refused
 	ApprovedSHA256  string // agent_tasks.approved_sha256
 	ApprovedBy      string
 	ApprovedAt      time.Time
-	ApproverAdmin   bool // auth.db: role admin
-	ApproverEnabled bool // auth.db: not disabled
+	ApproverAdmin   bool   // auth.db: role admin
+	ApproverEnabled bool   // auth.db: not disabled
+	State           string // agent_tasks.state: only approved and running tasks execute
 
 	RequestVersion  int
 	RequestSHA256   string
 	RequestApprover string
 }
 
+// ApprovedStates are the task states in which an approved plan may execute.
+var ApprovedStates = map[string]bool{"approved": true, "running": true}
+
 // CheckApproval is D6 rule 3.
 func CheckApproval(a Approval, ttl time.Duration, now time.Time) *Refusal {
 	switch {
 	case a.ApprovedVersion <= 0 || a.ApprovedBy == "" || a.ApprovedAt.IsZero():
 		return Refuse(3, CodeApproval, "the plan is not approved")
+	case !ApprovedStates[a.State]:
+		return Refuse(3, CodeApproval, "the task is %q, not approved or running (stopped, failed or re-planned)", clipName(a.State))
+	case !a.HashColumn:
+		return Refuse(3, CodeApproval, "the board database records no approved plan hash (agent_tasks.approved_sha256): no step runs until it does")
 	case a.RequestVersion != a.PlanVersion || a.ApprovedVersion != a.PlanVersion:
 		return Refuse(3, CodeApproval, "plan version mismatch: request v%d, stored v%d, approved v%d", a.RequestVersion, a.PlanVersion, a.ApprovedVersion)
 	case a.StoredSHA256 == "" || a.RequestSHA256 != a.StoredSHA256:
 		return Refuse(3, CodeApproval, "plan hash mismatch: the request does not carry the hash of the stored plan")
-	case a.HashColumn && a.ApprovedSHA256 != a.StoredSHA256:
+	case a.ApprovedSHA256 != a.StoredSHA256:
 		return Refuse(3, CodeApproval, "plan hash mismatch: the approved hash is not the hash of the stored plan")
 	case a.RequestApprover != a.ApprovedBy:
 		return Refuse(3, CodeApproval, "the request names another approver than the database")

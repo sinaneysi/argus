@@ -33,7 +33,7 @@ actd           the capability executor (ADR-0022): reads action requests from AR
                hash-chained audit record per phase to ARGUS_ACT_DIR/audit/actions.jsonl and writes redacted results
                to actions/out. ARGUS_ACTIONS_MODE: off (default; every request refused with a reason), dry-run (plan
                only), on. Runs only in ARGUS_LAYOUT=volume. -once: handle the waiting requests once and exit.
-credential     store or list the executor's credentials, sealed with its own key (keys/act.key or ARGUS_ACT_KEY).
+credential     store or list the executor's credentials, sealed with its own key (keys/act.key in ARGUS_ACT_DIR only).
                Only through "docker compose exec -T actd argus actd credential set <name>".
 verify-audit   check the audit chain: exit 0 and "OK" when it verifies, 1 when it is broken.
 `
@@ -71,19 +71,24 @@ func runActdIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	actDir := v("ARGUS_ACT_DIR")
 	switch sub {
 	case "verify-audit":
-		head, n, err := actd.VerifyFile(actd.AuditPath(actDir))
+		key, _, err := secret.Load(actd.KeySource(actDir, false))
 		if err != nil {
-			fmt.Fprintf(stdout, "BROKEN after %d records: %v\n", n, err)
+			if _, serr := os.Stat(actd.AuditPath(actDir)); serr != nil {
+				fmt.Fprintln(stdout, "OK 0 records, head -")
+				return 0
+			}
+			fmt.Fprintln(stdout, "BROKEN: the executor key is missing while the chain exists")
 			return 1
 		}
-		if st, ok := actd.ReadStatus(actd.StatusPath(actionsDir(c))); ok && st.Chain.Records > n {
-			fmt.Fprintf(stdout, "BROKEN: %d records, the last status recorded %d (lines were removed)\n", n, st.Chain.Records)
+		head, n, err := actd.VerifyDir(actDir, key)
+		if err != nil {
+			fmt.Fprintf(stdout, "BROKEN after %d records: %v\n", n, err)
 			return 1
 		}
 		fmt.Fprintf(stdout, "OK %d records, head %s\n", n, short(head))
 		return 0
 	case "credential":
-		return runActdCredential(fs.Args(), actDir, v("ARGUS_ACT_KEY"), stdin, stdout, stderr)
+		return runActdCredential(fs.Args(), actDir, stdin, stdout, stderr)
 	case "":
 	default:
 		fmt.Fprint(stderr, actdHelp)
@@ -103,6 +108,7 @@ func runActdIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "argus actd: does not start:", err)
 		return 1
 	}
+	defer d.Close() // New holds the executor lock: -once and the daemon never run at the same time
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if *once {
@@ -151,20 +157,22 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 	o := actd.Options{Mode: mode, ActDir: actDir, ActionsDir: actionsDir(c), BoardDB: c.BoardDB, AuthDB: c.AuthDB, OpsDB: c.DB,
 		Registry: reg, TTL: ttl, PerDay: perDay, Location: loc, Version: version,
 		Log: slog.New(slog.NewTextHandler(stderr, nil)).With("job", "actd")}
-	if mode != capability.ModeOff {
-		if err := actd.CheckActDir(actDir); err != nil {
-			return o, err
-		}
-		key, _, err := secret.Load(actd.KeySource(actDir, v("ARGUS_ACT_KEY"), true))
+	dirErr := actd.CheckActDir(actDir)
+	if dirErr != nil && mode != capability.ModeOff {
+		return o, dirErr
+	}
+	if dirErr == nil {
+		key, _, err := secret.Load(actd.KeySource(actDir, true))
 		if err != nil {
 			return o, err
 		}
+		o.Key = key
 		o.Credentials = func() []actd.Credential { return actd.ListCredentials(actDir, key) }
 	}
 	return o, nil
 }
 
-func runActdCredential(args []string, actDir, envKey string, stdin io.Reader, stdout, stderr io.Writer) int {
+func runActdCredential(args []string, actDir string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprint(stderr, actdHelp)
 		return 2
@@ -175,7 +183,7 @@ func runActdCredential(args []string, actDir, envKey string, stdin io.Reader, st
 	}
 	switch {
 	case args[0] == "set" && len(args) == 2:
-		key, _, err := secret.Load(actd.KeySource(actDir, envKey, true))
+		key, _, err := secret.Load(actd.KeySource(actDir, true))
 		if err != nil {
 			fmt.Fprintln(stderr, "argus actd credential:", err)
 			return 1
@@ -196,7 +204,7 @@ func runActdCredential(args []string, actDir, envKey string, stdin io.Reader, st
 			fmt.Fprintln(stdout, "no credentials stored")
 			return 0
 		}
-		key, _, err := secret.Load(actd.KeySource(actDir, envKey, false))
+		key, _, err := secret.Load(actd.KeySource(actDir, false))
 		if err != nil {
 			fmt.Fprintln(stderr, "argus actd credential:", err)
 			return 1

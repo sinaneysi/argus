@@ -25,10 +25,11 @@ var credNameRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}/[a-z0-9][a-z0-9_.-
 // MaxCredentialBytes is the longest credential value accepted.
 const MaxCredentialBytes = 16 << 10
 
-// KeySource is where the executor's AES-256 key comes from (D2): ARGUS_ACT_KEY wins, else keys/act.key in the
-// executor volume, created at the first start while no credential is stored.
-func KeySource(actDir, env string, generate bool) secret.Source {
-	return secret.Source{Env: env, File: filepath.Join(actDir, "keys", "act.key"), Generate: generate,
+// KeySource is where the executor's AES-256 key comes from (D2, amended): only keys/act.key in the executor volume,
+// created at the first start while no credential is stored. No environment variable: the env file is shared with
+// the other services.
+func KeySource(actDir string, generate bool) secret.Source {
+	return secret.Source{File: filepath.Join(actDir, "keys", "act.key"), Generate: generate,
 		Secrets: func() []string { m, _ := filepath.Glob(filepath.Join(actDir, "secrets", "*", "*.enc")); return m }}
 }
 

@@ -1379,12 +1379,6 @@
       "help": "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"
     },
     {
-      "key": "ARGUS_ACT_KEY",
-      "type": "str",
-      "secret": true,
-      "help": "32 bytes, base64: the executor's key; wins over ARGUS_ACT_DIR/keys/act.key (created at the first start)"
-    },
-    {
       "key": "ARGUS_ACTIONS_APPROVAL_TTL",
       "type": "str",
       "default": "24h",
@@ -1409,7 +1403,7 @@
     {
       "key": "ARGUS_ACT_HTTP_HOSTS",
       "type": "list",
-      "help": "http.check: the host names it may GET, *.suffix allowed, no IP address, no bare * (empty: http.check is not offered)"
+      "help": "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"
     },
     {
       "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",

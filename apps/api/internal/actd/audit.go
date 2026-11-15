@@ -3,23 +3,28 @@ package actd
 import (
 	"bufio"
 	"bytes"
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/notify"
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
-// Record is one audit line (ADR-0022 D7): one per phase (plan, apply, verify, rollback, refused).
+// Record is one audit line (ADR-0022 D7): one per phase (plan, apply, verify, rollback, refused). The members
+// prev_sha256 and sha256 keep the names of D7; their values are HMAC-SHA-256 tags (ADR-0022 amendment 1).
 type Record struct {
 	TS          string          `json:"ts"`
 	ActionID    string          `json:"action_id"`
@@ -68,74 +73,184 @@ func Clean(s string) string {
 	return s
 }
 
-// Audit is the authoritative hash chain argus-act/audit/actions.jsonl: append only, fsync after each line. Each
-// line's sha256 is the SHA-256 of the line without its sha256 member; prev_sha256 is the previous line's sha256
-// ("" for the first line). An edited, removed or reordered line breaks the chain.
+// AuditKey is the chain's HMAC key, derived from the executor key (keys/act.key): only actd can extend the chain.
+func AuditKey(k secret.Key) ([]byte, error) {
+	if len(k) != 32 {
+		return nil, errors.New("no executor key")
+	}
+	m := hmac.New(sha256.New, k)
+	m.Write([]byte("argus-actd-audit-v1"))
+	return m.Sum(nil), nil
+}
+
+func tag(key, b []byte) string {
+	m := hmac.New(sha256.New, key)
+	m.Write(b)
+	return hex.EncodeToString(m.Sum(nil))
+}
+
+// Audit is the authoritative chain argus-act/audit/actions.jsonl: append only, fsync after each line. Each line's
+// sha256 member is the HMAC of the line without that member; prev_sha256 is the previous line's tag ("" for the
+// first). The head, the record count and the file size are also kept in audit/anchor.json (HMAC-tagged, inside
+// argus-act), so a removed last line, an emptied file or a lost anchor is a broken chain too.
 type Audit struct {
-	mu   sync.Mutex
-	path string
-	head string
-	n    int
-	err  error // the chain is broken: nothing more is appended
+	mu      sync.Mutex
+	path    string
+	anchor  string
+	key     []byte
+	head    string
+	n       int
+	size    int64
+	lastOff int64    // where the last line starts
+	lastSum [32]byte // sha256 of the last line's bytes
+	err     error    // the chain is broken: nothing more is appended
 }
 
 var tailRe = regexp.MustCompile(`,"sha256":"([0-9a-f]{64})"}$`)
 
-// VerifyFile checks the chain of an audit file: the head (last sha256) and the number of records. A missing file is
-// an empty chain.
-func VerifyFile(path string) (head string, n int, err error) {
+type chainState struct {
+	head          string
+	n             int
+	size, lastOff int64
+	lastSum       [32]byte
+}
+
+func verifyFile(path string, key []byte) (chainState, error) {
+	var st chainState
 	f, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return "", 0, nil
+		return st, nil
 	}
+	if err != nil {
+		return st, err
+	}
+	defer f.Close()
+	r := bufio.NewReaderSize(f, 64<<10)
+	var off int64
+	for {
+		line, err := r.ReadBytes('\n')
+		if len(line) == 0 && err == io.EOF {
+			break
+		}
+		if err != nil && err != io.EOF {
+			return st, fmt.Errorf("read: %v", err)
+		}
+		if line[len(line)-1] != '\n' {
+			return st, fmt.Errorf("line %d is not complete", st.n+1)
+		}
+		st.n++
+		body := line[:len(line)-1]
+		m := tailRe.FindSubmatchIndex(body)
+		if m == nil {
+			return st, fmt.Errorf("line %d has no tag", st.n)
+		}
+		plain := append(append([]byte{}, body[:m[0]]...), '}')
+		got := tag(key, plain)
+		if !hmac.Equal([]byte(got), body[m[2]:m[3]]) {
+			return st, fmt.Errorf("line %d was changed (its tag does not match)", st.n)
+		}
+		var rec Record
+		if err := json.Unmarshal(plain, &rec); err != nil {
+			return st, fmt.Errorf("line %d is not a record", st.n)
+		}
+		if rec.Prev != st.head {
+			return st, fmt.Errorf("line %d does not follow line %d (a line was removed, added or moved)", st.n, st.n-1)
+		}
+		st.head, st.lastOff, st.lastSum = got, off, sha256.Sum256(line)
+		off += int64(len(line))
+		st.size = off
+	}
+	return st, nil
+}
+
+type anchorDoc struct {
+	Head    string `json:"head"`
+	Records int    `json:"records"`
+	Size    int64  `json:"size"`
+	Tag     string `json:"tag"`
+}
+
+func anchorTag(key []byte, a anchorDoc) string {
+	return tag(key, []byte("anchor|"+a.Head+"|"+strconv.Itoa(a.Records)+"|"+strconv.FormatInt(a.Size, 10)))
+}
+
+func readAnchor(path string, key []byte) (anchorDoc, bool, error) {
+	b, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return anchorDoc{}, false, nil
+	}
+	if err != nil {
+		return anchorDoc{}, false, fmt.Errorf("the anchor cannot be read: %v", err)
+	}
+	var a anchorDoc
+	if json.Unmarshal(b, &a) != nil || !hmac.Equal([]byte(a.Tag), []byte(anchorTag(key, a))) {
+		return anchorDoc{}, true, errors.New("the anchor is damaged or was not written by actd")
+	}
+	return a, true, nil
+}
+
+// compare checks a verified chain against its anchor.
+func compare(st chainState, a anchorDoc, have bool, aerr error) error {
+	switch {
+	case aerr != nil:
+		return aerr
+	case !have && st.n > 0:
+		return errors.New("the anchor is missing while the chain holds records")
+	case !have:
+		return nil
+	case a.Records != st.n || a.Head != st.head || a.Size != st.size:
+		return fmt.Errorf("the chain does not match its anchor (%d records, the anchor says %d)", st.n, a.Records)
+	}
+	return nil
+}
+
+// AuditPaths are the chain and its anchor in the executor volume.
+func AuditPaths(actDir string) (chain, anchor string) {
+	return filepath.Join(actDir, "audit", "actions.jsonl"), filepath.Join(actDir, "audit", "anchor.json")
+}
+
+// AuditPath is the chain file.
+func AuditPath(actDir string) string { p, _ := AuditPaths(actDir); return p }
+
+// VerifyDir checks the chain and its anchor (argus actd verify-audit).
+func VerifyDir(actDir string, k secret.Key) (head string, n int, err error) {
+	key, err := AuditKey(k)
 	if err != nil {
 		return "", 0, err
 	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 64<<10), 1<<20)
-	for sc.Scan() {
-		line := sc.Bytes()
-		n++
-		m := tailRe.FindSubmatchIndex(line)
-		if m == nil {
-			return head, n, fmt.Errorf("line %d has no sha256", n)
-		}
-		body := append(append([]byte{}, line[:m[0]]...), '}')
-		sum := sha256.Sum256(body)
-		got := hex.EncodeToString(sum[:])
-		if got != string(line[m[2]:m[3]]) {
-			return head, n, fmt.Errorf("line %d was changed (its sha256 does not match)", n)
-		}
-		var r Record
-		if err := json.Unmarshal(body, &r); err != nil {
-			return head, n, fmt.Errorf("line %d is not a record", n)
-		}
-		if r.Prev != head {
-			return head, n, fmt.Errorf("line %d does not follow line %d (a line was removed, added or moved)", n, n-1)
-		}
-		head = got
+	chain, anchor := AuditPaths(actDir)
+	st, err := verifyFile(chain, key)
+	if err != nil {
+		return st.head, st.n, err
 	}
-	if err := sc.Err(); err != nil {
-		return head, n, fmt.Errorf("read: %v", err)
-	}
-	return head, n, nil
+	a, have, aerr := readAnchor(anchor, key)
+	return st.head, st.n, compare(st, a, have, aerr)
 }
 
-// OpenAudit opens (creates) the audit file and verifies its chain. A broken chain is returned as the error and kept
+// OpenAudit opens the chain in actDir/audit and verifies it fully. A broken chain is returned as the error and kept
 // in the Audit: Check keeps failing and Append refuses, so actd refuses every step until a person looks.
-func OpenAudit(path string) (*Audit, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return nil, err
-	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDONLY, 0o600)
+func OpenAudit(actDir string, k secret.Key) (*Audit, error) {
+	key, err := AuditKey(k)
 	if err != nil {
 		return nil, err
 	}
-	f.Close()
-	a := &Audit{path: path}
-	a.head, a.n, a.err = VerifyFile(path)
+	chain, anchor := AuditPaths(actDir)
+	if err := os.MkdirAll(filepath.Dir(chain), 0o700); err != nil {
+		return nil, err
+	}
+	a := &Audit{path: chain, anchor: anchor, key: key}
+	a.err = a.full()
 	return a, a.err
+}
+
+func (a *Audit) full() error {
+	st, err := verifyFile(a.path, a.key)
+	if err == nil {
+		an, have, aerr := readAnchor(a.anchor, a.key)
+		err = compare(st, an, have, aerr)
+	}
+	a.head, a.n, a.size, a.lastOff, a.lastSum = st.head, st.n, st.size, st.lastOff, st.lastSum
+	return err
 }
 
 // Head is the chain head and the number of records.
@@ -152,66 +267,60 @@ func (a *Audit) Err() error {
 	return a.err
 }
 
-// Expect compares the chain with a head recorded elsewhere (the last status file): fewer records than recorded,
-// or another line at the recorded position, is a broken chain (the last lines were removed or replaced).
-func (a *Audit) Expect(head string, n int) error {
-	if n <= 0 || head == "" {
-		return nil
-	}
+// Full verifies the whole file and the anchor again (at start and every hour).
+func (a *Audit) Full() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.err != nil {
 		return a.err
 	}
-	if a.n < n {
-		a.err = fmt.Errorf("the chain has %d records, the last status recorded %d (lines were removed)", a.n, n)
-		return a.err
-	}
-	if a.n == n && a.head != head {
-		a.err = errors.New("the chain head is not the one the last status recorded")
-	}
-	if a.n > n && !a.contains(head, n) {
-		a.err = errors.New("the chain does not hold the head the last status recorded")
+	head, n := a.head, a.n
+	if err := a.full(); err != nil {
+		a.err = err
+	} else if a.head != head || a.n != n {
+		a.err = errors.New("the chain changed outside actd")
 	}
 	return a.err
 }
 
-func (a *Audit) contains(head string, n int) bool {
-	f, err := os.Open(a.path)
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 64<<10), 1<<20)
-	for i := 1; sc.Scan(); i++ {
-		if i == n {
-			m := tailRe.FindSubmatch(sc.Bytes())
-			return m != nil && string(m[1]) == head
-		}
-	}
-	return false
-}
-
-// Check verifies the whole file again and compares it with what this process appended (a removed last line, or a
-// line added by someone else, is a broken chain).
+// Check is the cheap check before every step: the file has exactly the size this process left, its last line is
+// unchanged, and the anchor still matches. Only actd appends, so any other size is a change from outside. The
+// whole chain is verified at start and every hour (Full).
 func (a *Audit) Check() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.err != nil {
 		return a.err
 	}
-	head, n, err := VerifyFile(a.path)
+	fi, err := os.Stat(a.path)
 	switch {
+	case errors.Is(err, os.ErrNotExist) && a.size == 0:
 	case err != nil:
-		a.err = err
-	case n != a.n || head != a.head:
-		a.err = fmt.Errorf("the chain changed outside actd (%d records, expected %d)", n, a.n)
+		a.err = fmt.Errorf("the chain cannot be read: %v", err)
+	case fi.Size() != a.size:
+		a.err = fmt.Errorf("the chain changed outside actd (%d bytes, expected %d)", fi.Size(), a.size)
+	case a.n > 0:
+		f, err := os.Open(a.path)
+		if err != nil {
+			a.err = err
+			break
+		}
+		buf := make([]byte, a.size-a.lastOff)
+		_, err = f.ReadAt(buf, a.lastOff)
+		f.Close()
+		if err != nil || sha256.Sum256(buf) != a.lastSum {
+			a.err = errors.New("the last line of the chain was changed")
+		}
+	}
+	if a.err == nil {
+		an, have, aerr := readAnchor(a.anchor, a.key)
+		a.err = compare(chainState{head: a.head, n: a.n, size: a.size}, an, have, aerr)
 	}
 	return a.err
 }
 
-// Append adds one record (it fills ts, prev_sha256 and sha256) and syncs the file. It refuses on a broken chain.
+// Append adds one record (it fills ts, prev_sha256 and sha256), syncs the file and moves the anchor. It refuses on
+// a broken chain; a failed write breaks the chain.
 func (a *Audit) Append(r Record, now time.Time) (Record, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -229,26 +338,32 @@ func (a *Audit) Append(r Record, now time.Time) (Record, error) {
 	if err != nil {
 		return r, err
 	}
-	sum := sha256.Sum256(body)
-	r.SHA256 = hex.EncodeToString(sum[:])
+	r.SHA256 = tag(a.key, body)
 	line := append(body[:len(body)-1], []byte(`,"sha256":"`+r.SHA256+`"}`+"\n")...)
 	f, err := os.OpenFile(a.path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o600)
 	if err != nil {
-		return r, err
-	}
-	if _, err := f.Write(line); err != nil {
-		f.Close()
-		a.err = fmt.Errorf("append failed: %v", err)
+		a.err = fmt.Errorf("the chain cannot be opened: %v", err)
 		return r, a.err
 	}
-	if err := f.Sync(); err != nil {
-		f.Close()
-		a.err = fmt.Errorf("fsync failed: %v", err)
+	_, werr := f.Write(line)
+	if werr == nil {
+		werr = f.Sync()
+	}
+	if cerr := f.Close(); werr == nil {
+		werr = cerr
+	}
+	if werr != nil {
+		a.err = fmt.Errorf("append failed: %v", werr)
 		return r, a.err
 	}
-	if err := f.Close(); err != nil {
-		return r, err
+	a.head, a.n, a.lastOff, a.lastSum = r.SHA256, a.n+1, a.size, sha256.Sum256(line)
+	a.size += int64(len(line))
+	an := anchorDoc{Head: a.head, Records: a.n, Size: a.size}
+	an.Tag = anchorTag(a.key, an)
+	b, _ := json.Marshal(an)
+	if err := writeFile(a.anchor, b, 0o600); err != nil {
+		a.err = fmt.Errorf("the anchor was not written: %v", err)
+		return r, a.err
 	}
-	a.head, a.n = r.SHA256, a.n+1
 	return r, nil
 }

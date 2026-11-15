@@ -1,10 +1,12 @@
 package actd
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -12,11 +14,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/migrate"
+	"github.com/sinaneysi/argus/internal/secret"
 )
 
 // fakeTokenDetail is a fake credential the secret scan must catch, built at run time.
@@ -35,6 +39,8 @@ type fx struct {
 	mode             capability.Mode
 	perDay           int
 	extra            []capability.Capability
+	key              secret.Key
+	cur              *Daemon
 }
 
 func newFx(t *testing.T, extra ...capability.Capability) *fx {
@@ -51,6 +57,8 @@ func newFx(t *testing.T, extra ...capability.Capability) *fx {
 			t.Fatal(err)
 		}
 	}
+	f.exec(f.board, `ALTER TABLE agent_tasks ADD COLUMN approved_sha256 TEXT`) // the PR 2 board migration
+	f.key, _ = secret.ParseKey(secret.NewKeyText())
 	f.exec(f.auth, `INSERT INTO users (username, hash, role, disabled, must_change) VALUES ('ada','x','admin',0,0), ('vic','x','viewer',0,0), ('dis','x','admin',1,0)`)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.calls.Add(1)
@@ -92,11 +100,16 @@ func (f *fx) exec(path, q string, a ...any) {
 
 func (f *fx) daemon() *Daemon {
 	f.t.Helper()
-	d, err := New(Options{Mode: f.mode, ActDir: f.act, ActionsDir: f.actions, BoardDB: f.board, AuthDB: f.auth, OpsDB: f.ops,
+	if f.cur != nil {
+		f.cur.Close()
+	}
+	d, err := New(Options{Mode: f.mode, ActDir: f.act, Key: f.key, ActionsDir: f.actions, BoardDB: f.board, AuthDB: f.auth, OpsDB: f.ops,
 		Registry: f.reg, TTL: 24 * time.Hour, PerDay: f.perDay, Now: func() time.Time { return f.now }})
 	if err != nil {
 		f.t.Fatal(err)
 	}
+	f.cur = d
+	f.t.Cleanup(d.Close)
 	return d
 }
 
@@ -109,7 +122,9 @@ func check(path string, status any) map[string]any {
 func (f *fx) task(key, env string, steps []map[string]any) Request {
 	f.t.Helper()
 	for i, s := range steps {
-		s["n"] = i + 1
+		if _, ok := s["n"]; !ok {
+			s["n"] = i + 1
+		}
 	}
 	plan := map[string]any{"classification": map[string]any{"environment": env, "kind": "change"}, "plan": steps, "summary": "s"}
 	pb, _ := json.Marshal(plan)
@@ -118,9 +133,13 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 	sha, _ := capability.PlanSHA256(raw.Classification, raw.Plan)
 	f.exec(f.board, `INSERT OR REPLACE INTO agent_tasks (key, state, plan, plan_version, approved_version, approved_by, approved_at)
 		VALUES (?, 'approved', ?, 1, 1, 'ada', ?)`, key, string(pb), f.now.Add(-time.Hour).Unix())
+	if f.hasHashCol() {
+		f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=? WHERE key=?`, sha, key)
+	}
 	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada"}
 	for _, s := range steps {
-		st := ReqStep{N: s["n"].(int), Mode: s["mode"].(string)}
+		n, _ := capability.AsInt(s["n"])
+		st := ReqStep{N: n, Mode: s["mode"].(string)}
 		if c, ok := s["capability"].(string); ok {
 			st.Capability = c
 			st.Args, _ = json.Marshal(s["args"])
@@ -130,6 +149,14 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 		}
 	}
 	return req
+}
+
+func (f *fx) hasHashCol() bool {
+	db, _ := sql.Open("sqlite", f.board)
+	defer db.Close()
+	var n int
+	db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('agent_tasks') WHERE name='approved_sha256'`).Scan(&n)
+	return n > 0
 }
 
 func (f *fx) submit(d *Daemon, req Request) *Response {
@@ -190,7 +217,7 @@ func TestHTTPCheckEndToEnd(t *testing.T) {
 	if len(lines) != 2 || lines[0].Phase != PhasePlan || lines[1].Phase != PhaseApply || lines[1].Prev != lines[0].SHA256 {
 		t.Fatalf("audit: %+v", lines)
 	}
-	if _, n, err := VerifyFile(AuditPath(f.act)); err != nil || n != 2 {
+	if _, n, err := VerifyDir(f.act, f.key); err != nil || n != 2 {
 		t.Fatal("chain", n, err)
 	}
 	var na, ne int
@@ -276,8 +303,8 @@ func TestDryRunPlansOnly(t *testing.T) {
 	if l := f.auditLines(); len(l) != 2 || l[0].Phase != PhasePlan || l[1].Phase != PhasePlan {
 		t.Fatalf("audit %+v", l)
 	}
-	if d.store.Started(r.ActionID) {
-		t.Fatal("a dry-run counted as a started action")
+	if !d.store.Started(r.ActionID) {
+		t.Fatal("a dry-run did not count as a started action (it counts towards ARGUS_ACTIONS_PER_DAY)")
 	}
 }
 
@@ -304,41 +331,61 @@ func TestKillSwitch(t *testing.T) {
 	wantRefused(t, r, 1, capability.CodeKillSwitch)
 }
 
+func lastReplace(s, old, new string) string {
+	i := strings.LastIndex(s, old)
+	return s[:i] + new + s[i+len(old):]
+}
+
 func TestBrokenChainRefuses(t *testing.T) {
 	f := newFx(t)
 	d := f.daemon()
 	f.submit(d, f.task("OPS-8", "develop", []map[string]any{check("/ok", 200)}))
-	b, _ := os.ReadFile(AuditPath(f.act))
-	os.WriteFile(AuditPath(f.act), []byte(strings.Replace(string(b), `"result":"ok"`, `"result":"OK"`, 1)), 0o600)
-	// the running daemon checks the chain before each step
-	r := f.submit(d, f.task("OPS-9", "develop", []map[string]any{check("/ok", 200)}))
-	wantRefused(t, r, 1, capability.CodeAuditChain)
-	// and a new one at start
-	d2 := f.daemon()
-	r = f.submit(d2, f.task("OPS-10", "develop", []map[string]any{check("/ok", 200)}))
-	wantRefused(t, r, 1, capability.CodeAuditChain)
+	good, _ := os.ReadFile(AuditPath(f.act))
+	// the last line edited: the running daemon's check before each step sees it
+	os.WriteFile(AuditPath(f.act), []byte(lastReplace(string(good), `"result":"ok"`, `"result":"OK"`)), 0o600)
+	wantRefused(t, f.submit(d, f.task("OPS-9", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	if st := d.CurrentStatus(); st.Chain.OK || st.Chain.Error == "" {
+		t.Fatalf("status shows a good chain: %+v", st.Chain)
+	}
+	// an earlier line edited: a new daemon sees it at start
+	os.WriteFile(AuditPath(f.act), []byte(strings.Replace(string(good), `"result":"ok"`, `"result":"OK"`, 1)), 0o600)
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-10", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	// and a running one at its hourly full check
+	os.WriteFile(AuditPath(f.act), good, 0o600)
+	d = f.daemon()
+	os.WriteFile(AuditPath(f.act), []byte(strings.Replace(string(good), `"result":"ok"`, `"result":"OK"`, 1)), 0o600)
+	f.now = f.now.Add(2 * time.Hour)
+	d.Tick(context.Background())
+	wantRefused(t, f.submit(d, f.task("OPS-10b", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
 	if f.calls.Load() != 1 {
 		t.Fatalf("%d calls with a broken chain", f.calls.Load())
 	}
-	if st := d2.CurrentStatus(); st.Chain.OK || st.Chain.Error == "" {
-		t.Fatalf("status shows a good chain: %+v", st.Chain)
-	}
 }
 
-func TestTruncatedChainDetectedAtStart(t *testing.T) {
+func TestAnchorDetectsTruncationAndLoss(t *testing.T) {
 	f := newFx(t)
 	d := f.daemon()
 	f.submit(d, f.task("OPS-11", "develop", []map[string]any{check("/ok", 200)}))
-	d.WriteStatus()
-	b, _ := os.ReadFile(AuditPath(f.act))
-	lines := strings.SplitAfter(string(b), "\n")
-	os.WriteFile(AuditPath(f.act), []byte(lines[0]), 0o600) // the last line removed: the chain alone still verifies
-	if _, _, err := VerifyFile(AuditPath(f.act)); err != nil {
-		t.Fatal(err)
+	chain, anchor := AuditPaths(f.act)
+	good, _ := os.ReadFile(chain)
+	ga, _ := os.ReadFile(anchor)
+	lines := strings.SplitAfter(string(good), "\n")
+	os.WriteFile(chain, []byte(lines[0]), 0o600) // the last line removed: the lines alone still chain
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-12", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	os.WriteFile(chain, good, 0o600)
+	os.Remove(anchor) // the anchor lost while records exist
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-13", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	os.WriteFile(anchor, []byte(strings.Replace(string(ga), `"records":2`, `"records":1`, 1)), 0o600) // a forged anchor
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-14", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	os.WriteFile(anchor, ga, 0o600)
+	os.Remove(chain) // the chain emptied while the anchor says 2
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-15", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	os.WriteFile(chain, good, 0o600)
+	f.key, _ = secret.ParseKey(secret.NewKeyText()) // another key cannot verify (nor extend) the chain
+	wantRefused(t, f.submit(f.daemon(), f.task("OPS-16", "develop", []map[string]any{check("/ok", 200)})), 1, capability.CodeAuditChain)
+	if f.calls.Load() != 1 {
+		t.Fatalf("%d calls", f.calls.Load())
 	}
-	d2 := f.daemon()
-	r := f.submit(d2, f.task("OPS-12", "develop", []map[string]any{check("/ok", 200)}))
-	wantRefused(t, r, 1, capability.CodeAuditChain)
 }
 
 func TestClassificationRules(t *testing.T) {
@@ -424,14 +471,19 @@ func TestApprovalRules(t *testing.T) {
 
 func TestApprovedHashColumn(t *testing.T) {
 	f := newFx(t)
-	f.exec(f.board, `ALTER TABLE agent_tasks ADD COLUMN approved_sha256 TEXT`)
 	d := f.daemon()
 	req := f.task("H-1", "develop", []map[string]any{check("/ok", 200)})
+	f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=NULL WHERE key='H-1'`)
 	wantRefused(t, f.submit(d, req), 3, capability.CodeApproval) // the column exists but holds no approved hash
-	req = f.task("H-2", "develop", []map[string]any{check("/ok", 200)})
-	f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=? WHERE key='H-2'`, req.PlanSHA256)
-	if r := f.submit(d, req); r.State != StateDone {
+	if r := f.submit(d, f.task("H-2", "develop", []map[string]any{check("/ok", 200)})); r.State != StateDone {
 		t.Fatalf("%+v", r)
+	}
+	// before the PR 2 board migration there is no approved hash: nothing runs
+	f.exec(f.board, `ALTER TABLE agent_tasks DROP COLUMN approved_sha256`)
+	r := f.submit(d, f.task("H-3", "develop", []map[string]any{check("/ok", 200)}))
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "approved_sha256") || f.calls.Load() != 1 {
+		t.Fatalf("%+v, %d calls", r.Refusal, f.calls.Load())
 	}
 }
 
@@ -615,8 +667,8 @@ func TestWriteTierPhases(t *testing.T) {
 
 func TestAuditTamper(t *testing.T) {
 	dir := t.TempDir()
-	p := filepath.Join(dir, "audit", "actions.jsonl")
-	a, err := OpenAudit(p)
+	key, _ := secret.ParseKey(secret.NewKeyText())
+	a, err := OpenAudit(dir, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -626,44 +678,267 @@ func TestAuditTamper(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	p, anchor := AuditPaths(dir)
 	good, _ := os.ReadFile(p)
-	if strings.Contains(string(good), "glpat-abcdefghij") {
+	ga, _ := os.ReadFile(anchor)
+	if strings.Contains(string(good), "abcdefghijklmnopqrstuv") {
 		t.Fatal("a secret in the detail was not scanned")
 	}
-	if fi, _ := os.Stat(p); fi.Mode().Perm() != 0o600 {
-		t.Fatalf("audit mode %o", fi.Mode().Perm())
+	for _, f := range []string{p, anchor} {
+		if fi, _ := os.Stat(f); fi.Mode().Perm() != 0o600 {
+			t.Fatalf("%s mode %o", f, fi.Mode().Perm())
+		}
 	}
-	if _, n, err := VerifyFile(p); err != nil || n != 4 {
+	if _, n, err := VerifyDir(dir, key); err != nil || n != 4 {
 		t.Fatal(n, err)
 	}
 	lines := strings.SplitAfter(strings.TrimSuffix(string(good), "\n"), "\n")
-	tamper := map[string]string{
+	lines[3] += "\n"
+	// an edited line whose tag is recomputed without the key: plain SHA-256 is not accepted
+	tampered := map[string]string{
 		"edited":    strings.Replace(string(good), `"step":2`, `"step":9`, 1),
 		"removed":   lines[0] + lines[2] + lines[3],
 		"reordered": lines[0] + lines[2] + lines[1] + lines[3],
 		"first cut": lines[1] + lines[2] + lines[3],
 		"inserted":  lines[0] + lines[0] + lines[1] + lines[2] + lines[3],
-		"no hash":   lines[0] + `{"ts":"x"}` + "\n",
+		"no tag":    lines[0] + `{"ts":"x"}` + "\n",
+		"last cut":  lines[0] + lines[1] + lines[2],
+		"half line": string(good) + `{"ts":"x"`,
 	}
-	for name, body := range tamper {
+	for name, body := range tampered {
 		os.WriteFile(p, []byte(body), 0o600)
-		if _, _, err := VerifyFile(p); err == nil {
-			t.Errorf("%s line not detected", name)
+		os.WriteFile(anchor, ga, 0o600)
+		if _, _, err := VerifyDir(dir, key); err == nil {
+			t.Errorf("%s not detected", name)
 		}
 	}
-	// a removed last line is caught by the running process and by the recorded head
+	other, _ := secret.ParseKey(secret.NewKeyText())
 	os.WriteFile(p, good, 0o600)
-	a, _ = OpenAudit(p)
-	head, n := a.Head()
-	os.WriteFile(p, []byte(lines[0]+lines[1]+lines[2]), 0o600)
-	if a.Check() == nil {
-		t.Error("a removed last line not detected by Check")
+	if _, _, err := VerifyDir(dir, other); err == nil {
+		t.Error("the chain verified under another key")
 	}
-	if _, err := a.Append(Record{Phase: PhasePlan}, t0); !errors.Is(err, a.Err()) || err == nil {
-		t.Error("Append went on after a broken chain")
+	// the cheap check before each step: a change of size or of the last line, by anyone but this process
+	for name, body := range map[string]string{"appended": string(good) + lines[0], "last line edited": strings.Replace(string(good), `"step":4`, `"step":8`, 1)} {
+		os.WriteFile(p, good, 0o600)
+		os.WriteFile(anchor, ga, 0o600)
+		a, _ = OpenAudit(dir, key)
+		os.WriteFile(p, []byte(body), 0o600)
+		if a.Check() == nil {
+			t.Errorf("Check missed: %s", name)
+		}
+		if _, err := a.Append(Record{Phase: PhasePlan}, t0); err == nil {
+			t.Errorf("Append went on after a broken chain (%s)", name)
+		}
 	}
-	b, _ := OpenAudit(p)
-	if b.Expect(head, n) == nil {
-		t.Error("a removed last line not detected against the recorded head")
+}
+
+func TestOneExecutorAtATime(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	if _, err := New(Options{Mode: f.mode, ActDir: f.act, Key: f.key, ActionsDir: f.actions, Registry: f.reg}); !errors.Is(err, ErrLocked) {
+		t.Fatalf("a second executor started: %v", err)
+	}
+	d.Close()
+	d2, err := New(Options{Mode: f.mode, ActDir: f.act, Key: f.key, ActionsDir: f.actions, Registry: f.reg})
+	if err != nil {
+		t.Fatal("the lock was not released:", err)
+	}
+	d2.Close()
+}
+
+func TestTaskStateRule(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	for _, st := range []string{"stopped", "failed", "planning", "ready", "done"} {
+		req := f.task("ST-"+st, "develop", []map[string]any{check("/ok", 200)})
+		f.exec(f.board, `UPDATE agent_tasks SET state=? WHERE key=?`, st, req.TaskKey)
+		wantRefused(t, f.submit(d, req), 3, capability.CodeApproval)
+	}
+	if r := f.submit(d, f.task("ST-run", "develop", []map[string]any{check("/ok", 200)})); r.State != StateDone {
+		t.Fatal(r.State)
+	}
+	// stopped by an admin while the action runs: the next step is refused
+	req := f.task("ST-mid", "develop", []map[string]any{check("/ok", 200), check("/ok", 200)})
+	f.onCall = func(string) { f.exec(f.board, `UPDATE agent_tasks SET state='stopped' WHERE key='ST-mid'`) }
+	r := f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if len(r.Steps) != 2 || r.Steps[0].Status != "ok" || r.Steps[1].Status != StateRefused {
+		t.Fatalf("%+v", r.Steps)
+	}
+}
+
+func TestStepModeAndNumbers(t *testing.T) {
+	w := &fakeWrite{}
+	f := newFx(t, w)
+	d := f.daemon()
+	ws := writeStep()
+	ws["mode"] = "read-only"
+	op := check("/ok", 200)
+	op["mode"] = "operator"
+	odd := check("/ok", 200)
+	odd["mode"] = "sometimes"
+	for i, steps := range [][]map[string]any{{ws}, {op}, {odd}} {
+		name := fmt.Sprintf("SM-%d", i)
+		r := f.submit(d, f.task(name, "develop", steps))
+		if r.State != StateRefused || r.Refusal.Code != capability.CodeStepMode {
+			t.Errorf("%s: %s %+v", name, r.State, r.Refusal)
+		}
+	}
+	a, b := check("/ok", 200), check("/ok", 200)
+	a["n"], b["n"] = 1, 1
+	wantRefused(t, f.submit(d, f.task("SN-dup", "develop", []map[string]any{a, b})), 4, capability.CodeArguments)
+	z := check("/ok", 200)
+	z["n"] = 0
+	wantRefused(t, f.submit(d, f.task("SN-zero", "develop", []map[string]any{z})), 4, capability.CodeArguments)
+	m := check("/ok", 200)
+	m["n"] = -3
+	wantRefused(t, f.submit(d, f.task("SN-neg", "develop", []map[string]any{m})), 4, capability.CodeArguments)
+	if w.applies != 0 || f.calls.Load() != 0 {
+		t.Fatal("a refused step ran")
+	}
+}
+
+func TestDryRunCountsTowardsTheDailyCap(t *testing.T) {
+	f := newFx(t)
+	f.mode, f.perDay = capability.ModeDryRun, 2
+	d := f.daemon()
+	for i, want := range []string{StateDryRun, StateDryRun, StateRefused} {
+		r := f.submit(d, f.task(fmt.Sprintf("DR-%d", i), "develop", []map[string]any{check("/ok", 200)}))
+		if r.State != want {
+			t.Fatalf("dry-run %d: %s", i, r.State)
+		}
+	}
+}
+
+func TestInterruptedApplyNeedsAPerson(t *testing.T) {
+	w := &fakeWrite{}
+	f := newFx(t, w)
+	d := f.daemon()
+	req := f.task("IA-1", "develop", []map[string]any{writeStep()})
+	// an earlier run wrote the marker and stopped before the result was stored
+	if err := d.store.MarkApplying(req.ActionID, 1, f.now); err != nil {
+		t.Fatal(err)
+	}
+	r := f.submit(d, req)
+	wantRefused(t, r, 5, capability.CodeInterrupted)
+	if w.applies != 0 {
+		t.Fatal("applied a second time")
+	}
+	// a normal run leaves no marker behind
+	req = f.task("IA-2", "develop", []map[string]any{writeStep()})
+	if r := f.submit(d, req); r.State != StateDone || d.store.Applying(req.ActionID, 1) {
+		t.Fatalf("%s, marker %v", r.State, d.store.Applying(req.ActionID, 1))
+	}
+}
+
+func TestInboxFileChecks(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	in := filepath.Join(f.actions, "in")
+	outside := filepath.Join(t.TempDir(), "x.json")
+	os.WriteFile(outside, []byte("{}"), 0o600)
+	link := "LN-1.v1.0123456789ab"
+	os.Symlink(outside, filepath.Join(in, link+".json"))
+	fifo := "FI-1.v1.0123456789ab"
+	if err := syscall.Mkfifo(filepath.Join(in, fifo+".json"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	big := "BG-1.v1.0123456789ab"
+	os.WriteFile(filepath.Join(in, big+".json"), bytes.Repeat([]byte(" "), MaxRequestBytes+1), 0o600)
+	done := make(chan struct{})
+	go func() { d.Tick(context.Background()); close(done) }()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("a FIFO in the inbox blocked actd")
+	}
+	for _, id := range []string{link, fifo, big} {
+		b, err := os.ReadFile(filepath.Join(f.actions, "out", id+".json"))
+		if err != nil || !strings.Contains(string(b), `"refused"`) {
+			t.Errorf("%s: %s %v", id, b, err)
+		}
+	}
+	if b, _ := os.ReadFile(outside); string(b) != "{}" {
+		t.Fatal("the link target was touched")
+	}
+	if m, _ := filepath.Glob(filepath.Join(in, "*")); len(m) != 0 {
+		t.Fatalf("left in the inbox: %v", m)
+	}
+}
+
+func TestInboxAuditRateLimit(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	in := filepath.Join(f.actions, "in")
+	for i := 0; i < 25; i++ {
+		os.WriteFile(filepath.Join(in, fmt.Sprintf("JK-%d.v1.0123456789ab.json", i)), []byte("not json"), 0o600)
+	}
+	d.Tick(context.Background())
+	if n := len(f.auditLines()); n != inboxAuditPerMinute {
+		t.Fatalf("%d audit records for junk files, want %d", n, inboxAuditPerMinute)
+	}
+	if m, _ := filepath.Glob(filepath.Join(f.actions, "out", "JK-*")); len(m) != 25 {
+		t.Fatalf("%d answers, want 25", len(m))
+	}
+}
+
+func TestRefusalsWriteOnlyConfirmedFields(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	req := f.task("CF-1", "develop", []map[string]any{check("/ok", 200)})
+	req.Approver = "mallory"
+	wantRefused(t, f.submit(d, req), 3, capability.CodeApproval)
+	ghost := f.task("CF-2", "develop", []map[string]any{check("/ok", 200)})
+	f.exec(f.board, `DELETE FROM agent_tasks WHERE key='CF-2'`)
+	ghost.Approver = "mallory"
+	f.submit(d, ghost)
+	for _, l := range f.auditLines() {
+		if l.Approver == "mallory" || l.TaskKey == "CF-2" {
+			t.Fatalf("an unconfirmed request field was audited: %+v", l)
+		}
+	}
+	db, _ := sql.Open("sqlite", f.ops)
+	defer db.Close()
+	var n int
+	db.QueryRow(`SELECT COUNT(*) FROM actions WHERE approver='mallory' OR task_key='CF-2'`).Scan(&n)
+	var appr string
+	db.QueryRow(`SELECT approver FROM actions WHERE action_id=?`, req.ActionID).Scan(&appr)
+	if n != 0 || appr != "ada" {
+		t.Fatalf("ops rows: %d unconfirmed, approver %q", n, appr)
+	}
+}
+
+func TestAuditWriteFailureRefusesTheStep(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores file modes")
+	}
+	f := newFx(t)
+	d := f.daemon()
+	f.submit(d, f.task("AW-0", "develop", []map[string]any{check("/ok", 200)}))
+	f.onCall = func(string) { os.Chmod(AuditPath(f.act), 0o400) } // the apply record cannot be written
+	r := f.submit(d, f.task("AW-1", "develop", []map[string]any{check("/ok", 200), check("/ok", 200)}))
+	os.Chmod(AuditPath(f.act), 0o600)
+	wantRefused(t, r, 1, capability.CodeAuditChain)
+	if len(r.Steps) != 1 || r.Steps[0].Refusal == nil || f.calls.Load() != 2 {
+		t.Fatalf("%+v, %d calls", r.Steps, f.calls.Load())
+	}
+	if _, ok := d.store.Get(r.ActionID, 1); ok {
+		t.Fatal("a step without its audit record was stored as finished")
+	}
+}
+
+func TestSecretLookingArgumentsRefused(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	st := check("/ok/"+strings.TrimPrefix(fakeTokenDetail, "token="), 200)
+	r := f.submit(d, f.task("SA-1", "develop", []map[string]any{st}))
+	wantRefused(t, r, 4, capability.CodeArguments)
+	if !strings.Contains(r.Refusal.Reason, "looks like a secret") || f.calls.Load() != 0 {
+		t.Fatalf("%+v", r.Refusal)
+	}
+	b, _ := os.ReadFile(AuditPath(f.act))
+	o, _ := os.ReadFile(filepath.Join(f.actions, "out", r.ActionID+".json"))
+	if strings.Contains(string(b)+string(o), "abcdefghijklmnopqrstuv") {
+		t.Fatal("the secret-looking value was stored")
 	}
 }

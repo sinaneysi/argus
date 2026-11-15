@@ -279,11 +279,10 @@ var Fields = []Field{
 	// the capability executor argus actd (ADR-0022; compose profile actions, its own volume argus-act)
 	{Key: "ARGUS_ACTIONS_MODE", Kind: Str, Default: "off", Choices: []string{"off", "dry-run", "on"}, Help: "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"},
 	{Key: "ARGUS_ACT_DIR", Kind: Path, Default: "/var/lib/argus-act", Help: "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"},
-	{Key: "ARGUS_ACT_KEY", Kind: Str, Secret: true, Help: "32 bytes, base64: the executor's key; wins over ARGUS_ACT_DIR/keys/act.key (created at the first start)"},
 	{Key: "ARGUS_ACTIONS_APPROVAL_TTL", Kind: Str, Default: "24h", Help: "an approval older than this is refused (5m..168h)"},
 	{Key: "ARGUS_ACTIONS_PER_DAY", Kind: Int, Default: "20", Min: 1, Max: 200, Help: "actions started a day at most (ARGUS_TZ days)"},
 	{Key: "ARGUS_ACTIONS_BACKUP_DAYS", Kind: Int, Default: "30", Min: 1, Max: 365, Help: "how long the sealed old values of write steps are kept"},
-	{Key: "ARGUS_ACT_HTTP_HOSTS", Kind: List, Help: "http.check: the host names it may GET, *.suffix allowed, no IP address, no bare * (empty: http.check is not offered)"},
+	{Key: "ARGUS_ACT_HTTP_HOSTS", Kind: List, Help: "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"},
 	{Key: "ARGUS_ACT_HTTP_ALLOW_HTTP", Kind: Bool, Default: "0", Help: "1: http.check may use plain http:// (test installations only)"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
