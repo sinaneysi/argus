@@ -3,6 +3,8 @@ package actd
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/sinaneysi/argus/internal/capability"
 )
 
 // Status is actions/actd-status.json in the shared volume (no secret): the heartbeat, the mode, the chain head
@@ -15,6 +17,8 @@ type Status struct {
 	Capabilities []string     `json:"capabilities"`
 	Credentials  []Credential `json:"credentials"`
 	Last         *lastAction  `json:"last,omitempty"`
+	// ApprovalKey is the fingerprint of the api's approval public key; "" when none is stored (every step refused)
+	ApprovalKey string `json:"approval_key"`
 }
 
 // ChainStatus is the audit chain's state.
@@ -43,6 +47,9 @@ func (d *Daemon) CurrentStatus() Status {
 	s := Status{TS: d.now().Unix(), Version: d.o.Version, Mode: string(d.o.Mode), Capabilities: d.o.Registry.Names(), Last: d.last}
 	if s.Capabilities == nil {
 		s.Capabilities = []string{}
+	}
+	if len(d.o.ApprovalPub) > 0 {
+		s.ApprovalKey = capability.KeyFingerprint(d.o.ApprovalPub)
 	}
 	if d.audit == nil {
 		s.Chain.Error = "the executor volume is not usable"

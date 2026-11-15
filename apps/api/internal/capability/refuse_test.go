@@ -1,6 +1,8 @@
 package capability
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"errors"
 	"strings"
 	"testing"
@@ -11,10 +13,17 @@ var now = time.Date(2026, 11, 15, 12, 0, 0, 0, time.UTC)
 
 const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
+var testPriv, testPub = func() (ed25519.PrivateKey, ed25519.PublicKey) {
+	p, k, _ := ed25519.GenerateKey(rand.Reader)
+	return k, p
+}()
+
 func goodApproval() Approval {
-	return Approval{PlanVersion: 2, StoredSHA256: sha, ApprovedVersion: 2, HashColumn: true, ApprovedSHA256: sha,
+	a := Approval{PlanVersion: 2, StoredSHA256: sha, ApprovedVersion: 2, HashColumn: true, ApprovedSHA256: sha,
 		ApprovedBy: "ada", ApprovedAt: now.Add(-time.Hour), ApproverAdmin: true, ApproverEnabled: true, State: "approved",
-		RequestVersion: 2, RequestSHA256: sha, RequestApprover: "ada"}
+		RequestVersion: 2, RequestSHA256: sha, RequestApprover: "ada", TaskKey: "OPS-1", RequestSealed: SealedSHA256(nil), PublicKey: testPub}
+	a.Signature, _ = SignApproval(testPriv, a.Claim())
+	return a
 }
 
 func testRegistry(t *testing.T) *Registry {
@@ -68,6 +77,11 @@ func TestRefusalRules(t *testing.T) {
 		{"task stopped", func(s *Step) { s.Approval.State = "stopped" }, 3, CodeApproval},
 		{"task re-planning", func(s *Step) { s.Approval.State = "planning" }, 3, CodeApproval},
 		{"approval in the future", func(s *Step) { s.Approval.ApprovedAt = now.Add(time.Hour) }, 3, CodeApproval},
+		{"unsigned approval", func(s *Step) { s.Approval.Signature = "" }, 3, CodeApproval},
+		{"no public key", func(s *Step) { s.Approval.PublicKey = nil }, 3, CodeApproval},
+		{"signature over other sealed inputs", func(s *Step) { s.Approval.RequestSealed = SealedSHA256(map[string]string{"X": "c"}) }, 3, CodeApproval},
+		{"approval time rewritten", func(s *Step) { s.Approval.ApprovedAt = now.Add(-time.Minute) }, 3, CodeApproval},
+		{"another task's signature", func(s *Step) { s.Approval.TaskKey = "OPS-2" }, 3, CodeApproval},
 		{"unknown capability", func(s *Step) { s.Name = "shell.exec" }, 4, CodeCapability},
 		{"bad arguments", func(s *Step) { s.Args = Args{"url": 5, "expect_status": 200} }, 4, CodeArguments},
 		{"unknown argument", func(s *Step) { s.Args["method"] = "DELETE" }, 4, CodeArguments},

@@ -220,6 +220,36 @@ Design items for PR 2 (not built in PR 1):
 - **B. Sealed inputs.** The hash of `sealed_inputs` is part of the signed approval (A), so a sealed input cannot be
   replaced after approval.
 
+## As built (PR 2, board wiring)
+
+- **A, done.** The api signs Spin up, Continue and manual rollback with an Ed25519 key in `ARGUS_APPROVAL_KEY_DIR`
+  (volume `argus-approve`, mounted by the api only). The signed message is fixed (`argus-approval-v1`, kind, task key,
+  plan version, plan sha256, approver, time, sealed-inputs sha256, step). `actd` loads `argus-act/keys/approval.pub`
+  and refuses (rule 3) an approval that is unsigned, signed by another key, re-dated, moved to another task or made
+  over other sealed inputs. Continue and rollback are refused unless signed by an enabled admin within the TTL.
+- **What actd remembers** (its own volume, not `board.db`): per task the approval time of the last accepted start
+  and of the last signed stop (`approvals/<task key>.json`); per action each operator step confirmed by a continue
+  (`steps/<action-id>/operator-<n>.json`). A start approval starts the action once (a repeat needs a newer
+  approval); a signed stop revokes every approval of the task signed before it; a continue must name the first
+  operator step not yet confirmed for that start, and is consumed. A continue has its own TTL (from its signature);
+  the start TTL bounds only the start. A rollback needs the action's signed approval of the stored plan and a task
+  with no job running. Any write step (write-tier capability or WRITE mode) is refused unless the classification is
+  `develop`; read-tier steps run for every classification (O8).
+- **One reading of a plan:** the intake output must be valid UTF-8, without duplicate keys, with integers within
+  ±2^53; the worker, the api and actd hash the stored plan decoded with exact numbers, and actd runs those numbers.
+- The review panel's approval pins the plan hash like the task page.
+- Decisions after the security review (2026-11-15): a rollback after a stop is allowed (it is signed by an admin of
+  its own). Read-tier capability steps are allowed for every classification (O8). A stop has no TTL (it only
+  restricts). Dry-run consumes no approval. A worker that drops a stop is a known residual risk: the worker shares
+  the data volume, so the api cannot deliver a stop the worker cannot delete; it is bounded by the single-use start
+  approval and the 24 h TTL, and a stop that cannot be passed on is an alert on the task and in the worker log.
+- **B, done for the hash.** The sealed inputs' hash is in the signature; no capability opens sealed inputs before PR 3.
+- Board migration `0002_plan_hash`: `plan_sha256` (at intake), `approved_sha256`, `approval_sig`, `action_id`,
+  `action_state`, the signed continue, `rollback_started`; table `agent_actions` (step results from `actions/out`).
+- `spinUp` path `execute`: classification `develop`, mode not `off`, at least one capability step and every WRITE
+  step with a valid one. `release` and `pre-release` keep their paths. An operator step ends the action in state
+  `operator`; `agent-continue` resumes after it; the comment's capability table comes from `actions/out`.
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan

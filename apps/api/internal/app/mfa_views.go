@@ -102,6 +102,8 @@ var POST_ROUTES = map[string]Policy{
 	"/api/v1/admin/users/matrix":               PolicySensitive,
 	"/api/v1/admin/writing-style":              PolicySensitive,
 	"/api/v1/backups/override":                 PolicySensitive,
+	"/api/v1/board/agent/continue":             PolicySensitive,
+	"/api/v1/board/agent/rollback":             PolicySensitive,
 	"/api/v1/board/agent/spinup":               PolicySensitive,
 	"/api/v1/board/task/secret":                PolicySensitive,
 	"/api/v1/fix/review":                       PolicySensitive,

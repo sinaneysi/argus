@@ -1,6 +1,7 @@
 package capability
 
 import (
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"strings"
@@ -149,10 +150,34 @@ type Approval struct {
 	ApproverAdmin   bool   // auth.db: role admin
 	ApproverEnabled bool   // auth.db: not disabled
 	State           string // agent_tasks.state: only approved and running tasks execute
+	TaskKey         string // the task, as board.db names it
+	Signature       string // agent_tasks.approval_sig: the api's signature of the start approval
 
 	RequestVersion  int
 	RequestSHA256   string
 	RequestApprover string
+	RequestSealed   string // SealedSHA256 of the request's sealed inputs
+
+	PublicKey ed25519.PublicKey // the api's approval public key (argus-act/keys/approval.pub); nil: every step refused
+	// TTLFrom, when set, is the time the TTL counts from instead of ApprovedAt: a signed continue has its own TTL
+	TTLFrom time.Time
+}
+
+// Claim is the start approval this approval says the api signed.
+func (a Approval) Claim() ApprovalClaim {
+	var at int64
+	if !a.ApprovedAt.IsZero() {
+		at = a.ApprovedAt.Unix()
+	}
+	return ApprovalClaim{Kind: SignStart, TaskKey: a.TaskKey, PlanVersion: a.ApprovedVersion, PlanSHA256: a.ApprovedSHA256,
+		Approver: a.ApprovedBy, At: at, SealedSHA256: a.RequestSealed}
+}
+
+func (a Approval) ttlFrom() time.Time {
+	if !a.TTLFrom.IsZero() {
+		return a.TTLFrom
+	}
+	return a.ApprovedAt
 }
 
 // ApprovedStates are the task states in which an approved plan may execute.
@@ -166,7 +191,7 @@ func CheckApproval(a Approval, ttl time.Duration, now time.Time) *Refusal {
 	case !ApprovedStates[a.State]:
 		return Refuse(3, CodeApproval, "the task is %q, not approved or running (stopped, failed or re-planned)", clipName(a.State))
 	case !a.HashColumn:
-		return Refuse(3, CodeApproval, "the board database records no approved plan hash (agent_tasks.approved_sha256): no step runs until it does")
+		return Refuse(3, CodeApproval, "the board database records no approved plan hash or signature (agent_tasks.approved_sha256, approval_sig): no step runs until it does")
 	case a.RequestVersion != a.PlanVersion || a.ApprovedVersion != a.PlanVersion:
 		return Refuse(3, CodeApproval, "plan version mismatch: request v%d, stored v%d, approved v%d", a.RequestVersion, a.PlanVersion, a.ApprovedVersion)
 	case a.StoredSHA256 == "" || a.RequestSHA256 != a.StoredSHA256:
@@ -175,13 +200,16 @@ func CheckApproval(a Approval, ttl time.Duration, now time.Time) *Refusal {
 		return Refuse(3, CodeApproval, "plan hash mismatch: the approved hash is not the hash of the stored plan")
 	case a.RequestApprover != a.ApprovedBy:
 		return Refuse(3, CodeApproval, "the request names another approver than the database")
+	case VerifyApproval(a.PublicKey, a.Claim(), a.Signature) != nil:
+		return Refuse(3, CodeApproval, "%s (the version, hash, approver, time and sealed inputs must be the ones the api signed)",
+			VerifyApproval(a.PublicKey, a.Claim(), a.Signature).Error())
 	case !a.ApproverAdmin:
 		return Refuse(3, CodeApproval, "the approver is not an admin")
 	case !a.ApproverEnabled:
 		return Refuse(3, CodeApproval, "the approver is disabled")
-	case a.ApprovedAt.After(now.Add(clockSkew)):
+	case a.ApprovedAt.After(now.Add(clockSkew)) || a.TTLFrom.After(now.Add(clockSkew)):
 		return Refuse(3, CodeApproval, "the approval time is in the future")
-	case ttl <= 0 || now.Sub(a.ApprovedAt) > ttl:
+	case ttl <= 0 || now.Sub(a.ttlFrom()) > ttl:
 		return Refuse(3, CodeApproval, "the approval is older than %s", ttl)
 	}
 	return nil

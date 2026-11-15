@@ -154,6 +154,17 @@ describe("task page", () => {
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     for (const w of ["Plan again", "What failed exactly", "Stop refreshing", 'id="agent-stop"', 'name="plan_version"', "Move to Done", "Provide DB_TOKEN", 'type="password"', 'aria-current="step"']) expect(h).toContain(w);
   });
+  it("renders the capability steps from the executor, Continue and rollback", async () => {
+    const a = { ...task.agent, state: "operator", planSha256: "ab".repeat(32), action: { id: "OPS-1.v2.abababababab", state: "operator", steps: [
+      { step: 1, capability: "http.check", status: "ok", detail: "200 in 12 ms", audit: "0123456789ab", text: "check the health URL", rollback: true },
+      { step: 2, capability: "", status: "needs the operator", detail: "", audit: "", text: "start the deploy pipeline" },
+      { step: 3, capability: "http.check", status: "waiting", detail: "", audit: "", text: "check again" }],
+      continue: { step: 2, text: "start the deploy pipeline", can: true } } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["Capability steps", "run by Argus, not by the model", "audit 0123456789ab", "Continue after step 2", "Roll back step 1", 'name="plan_sha256"', 'name="action_id"']) expect(h).toContain(w);
+  });
   it("renders the fixer form on a task Argus does not work", async () => {
     answers["/api/v1/board/task"] = { status: 200, data: { ...taskPlain, fixer: { heading: "Send to the fixer", notes: [], envLabel: "develop", hosts: [{ alias: "web-1", checked: true }] } } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
@@ -231,6 +242,9 @@ describe("writes", () => {
       [a.matrixPreview, { pid: "p1", action: "create", assignee: "sam" }, "/api/v1/board/mxpreview", { pid: "p1", action: "create", assignee: "sam" }],
       [a.agentAct, { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes", other: "no" }, "/api/v1/board/agent", { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes" }],
       [a.agentSpin, { key: "OPS-1", plan_version: "2" }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2" }],
+      [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }],
+      [a.agentContinue, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }, "/api/v1/board/agent/continue", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }],
+      [a.agentRollback, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }, "/api/v1/board/agent/rollback", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }],
       [a.agentChat, { key: "OPS-1", text: "t".repeat(3000) }, "/api/v1/board/agent/chat", { key: "OPS-1", text: "t".repeat(3000) }],
     ];
     for (const [fn, f, path, body] of cases) {

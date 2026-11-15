@@ -9,6 +9,7 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -44,9 +45,11 @@ const (
 	StateRefused  = "refused"
 	StateFailed   = "failed"
 	StateOperator = "operator" // an operator step stopped the run: "needs the operator"
+	StateStopped  = "stopped"  // a signed stop was recorded
 )
 
-// Request is actions/in/<action-id>.json, written by the worker (D5).
+// Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from
+// board.db (agent_tasks.approval_sig); Continue and Rollback carry their own signature.
 type Request struct {
 	ActionID     string            `json:"action_id"`
 	TaskKey      string            `json:"task_key"`
@@ -55,6 +58,17 @@ type Request struct {
 	Approver     string            `json:"approver"`
 	Steps        []ReqStep         `json:"steps"`
 	SealedInputs map[string]string `json:"sealed_inputs,omitempty"` // opened by a later capability; ciphertext only
+	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
+	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
+	Stop         *Signed           `json:"stop,omitempty"`          // agent-stop: revoke the task's approvals signed before it
+}
+
+// Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
+type Signed struct {
+	Step      int    `json:"step"`
+	Approver  string `json:"approver"`
+	At        int64  `json:"at"`
+	Signature string `json:"signature"`
 }
 
 // ReqStep is one step of a request.
@@ -80,21 +94,23 @@ type Response struct {
 
 // Options configure the executor.
 type Options struct {
-	Mode       capability.Mode
-	ActDir     string     // ARGUS_ACT_DIR: the executor's own volume
-	Key        secret.Key // the executor key (keys/act.key); nil: no audit, every step refused
-	ActionsDir string     // <ARGUS_STATE_DIR>/actions: in/, out/, actd-status.json
-	BoardDB    string     // read only
-	AuthDB     string     // read only
-	OpsDB      string     // actions, action_events
-	Registry   *capability.Registry
-	TTL        time.Duration // ARGUS_ACTIONS_APPROVAL_TTL
-	PerDay     int           // ARGUS_ACTIONS_PER_DAY (dry-run actions count too)
-	Location   *time.Location
-	Poll       time.Duration // how often actions/in is read (default 2 s)
-	Now        func() time.Time
-	Log        *slog.Logger
-	Version    string
+	Mode   capability.Mode
+	ActDir string     // ARGUS_ACT_DIR: the executor's own volume
+	Key    secret.Key // the executor key (keys/act.key); nil: no audit, every step refused
+	// ApprovalPub is the api's approval public key (keys/approval.pub in ActDir); nil: every step refused (rule 3)
+	ApprovalPub ed25519.PublicKey
+	ActionsDir  string // <ARGUS_STATE_DIR>/actions: in/, out/, actd-status.json
+	BoardDB     string // read only
+	AuthDB      string // read only
+	OpsDB       string // actions, action_events
+	Registry    *capability.Registry
+	TTL         time.Duration // ARGUS_ACTIONS_APPROVAL_TTL
+	PerDay      int           // ARGUS_ACTIONS_PER_DAY (dry-run actions count too)
+	Location    *time.Location
+	Poll        time.Duration // how often actions/in is read (default 2 s)
+	Now         func() time.Time
+	Log         *slog.Logger
+	Version     string
 	// Credentials lists the stored credentials for the status file (names and last four characters only).
 	Credentials func() []Credential
 }
@@ -203,7 +219,7 @@ func New(o Options) (*Daemon, error) {
 	}
 	d.lock = lock
 	if actErr == nil {
-		for _, sub := range []string{"audit", "steps", "keys", "secrets", "backups"} {
+		for _, sub := range []string{"audit", "steps", "keys", "secrets", "backups", "approvals"} {
 			if err := os.MkdirAll(filepath.Join(o.ActDir, sub), 0o700); err != nil {
 				d.Close()
 				return nil, err
@@ -405,18 +421,18 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	}
 	defer db.Close()
 	var hasCol int
-	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('agent_tasks') WHERE name='approved_sha256'`).Scan(&hasCol); err != nil {
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('agent_tasks') WHERE name IN ('approved_sha256','approval_sig')`).Scan(&hasCol); err != nil {
 		return nil, fmt.Errorf("board database: %v", err)
 	}
-	shaCol := `''`
-	if hasCol > 0 {
-		shaCol = `COALESCE(approved_sha256,'')`
+	shaCol, sigCol := `''`, `''`
+	if hasCol == 2 {
+		shaCol, sigCol = `COALESCE(approved_sha256,'')`, `COALESCE(approval_sig,'')`
 	}
-	var plan, by, sha, state string
+	var plan, by, sha, sig, state string
 	var ver, aver int
 	var at int64
 	err = db.QueryRowContext(ctx, `SELECT COALESCE(plan,''), COALESCE(plan_version,0), COALESCE(approved_version,0), COALESCE(approved_by,''),
-		COALESCE(approved_at,0), COALESCE(state,''), `+shaCol+` FROM agent_tasks WHERE key=?`, key).Scan(&plan, &ver, &aver, &by, &at, &state, &sha)
+		COALESCE(approved_at,0), COALESCE(state,''), `+shaCol+`, `+sigCol+` FROM agent_tasks WHERE key=?`, key).Scan(&plan, &ver, &aver, &by, &at, &state, &sha, &sig)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("the task is not in the board database")
 	}
@@ -427,22 +443,22 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 		Classification map[string]any   `json:"classification"`
 		Plan           []map[string]any `json:"plan"`
 	}
-	if err := json.Unmarshal([]byte(plan), &doc); err != nil || doc.Classification == nil {
+	dec := json.NewDecoder(strings.NewReader(plan))
+	dec.UseNumber() // exact numbers: the arguments that run are the ones the hash covers
+	if err := dec.Decode(&doc); err != nil || doc.Classification == nil {
 		return nil, errors.New("the stored plan is not readable")
 	}
-	var raw struct {
-		Classification any `json:"classification"`
-		Plan           any `json:"plan"`
+	if err := capability.StrictJSON([]byte(plan)); err != nil {
+		return nil, fmt.Errorf("the stored plan is refused: %v", err)
 	}
-	json.Unmarshal([]byte(plan), &raw)
-	stored, err := capability.PlanSHA256(raw.Classification, raw.Plan)
-	if err != nil {
-		return nil, err
+	stored := capability.StoredPlanSHA256(plan)
+	if stored == "" {
+		return nil, errors.New("the stored plan is not readable")
 	}
 	env, _ := doc.Classification["environment"].(string)
 	t := &task{key: key, env: capability.Env(env)}
-	t.approval = capability.Approval{PlanVersion: ver, StoredSHA256: stored, ApprovedVersion: aver, HashColumn: hasCol > 0,
-		ApprovedSHA256: sha, ApprovedBy: by, State: state}
+	t.approval = capability.Approval{PlanVersion: ver, StoredSHA256: stored, ApprovedVersion: aver, HashColumn: hasCol == 2,
+		ApprovedSHA256: sha, ApprovedBy: by, State: state, TaskKey: key, Signature: sig, PublicKey: d.o.ApprovalPub}
 	if at > 0 {
 		t.approval.ApprovedAt = time.Unix(at, 0)
 	}
@@ -470,21 +486,57 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 		}
 	}
 	if by != "" {
-		adb, err := openRO(d.o.AuthDB)
+		admin, enabled, err := d.approver(ctx, by)
 		if err != nil {
-			return nil, fmt.Errorf("auth database: %v", err)
+			return nil, err
 		}
-		defer adb.Close()
-		var role string
-		var disabled int
-		err = adb.QueryRowContext(ctx, `SELECT role, disabled FROM users WHERE username=?`, by).Scan(&role, &disabled)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("auth database: %v", err)
-		}
-		t.approval.ApproverAdmin = err == nil && role == "admin"
-		t.approval.ApproverEnabled = err == nil && disabled == 0
+		t.approval.ApproverAdmin, t.approval.ApproverEnabled = admin, enabled
 	}
 	return t, nil
+}
+
+// approver reads the user from auth.db: (role admin, not disabled).
+func (d *Daemon) approver(ctx context.Context, by string) (bool, bool, error) {
+	adb, err := openRO(d.o.AuthDB)
+	if err != nil {
+		return false, false, fmt.Errorf("auth database: %v", err)
+	}
+	defer adb.Close()
+	var role string
+	var disabled int
+	err = adb.QueryRowContext(ctx, `SELECT role, disabled FROM users WHERE username=?`, by).Scan(&role, &disabled)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, false, fmt.Errorf("auth database: %v", err)
+	}
+	return err == nil && role == "admin", err == nil && disabled == 0, nil
+}
+
+// checkSigned is D6 rule 3 for a signed continue or rollback: the api's signature over this task, the stored plan
+// version and hash, the sealed inputs and the step; an enabled admin; not older than the approval TTL.
+func (d *Daemon) checkSigned(ctx context.Context, kind string, t *task, req Request, s *Signed) *capability.Refusal {
+	c := capability.ApprovalClaim{Kind: kind, TaskKey: t.key, PlanVersion: t.approval.PlanVersion, PlanSHA256: t.approval.StoredSHA256,
+		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step}
+	if err := capability.VerifyApproval(d.o.ApprovalPub, c, s.Signature); err != nil {
+		return capability.Refuse(3, capability.CodeApproval, "%s: %s", kind, err.Error())
+	}
+	admin, enabled, err := d.approver(ctx, s.Approver)
+	switch {
+	case err != nil:
+		return capability.Refuse(3, capability.CodeApproval, "%s", err.Error())
+	case !admin || !enabled:
+		return capability.Refuse(3, capability.CodeApproval, "%s: the approver is not an enabled admin", kind)
+	}
+	at := time.Unix(s.At, 0)
+	if at.After(d.now().Add(5 * time.Minute)) {
+		return capability.Refuse(3, capability.CodeApproval, "%s: the signed time is in the future", kind)
+	}
+	if kind == capability.SignStop { // a stop only restricts: no TTL
+		return nil
+	}
+	if d.now().Sub(at) > d.o.TTL || d.o.TTL <= 0 {
+		return capability.Refuse(3, capability.CodeApproval, "%s: the signed request is older than %s or in the future", kind, d.o.TTL)
+	}
+	return nil
 }
 
 // stopped reads the admin switch; an unreadable switch is an error, which the gate treats as stopped.
@@ -611,11 +663,27 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	id := req.ActionID
 	t, terr := d.loadTask(ctx, req.TaskKey)
 	c := t.confirmed()
-	// Write-tier steps for release and pre-release are refused before any other check (rule 2).
+	kinds := 0
+	for _, x := range []*Signed{req.Continue, req.Rollback, req.Stop} {
+		if x != nil {
+			kinds++
+		}
+	}
+	if kinds > 1 {
+		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is one of start, continue, rollback or stop"), true)
+	}
+	if req.Stop != nil { // recorded even while the mode or the switch refuses everything else
+		if want := capability.ActionID(req.TaskKey, req.PlanVersion, req.PlanSHA256); want == "" || want != id || terr != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "stop: the request is not for the stored plan"), d.audit != nil)
+		}
+		return d.stop(ctx, req, t, c)
+	}
+	// a write step (write-tier capability or WRITE mode) runs only for develop; refused before any other check (rule 2)
 	if terr == nil {
 		for _, s := range t.steps {
-			if cp, ok := d.o.Registry.Get(s.Capability); ok && cp.Tier() == capability.Write && (t.env == capability.Release || t.env == capability.PreRelease) {
-				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write-tier capability never runs for %s", s.N, t.env), true)
+			cp, ok := d.o.Registry.Get(s.Capability)
+			if (ok && cp.Tier() == capability.Write || s.Mode == "WRITE") && t.env != capability.Develop {
+				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write step runs only for develop, the task is %q", s.N, clip(string(t.env), 20)), true)
 			}
 		}
 	}
@@ -628,7 +696,37 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if terr != nil {
 		return d.refuseAll(nil, id, capability.Refuse(3, capability.CodeApproval, "%s", terr.Error()), true)
 	}
-	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover = req.PlanVersion, req.PlanSHA256, req.Approver
+	sealed := capability.SealedSHA256(req.SealedInputs)
+	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover, t.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+	if req.Rollback != nil {
+		return d.rollback(ctx, req, t, c)
+	}
+	// what actd remembers: a start approval starts the action once; a stop revokes older approvals (amendment 1)
+	rec, err := d.taskRecord(t.key)
+	if err != nil {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "%s", err.Error()), true)
+	}
+	startAt := t.approval.ApprovedAt.Unix()
+	switch {
+	case t.approval.ApprovedAt.IsZero():
+	case startAt <= rec.RevokedAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "an admin stopped this task at %s, after (or in the same second as) this approval of %s: approve again",
+			stamp(rec.RevokedAt), stamp(startAt)), true)
+	case req.Continue == nil && d.o.Mode == capability.ModeOn && startAt <= rec.StartAt:
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "this approval (%s) is not newer than the last accepted start (%s): an approval starts the action once; approve again",
+			stamp(startAt), stamp(rec.StartAt)), true)
+	case req.Continue != nil && d.o.Mode == capability.ModeOn && startAt != rec.StartAt: // dry-run records no start
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: the action was not started with this approval"), true)
+	}
+	if req.Continue != nil {
+		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
+			return d.refuseAll(c, id, r, true)
+		}
+		if req.Continue.At <= rec.RevokedAt || req.Continue.At < startAt {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: signed before the start or before a stop"), true)
+		}
+		t.approval.TTLFrom = time.Unix(req.Continue.At, 0) // a continue has its own TTL; the start TTL bounds the start only
+	}
 	if r := capability.CheckApproval(t.approval, d.o.TTL, d.now()); r != nil {
 		return d.refuseAll(c, id, r, true)
 	}
@@ -655,6 +753,24 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if ncap == 0 {
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeCapability, "the plan has no capability step"), true)
 	}
+	// the operator step the action waits for: the first one not yet confirmed for this start (actd's own record)
+	waitN, opDone := 0, map[int]bool{}
+	for _, s := range t.steps {
+		if s.Mode != "operator" {
+			continue
+		}
+		done, err := d.store.OperatorDone(id, s.N, startAt)
+		if err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the operator record of step %d is not readable: %v", s.N, err), true)
+		}
+		opDone[s.N] = done
+		if !done && waitN == 0 {
+			waitN = s.N
+		}
+	}
+	if req.Continue != nil && (waitN == 0 || req.Continue.Step != waitN) {
+		return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "continue: step %d is not the operator step the action waits for", req.Continue.Step), true)
+	}
 	on := d.o.Mode == capability.ModeOn
 	newAction := !d.store.Started(id)
 	day := d.now().In(d.o.Location)
@@ -665,6 +781,23 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if newAction {
 		if err := d.store.MarkStarted(id, d.now()); err != nil {
 			return d.refuseAll(c, id, capability.Refuse(6, capability.CodeLimit, "the start could not be recorded: %v", err), true)
+		}
+	}
+	// the approval is consumed before any step runs: a replay of this start or this continue is refused. Dry-run
+	// consumes nothing: it only shows what would run.
+	if req.Continue != nil {
+		opDone[req.Continue.Step] = true
+	}
+	switch {
+	case !on:
+	case req.Continue == nil:
+		rec.StartAt = startAt
+		if err := d.putTaskRecord(t.key, rec); err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the start could not be recorded: %v", err), true)
+		}
+	default:
+		if err := d.store.MarkOperatorDone(id, req.Continue.Step, operatorRecord{StartAt: startAt, ContinueAt: req.Continue.At, Approver: req.Continue.Approver}); err != nil {
+			return d.refuseAll(c, id, capability.Refuse(3, capability.CodeApproval, "the continue could not be recorded: %v", err), true)
 		}
 	}
 	resp := &Response{ActionID: id, TaskKey: c.TaskKey, Mode: string(d.o.Mode), State: StateDone, Steps: []StepResult{}, Started: d.now().Unix()}
@@ -701,6 +834,10 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		resp.Steps = append(resp.Steps, sr)
 	}
 	for i, s := range t.steps {
+		if s.Mode == "operator" && opDone[s.N] {
+			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "done by the operator", At: d.now().Unix()})
+			continue
+		}
 		if s.Mode == "operator" {
 			resp.State = StateOperator
 			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "needs the operator", At: d.now().Unix()})
@@ -720,7 +857,8 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				refuseStep(s, capability.Refuse(3, capability.CodeApproval, "the stored plan changed during the action"))
 				break
 			}
-			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover = req.PlanVersion, req.PlanSHA256, req.Approver
+			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover, nt.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+			nt.approval.TTLFrom = t.approval.TTLFrom
 			t.approval = nt.approval
 		}
 		if r := argsSecretRule(s.N, s.Args); r != nil {
@@ -773,6 +911,9 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	d.log().Info("action", "action", id, "state", resp.State, "steps", len(resp.Steps))
 	return resp
 }
+
+// stamp is a unix time for a refusal reason (UTC, seconds: approvals are compared at one-second granularity).
+func stamp(t int64) string { return time.Unix(t, 0).UTC().Format("2006-01-02 15:04:05Z") }
 
 func clip(s string, n int) string {
 	s = Clean(s)

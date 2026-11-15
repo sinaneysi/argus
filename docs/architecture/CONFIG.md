@@ -92,6 +92,7 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 | `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | 1..365 |
 | `ARGUS_ACT_HTTP_HOSTS` | list | empty (`http.check` off) | `[internal:]host[:port]`, `*.suffix` allowed; no IP literal, no bare `*` |
 | `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only |
+| `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
 
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
 `actions/actd-status.json` (the self-check reads it when the mode is not `off`); in `argus-act`: `audit/actions.jsonl`
@@ -101,6 +102,34 @@ The executor key is only `argus-act/keys/act.key` (no environment variable: `arg
 `ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with
 `ARGUS_ACT_HTTP_ALLOW_HTTP=1`); without `internal:` a name that resolves to a loopback, link-local, private, shared
 (100.64/10), unique local, multicast or unspecified address is refused.
+
+Signed approvals (ADR-0022 amendment 1, PR 2). The worker shares the data volume and the uid with the api, so an
+`approved_*` row in `board.db` proves nothing. The api signs every Spin up, every Continue after an operator step and
+every manual rollback with an Ed25519 key; `actd` holds only the public key and refuses a step without a valid
+signature. The signature covers the task key, the plan version, the plan sha256, the approver, the approval time,
+the sha256 of the sealed inputs and (continue, rollback) the step.
+
+| file | where | made by |
+|---|---|---|
+| `approval.key` (PKCS#8 PEM, 0600) | `ARGUS_APPROVAL_KEY_DIR`, compose volume `argus-approve`, mounted by the api only | the api at its first start, or `argus approval-key init` in the api service; `openssl genpkey -algorithm ed25519` also works |
+| `approval.pub` (PKIX PEM) | the same folder | written next to the key |
+| `keys/approval.pub` | `argus-act` | `docker compose exec api /app/argus approval-key public \| docker compose exec -T actd /app/argus actd approval-key set` |
+
+The key is never a configuration value and never in `argus.env` (that file is shared by every service). Compare the
+fingerprints with `argus approval-key show` (api) and `argus actd approval-key show` (actd); `actd-status.json`
+carries it as `approval_key`. Rotation: stop `actd`, move `approval.key` away, restart the api (a new key is made),
+set the new public key in `actd`; approvals signed with the old key are refused from then on. Without the public key
+`actd` starts and refuses every step with the reason.
+Without the key the api refuses to approve a plan that would execute, a continue and a rollback (HTTP 500 with the
+reason); read-only and proposal runs and Stop still work unsigned. A signed Stop is passed to `actd`, which then
+refuses every approval of the task signed before it. `actd` keeps its approval records in `argus-act/approvals/`
+and `argus-act/steps/<action-id>/` (back them up with the volume).
+Approval times are unix seconds from the api's clock, compared at one-second granularity: a start approval must be
+strictly newer than the last accepted start, and a stop revokes every approval signed in the same second or before.
+Two approvals in the same second count as one (approve again a second later). A clock stepped back on the api host
+makes new approvals look older: they are refused with both times in the reason until the clock passes the last
+accepted time; keep the api's clock synchronised (NTP) and avoid large steps. The refusal reason is shown on the task
+page. A dry-run consumes no approval and confirms no operator step.
 
 ## 1. Files
 

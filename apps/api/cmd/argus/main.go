@@ -66,6 +66,7 @@ var commands = []command{
 	{"marketing", "the marketing module's jobs: crawler logs, sitemaps, the SEO page's Googlebot table (googlebot ...)", runMarketing},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
 	{"actd", "the capability executor: approved capability steps, refusal rules, audit chain (credential, verify-audit)", runActd},
+	{"approval-key", "the api's approval signing key: init, public (copy the public key to actd)", runApprovalKey},
 	{"ingest", "read alerts and chat messages", nil},
 	{"dispatch", "act on request files written by the web app", nil},
 }

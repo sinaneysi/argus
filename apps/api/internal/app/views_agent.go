@@ -9,17 +9,18 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
-var agentState = map[string][2]string{"planning": {"Planning", ""}, "waiting": {"Waiting for answers", "warn"},
+var agentState = map[string][2]string{"planning": {"Planning", ""}, "waiting": {"Waiting for answers", "warn"}, "operator": {"Needs the operator", "warn"},
 	"ready": {"Ready to spin up", "ok"}, "approved": {"Starting", ""}, "running": {"Running", ""}, "done": {"Done", "ok"},
 	"failed": {"Failed", "fail"}, "blocked": {"Blocked: needs the operator", "fail"}, "stopped": {"Stopped", ""}}
 
 var agentBadgeMap = map[string][2]string{"planning": {"agent planning", ""}, "waiting": {"questions waiting", "warn"},
 	"ready": {"plan ready", "ok"}, "approved": {"agent starting", ""}, "running": {"agent running", ""},
 	"done": {"agent done", "ok"}, "failed": {"agent failed", "fail"}, "blocked": {"blocked", "fail"},
-	"stopped": {"agent stopped", ""}}
+	"stopped": {"agent stopped", ""}, "operator": {"needs the operator", "warn"}}
 
 var agentKind = map[string]string{"investigate": "investigate / review", "documentation": "documentation (MR)",
 	"change": "change via the fixer", "production": "production: proposal only", "code": "code change (MR)", "unclear": "unclear"}
@@ -122,6 +123,9 @@ func agentSpinUp(plan *py.OMap) (string, string) {
 				tg = append(tg, v)
 			}
 		}
+	}
+	if agentExecutes(plan) {
+		return "execute", "Spin up agent: run the approved capability steps on " + EnvLabel(env)
 	}
 	if !write {
 		return "run", "Spin up agent (read-only; MRs on agent/* only)"
@@ -349,6 +353,12 @@ func AgentPost(c *Ctx, form py.QS, sess *Session) (int, string) {
 		payload = py.NewOMap("kind", "agent-answers", "key", key, "instructions", ins, "answers", answers, "post_jira", get("post_jira") == "1")
 	default:
 		payload = py.NewOMap("kind", "agent-stop", "key", key)
+		// a signed stop: actd revokes every approval of the task signed before it (ADR-0022 amendment 1)
+		if sha := agentPlanSHA(a); sha != "" && a.I("plan_version") > 0 {
+			if err := agentSignedPayload(payload, capability.SignStop, key, a.I("plan_version"), sha, sess.Username, 0, true); err != nil {
+				return 500, "Not stopped: " + err.Error()
+			}
+		}
 	}
 	rid, err := BoardWriteRequest(payload, sess)
 	if err != nil {
@@ -382,7 +392,16 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if path, why := agentSpinUp(plan); path == "refused" {
 		return 409, "Not started: " + why
 	}
-	rid, err := BoardWriteRequest(py.NewOMap("kind", "agent-start", "key", key, "plan_version", n), sess)
+	// the approval binds to the plan hash the page showed (ADR-0022 D4); the api signs it (amendment 1)
+	sha, shown := agentPlanSHA(a), form.Get("plan_sha256")
+	if sha == "" || (shown != "" && shown != sha) || (shown == "" && agentExecutes(plan)) {
+		return 409, "The plan changed: review v" + I2S(a.I("plan_version")) + " (its hash is pinned when you spin up)"
+	}
+	p := py.NewOMap("kind", "agent-start", "key", key, "plan_version", n)
+	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan)); err != nil {
+		return 500, "Not started: " + err.Error()
+	}
+	rid, err := BoardWriteRequest(p, sess)
 	if err != nil {
 		return boardCouldNotSave(c, err)
 	}

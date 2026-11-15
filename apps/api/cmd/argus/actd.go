@@ -27,6 +27,8 @@ const actdHelp = `usage: argus actd [-once] [-file F]
        argus actd credential [-file F] set <family>/<name>   (the value on stdin, never an argument)
        argus actd credential [-file F] list
        argus actd verify-audit [-file F]
+       argus actd approval-key [-file F] set     (the api's approval public key, PEM on stdin)
+       argus actd approval-key [-file F] show
 
 actd           the capability executor (ADR-0022): reads action requests from ARGUS_STATE_DIR/actions/in, checks
                the fixed refusal rules before every step, runs the approved capability steps, appends one
@@ -36,6 +38,9 @@ actd           the capability executor (ADR-0022): reads action requests from AR
 credential     store or list the executor's credentials, sealed with its own key (keys/act.key in ARGUS_ACT_DIR only).
                Only through "docker compose exec -T actd argus actd credential set <name>".
 verify-audit   check the audit chain: exit 0 and "OK" when it verifies, 1 when it is broken.
+approval-key   store or show the api's approval public key (keys/approval.pub in ARGUS_ACT_DIR). Without it every
+               step is refused. Copy it from the api once:
+               docker compose exec api /app/argus approval-key public | docker compose exec -T actd /app/argus actd approval-key set
 `
 
 func runActd(args []string, stdout, stderr io.Writer) int {
@@ -89,6 +94,8 @@ func runActdIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 0
 	case "credential":
 		return runActdCredential(fs.Args(), actDir, stdin, stdout, stderr)
+	case "approval-key":
+		return runActdApprovalKey(fs.Args(), actDir, stdin, stdout, stderr)
 	case "":
 	default:
 		fmt.Fprint(stderr, actdHelp)
@@ -168,8 +175,52 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 		}
 		o.Key = key
 		o.Credentials = func() []actd.Credential { return actd.ListCredentials(actDir, key) }
+		pub, err := actd.LoadApprovalPub(actDir)
+		if err != nil {
+			return o, fmt.Errorf("%s: %v", actd.ApprovalPubPath(actDir), err)
+		}
+		if pub == nil && mode != capability.ModeOff {
+			fmt.Fprintln(stderr, "argus actd: no approval public key (argus actd approval-key set): every step is refused")
+		}
+		o.ApprovalPub = pub
 	}
 	return o, nil
+}
+
+func runActdApprovalKey(args []string, actDir string, stdin io.Reader, stdout, stderr io.Writer) int {
+	if err := actd.CheckActDir(actDir); err != nil {
+		fmt.Fprintln(stderr, "argus actd approval-key:", err)
+		return 1
+	}
+	switch {
+	case len(args) == 1 && args[0] == "set":
+		b, err := io.ReadAll(io.LimitReader(stdin, 4097))
+		if err != nil {
+			fmt.Fprintln(stderr, "argus actd approval-key: read stdin:", err)
+			return 1
+		}
+		p, err := actd.SetApprovalPub(actDir, b)
+		if err != nil {
+			fmt.Fprintln(stderr, "argus actd approval-key:", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "stored the approval public key %s (restart actd to use it)\n", capability.KeyFingerprint(p))
+		return 0
+	case len(args) == 1 && args[0] == "show":
+		p, err := actd.LoadApprovalPub(actDir)
+		if err != nil {
+			fmt.Fprintln(stderr, "argus actd approval-key:", err)
+			return 1
+		}
+		if p == nil {
+			fmt.Fprintln(stdout, "no approval public key: every step is refused")
+			return 1
+		}
+		fmt.Fprintln(stdout, capability.KeyFingerprint(p))
+		return 0
+	}
+	fmt.Fprint(stderr, actdHelp)
+	return 2
 }
 
 func runActdCredential(args []string, actDir string, stdin io.Reader, stdout, stderr io.Writer) int {
