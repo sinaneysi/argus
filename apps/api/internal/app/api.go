@@ -271,6 +271,7 @@ func apiIsPost(path string) bool {
 		"/api/v1/account/stepup", "/api/v1/cicd/repo/check", "/api/v1/vulns/suppress", "/api/v1/seo/send",
 		"/api/v1/board/create", "/api/v1/board/comment", "/api/v1/board/move", "/api/v1/board/assign", "/api/v1/board/fixer",
 		"/api/v1/board/jmove", "/api/v1/board/refresh", "/api/v1/board/agent", "/api/v1/board/agent/spinup", "/api/v1/board/agent/chat",
+		"/api/v1/board/agent/continue", "/api/v1/board/agent/rollback",
 		"/api/v1/board/task/secret", "/api/v1/board/mxpreview", "/api/v1/fix/review", "/api/v1/ideas/act", "/api/v1/ideas/generate",
 		"/api/v1/proposals/act", "/api/v1/proposals/settings", "/api/v1/lessons/act", "/api/v1/lessons/settings",
 		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
@@ -383,6 +384,7 @@ func (h *reqCtx) apiPOST(path string) {
 		v, e = deliveryPost(path, body, sess)
 	case "/api/v1/board/create", "/api/v1/board/comment", "/api/v1/board/move", "/api/v1/board/assign", "/api/v1/board/fixer",
 		"/api/v1/board/jmove", "/api/v1/board/refresh", "/api/v1/board/agent", "/api/v1/board/agent/spinup", "/api/v1/board/agent/chat",
+		"/api/v1/board/agent/continue", "/api/v1/board/agent/rollback",
 		"/api/v1/board/task/secret", "/api/v1/board/mxpreview":
 		v, e = boardAPIPost(path, body, sess)
 	case "/api/v1/fix/review":

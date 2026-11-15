@@ -284,6 +284,7 @@ var Fields = []Field{
 	{Key: "ARGUS_ACTIONS_BACKUP_DAYS", Kind: Int, Default: "30", Min: 1, Max: 365, Help: "how long the sealed old values of write steps are kept"},
 	{Key: "ARGUS_ACT_HTTP_HOSTS", Kind: List, Help: "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"},
 	{Key: "ARGUS_ACT_HTTP_ALLOW_HTTP", Kind: Bool, Default: "0", Help: "1: http.check may use plain http:// (test installations only)"},
+	{Key: "ARGUS_APPROVAL_KEY_DIR", Kind: Path, Default: "/var/lib/argus-approve", Help: "the api's approval signing key (approval.key, approval.pub), in a folder only the api mounts (compose volume argus-approve; 0700, owned by the api's user); created at the api's first start; missing: approvals are not signed and actd refuses every step"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},

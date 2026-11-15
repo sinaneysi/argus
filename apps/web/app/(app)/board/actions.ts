@@ -70,9 +70,19 @@ export async function agentAct(fd: FormData): Promise<void> {
   await send("/api/v1/board/agent", body, fd);
 }
 
-/** An admin approves exactly the plan version on the page (recent 2FA code). */
+/** An admin approves exactly the plan version and hash on the page (recent 2FA code). */
 export async function agentSpin(fd: FormData): Promise<void> {
-  await send("/api/v1/board/agent/spinup", { key: field(fd, "key"), plan_version: field(fd, "plan_version") }, fd);
+  await send("/api/v1/board/agent/spinup", { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256") || undefined }, fd);
+}
+
+/** The operator did the operator step: an admin continues the action with the steps after it (recent 2FA code). */
+export async function agentContinue(fd: FormData): Promise<void> {
+  await send("/api/v1/board/agent/continue", { key: field(fd, "key"), plan_version: field(fd, "plan_version"), plan_sha256: field(fd, "plan_sha256"), step: field(fd, "step") }, fd);
+}
+
+/** An admin rolls back one write step of the task's last action (recent 2FA code). */
+export async function agentRollback(fd: FormData): Promise<void> {
+  await send("/api/v1/board/agent/rollback", { key: field(fd, "key"), action_id: field(fd, "action_id"), step: field(fd, "step") }, fd);
 }
 
 export async function agentChat(fd: FormData): Promise<void> {

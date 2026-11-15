@@ -9,6 +9,7 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -46,7 +47,8 @@ const (
 	StateOperator = "operator" // an operator step stopped the run: "needs the operator"
 )
 
-// Request is actions/in/<action-id>.json, written by the worker (D5).
+// Request is actions/in/<action-id>.json, written by the worker (D5). The start approval's signature is read from
+// board.db (agent_tasks.approval_sig); Continue and Rollback carry their own signature.
 type Request struct {
 	ActionID     string            `json:"action_id"`
 	TaskKey      string            `json:"task_key"`
@@ -55,6 +57,16 @@ type Request struct {
 	Approver     string            `json:"approver"`
 	Steps        []ReqStep         `json:"steps"`
 	SealedInputs map[string]string `json:"sealed_inputs,omitempty"` // opened by a later capability; ciphertext only
+	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
+	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
+}
+
+// Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
+type Signed struct {
+	Step      int    `json:"step"`
+	Approver  string `json:"approver"`
+	At        int64  `json:"at"`
+	Signature string `json:"signature"`
 }
 
 // ReqStep is one step of a request.
@@ -80,21 +92,23 @@ type Response struct {
 
 // Options configure the executor.
 type Options struct {
-	Mode       capability.Mode
-	ActDir     string     // ARGUS_ACT_DIR: the executor's own volume
-	Key        secret.Key // the executor key (keys/act.key); nil: no audit, every step refused
-	ActionsDir string     // <ARGUS_STATE_DIR>/actions: in/, out/, actd-status.json
-	BoardDB    string     // read only
-	AuthDB     string     // read only
-	OpsDB      string     // actions, action_events
-	Registry   *capability.Registry
-	TTL        time.Duration // ARGUS_ACTIONS_APPROVAL_TTL
-	PerDay     int           // ARGUS_ACTIONS_PER_DAY (dry-run actions count too)
-	Location   *time.Location
-	Poll       time.Duration // how often actions/in is read (default 2 s)
-	Now        func() time.Time
-	Log        *slog.Logger
-	Version    string
+	Mode   capability.Mode
+	ActDir string     // ARGUS_ACT_DIR: the executor's own volume
+	Key    secret.Key // the executor key (keys/act.key); nil: no audit, every step refused
+	// ApprovalPub is the api's approval public key (keys/approval.pub in ActDir); nil: every step refused (rule 3)
+	ApprovalPub ed25519.PublicKey
+	ActionsDir  string // <ARGUS_STATE_DIR>/actions: in/, out/, actd-status.json
+	BoardDB     string // read only
+	AuthDB      string // read only
+	OpsDB       string // actions, action_events
+	Registry    *capability.Registry
+	TTL         time.Duration // ARGUS_ACTIONS_APPROVAL_TTL
+	PerDay      int           // ARGUS_ACTIONS_PER_DAY (dry-run actions count too)
+	Location    *time.Location
+	Poll        time.Duration // how often actions/in is read (default 2 s)
+	Now         func() time.Time
+	Log         *slog.Logger
+	Version     string
 	// Credentials lists the stored credentials for the status file (names and last four characters only).
 	Credentials func() []Credential
 }
@@ -405,18 +419,18 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	}
 	defer db.Close()
 	var hasCol int
-	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('agent_tasks') WHERE name='approved_sha256'`).Scan(&hasCol); err != nil {
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('agent_tasks') WHERE name IN ('approved_sha256','approval_sig')`).Scan(&hasCol); err != nil {
 		return nil, fmt.Errorf("board database: %v", err)
 	}
-	shaCol := `''`
-	if hasCol > 0 {
-		shaCol = `COALESCE(approved_sha256,'')`
+	shaCol, sigCol := `''`, `''`
+	if hasCol == 2 {
+		shaCol, sigCol = `COALESCE(approved_sha256,'')`, `COALESCE(approval_sig,'')`
 	}
-	var plan, by, sha, state string
+	var plan, by, sha, sig, state string
 	var ver, aver int
 	var at int64
 	err = db.QueryRowContext(ctx, `SELECT COALESCE(plan,''), COALESCE(plan_version,0), COALESCE(approved_version,0), COALESCE(approved_by,''),
-		COALESCE(approved_at,0), COALESCE(state,''), `+shaCol+` FROM agent_tasks WHERE key=?`, key).Scan(&plan, &ver, &aver, &by, &at, &state, &sha)
+		COALESCE(approved_at,0), COALESCE(state,''), `+shaCol+`, `+sigCol+` FROM agent_tasks WHERE key=?`, key).Scan(&plan, &ver, &aver, &by, &at, &state, &sha, &sig)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("the task is not in the board database")
 	}
@@ -441,8 +455,8 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	}
 	env, _ := doc.Classification["environment"].(string)
 	t := &task{key: key, env: capability.Env(env)}
-	t.approval = capability.Approval{PlanVersion: ver, StoredSHA256: stored, ApprovedVersion: aver, HashColumn: hasCol > 0,
-		ApprovedSHA256: sha, ApprovedBy: by, State: state}
+	t.approval = capability.Approval{PlanVersion: ver, StoredSHA256: stored, ApprovedVersion: aver, HashColumn: hasCol == 2,
+		ApprovedSHA256: sha, ApprovedBy: by, State: state, TaskKey: key, Signature: sig, PublicKey: d.o.ApprovalPub}
 	if at > 0 {
 		t.approval.ApprovedAt = time.Unix(at, 0)
 	}
@@ -470,21 +484,51 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 		}
 	}
 	if by != "" {
-		adb, err := openRO(d.o.AuthDB)
+		admin, enabled, err := d.approver(ctx, by)
 		if err != nil {
-			return nil, fmt.Errorf("auth database: %v", err)
+			return nil, err
 		}
-		defer adb.Close()
-		var role string
-		var disabled int
-		err = adb.QueryRowContext(ctx, `SELECT role, disabled FROM users WHERE username=?`, by).Scan(&role, &disabled)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("auth database: %v", err)
-		}
-		t.approval.ApproverAdmin = err == nil && role == "admin"
-		t.approval.ApproverEnabled = err == nil && disabled == 0
+		t.approval.ApproverAdmin, t.approval.ApproverEnabled = admin, enabled
 	}
 	return t, nil
+}
+
+// approver reads the user from auth.db: (role admin, not disabled).
+func (d *Daemon) approver(ctx context.Context, by string) (bool, bool, error) {
+	adb, err := openRO(d.o.AuthDB)
+	if err != nil {
+		return false, false, fmt.Errorf("auth database: %v", err)
+	}
+	defer adb.Close()
+	var role string
+	var disabled int
+	err = adb.QueryRowContext(ctx, `SELECT role, disabled FROM users WHERE username=?`, by).Scan(&role, &disabled)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, false, fmt.Errorf("auth database: %v", err)
+	}
+	return err == nil && role == "admin", err == nil && disabled == 0, nil
+}
+
+// checkSigned is D6 rule 3 for a signed continue or rollback: the api's signature over this task, the stored plan
+// version and hash, the sealed inputs and the step; an enabled admin; not older than the approval TTL.
+func (d *Daemon) checkSigned(ctx context.Context, kind string, t *task, req Request, s *Signed) *capability.Refusal {
+	c := capability.ApprovalClaim{Kind: kind, TaskKey: t.key, PlanVersion: t.approval.PlanVersion, PlanSHA256: t.approval.StoredSHA256,
+		Approver: s.Approver, At: s.At, SealedSHA256: capability.SealedSHA256(req.SealedInputs), Step: s.Step}
+	if err := capability.VerifyApproval(d.o.ApprovalPub, c, s.Signature); err != nil {
+		return capability.Refuse(3, capability.CodeApproval, "%s: %s", kind, err.Error())
+	}
+	admin, enabled, err := d.approver(ctx, s.Approver)
+	switch {
+	case err != nil:
+		return capability.Refuse(3, capability.CodeApproval, "%s", err.Error())
+	case !admin || !enabled:
+		return capability.Refuse(3, capability.CodeApproval, "%s: the approver is not an enabled admin", kind)
+	}
+	at := time.Unix(s.At, 0)
+	if at.After(d.now().Add(5*time.Minute)) || d.now().Sub(at) > d.o.TTL || d.o.TTL <= 0 {
+		return capability.Refuse(3, capability.CodeApproval, "%s: the signed request is older than %s or in the future", kind, d.o.TTL)
+	}
+	return nil
 }
 
 // stopped reads the admin switch; an unreadable switch is an error, which the gate treats as stopped.
@@ -628,7 +672,14 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	if terr != nil {
 		return d.refuseAll(nil, id, capability.Refuse(3, capability.CodeApproval, "%s", terr.Error()), true)
 	}
-	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover = req.PlanVersion, req.PlanSHA256, req.Approver
+	sealed := capability.SealedSHA256(req.SealedInputs)
+	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover, t.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+	if req.Rollback != nil {
+		if req.Continue != nil {
+			return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "a request is a continue or a rollback, not both"), true)
+		}
+		return d.rollback(ctx, req, t, c)
+	}
 	if r := capability.CheckApproval(t.approval, d.o.TTL, d.now()); r != nil {
 		return d.refuseAll(c, id, r, true)
 	}
@@ -654,6 +705,21 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	if ncap == 0 {
 		return d.refuseAll(c, id, capability.Refuse(4, capability.CodeCapability, "the plan has no capability step"), true)
+	}
+	// agent-continue: the operator steps up to the signed one are done; the steps after it run
+	doneUpTo := -1
+	if req.Continue != nil {
+		for i, s := range t.steps {
+			if s.Mode == "operator" && s.N == req.Continue.Step {
+				doneUpTo = i
+			}
+		}
+		if doneUpTo < 0 {
+			return d.refuseAll(c, id, capability.Refuse(4, capability.CodeArguments, "continue: step %d is not an operator step of the plan", req.Continue.Step), true)
+		}
+		if r := d.checkSigned(ctx, capability.SignContinue, t, req, req.Continue); r != nil {
+			return d.refuseAll(c, id, r, true)
+		}
 	}
 	on := d.o.Mode == capability.ModeOn
 	newAction := !d.store.Started(id)
@@ -701,6 +767,10 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 		resp.Steps = append(resp.Steps, sr)
 	}
 	for i, s := range t.steps {
+		if s.Mode == "operator" && i <= doneUpTo {
+			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "done by the operator", At: d.now().Unix()})
+			continue
+		}
 		if s.Mode == "operator" {
 			resp.State = StateOperator
 			resp.Steps = append(resp.Steps, StepResult{N: s.N, Phase: "operator", Status: "needs the operator", At: d.now().Unix()})
@@ -720,7 +790,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				refuseStep(s, capability.Refuse(3, capability.CodeApproval, "the stored plan changed during the action"))
 				break
 			}
-			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover = req.PlanVersion, req.PlanSHA256, req.Approver
+			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover, nt.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
 			t.approval = nt.approval
 		}
 		if r := argsSecretRule(s.N, s.Args); r != nil {

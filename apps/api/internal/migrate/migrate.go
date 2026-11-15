@@ -6,7 +6,8 @@
 //     again; a recorded migration whose sha256 changed is an error;
 //   - a database that records a version above the newest one this binary knows is refused (ErrDowngrade);
 //   - an existing database is adopted: a CREATE TABLE or CREATE INDEX for an object that already exists is skipped, and
-//     the columns the statement defines but the table lacks are added (ALTER TABLE ... ADD COLUMN);
+//     the columns the statement defines but the table lacks are added (ALTER TABLE ... ADD COLUMN); an ALTER TABLE ...
+//     ADD COLUMN for a column the table already has (added by an older binary's own schema code) is skipped;
 //   - a database file that cannot be written (a read-only mount) is not touched (ErrReadOnly).
 package migrate
 
@@ -222,10 +223,24 @@ func firstLine(s string) string {
 	return s
 }
 
-var createRe = regexp.MustCompile(`(?is)^CREATE\s+(UNIQUE\s+)?(TABLE|INDEX)\s+(IF\s+NOT\s+EXISTS\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+var (
+	createRe    = regexp.MustCompile(`(?is)^CREATE\s+(UNIQUE\s+)?(TABLE|INDEX)\s+(IF\s+NOT\s+EXISTS\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+	addColumnRe = regexp.MustCompile(`(?is)^ALTER\s+TABLE\s+["\x60]?([A-Za-z_][A-Za-z0-9_]*)["\x60]?\s+ADD\s+(?:COLUMN\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+)
 
 // execStmt runs one statement, adopting an existing table or index.
 func execStmt(ctx context.Context, q Q, scratch *sql.DB, st string) ([]string, error) {
+	if a := addColumnRe.FindStringSubmatch(strings.TrimSpace(st)); a != nil {
+		have, err := tableInfo(ctx, q, a[1])
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := have[a[2]]; ok {
+			return []string{a[1] + "." + a[2]}, nil
+		}
+		_, err = q.ExecContext(ctx, st)
+		return nil, err
+	}
 	m := createRe.FindStringSubmatch(st)
 	if m == nil {
 		_, err := q.ExecContext(ctx, st)

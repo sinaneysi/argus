@@ -2,7 +2,7 @@ import "./work.css";
 import { Fragment } from "react";
 import { EnvPill, Pill } from "./Pills";
 import { Segs, tone } from "./Section";
-import { agentAct, agentChat, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
+import { agentAct, agentChat, agentContinue, agentRollback, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
 import { full, iso } from "@/lib/format";
 import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, QaMsg, Seg, SecretForm, Secrets, TaskPage } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -205,9 +205,43 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
   return (
     <form action={agentSpin} className="actionbar">
       <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
+      {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
       <Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
       <span className="muted small">Pinned to plan v{a.planVersion}; if the plan changes, review the new version and spin up again.{s.proposal ? " Production stays read-only: a read-only run writes the proposal and the task is blocked for the operator." : ""}</span>
     </form>
+  );
+}
+
+/** The capability steps actd ran (ADR-0022): results from the executor, Continue after an operator step, rollback. */
+export function ActionBox({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
+  const x = a.action;
+  if (!x) return null;
+  const tones: Record<string, "ok" | "warn" | "neutral" | "fail"> = { ok: "ok", unchanged: "ok", "done by the operator": "ok", "rolled-back": "warn", "needs the operator": "warn", waiting: "neutral", planned: "neutral" };
+  return (
+    <>
+      <h3>Capability steps <span className="muted small">run by Argus, not by the model · {x.state || "running"}</span></h3>
+      <ol className="ag-plan">{x.steps.map((s) => (
+        <li key={s.step}>
+          <p dir="auto">{s.step ? `${s.step}. ` : null}{s.text || s.capability || "the action"}</p>
+          <p className="meta-line"><Pill tone={tones[s.status] ?? "fail"}>{s.status}</Pill>{s.capability ? <span className="mono small">{s.capability}</span> : null}{s.audit ? <span className="mono small">audit {s.audit}</span> : null}</p>
+          {s.detail ? <p className="muted small" dir="auto">{s.detail}</p> : null}
+          {s.rollback ? (
+            <form action={agentRollback} className="actionbar">
+              <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
+              <Button variant="outline" size="sm">Roll back step {s.step}</Button>
+            </form>
+          ) : null}
+        </li>
+      ))}</ol>
+      {x.continue ? (x.continue.can ? (
+        <form action={agentContinue} className="actionbar">
+          <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
+          <input type="hidden" name="plan_sha256" value={a.planSha256 ?? ""} /><input type="hidden" name="step" value={x.continue.step} />
+          <Button>Continue after step {x.continue.step}</Button>
+          <span className="muted small">Press it when the operator has done step {x.continue.step}: {x.continue.text}</span>
+        </form>
+      ) : <p className="muted small">Waits for the operator: step {x.continue.step}. An admin continues it.</p>) : null}
+    </>
   );
 }
 

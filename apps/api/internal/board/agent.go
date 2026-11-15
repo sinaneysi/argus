@@ -39,6 +39,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/notify"
 )
 
@@ -54,6 +55,11 @@ type AgentOptions struct {
 	IntakeTO     time.Duration         // a job without a result after this fails (default 12 min)
 	RunTO        time.Duration         // the same for a run (default 65 min)
 	ChatReqDir   string                // the task page's chat messages (settings-in/task-chat; "": no chat)
+	// The capability executor (ADR-0022): requests to actd go to ActionsDir/in, its results come from ActionsDir/out.
+	ActionsDir  string               // "": no executor, Spin up never takes the execute path
+	ActionsMode string               // ARGUS_ACTIONS_MODE (off, dry-run, on): off keeps every plan on today's paths
+	Registry    *capability.Registry // the capabilities offered, with actd's allow-lists; nil: none (no step keeps one)
+	ActTO       time.Duration        // an action without a result after this fails (default 10 min)
 }
 
 const (
@@ -83,10 +89,18 @@ CREATE TABLE IF NOT EXISTS agent_inputs (key TEXT PRIMARY KEY, instructions TEXT
   by TEXT, at INTEGER);
 CREATE TABLE IF NOT EXISTS agent_log (id INTEGER PRIMARY KEY, key TEXT, at INTEGER, kind TEXT, text TEXT);
 CREATE INDEX IF NOT EXISTS agent_log_key ON agent_log(key, at);
+CREATE TABLE IF NOT EXISTS agent_actions (
+  action_id TEXT NOT NULL, step INTEGER NOT NULL, key TEXT NOT NULL, capability TEXT, phase TEXT, status TEXT,
+  summary TEXT, detail TEXT, backup_ref TEXT, audit_sha256 TEXT, at INTEGER,
+  PRIMARY KEY (action_id, step));
+CREATE INDEX IF NOT EXISTS agent_actions_key ON agent_actions (key, action_id, step);
 `
 
 var agentCols = [][2]string{{"argus_user", "TEXT"}, {"plan_entered_at", "INTEGER"}, {"spent_usd", "REAL DEFAULT 0"},
-	{"retry_at", "INTEGER"}, {"limit_since", "INTEGER"}, {"error_detail", "TEXT"}}
+	{"retry_at", "INTEGER"}, {"limit_since", "INTEGER"}, {"error_detail", "TEXT"},
+	// board migration 0002 (ADR-0022): the plan hash, the signed approval, the action and the signed continue
+	{"plan_sha256", "TEXT"}, {"approved_sha256", "TEXT"}, {"approval_sig", "TEXT"}, {"action_id", "TEXT"}, {"action_state", "TEXT"},
+	{"continue_step", "INTEGER"}, {"continue_by", "TEXT"}, {"continue_at", "INTEGER"}, {"continue_sig", "TEXT"}, {"rollback_started", "INTEGER"}}
 
 func (a *AgentOptions) defaults() {
 	if a.Debounce <= 0 {
@@ -100,6 +114,9 @@ func (a *AgentOptions) defaults() {
 	}
 	if a.RunTO <= 0 {
 		a.RunTO = 65 * time.Minute
+	}
+	if a.ActTO <= 0 {
+		a.ActTO = 10 * time.Minute
 	}
 }
 
@@ -397,8 +414,9 @@ func (r *run) agentRunTick() string {
 		if !in && !row.null("plan_entered_at") {
 			r.must(`UPDATE agent_tasks SET plan_entered_at=NULL WHERE key=?`, key)
 		}
-		if !in && (row.s("state") == "planning" || row.s("state") == "running") {
+		if !in && (row.s("state") == "planning" || row.s("state") == "running" || row.s("state") == "operator") {
 			r.stopJob(row.s("phase"), key)
+			r.stopAct(row)
 			r.must(`UPDATE agent_tasks SET state='stopped', job_started=NULL, error=?, updated=? WHERE key=?`,
 				"moved out of the agent column or assigned to someone else", r.now(), key)
 			r.alog(key, "stopped", "Stopped: the task left the agent column or its assignee changed")
@@ -436,7 +454,8 @@ func (r *run) agentRunTick() string {
 	for _, row := range r.rows(`SELECT * FROM agent_tasks WHERE state NOT IN ('running','approved') ORDER BY updated`) {
 		key := row.s("key")
 		sc, ok := scope[key]
-		if !ok || ((row.s("state") == "done" || row.s("state") == "blocked") && (row.s("phase") == "run" || row.s("phase") == "fix")) {
+		if !ok || ((row.s("state") == "done" || row.s("state") == "blocked") && (row.s("phase") == "run" || row.s("phase") == "fix")) ||
+			row.s("state") == "operator" { // waits for the operator and agent-continue; a comment does not re-plan it
 			continue
 		}
 		if row.null("plan_entered_at") || r.now()-row.i("plan_entered_at") < int64(r.o.Agent.Debounce/time.Second) {
@@ -541,9 +560,14 @@ func (r *run) agentComment(key, body, as string) {
 // agentIngest reads the finished intake and run results.
 func (r *run) agentIngest() {
 	a := r.o.Agent
+	r.rollbackIngest()
 	for _, row := range r.rows(`SELECT * FROM agent_tasks WHERE state IN ('planning','running')`) {
 		key, phase := row.s("key"), row.s("phase")
 		if phase == "fix" || row.null("job_started") {
+			continue
+		}
+		if phase == "act" {
+			r.actIngest(row)
 			continue
 		}
 		base := filepath.Join(a.OutDir, key+"."+phase)
@@ -599,7 +623,7 @@ func (r *run) agentIngest() {
 				r.alog(key, "failed", "Claude usage limit reached: "+strings.TrimSpace(strings.TrimPrefix(me, agentLimitPrefix))+tail)
 				continue
 			}
-			plan, err := validatePlan(d)
+			plan, err := validatePlanWith(d, a.Registry)
 			if me != "" {
 				_, after, _ := strings.Cut(me, ": ")
 				plan, err = nil, fmt.Errorf("%s", after)
@@ -628,9 +652,9 @@ func (r *run) agentIngest() {
 				state = "waiting"
 			}
 			pb, _ := json.Marshal(plan)
-			r.must(`UPDATE agent_tasks SET state=?, phase='intake', plan=?, plan_version=?, intake_at=?, intake_cost=?, spent_usd=COALESCE(spent_usd,0)+?,
+			r.must(`UPDATE agent_tasks SET state=?, phase='intake', plan=?, plan_version=?, plan_sha256=?, intake_at=?, intake_cost=?, spent_usd=COALESCE(spent_usd,0)+?,
 				job_started=NULL, error=NULL, error_detail=NULL, retry_at=NULL, limit_since=NULL, updated=? WHERE key=?`,
-				state, string(pb), version, r.now(), cost, cost, r.now(), key)
+				state, string(pb), version, storedPlanSHA(string(pb)), r.now(), cost, cost, r.now(), key)
 			cl := asMap(plan["classification"])
 			r.alog(key, "plan", fmt.Sprintf("Plan v%d: %s on %s, %d steps, %d questions ($%.2f)", version, cl["kind"], cl["environment"],
 				len(asList(plan["plan"])), len(asList(plan["questions"])), cost))
@@ -658,7 +682,18 @@ func (r *run) agentIngest() {
 		}
 		var plan map[string]any
 		json.Unmarshal([]byte(row.s("plan")), &plan)
-		if res["status"] == "done" && (asMap(plan["classification"])["kind"] == "production" || hasWrite(plan)) {
+		if row.s("action_id") != "" {
+			// the execute path: the action's state, from actions/out, decides what the model may report
+			switch row.s("action_state") {
+			case "done":
+			case "failed":
+				res["status"] = "failed"
+			default: // dry-run, refused: nothing (or not everything) was applied
+				if res["status"] == "done" {
+					res["status"] = "blocked"
+				}
+			}
+		} else if res["status"] == "done" && (asMap(plan["classification"])["kind"] == "production" || hasWrite(plan)) {
 			res["status"] = "blocked" // a proposal, or WRITE steps for the fixer: a person acts next
 		}
 		r.finish(row, res, cost)
@@ -693,8 +728,15 @@ func (r *run) finish(row row, res map[string]any, cost float64) {
 			lines = append(lines, b.String())
 		}
 	}
+	if t := r.capabilityTable(row.s("action_id")); t != "" {
+		lines = append(lines, t)
+	}
 	if status == "blocked" {
-		lines = append(lines, "Blocked: needs the operator. "+r.o.Name+" never executes production changes or WRITE steps.")
+		if row.s("action_id") != "" {
+			lines = append(lines, "Blocked: needs the operator. The capability steps did not all run ("+orDash(row.s("action_state"))+").")
+		} else {
+			lines = append(lines, "Blocked: needs the operator. "+r.o.Name+" never executes production changes or WRITE steps.")
+		}
 	}
 	lines = append(lines, "Full report: "+r.agentTaskURL(key))
 	as := row.s("approved_by")
@@ -739,12 +781,30 @@ func hasWrite(plan map[string]any) bool {
 	return false
 }
 
-// spinUp is what Spin up agent does with a plan: (path, label); path proposal | write-report | run | refused.
-func spinUp(plan map[string]any) (string, string) {
+// spinUp is what Spin up agent does with a plan while the executor is off.
+func spinUp(plan map[string]any) (string, string) { return spinUpMode(plan, "off") }
+
+// spin is spinUpMode with this installation's executor mode ("off" without an actions folder).
+func (r *run) spin(plan map[string]any) (string, string) {
+	mode := "off"
+	if a := r.o.Agent; a != nil && a.ActionsDir != "" && a.ActionsMode != "" {
+		mode = a.ActionsMode
+	}
+	return spinUpMode(plan, mode)
+}
+
+// spinUpMode is what Spin up agent does with a plan: (path, label); path proposal | execute | write-report | run |
+// refused. execute (ADR-0022 D5): classification develop, ARGUS_ACTIONS_MODE not off, at least one capability step
+// and every WRITE step with a valid capability; actd runs the steps, then a read-only run reports them. release and
+// pre-release never take it: a proposal, or the write-report run, as before.
+func spinUpMode(plan map[string]any, mode string) (string, string) {
 	cl := asMap(plan["classification"])
 	env := orStr(cl["environment"])
 	if env == "release" || cl["kind"] == "production" {
 		return "proposal", "Write proposal for the operator"
+	}
+	if mode != "off" && mode != "" && env == "develop" && executable(plan) {
+		return "execute", "Spin up agent: run the approved capability steps on develop, then a read-only report"
 	}
 	if hasWrite(plan) {
 		if contains(agentFixEnvs, env) {
@@ -764,12 +824,16 @@ func (r *run) dispatchRun(row row, sc scoped) string {
 		r.commit()
 		return "plan changed"
 	}
-	if r.dayCount("run") >= agentRunsPerDay {
+	resume := !row.null("continue_step")
+	if !resume && r.dayCount("run") >= agentRunsPerDay {
 		r.must(`UPDATE agent_tasks SET state='ready', error=? WHERE key=?`, fmt.Sprintf("daily limit of %d runs reached", agentRunsPerDay), key)
 		r.commit()
 		return "run cap"
 	}
-	path, why := spinUp(plan)
+	path, why := r.spin(plan)
+	if path == "execute" {
+		return r.dispatchAct(row, plan, resume)
+	}
 	if path == "refused" {
 		r.must(`UPDATE agent_tasks SET state='ready', error=? WHERE key=?`, why, key)
 		r.alog(key, "refused", why)
@@ -810,8 +874,13 @@ func strList(v any, max, n int) []any {
 	return out
 }
 
-// validatePlan is the intake's output, cleaned.
-func validatePlan(d map[string]any) (map[string]any, error) {
+// validatePlan is the intake's output, cleaned, without capabilities (no step keeps one).
+func validatePlan(d map[string]any) (map[string]any, error) { return validatePlanWith(d, nil) }
+
+// validatePlanWith is the intake's output, cleaned. A step keeps its capability and arguments only when
+// capability.Validate passes for the plan's classification (ADR-0022 D5); a step that names an unusable one keeps
+// capability "" and the reason (a WRITE step then takes today's write-report path).
+func validatePlanWith(d map[string]any, reg *capability.Registry) (map[string]any, error) {
 	if d == nil || len(d) == 0 {
 		return nil, fmt.Errorf("no output")
 	}
@@ -833,10 +902,22 @@ func validatePlan(d map[string]any) (map[string]any, error) {
 			continue
 		}
 		mode := "read-only"
-		if strings.ToUpper(orStr(s["mode"])) == "WRITE" {
+		switch strings.ToLower(orStr(s["mode"])) {
+		case "write":
 			mode = "WRITE"
+		case "operator":
+			mode = "operator"
 		}
-		steps = append(steps, map[string]any{"n": i + 1, "text": sOf(s["text"], 2000), "mode": mode, "targets": strList(s["targets"], 10, 200)})
+		step := map[string]any{"n": i + 1, "text": sOf(s["text"], 2000), "mode": mode, "targets": strList(s["targets"], 10, 200)}
+		if name := orStr(s["capability"]); name != "" || mode == "WRITE" {
+			args, why := checkCapability(reg, name, s["args"], mode, capability.Env(env))
+			if why == "" {
+				step["capability"], step["args"] = name, map[string]any(args)
+			} else {
+				step["capability"], step["capability_error"] = "", sOf(why, 300)
+			}
+		}
+		steps = append(steps, step)
 	}
 	if len(steps) == 0 {
 		return nil, fmt.Errorf("no plan steps")
@@ -1243,6 +1324,11 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		if !isInt || ver != row.i("plan_version") || row.s("plan") == "" {
 			panic(refused(fmt.Sprintf("the plan changed: review v%d", row.i("plan_version"))))
 		}
+		sha := storedPlanSHA(row.s("plan"))
+		if got := orStr(req["plan_sha256"]); got != sha || sha == "" {
+			panic(refused(fmt.Sprintf("the plan changed: review v%d (plan hash)", row.i("plan_version"))))
+		}
+		at, sig := r.signedAt(req), signature(req)
 		if !contains([]string{"ready", "waiting", "done", "failed", "blocked", "stopped"}, row.s("state")) {
 			panic(refused("cannot start while " + row.s("state")))
 		}
@@ -1251,25 +1337,31 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		if len(r.unanswered(plan, key)) > 0 {
 			panic(refused("answer the blocking questions first (Save answers & re-plan)"))
 		}
-		path, why := spinUp(plan)
+		path, why := r.spin(plan)
 		if path == "refused" {
 			panic(refused(why))
 		}
 		if f64(row["spent_usd"]) >= r.o.Agent.TaskBudget {
 			panic(refused(r.budgetNote()))
 		}
-		r.must(`UPDATE agent_tasks SET state='approved', approved_version=?, approved_by=?, approved_at=?, error=NULL, updated=? WHERE key=?`,
-			ver, by, r.now(), r.now(), key)
+		r.must(`UPDATE agent_tasks SET state='approved', approved_version=?, approved_by=?, approved_at=?, approved_sha256=?, approval_sig=?,
+			action_id=NULL, action_state=NULL, continue_step=NULL, continue_by=NULL, continue_at=NULL, continue_sig=NULL, error=NULL, updated=? WHERE key=?`,
+			ver, by, at, sha, sig, r.now(), key)
 		what := map[string]string{"proposal": "write proposal for the operator", "write-report": "a read-only run that reports the WRITE steps",
-			"run": "spin up a read-only run"}[path]
+			"run": "spin up a read-only run", "execute": "run the capability steps, then a read-only report"}[path]
 		r.alog(key, "approved", fmt.Sprintf("Plan v%d approved by %s: %s", ver, by, what))
 		if path == "proposal" {
 			return "proposal requested", nil
 		}
 		return "approved; spinning up", nil
+	case "agent-continue":
+		return r.agentContinue(row, req, by), nil
+	case "agent-rollback":
+		return r.agentRollback(row, req, by), nil
 	case "agent-stop":
-		if contains([]string{"planning", "running", "approved"}, row.s("state")) {
+		if contains([]string{"planning", "running", "approved", "operator"}, row.s("state")) {
 			r.stopJob(row.s("phase"), key)
+			r.stopAct(row)
 			r.must(`UPDATE agent_tasks SET state='stopped', job_started=NULL, error=?, updated=? WHERE key=?`, "stopped by "+by, r.now(), key)
 			r.alog(key, "stopped", "Stopped by "+by)
 		}

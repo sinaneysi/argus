@@ -385,6 +385,10 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		}
 		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal"}
 	}
+	out["planSha256"] = agentPlanSHA(a)
+	if act := apiAgentAction(a, plan, admin); act != nil {
+		out["action"] = act
+	}
 	out["chat"] = apiChat(c, key, sess)
 	out["secrets"] = apiSecrets(key, a, py.OrS(t.Get("env"), ""), sess)
 	logs := []map[string]any{}
@@ -557,4 +561,41 @@ func apiBoardNewJSON(qs py.QS, sess *Session) (any, *apiErr) {
 		out["trackers"] = map[string]any{"jira": py.OrS(BoardWriteBlock(sess), "Your Jira connection, else the shared one."), "gitlab": sub, "projects": projects, "project": gitlabDefaultProject(st)}
 	}
 	return out, nil
+}
+
+// apiAgentAction is the task's last capability action (ADR-0022): its steps from agent_actions (actd's results, not
+// the model's), the operator step it waits for and, for an admin, Continue and the rollback of each backed-up step.
+func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
+	id := a.Str("action_id")
+	if id == "" {
+		return nil
+	}
+	texts := map[int64]string{}
+	for _, sv := range py.AsList(py.Or(plan.Get("plan"), []any{})) {
+		s := py.AsMap(sv)
+		texts[int64(py.Num(py.Or(s.Get("n"), int64(0))))] = py.Str(s.Get("text"))
+	}
+	busy := In(a.Str("state"), "planning", "running", "approved") || a.T("rollback_started")
+	steps := []map[string]any{}
+	var wait map[string]any
+	for _, r := range BoardBQ("SELECT * FROM agent_actions WHERE action_id=? ORDER BY step", id) {
+		audit := r.Str("audit_sha256")
+		if len(audit) > 12 {
+			audit = audit[:12]
+		}
+		st := map[string]any{"step": r.I("step"), "capability": r.Str("capability"), "status": r.Str("status"), "detail": py.OrS(r.Get("detail"), r.Str("summary")),
+			"audit": audit, "text": texts[r.I("step")]}
+		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" {
+			st["rollback"] = true
+		}
+		if r.Str("status") == "needs the operator" && a.Str("state") == "operator" {
+			wait = map[string]any{"step": r.I("step"), "text": texts[r.I("step")], "can": admin}
+		}
+		steps = append(steps, st)
+	}
+	out := map[string]any{"id": id, "state": a.Str("action_state"), "steps": steps}
+	if wait != nil {
+		out["continue"] = wait
+	}
+	return out
 }

@@ -3,6 +3,8 @@ package actd
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -41,6 +43,8 @@ type fx struct {
 	extra            []capability.Capability
 	key              secret.Key
 	cur              *Daemon
+	priv             ed25519.PrivateKey // the api's approval key; the daemon gets the public half
+	pub              ed25519.PublicKey
 }
 
 func newFx(t *testing.T, extra ...capability.Capability) *fx {
@@ -57,7 +61,7 @@ func newFx(t *testing.T, extra ...capability.Capability) *fx {
 			t.Fatal(err)
 		}
 	}
-	f.exec(f.board, `ALTER TABLE agent_tasks ADD COLUMN approved_sha256 TEXT`) // the PR 2 board migration
+	f.pub, f.priv, _ = ed25519.GenerateKey(rand.Reader)
 	f.key, _ = secret.ParseKey(secret.NewKeyText())
 	f.exec(f.auth, `INSERT INTO users (username, hash, role, disabled, must_change) VALUES ('ada','x','admin',0,0), ('vic','x','viewer',0,0), ('dis','x','admin',1,0)`)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +108,7 @@ func (f *fx) daemon() *Daemon {
 		f.cur.Close()
 	}
 	d, err := New(Options{Mode: f.mode, ActDir: f.act, Key: f.key, ActionsDir: f.actions, BoardDB: f.board, AuthDB: f.auth, OpsDB: f.ops,
-		Registry: f.reg, TTL: 24 * time.Hour, PerDay: f.perDay, Now: func() time.Time { return f.now }})
+		Registry: f.reg, TTL: 24 * time.Hour, PerDay: f.perDay, Now: func() time.Time { return f.now }, ApprovalPub: f.pub})
 	if err != nil {
 		f.t.Fatal(err)
 	}
@@ -131,10 +135,13 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 	var raw struct{ Classification, Plan any }
 	json.Unmarshal(pb, &raw)
 	sha, _ := capability.PlanSHA256(raw.Classification, raw.Plan)
+	at := f.now.Add(-time.Hour).Unix()
 	f.exec(f.board, `INSERT OR REPLACE INTO agent_tasks (key, state, plan, plan_version, approved_version, approved_by, approved_at)
-		VALUES (?, 'approved', ?, 1, 1, 'ada', ?)`, key, string(pb), f.now.Add(-time.Hour).Unix())
+		VALUES (?, 'approved', ?, 1, 1, 'ada', ?)`, key, string(pb), at)
 	if f.hasHashCol() {
-		f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=? WHERE key=?`, sha, key)
+		sig := f.sign(capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada", At: at,
+			SealedSHA256: capability.SealedSHA256(nil)})
+		f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=?, approval_sig=? WHERE key=?`, sha, sig, key)
 	}
 	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada"}
 	for _, s := range steps {
@@ -149,6 +156,16 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 		}
 	}
 	return req
+}
+
+// sign is the api's signature of a claim.
+func (f *fx) sign(c capability.ApprovalClaim) string {
+	f.t.Helper()
+	s, err := capability.SignApproval(f.priv, c)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return s
 }
 
 func (f *fx) hasHashCol() bool {
@@ -940,5 +957,175 @@ func TestSecretLookingArgumentsRefused(t *testing.T) {
 	o, _ := os.ReadFile(filepath.Join(f.actions, "out", r.ActionID+".json"))
 	if strings.Contains(string(b)+string(o), "abcdefghijklmnopqrstuv") {
 		t.Fatal("the secret-looking value was stored")
+	}
+}
+
+// TestSignedApprovalRequired: the worker can write board.db but not sign, so an approval without the api's
+// signature, with a signature of another key, or over other sealed inputs never runs a step (amendment 1, A and B).
+func TestSignedApprovalRequired(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	steps := func() []map[string]any { return []map[string]any{check("/ok", 200)} }
+
+	req := f.task("SG-none", "develop", steps())
+	f.exec(f.board, `UPDATE agent_tasks SET approval_sig=NULL WHERE key='SG-none'`)
+	r := f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "not signed") {
+		t.Fatal(r.Refusal.Reason)
+	}
+
+	// a forged approval: the worker made its own key and signed the row it wrote
+	_, wpriv, _ := ed25519.GenerateKey(rand.Reader)
+	req = f.task("SG-forged", "develop", steps())
+	forged, _ := capability.SignApproval(wpriv, capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: "SG-forged", PlanVersion: 1,
+		PlanSHA256: req.PlanSHA256, Approver: "ada", At: f.now.Add(-time.Hour).Unix(), SealedSHA256: capability.SealedSHA256(nil)})
+	f.exec(f.board, `UPDATE agent_tasks SET approval_sig=? WHERE key='SG-forged'`, forged)
+	r = f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "not valid") {
+		t.Fatal(r.Refusal.Reason)
+	}
+
+	// a valid signature moved to a later approval time (a re-dated row) does not verify
+	req = f.task("SG-redated", "develop", steps())
+	f.exec(f.board, `UPDATE agent_tasks SET approved_at=approved_at+60 WHERE key='SG-redated'`)
+	wantRefused(t, f.submit(d, req), 3, capability.CodeApproval)
+
+	// sealed inputs swapped after the approval: the signature covers the hash of the inputs it was given
+	req = f.task("SG-sealed", "develop", steps())
+	req.SealedInputs = map[string]string{"NEW_VALUE": "v1.sealed-by-someone-else"}
+	r = f.submit(d, req)
+	wantRefused(t, r, 3, capability.CodeApproval)
+
+	// a signature for another task's approval does not carry over
+	a := f.task("SG-a", "develop", steps())
+	b := f.task("SG-b", "develop", steps())
+	f.exec(f.board, `UPDATE agent_tasks SET approval_sig=(SELECT approval_sig FROM agent_tasks WHERE key='SG-a') WHERE key='SG-b'`)
+	wantRefused(t, f.submit(d, b), 3, capability.CodeApproval)
+	if r := f.submit(d, a); r.State != StateDone {
+		t.Fatalf("the signed approval did not run: %+v", r.Refusal)
+	}
+
+	// an executor without the api's public key refuses every step
+	f.pub = nil
+	d = f.daemon()
+	r = f.submit(d, f.task("SG-nokey", "develop", steps()))
+	wantRefused(t, r, 3, capability.CodeApproval)
+	if !strings.Contains(r.Refusal.Reason, "public key") {
+		t.Fatal(r.Refusal.Reason)
+	}
+	if f.calls.Load() != 1 {
+		t.Fatalf("%d calls: a refused approval called the target", f.calls.Load())
+	}
+}
+
+func TestContinueAfterOperatorStep(t *testing.T) {
+	f := newFx(t)
+	d := f.daemon()
+	steps := []map[string]any{check("/ok", 200), {"mode": "operator", "text": "start the pipeline"}, check("/ok", 200)}
+	req := f.task("CT-1", "develop", steps)
+	r := f.submit(d, req)
+	if r.State != StateOperator || f.calls.Load() != 1 {
+		t.Fatalf("%+v", r)
+	}
+	f.exec(f.board, `UPDATE agent_tasks SET state='approved' WHERE key='CT-1'`)
+	claim := capability.ApprovalClaim{Kind: capability.SignContinue, TaskKey: "CT-1", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+		At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(nil), Step: 2}
+
+	// unsigned, signed by another key, or for another step: refused, nothing runs
+	_, wpriv, _ := ed25519.GenerateKey(rand.Reader)
+	forged, _ := capability.SignApproval(wpriv, claim)
+	for name, c := range map[string]*Signed{
+		"unsigned": {Step: 2, Approver: "ada", At: claim.At},
+		"forged":   {Step: 2, Approver: "ada", At: claim.At, Signature: forged},
+		"viewer":   {Step: 2, Approver: "vic", At: claim.At, Signature: f.sign(func() capability.ApprovalClaim { c := claim; c.Approver = "vic"; return c }())},
+		"old":      {Step: 2, Approver: "ada", At: t0.Add(-25 * time.Hour).Unix(), Signature: f.sign(func() capability.ApprovalClaim { c := claim; c.At = t0.Add(-25 * time.Hour).Unix(); return c }())},
+	} {
+		rq := req
+		rq.Continue = c
+		if r := f.submit(d, rq); r.State != StateRefused || r.Refusal.Rule != 3 {
+			t.Errorf("%s: %s %+v", name, r.State, r.Refusal)
+		}
+	}
+	rq := req
+	rq.Continue = &Signed{Step: 3, Approver: "ada", At: claim.At, Signature: f.sign(func() capability.ApprovalClaim { c := claim; c.Step = 3; return c }())}
+	wantRefused(t, f.submit(d, rq), 4, capability.CodeArguments) // step 3 is not an operator step
+	if f.calls.Load() != 1 {
+		t.Fatal("a refused continue ran a step")
+	}
+
+	rq = req
+	rq.Continue = &Signed{Step: 2, Approver: "ada", At: claim.At, Signature: f.sign(claim)}
+	r = f.submit(d, rq)
+	if r.State != StateDone || len(r.Steps) != 3 || !r.Steps[0].Stored || r.Steps[1].Status != "done by the operator" || r.Steps[2].Status != "ok" {
+		t.Fatalf("%+v", r)
+	}
+	if f.calls.Load() != 2 {
+		t.Fatalf("%d calls: step 1 must come from the store, step 3 must run once", f.calls.Load())
+	}
+	var phases []string
+	for _, l := range f.auditLines() {
+		if l.ActionID == req.ActionID && l.Phase != PhaseRefused {
+			phases = append(phases, fmt.Sprintf("%d:%s", l.Step, l.Phase))
+		}
+	}
+	if strings.Join(phases, ",") != "1:plan,1:apply,3:plan,3:apply" {
+		t.Fatal(phases)
+	}
+}
+
+func TestManualRollback(t *testing.T) {
+	w := &fakeWrite{}
+	f := newFx(t, w)
+	d := f.daemon()
+	req := f.task("RB-1", "develop", []map[string]any{writeStep()})
+	if r := f.submit(d, req); r.State != StateDone {
+		t.Fatalf("%+v", r)
+	}
+	f.exec(f.board, `UPDATE agent_tasks SET state='done' WHERE key='RB-1'`) // the action is over
+	claim := capability.ApprovalClaim{Kind: capability.SignRollback, TaskKey: "RB-1", PlanVersion: 1, PlanSHA256: req.PlanSHA256, Approver: "ada",
+		At: f.now.Unix(), SealedSHA256: capability.SealedSHA256(nil), Step: 1}
+	rq := req
+	rq.Rollback = &Signed{Step: 1, Approver: "ada", At: claim.At}
+	wantRefused(t, f.submit(d, rq), 3, capability.CodeApproval)
+	start := claim
+	start.Kind, start.Step = capability.SignContinue, 1
+	rq.Rollback = &Signed{Step: 1, Approver: "ada", At: claim.At, Signature: f.sign(start)} // a signature of another kind
+	wantRefused(t, f.submit(d, rq), 3, capability.CodeApproval)
+	if w.rollbacks != 0 {
+		t.Fatal("an unsigned rollback ran")
+	}
+	rq.Rollback = &Signed{Step: 1, Approver: "ada", At: claim.At, Signature: f.sign(claim)}
+	r := f.submit(d, rq)
+	if r.State != StateDone || w.rollbacks != 1 || len(r.Steps) != 1 || r.Steps[0].Status != "rolled-back" {
+		t.Fatalf("%+v", r)
+	}
+	last := f.auditLines()[len(f.auditLines())-1]
+	if last.Phase != PhaseRollback || last.Step != 1 || last.BackupRef != "backup:x/1" || last.Args["value_ref"] != capability.Redacted {
+		t.Fatalf("%+v", last)
+	}
+	wantRefused(t, f.submit(d, rq), 4, capability.CodeArguments) // already rolled back
+	if w.rollbacks != 1 {
+		t.Fatal("rolled back twice")
+	}
+}
+
+func TestApprovalPubFile(t *testing.T) {
+	dir := t.TempDir()
+	if p, err := LoadApprovalPub(dir); p != nil || err != nil {
+		t.Fatal("a missing key is not (nil, nil)")
+	}
+	_, pub, _ := capability.NewApprovalKey()
+	p, err := SetApprovalPub(dir, pub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q, err := LoadApprovalPub(dir)
+	if err != nil || !q.Equal(p) {
+		t.Fatal(err)
+	}
+	if _, err := SetApprovalPub(dir, []byte("not a key")); err == nil {
+		t.Fatal("junk stored as the key")
 	}
 }

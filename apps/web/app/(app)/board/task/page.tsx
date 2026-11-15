@@ -6,7 +6,7 @@ import { Reload } from "@/components/Infra";
 import { Markdown } from "@/components/Markdown";
 import { EnvPill, Pill } from "@/components/Pills";
 import { Banners, Crumb, FixCards, pick, Report, type Search, tone, When } from "@/components/Section";
-import { AgentForm, ChatBox, FixerBox, MoveChoiceForm, MoveForm, Progress, SecretsBox, SpinBar } from "@/components/Work";
+import { ActionBox, AgentForm, ChatBox, FixerBox, MoveChoiceForm, MoveForm, Progress, SecretsBox, SpinBar } from "@/components/Work";
 import { qs } from "@/lib/api";
 import { full, iso } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
@@ -56,6 +56,7 @@ function Plan({ a, t, csrf }: { a: Agent; t: TaskPage; csrf: string }) {
       </> : null}
       {a.emptyDesc ? <Banners list={[{ kind: "warn", text: "The issue description is empty. Tell Argus what to do; it plans again from that." }]} /> : null}
       {a.pause ? <p><a data-slot="button" className={buttonVariants({ variant: "outline" })} href={a.pause.href}>{a.pause.text}</a> <span className="muted small">The page stops refreshing while you write.</span></p> : null}
+      <ActionBox a={a} csrf={csrf} ret={t.return} />
       <AgentForm a={a} csrf={csrf} ret={t.return} />
       <SpinBar a={a} csrf={csrf} ret={t.return} />
     </>

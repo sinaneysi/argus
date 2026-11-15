@@ -976,6 +976,10 @@ func BoardPost(c *Ctx, path string, form py.QS, sess *Session) (int, string) {
 		return AgentPost(c, form, sess)
 	case "/board/agent/spinup":
 		return AgentPostSpinUp(c, form, sess)
+	case "/board/agent/continue":
+		return AgentPostContinue(c, form, sess)
+	case "/board/agent/rollback":
+		return AgentPostRollback(c, form, sess)
 	case "/board/agent/chat":
 		return AgentPostChat(c, form, sess)
 	case "/board/task/secret":

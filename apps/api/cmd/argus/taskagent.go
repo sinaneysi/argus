@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/sinaneysi/argus/internal/board"
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/model"
@@ -54,7 +55,7 @@ func agentBoardOptions(c *config.Config) *board.AgentOptions {
 	if err == nil && deb == 0 {
 		debounce = time.Nanosecond // 0: no wait (the zero value means the default)
 	}
-	return &board.AgentOptions{JobsDir: filepath.Join(dir, "jobs"), OutDir: filepath.Join(dir, "out"),
+	o := &board.AgentOptions{JobsDir: filepath.Join(dir, "jobs"), OutDir: filepath.Join(dir, "out"),
 		ClaudeStatus: filepath.Join(c.SettingsOut, "claude-token-status.json"),
 		Guard: func() (bool, string) {
 			r := model.New(modelOptions(c, nil))
@@ -69,6 +70,16 @@ func agentBoardOptions(c *config.Config) *board.AgentOptions {
 		RunTO:      cfgMinutes(c, "ARGUS_TASK_RUN_MINUTES", 60) + 5*time.Minute,
 		ChatReqDir: filepath.Join(c.SettingsIn, "task-chat"),
 	}
+	// the capability executor (ADR-0022): the worker validates each step with the same allow-lists actd uses
+	mode, err := capability.ParseMode(c.Values["ARGUS_ACTIONS_MODE"].Raw)
+	if err == nil && mode != capability.ModeOff {
+		reg, rerr := capability.Default(capability.Options{HTTPHosts: splitList(c.Values["ARGUS_ACT_HTTP_HOSTS"].Raw),
+			HTTPAllowPlain: c.Values["ARGUS_ACT_HTTP_ALLOW_HTTP"].Raw == "1"})
+		if rerr == nil {
+			o.ActionsDir, o.ActionsMode, o.Registry = actionsDir(c), string(mode), reg
+		}
+	}
+	return o
 }
 
 // taskAgentJob runs the oldest pending model job of the task agent; after one ran, the board sync reads its result.

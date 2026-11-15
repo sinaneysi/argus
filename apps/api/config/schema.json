@@ -1412,6 +1412,12 @@
       "help": "1: http.check may use plain http:// (test installations only)"
     },
     {
+      "key": "ARGUS_APPROVAL_KEY_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-approve",
+      "help": "the api's approval signing key (approval.key, approval.pub), in a folder only the api mounts (compose volume argus-approve; 0700, owned by the api's user); created at the api's first start; missing: approvals are not signed and actd refuses every step"
+    },
+    {
       "key": "ARGUS_KUBE_DIR",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/kube",

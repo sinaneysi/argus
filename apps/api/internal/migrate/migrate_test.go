@@ -233,3 +233,28 @@ func TestEnsureDirsVolumeOnly(t *testing.T) {
 		}
 	}
 }
+
+// TestAddColumnAdopted: a column an older binary's schema code already added is skipped, not an error.
+func TestAddColumnAdopted(t *testing.T) {
+	ctx := context.Background()
+	p := filepath.Join(t.TempDir(), "board.db")
+	db, err := sql.Open("sqlite", p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`CREATE TABLE agent_tasks (key TEXT PRIMARY KEY, plan_sha256 TEXT)`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	r, err := ApplyFile(ctx, p, Board)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, a := range r.Adopted {
+		found = found || a == "agent_tasks.plan_sha256"
+	}
+	if !found || r.To != Latest(Board) {
+		t.Fatalf("%+v", r)
+	}
+}

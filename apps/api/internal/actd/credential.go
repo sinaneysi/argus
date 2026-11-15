@@ -1,6 +1,7 @@
 package actd
 
 import (
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/secret"
 )
 
@@ -97,4 +99,38 @@ func ListCredentials(actDir string, key secret.Key) []Credential {
 		out = append(out, c)
 	}
 	return out
+}
+
+// ApprovalPubPath is the api's approval public key in the executor volume (ADR-0022 amendment 1, item A).
+func ApprovalPubPath(actDir string) string { return filepath.Join(actDir, "keys", "approval.pub") }
+
+// LoadApprovalPub reads keys/approval.pub. Missing: (nil, nil), and every step is refused (rule 3).
+func LoadApprovalPub(actDir string) (ed25519.PublicKey, error) {
+	b, err := os.ReadFile(ApprovalPubPath(actDir))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return capability.ParseApprovalPublic(b)
+}
+
+// SetApprovalPub stores the api's approval public key (PEM, from `argus approval-key public` in the api service).
+func SetApprovalPub(actDir string, pemText []byte) (ed25519.PublicKey, error) {
+	if len(pemText) > 4096 {
+		return nil, errors.New("the public key is longer than 4096 bytes")
+	}
+	p, err := capability.ParseApprovalPublic(pemText)
+	if err != nil {
+		return nil, err
+	}
+	out, err := capability.PublicKeyPEM(p)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Join(actDir, "keys"), 0o700); err != nil {
+		return nil, err
+	}
+	return p, writeFile(ApprovalPubPath(actDir), out, 0o600)
 }

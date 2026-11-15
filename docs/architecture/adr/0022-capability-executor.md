@@ -220,6 +220,20 @@ Design items for PR 2 (not built in PR 1):
 - **B. Sealed inputs.** The hash of `sealed_inputs` is part of the signed approval (A), so a sealed input cannot be
   replaced after approval.
 
+## As built (PR 2, board wiring)
+
+- **A, done.** The api signs Spin up, Continue and manual rollback with an Ed25519 key in `ARGUS_APPROVAL_KEY_DIR`
+  (volume `argus-approve`, mounted by the api only). The signed message is fixed (`argus-approval-v1`, kind, task key,
+  plan version, plan sha256, approver, time, sealed-inputs sha256, step). `actd` loads `argus-act/keys/approval.pub`
+  and refuses (rule 3) an approval that is unsigned, signed by another key, re-dated, moved to another task or made
+  over other sealed inputs. Continue and rollback are refused unless signed by an enabled admin within the TTL.
+- **B, done for the hash.** The sealed inputs' hash is in the signature; no capability opens sealed inputs before PR 3.
+- Board migration `0002_plan_hash`: `plan_sha256` (at intake), `approved_sha256`, `approval_sig`, `action_id`,
+  `action_state`, the signed continue, `rollback_started`; table `agent_actions` (step results from `actions/out`).
+- `spinUp` path `execute`: classification `develop`, mode not `off`, at least one capability step and every WRITE
+  step with a valid one. `release` and `pre-release` keep their paths. An operator step ends the action in state
+  `operator`; `agent-continue` resumes after it; the comment's capability table comes from `actions/out`.
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan
