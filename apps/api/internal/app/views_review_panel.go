@@ -196,10 +196,8 @@ func rvApprovalBlock(c *Ctx, it *rvItem) string {
 	switch {
 	case path == "refused":
 		return label
-	case !strings.HasPrefix(key, "gl-"):
-		return BoardWriteBlock(c.Sess)
 	}
-	return ""
+	return agentWriteBlock(c.Sess, key) // the task's own tracker, never the key's form
 }
 
 func rvApprovalAfter(it *rvItem) string {

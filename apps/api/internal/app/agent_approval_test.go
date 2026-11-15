@@ -243,6 +243,7 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 	// a start that is not sent leaves no record
 	if os.Geteuid() != 0 {
 		e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-6', 'ready', 1, ?)`, plan)
+		e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (6, 't', 'todo', 1, 1, 0, 'gitlab')`)
 		sha6 := agentPlanSHA(agentRow("gl-6"))
 		rq := filepath.Join(SET_IN, "board-requests")
 		os.Chmod(rq, 0o500)
@@ -301,6 +302,21 @@ func TestAgentWriteBlockFromTracker(t *testing.T) {
 	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	if why := agentWriteBlock(e.admin, "gl-9"); why != "" {
 		t.Fatal(why)
+	}
+	// spin up (also the review queue's approve, which posts to it) and the review queue's shown block
+	plan := `{"classification": {"environment": "develop", "kind": "investigate"}, "summary": "s", "plan": [{"n": 1, "text": "look", "mode": "read-only"}]}`
+	e.board.Exec(`INSERT OR REPLACE INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-8', 'ready', 1, ?)`, plan)
+	sha8 := agentPlanSHA(agentRow("gl-8"))
+	if c, out := AgentPostSpinUp(e.ctx(e.admin), boardForm("key", "gl-8", "plan_version", "1", "plan_sha256", sha8), e.admin); c != 403 {
+		t.Fatal("spin up of a gl- key of a Jira task:", c, out)
+	}
+	it := &rvItem{id: "gl-8", plan: py.AsMap(agentJSON(plan, "null"))}
+	if why := rvApprovalBlock(e.ctx(e.admin), it); why == "" {
+		t.Fatal("the review queue offers the approval of a gl- key of a Jira task")
+	}
+	it.id = "gl-9"
+	if why := rvApprovalBlock(e.ctx(e.admin), it); why != "" {
+		t.Fatal("a connected GitLab task is blocked in the review queue:", why)
 	}
 	for _, f := range []func(*Ctx, py.QS, *Session) (int, string){AgentPostContinue, AgentPostRollback, AgentPostChecked} {
 		e.board.Exec(`INSERT OR REPLACE INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-8', 'operator', 1, '{}')`)

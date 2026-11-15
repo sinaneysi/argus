@@ -382,7 +382,7 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if a == nil {
 		return 404, "Argus is not working this task"
 	}
-	if why := BoardWriteBlock(sess); why != "" && !strings.HasPrefix(key, "gl-") {
+	if why := agentWriteBlock(sess, key); why != "" {
 		return 403, "Not started: " + why
 	}
 	n, _ := py.ParseInt(v)

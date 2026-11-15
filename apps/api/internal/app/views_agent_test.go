@@ -91,6 +91,8 @@ func TestAgentGitLabKey(t *testing.T) {
 		t.Fatal("agent key")
 	}
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-5', 'ready', 1, '{"plan": []}')`)
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (5, 't', 'todo', 1, 1, 0, 'gitlab')`)
+	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	for _, bad := range []string{"gl-", "gl-x", "GL-5x", "gl-5;rm"} {
 		if c, _ := AgentPost(e.ctx(e.admin), boardForm("key", bad, "action", "stop"), e.admin); c != 400 {
 			t.Fatal("bad key", bad)
@@ -115,6 +117,10 @@ func TestAgentSpinUp(t *testing.T) {
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('OPS-2', 'ready', 1, ?)`, strings.Replace(write, "%s", "none", 1))
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('OPS-3', 'ready', 1, ?)`, strings.Replace(write, "%s", "release", 1))
 	e.json(t, "out/board-status.json", map[string]any{"configured": true, "in_use": true})
+	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
+	for _, id := range []int{1, 2} { // the write block comes from the task's own tracker field
+		e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (?, 't', 'todo', 1, 1, 0, 'gitlab')`, id)
+	}
 	if c, _ := AgentPostSpinUp(e.ctx(e.view), boardForm("key", "gl-1", "plan_version", "3"), e.view); c != 403 {
 		t.Fatal("viewer")
 	}

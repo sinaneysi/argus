@@ -279,7 +279,7 @@ Design items for PR 2 (not built in PR 1):
   refused as contradicted (the marker stays), otherwise the step is stored as `failed-checked` with the read-back's
   summary (no value), the marker is cleared and the action ends. A replay finds no marker and is refused. The
   backup of a `failed-checked` step is never pruned (the person may be wrong).
-- Continue, rollback and checked take the admin's write block from the task's own tracker field
+- Spin up (and the review queue's approval), continue, rollback and checked take the admin's write block from the task's own tracker field
   (`tasks.tracker`), not from the form of the agent key.
 - A step refused after its backup was written (e.g. the audit record of the apply could not be written) is stored
   as refused: a retry does not apply again, and the prune can age its backup out.
