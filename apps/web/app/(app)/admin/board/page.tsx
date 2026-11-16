@@ -95,9 +95,9 @@ function ActionsCard({ x, csrf }: { x: NonNullable<AdminBoard["actions"]>; csrf:
   return (
     <PlainCard as="section" id="actions" aria-labelledby="j-x"><div className="card-h"><h2 id="j-x">Capability executor</h2>
       {x.stopped ? <Pill tone="fail">Stopped</Pill> : <Pill tone={m.tone}>{x.mode}</Pill>}</div>
-      <p className="set-note">{x.stopped ? `All actions are stopped: actd refuses every capability step until an admin resumes (mode ${x.mode}).` : m.text} The mode and the allow-lists come from the configuration (<span className="mono">argus.env</span>) and are read-only here; the credentials live only in actd&apos;s own volume and never show.</p>
+      <p className="set-note">{x.stopped ? `All actions are stopped: actd refuses every capability step until an admin resumes (mode ${x.mode}).` : m.text} The mode and the allow-lists come from the configuration (<span className="mono">argus.env</span>) and are read-only here; the credentials live only in actd&apos;s own volume and never show. actd&apos;s status counts only when its signature checks with the key pinned in the api and it is fresh.</p>
       <dl className="rec">
-        <div><dt>actd</dt><dd><Pill tone={h.kind}>{h.text}</Pill>{h.at ? <> <span className="muted small">last heartbeat <When ts={h.at} /></span></> : null}{h.detail ? <p className="muted small">{h.detail}</p> : null}</dd></div>
+        <div><dt>actd status</dt><dd><Pill tone={h.kind}>{h.text}</Pill>{h.at ? <> <span className="muted small">last heartbeat <When ts={h.at} /></span></> : null}{h.detail ? <p className="muted small">{h.detail}</p> : null}</dd></div>
         {h.seen ? <>
           <div><dt>Audit chain</dt><dd className={h.chainOk ? undefined : "set-err"}>{h.chain}</dd></div>
           <div><dt>Offers</dt><dd>{h.capabilities.length ? <span className="mono">{h.capabilities.join(", ")}</span> : "nothing: every allow-list is empty"}</dd></div>

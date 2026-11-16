@@ -320,7 +320,7 @@ func apiReviewDetail(c *Ctx, it *rvItem, f rvQuery) map[string]any {
 // apiPlan is the plan review step of an action approval (rvPlanStep) as data.
 func apiPlan(c *Ctx, it *rvItem) map[string]any {
 	a, plan := it.row, it.plan
-	path, label := agentSpinUp(plan)
+	path, label := agentSpinUp(plan, it.id)
 	steps := []map[string]any{}
 	writes := 0
 	for _, sv := range py.AsList(py.Or(plan.Get("plan"), []any{})) {
@@ -388,7 +388,7 @@ func apiReviewActions(c *Ctx, it *rvItem, f rvQuery) ([]apiAction, string) {
 	case "approvals":
 		block := rvApprovalBlock(c, it)
 		if f.step == "plan" {
-			_, label := agentSpinUp(it.plan)
+			_, label := agentSpinUp(it.plan, it.id)
 			acts = append(acts, apiAction{Action: "approve", Label: "Approve plan v" + I2S(r.I("plan_version")) + " & start", Style: "primary", Disabled: block},
 				apiAction{Href: f.with(func(g *rvQuery) { g.step = "" }).href(), Label: "Back to the summary", Style: "secondary"})
 			note = py.OrS(block, label)

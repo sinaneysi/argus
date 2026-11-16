@@ -150,14 +150,14 @@ func TestAgentSpinUp(t *testing.T) {
 	}
 	for key, want := range map[string]string{"OPS-1": "Spin up agent: writes on develop (stage3)", "OPS-3": "Write proposal for the operator"} {
 		plan := py.AsMap(agentJSON(agentRow(key).Get("plan"), "null"))
-		if _, label := agentSpinUp(plan); label != want {
+		if _, label := agentSpinUp(plan, key); label != want {
 			t.Fatal(key, label)
 		}
 	}
-	if path, _ := agentSpinUp(py.AsMap(agentJSON(agentRow("OPS-3").Get("plan"), "null"))); path != "proposal" {
+	if path, _ := agentSpinUp(py.AsMap(agentJSON(agentRow("OPS-3").Get("plan"), "null")), "OPS-3"); path != "proposal" {
 		t.Fatal("release must be a proposal")
 	}
-	if path, _ := agentSpinUp(py.AsMap(agentJSON(`{"classification": {"environment": "develop"}, "plan": [{"mode": "read-only"}]}`, ""))); path != "run" {
+	if path, _ := agentSpinUp(py.AsMap(agentJSON(`{"classification": {"environment": "develop"}, "plan": [{"mode": "read-only"}]}`, "")), ""); path != "run" {
 		t.Fatal("read-only plan")
 	}
 }

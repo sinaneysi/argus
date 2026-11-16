@@ -172,13 +172,24 @@ describe("task page", () => {
         args: [{ name: "environment_scope", value: "develop" }, { name: "key", value: "PAYMENT_KEY" }, { name: "value_ref", value: "NEW_PAYMENT_KEY", input: true }] },
       { text: "start the develop pipeline", mode: "operator", targets: ["group/app"] },
       { text: "edit the unit by hand", mode: "WRITE", targets: ["web-1"], capabilityError: "no capability: a person does this step" }] };
-    const a = { ...task.agent, finished: false, planVersion: 3, planSha256: "0123456789abcdef".repeat(4), plan, spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false } };
+    const a = { ...task.agent, finished: false, planVersion: 3, planSha256: "0123456789abcdef".repeat(4), plan,
+      spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false, env: { model: "develop", boardOk: true, board: "board label env:stage", matters: true } } };
     answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     for (const w of ["gitlab.ci-variable.set", "<dt class=\"mono\">value_ref</dt>", "NEW_PAYMENT_KEY", "entered at approval", "for the operator", "Argus does not run this step: no capability",
-      "v3 · ", ">0123456789ab<", "Pinned to plan v3 (0123456789ab)"]) expect(h).toContain(w);
+      "v3 · ", ">0123456789ab<", "Pinned to plan v3 (0123456789ab)", "from the model&#x27;s classification;", "board label env:stage"]) expect(h).toContain(w);
+    expect(h).not.toContain("not confirmed by the board");
     expect(h.match(/entered at approval/g)?.length).toBe(1);
+  });
+  it("says when the board does not confirm the model's environment, and that nothing executes", async () => {
+    const a = { ...task.agent, finished: false, spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false,
+      env: { model: "develop", boardOk: false, board: "the board label env:production disagrees with the develop classification", matters: true } } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["not confirmed by the board: the board label env:production disagrees", "The WRITE steps are reported for a person; nothing executes.", 'class="pill warn">develop<'])
+      expect(h).toContain(w);
   });
   it("names every action state and step mode in words", async () => {
     const { actionState, stepMode, stepStatusTone } = await import("@/components/Work");

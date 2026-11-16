@@ -31,6 +31,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -59,7 +60,12 @@ type AgentOptions struct {
 	ActionsDir  string               // "": no executor, Spin up never takes the execute path
 	ActionsMode string               // ARGUS_ACTIONS_MODE (off, dry-run, on): off keeps every plan on today's paths
 	Registry    *capability.Registry // the capabilities offered, with actd's allow-lists; nil: none (no step keeps one)
-	ActTO       time.Duration        // an action without a result after this fails (default 10 min)
+	// DevelopLabels: ARGUS_ACT_DEVELOP_LABELS, the board labels that mark a stage task (nil: the default); a
+	// write-tier capability executes only with one of them and the develop classification
+	DevelopLabels []string
+	// CatalogueDetail: ARGUS_ACT_CATALOGUE_DETAIL; "aliases" gives the model aliases for the allow-list entries
+	CatalogueDetail string
+	ActTO           time.Duration // an action without a result after this fails (default 10 min)
 }
 
 const (
@@ -519,28 +525,33 @@ func (r *run) boardColumns() []any {
 
 // readOut is a result or meta file: the JSON object, {"_error": ...} when it is not one, nil when missing.
 func readOut(path string) map[string]any {
+	m, _ := readOutBytes(path)
+	return m
+}
+
+// readOutBytes is readOut and the bytes it decoded (nil when the file is missing, too large or not an object).
+func readOutBytes(path string) (map[string]any, []byte) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer f.Close()
 	if fi, err := f.Stat(); err != nil || !fi.Mode().IsRegular() {
-		return nil
+		return nil, nil
 	}
-	b := make([]byte, agentMaxOut+1)
-	n, _ := f.Read(b)
-	if n > agentMaxOut {
-		return map[string]any{"_error": "output too large"}
+	b, _ := io.ReadAll(io.LimitReader(f, agentMaxOut+1))
+	if len(b) > agentMaxOut {
+		return map[string]any{"_error": "output too large"}, nil
 	}
 	var v any
-	if json.Unmarshal(b[:n], &v) != nil {
-		return map[string]any{"_error": "output is not valid JSON"}
+	if json.Unmarshal(b, &v) != nil {
+		return map[string]any{"_error": "output is not valid JSON"}, nil
 	}
 	m, ok := v.(map[string]any)
 	if !ok {
-		return map[string]any{"_error": "output is not a JSON object"}
+		return map[string]any{"_error": "output is not a JSON object"}, nil
 	}
-	return m
+	return m, b
 }
 
 func (r *run) taskIDOf(key string) any {
@@ -602,7 +613,7 @@ func (r *run) agentIngest() {
 			continue
 		}
 		cost := f64(meta["cost_usd"])
-		d := readOut(base + ".json")
+		d, outBytes := readOutBytes(base + ".json") // one read: the bytes checked are the bytes validated
 		bad := d == nil || d["_error"] != nil || len(d) == 0
 		var me string
 		var limit bool
@@ -626,13 +637,11 @@ func (r *run) agentIngest() {
 				r.alog(key, "failed", "Claude usage limit reached: "+strings.TrimSpace(strings.TrimPrefix(me, agentLimitPrefix))+tail)
 				continue
 			}
-			plan, err := validatePlanWith(d, a.Registry)
-			if err == nil {
+			plan, err := validatePlanAliased(d, a.Registry, r.catalogueAliases())
+			if err == nil && outBytes != nil {
 				// one reading for the page, the hash and actd: valid UTF-8, no duplicate keys, integers within ±2^53
-				if b, rerr := os.ReadFile(base + ".json"); rerr == nil {
-					if serr := capability.StrictJSON(b); serr != nil {
-						plan, err = nil, serr
-					}
+				if serr := capability.StrictJSON(outBytes); serr != nil {
+					plan, err = nil, serr
 				}
 			}
 			if me != "" {
@@ -793,28 +802,54 @@ func hasWrite(plan map[string]any) bool {
 }
 
 // spinUp is what Spin up agent does with a plan while the executor is off.
-func spinUp(plan map[string]any) (string, string) { return spinUpMode(plan, "off") }
+func spinUp(plan map[string]any) (string, string) { return spinUpMode(plan, "off", false) }
 
-// spin is spinUpMode with this installation's executor mode ("off" without an actions folder).
-func (r *run) spin(plan map[string]any) (string, string) {
+// spin is spinUpMode with this installation's executor mode ("off" without an actions folder) and the task's board
+// labels as the evidence of the stage environment.
+func (r *run) spin(plan map[string]any, key string) (string, string) {
 	mode := "off"
 	if a := r.o.Agent; a != nil && a.ActionsDir != "" && a.ActionsMode != "" {
 		mode = a.ActionsMode
 	}
-	return spinUpMode(plan, mode)
+	ok, _ := r.stageEvidence(key)
+	return spinUpMode(plan, mode, ok)
+}
+
+// taskLabels are the board labels of the task with this agent key.
+func (r *run) taskLabels(key string) []string {
+	id := r.taskIDOf(key)
+	if id == nil {
+		return nil
+	}
+	t := r.one(`SELECT labels FROM tasks WHERE id=?`, id)
+	if t == nil {
+		return nil
+	}
+	return capability.LabelsJSON(t.s("labels"))
+}
+
+// stageEvidence is whether the task's board labels say stage (ADR-0022 PR 5 review): the model's classification
+// alone never lets a write-tier capability execute.
+func (r *run) stageEvidence(key string) (bool, string) {
+	var dev []string
+	if r.o.Agent != nil {
+		dev = r.o.Agent.DevelopLabels
+	}
+	return capability.StageEvidence(r.taskLabels(key), dev)
 }
 
 // spinUpMode is what Spin up agent does with a plan: (path, label); path proposal | execute | write-report | run |
 // refused. execute (ADR-0022 D5): classification develop, ARGUS_ACTIONS_MODE not off, at least one capability step
-// and every WRITE step with a valid capability; actd runs the steps, then a read-only run reports them. release and
-// pre-release never take it: a proposal, or the write-report run, as before.
-func spinUpMode(plan map[string]any, mode string) (string, string) {
+// and every WRITE step with a valid capability; actd runs the steps, then a read-only run reports them. A plan with
+// WRITE steps executes only when the board's labels also say stage (stageOK); otherwise its WRITE steps are reported
+// for a person. release and pre-release never take it: a proposal, or the write-report run, as before.
+func spinUpMode(plan map[string]any, mode string, stageOK bool) (string, string) {
 	cl := asMap(plan["classification"])
 	env := orStr(cl["environment"])
 	if env == "release" || cl["kind"] == "production" {
 		return "proposal", "Write proposal for the operator"
 	}
-	if mode != "off" && mode != "" && env == "develop" && executable(plan) {
+	if mode != "off" && mode != "" && env == "develop" && executable(plan) && (stageOK || !hasWrite(plan)) {
 		return "execute", "Spin up agent: run the approved capability steps on develop, then a read-only report"
 	}
 	if hasWrite(plan) {
@@ -841,7 +876,7 @@ func (r *run) dispatchRun(row row, sc scoped) string {
 		r.commit()
 		return "run cap"
 	}
-	path, why := r.spin(plan)
+	path, why := r.spin(plan, key)
 	if path == "execute" {
 		return r.dispatchAct(row, plan, resume)
 	}
@@ -892,6 +927,13 @@ func validatePlan(d map[string]any) (map[string]any, error) { return validatePla
 // capability.Validate passes for the plan's classification (ADR-0022 D5); a step that names an unusable one keeps
 // capability "" and the reason (a WRITE step then takes today's write-report path).
 func validatePlanWith(d map[string]any, reg *capability.Registry) (map[string]any, error) {
+	return validatePlanAliased(d, reg, nil)
+}
+
+// validatePlanAliased is validatePlanWith for an intake that saw aliases of the allow-lists
+// (ARGUS_ACT_CATALOGUE_DETAIL=aliases): each step's arguments are mapped back to the configured values before
+// Validate, so the stored plan, its hash and actd see the real values.
+func validatePlanAliased(d map[string]any, reg *capability.Registry, al *capability.Aliases) (map[string]any, error) {
 	if d == nil || len(d) == 0 {
 		return nil, fmt.Errorf("no output")
 	}
@@ -921,7 +963,11 @@ func validatePlanWith(d map[string]any, reg *capability.Registry) (map[string]an
 		}
 		step := map[string]any{"n": i + 1, "text": sOf(s["text"], 2000), "mode": mode, "targets": strList(s["targets"], 10, 200)}
 		if name := orStr(s["capability"]); name != "" || mode == "WRITE" {
-			args, why := checkCapability(reg, name, s["args"], mode, capability.Env(env))
+			raw := s["args"]
+			if m, ok := raw.(map[string]any); ok {
+				raw = al.Resolve(m)
+			}
+			args, why := checkCapability(reg, name, raw, mode, capability.Env(env))
 			if why == "" {
 				step["capability"], step["args"] = name, map[string]any(args)
 			} else {
@@ -1348,7 +1394,7 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		if len(r.unanswered(plan, key)) > 0 {
 			panic(refused("answer the blocking questions first (Save answers & re-plan)"))
 		}
-		path, why := r.spin(plan)
+		path, why := r.spin(plan, key)
 		if path == "refused" {
 			panic(refused(why))
 		}

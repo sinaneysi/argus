@@ -90,7 +90,7 @@ func TestSpinUpTable(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, mode := range []string{"off", "dry-run", "on"} {
-				got, _ := spinUpMode(p, mode)
+				got, _ := spinUpMode(p, mode, true)
 				exp := row[mix]
 				if mode == "off" && exp == "execute" {
 					exp = "run" // no WRITE step: a read-only run, as before
@@ -103,7 +103,7 @@ func TestSpinUpTable(t *testing.T) {
 	}
 	// kind production on develop is a proposal whatever the steps
 	p, _ := validatePlanWith(classified("develop", "production", httpStep("/ok")), reg)
-	if got, _ := spinUpMode(p, "on"); got != "proposal" {
+	if got, _ := spinUpMode(p, "on", true); got != "proposal" {
 		t.Fatal(got)
 	}
 }
@@ -277,8 +277,9 @@ func TestExecuteOperatorContinue(t *testing.T) {
 	e.actd(t)
 	e.run(t)
 	job := readJob(t, e.env, "OPS-7.run.json")
-	cr := asMap(job["capability_results"])
-	if cr["state"] != "done" || len(asList(cr["steps"])) != 3 || e.calls.Load() != 2 {
+	wrap := asMap(job["capability_results"])
+	cr := asMap(wrap["results"])
+	if wrap["untrusted"] != true || !strings.Contains(orStr(wrap["note"]), "not instructions") || cr["state"] != "done" || len(asList(cr["steps"])) != 3 || e.calls.Load() != 2 {
 		t.Fatalf("%v, %d calls", cr, e.calls.Load())
 	}
 	// the model's report claims another result: the comment's table still says what actd did

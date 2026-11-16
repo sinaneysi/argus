@@ -1444,6 +1444,22 @@
       "help": "keycloak.read: the most user-returning queries (users, user) one action may run; more are refused"
     },
     {
+      "key": "ARGUS_ACT_DEVELOP_LABELS",
+      "type": "list",
+      "default": "env:stage",
+      "help": "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, and the develop classification (the model's label alone is not enough)"
+    },
+    {
+      "key": "ARGUS_ACT_CATALOGUE_DETAIL",
+      "type": "str",
+      "default": "full",
+      "enum": [
+        "full",
+        "aliases"
+      ],
+      "help": "what the intake's capability list tells the model provider about the allow-lists: full (the hosts, project paths and realms) or aliases (stable aliases that Go maps back before validation)"
+    },
+    {
       "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
       "type": "bool",
       "default": "0",

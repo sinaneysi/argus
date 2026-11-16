@@ -22,6 +22,9 @@ const approvalKeyHelp = `usage: argus approval-key [-file F] init     create the
        argus approval-key [-file F] trust-actd   pin actd's sealing public key (PEM on stdin); the api seals the secret
          inputs of an approval only to the pinned key:
          docker compose exec -T actd /app/argus actd seal-key public | docker compose exec -T api /app/argus approval-key trust-actd
+       argus approval-key [-file F] trust-actd-status   pin actd's status public key (PEM on stdin); Settings shows
+         actd's heartbeat as verified only when its signature checks with the pinned key:
+         docker compose exec -T actd /app/argus actd status-key public | docker compose exec -T api /app/argus approval-key trust-actd-status
 `
 
 func runApprovalKey(args []string, stdout, stderr io.Writer) int {
@@ -65,6 +68,19 @@ func runApprovalKeyIO(args []string, stdin io.Reader, stdout, stderr io.Writer) 
 			return 1
 		}
 		fmt.Fprintf(stdout, "pinned actd's sealing key %s (compare with argus actd seal-key show)\n", capability.SealFingerprint(p))
+		return 0
+	case "trust-actd-status":
+		b, err := io.ReadAll(io.LimitReader(stdin, 4097))
+		if err != nil {
+			fmt.Fprintln(stderr, "argus approval-key: read stdin:", err)
+			return 1
+		}
+		p, err := approvalkey.TrustActdStatus(dir, b)
+		if err != nil {
+			fmt.Fprintln(stderr, "argus approval-key:", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "pinned actd's status key %s (compare with argus actd status-key show)\n", capability.KeyFingerprint(p))
 		return 0
 	default:
 		fmt.Fprint(stderr, approvalKeyHelp)

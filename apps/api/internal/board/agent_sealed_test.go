@@ -50,6 +50,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 	t.Cleanup(d.Close)
 	e.ex = d
 
+	e.exec(t, `UPDATE tasks SET labels='["ops","env:stage"]' WHERE id=7`) // the board says stage too (PR 5 review)
 	e.run(t)
 	set := map[string]any{"text": "rotate API_TOKEN", "mode": "WRITE", "capability": capability.GitLabVarSet,
 		"args": map[string]any{"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "value_ref": "input:NEW_TOKEN"}}
@@ -88,7 +89,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 		t.Fatal("not set:", v, ok)
 	}
 	job := readJob(t, e.env, "OPS-7.run.json")
-	if asMap(job["capability_results"])["state"] != "done" {
+	if cr := asMap(job["capability_results"]); cr["untrusted"] != true || asMap(cr["results"])["state"] != "done" {
 		t.Fatal(job["capability_results"])
 	}
 	e.out(t, "OPS-7", "run", map[string]any{"status": "done", "summary": "Rotated."}, map[string]any{"cost_usd": 0.1, "is_error": false})

@@ -36,7 +36,7 @@ func TestAgentApprovalSigned(t *testing.T) {
 	if len(sha) != 64 {
 		t.Fatal(sha)
 	}
-	if path, _ := agentSpinUp(py.AsMap(agentJSON(plan, "null"))); path != "execute" {
+	if path, _ := agentSpinUp(py.AsMap(agentJSON(plan, "null")), "gl-4"); path != "execute" {
 		t.Fatal(path)
 	}
 	// an executable plan needs the hash the page showed, and the stored plan's hash
@@ -186,7 +186,7 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 		`{"n": 1, "text": "rotate", "mode": "WRITE", "capability": "gitlab.ci-variable.set", "args": {"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "value_ref": "input:NEW_TOKEN"}},` +
 		`{"n": 2, "text": "check", "mode": "read-only", "capability": "gitlab.ci-variable.get", "args": {"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "matches": "input:NEW_TOKEN"}}]}`
 	e.board.Exec(`INSERT INTO agent_tasks (key, state, plan_version, plan) VALUES ('gl-5', 'ready', 1, ?)`, plan)
-	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker) VALUES (5, 't', 'todo', 1, 1, 0, 'gitlab')`)
+	e.board.Exec(`INSERT INTO tasks (id, title, status, created_at, updated_at, gone, tracker, labels) VALUES (5, 't', 'todo', 1, 1, 0, 'gitlab', '["env:stage"]')`)
 	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	sha := agentPlanSHA(agentRow("gl-5"))
 	id := capability.ActionID("gl-5", 1, sha)

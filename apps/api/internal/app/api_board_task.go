@@ -367,7 +367,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 	}
 	if admin {
 		okWrite, whyW := JiraCanWrite(sess.Username)
-		path, spin := agentSpinUp(plan)
+		path, spin := agentSpinUp(plan, key)
 		can := In(stateS, "ready", "done", "failed", "blocked", "stopped") && py.Truthy(plan) && !blocked && okWrite && path != "refused"
 		reason := ""
 		if !can {
@@ -396,7 +396,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		}
 		// the secret inputs of the capability steps: one write-only field each, sealed to actd at approval
 		inputs := []string{}
-		if agentExecutes(plan) {
+		if agentExecutes(plan, key) {
 			inputs = agentInputNames(agentPlanInputs(a))
 			if len(inputs) > 0 && can {
 				if _, err := agentSealKey(); err != nil {
@@ -408,7 +408,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 			inputs = []string{}
 		}
 		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal",
-			"inputs": inputs}
+			"inputs": inputs, "env": apiSpinEnv(plan, key)}
 	}
 	out["planSha256"] = agentPlanSHA(a)
 	if act := apiAgentAction(a, plan, admin); act != nil {
@@ -668,4 +668,14 @@ func apiStepArgs(v any) []map[string]any {
 		out = append(out, map[string]any{"name": k, "value": py.Head(val, 300)})
 	}
 	return out
+}
+
+// apiSpinEnv is the classification on the approval and where it comes from (ADR-0022 PR 5 review): the model's
+// label, and whether the task's board labels confirm stage. A write-tier capability executes only with both.
+func apiSpinEnv(plan *py.OMap, key string) map[string]any {
+	cl := py.AsMap(py.Or(plan.Get("classification"), py.NewOMap()))
+	env := py.OrS(cl.Get("environment"), "")
+	ok, why := agentStageEvidence(key)
+	matters := env == "develop" && agentHasWrite(plan) && strings.TrimSpace(ACTIONS_MODE) != "" && ACTIONS_MODE != "off"
+	return map[string]any{"model": env, "boardOk": ok, "board": why, "matters": matters}
 }

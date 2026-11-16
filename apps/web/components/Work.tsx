@@ -4,7 +4,7 @@ import { EnvPill, Pill } from "./Pills";
 import { Segs, tone } from "./Section";
 import { agentAct, agentChat, agentChecked, agentContinue, agentRollback, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
 import { full, iso } from "@/lib/format";
-import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, PlanStep, QaMsg, Seg, SecretForm, Secrets, TaskPage } from "@/lib/types";
+import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, PlanStep, QaMsg, Seg, SecretForm, Secrets, SpinEnv, TaskPage } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
 
@@ -198,9 +198,26 @@ export function Progress({ p }: { p: NonNullable<Agent["progress"]> }) {
   );
 }
 
+/** Where the classification comes from: the model labels the plan; the board's labels must agree before a write runs. */
+export function EnvSource({ e }: { e?: SpinEnv }) {
+  if (!e || !e.model) return null;
+  const warn = e.matters && !e.boardOk;
+  return (
+    <p className="meta-line"><span>Environment</span><Pill tone={warn ? "warn" : "neutral"}>{e.model}</Pill><span>from the model&apos;s classification;</span>
+      <span>{e.boardOk ? e.board : `not confirmed by the board: ${e.board}`}</span>
+      {warn ? <span>The WRITE steps are reported for a person; nothing executes.</span> : null}</p>
+  );
+}
+
 export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
   const s = a.spin;
   if (!s) return <p className="muted small">{a.chatOn ? "Admins spin up the agent." : "Admins answer, instruct and spin up the agent."}</p>;
+  return <><EnvSource e={s.env} /><SpinForm a={a} csrf={csrf} ret={ret} /></>;
+}
+
+function SpinForm({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
+  const s = a.spin;
+  if (!s) return null;
   if (!s.can) return <div className="actionbar"><Button  disabled title={s.reason}>{s.label}</Button>{s.reason ? <span className="muted small">{s.reason}</span> : null}</div>;
   const inputs = s.inputs ?? [];
   if (inputs.length) {

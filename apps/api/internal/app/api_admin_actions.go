@@ -6,11 +6,14 @@ package app
 // shared volume, which holds no secret; only its listed fields reach the page.
 
 import (
+	"crypto/ed25519"
+	"errors"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/sinaneysi/argus/internal/actd"
+	"github.com/sinaneysi/argus/internal/approvalkey"
 	"github.com/sinaneysi/argus/internal/auth"
 	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
@@ -35,11 +38,27 @@ var actionsAddressKeys = [][2]string{
 	{"ARGUS_ACT_KEYCLOAK_URL", "Identity provider address"},
 }
 
+// actdStatusPub is actd's status public key as the operator pinned it (tests replace it); an error when none is.
+var actdStatusPub = func() (ed25519.PublicKey, error) {
+	pub, err := approvalkey.LoadActdStatus(APPROVAL_KEY_DIR)
+	if err != nil {
+		return nil, err
+	}
+	if pub == nil {
+		return nil, errors.New("no status key of actd is pinned (argus approval-key trust-actd-status)")
+	}
+	return pub, nil
+}
+
 // actionsSetting reads an executor key of the configuration (tests replace it).
 var actionsSetting = func(k string) string { return env(k, "") }
 
 // ActionsStopped reports the admin switch "Stop all actions".
-func ActionsStopped() bool { return auth.Setting(actd.StoppedKey) == "1" }
+// It reads the switch as actd does: any value other than empty or "0" is stopped.
+func ActionsStopped() bool {
+	v := strings.TrimSpace(auth.Setting(actd.StoppedKey))
+	return v != "" && v != "0"
+}
 
 func splitCSV(s string) []string {
 	out := []string{}
@@ -82,15 +101,31 @@ func apiActdHeartbeat(mode string) map[string]any {
 		return map[string]any{"seen": false, "kind": kind, "text": "Not running", "detail": detail, "capabilities": []string{}}
 	}
 	age := NowInt() - st.TS
+	// the worker can write the shared volume: a status counts only when actd's signature checks with the key the
+	// operator pinned in the api's own folder, and its time is fresh (ADR-0022 PR 5 review)
+	pub, perr := actdStatusPub()
+	verr := perr
+	if verr == nil {
+		verr = actd.VerifyStatus(st, pub)
+	}
+	if verr == nil && (age > actdHeartbeatStale || age < -300) {
+		verr = errors.New("the signed status is " + If(age < 0, "dated in the future", "older than "+I2S(actdHeartbeatStale)+" seconds"))
+	}
+	if verr != nil {
+		kind := "warn"
+		if mode != "off" {
+			kind = "fail"
+		}
+		return map[string]any{"seen": false, "verified": false, "kind": kind, "text": "Not verified", "capabilities": []string{},
+			"detail": "actd's status cannot be trusted: " + py.Head(verr.Error(), 200) + ". Nothing it claims is shown."}
+	}
 	if age < 0 {
 		age = 0
 	}
-	kind, text := "ok", "Alive"
+	kind, text := "ok", "Verified"
 	switch {
-	case age > actdHeartbeatStale:
-		kind, text = "fail", "No heartbeat"
 	case age > actdHeartbeatOK:
-		kind, text = "warn", "Late"
+		kind, text = "warn", "Verified, late"
 	}
 	if !st.Chain.OK {
 		kind, text = "fail", "Chain broken"
@@ -101,7 +136,7 @@ func apiActdHeartbeat(mode string) map[string]any {
 	if !st.Chain.OK {
 		chain = py.Head(st.Chain.Error, 200)
 	}
-	return map[string]any{"seen": true, "kind": kind, "text": text, "at": st.TS, "mode": st.Mode, "version": st.Version, "chain": chain,
+	return map[string]any{"seen": true, "verified": true, "kind": kind, "text": text, "at": st.TS, "mode": st.Mode, "version": st.Version, "chain": chain,
 		"chainOk": st.Chain.OK, "capabilities": caps, "backupsKept": st.BackupsKept, "approvalKey": st.ApprovalKey != "", "sealKey": st.SealKey != ""}
 }
 

@@ -150,7 +150,11 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 			SealedSHA256: capability.SealedSHA256(nil)})
 		f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=?, approval_sig=? WHERE key=?`, sha, sig, key)
 	}
-	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada"}
+	// the board's labels say stage (ADR-0022 PR 5 review): in board.db and in the request
+	f.exec(f.board, `INSERT INTO tasks (jira_key, title, created_at, updated_at, labels) VALUES (?, 't', 1, 1, '["ops","env:stage"]')
+		ON CONFLICT(jira_key) DO UPDATE SET labels=excluded.labels`, key)
+	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada",
+		EnvLabels: []string{"ops", "env:stage"}}
 	for _, s := range steps {
 		n, _ := capability.AsInt(s["n"])
 		st := ReqStep{N: n, Mode: s["mode"].(string)}

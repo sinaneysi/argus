@@ -99,6 +99,8 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 | `ARGUS_ACT_KEYCLOAK_CLIENT_ID` | str | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; the confidential client (its secret is `argus-act/secrets/keycloak/client.enc`) |
 | `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | str | empty (the only realm on the list) | required with several realms (then normally `master`); the realm the client lives in. Its token endpoint is the only POST allowed, and it always gets the token request, whatever realm a query reads |
 | `ARGUS_ACT_KEYCLOAK_MAX_READS` | int | `5` | 1..50; the most user-returning queries (`users`, `user`) one action may run; more are refused (rule 6, `limit`) |
+| `ARGUS_ACT_DEVELOP_LABELS` | list | `env:stage` | the board labels that mark a stage task; a WRITE step executes only with one of them, no other `env:` label and the classification `develop` (read by the worker, the api and actd) |
+| `ARGUS_ACT_CATALOGUE_DETAIL` | `full` \| `aliases` | `full` | `full`: the intake's capability list gives the model provider the allow-list entries (hosts, project paths, realms); `aliases`: stable aliases, mapped back by Go before validation |
 | `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
 
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
@@ -106,7 +108,9 @@ Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/
 (hash chain, `argus actd verify-audit`), `steps/` (stored step results), `keys/`, `secrets/`, `backups/`. The admin
 switch "Stop all actions" is `auth_settings` key `actions.stopped` (read before every step), set in Settings → Jira
 sync → Capability executor (`POST /api/v1/admin/actions`, admins, recent 2FA code, in the audit log). That card also
-shows the mode, the allow-lists and the target addresses read-only, and actd's heartbeat from `actd-status.json`.
+shows the mode, the allow-lists and the target addresses read-only, and actd's heartbeat from `actd-status.json`,
+as facts only when actd's signature (`argus-act/keys/status.key`) checks with the key pinned in the api's folder
+(`argus actd status-key public | argus approval-key trust-actd-status`, file `actd-status.pub`) and the status is fresh.
 With the mode not `off`, the intake's task file lists `capabilities` (the registry with its allow-lists).
 The executor key is only `argus-act/keys/act.key` (no environment variable: `argus.env` is shared by every service).
 `ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with

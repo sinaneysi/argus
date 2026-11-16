@@ -567,10 +567,13 @@ export type Agent = {
   progress?: { label: string; cur: number; bar: boolean; now: Seg[]; meta: Seg[][]; fix: boolean; steps?: string[] };
   result: AgentResult | null; plan?: AgentPlan; questions: { id: string; text: string; blocking: boolean; answer: string }[]; emptyDesc: boolean; running: boolean;
   inputs?: { instructions: string; postJira: boolean; tracker: string; paused: boolean }; pause?: Seg;
-  spin?: { can: boolean; label: string; reason: string; primary: boolean; proposal: boolean; inputs?: string[] }; chat: Chat | null; secrets: Secrets | null;
+  spin?: { can: boolean; label: string; reason: string; primary: boolean; proposal: boolean; inputs?: string[]; env?: SpinEnv }; chat: Chat | null; secrets: Secrets | null;
   planSha256?: string; action?: AgentAction;
   log: { at: number; kind: string; text: string }[];
 };
+/** The classification on the approval and its source: the model's label, and whether the board's labels confirm
+ * stage (a write-tier capability executes only with both). matters: the plan would execute WRITE steps. */
+export type SpinEnv = { model: string; boardOk: boolean; board: string; matters: boolean };
 /** The task's last capability action (ADR-0022): actd's step results, not the model's report. */
 export type AgentAction = {
   id: string; state: string;
@@ -732,7 +735,7 @@ export type AdminActions = {
   mode: string; stopped: boolean;
   lists: { key: string; label: string; values: string[] }[];
   addresses: { key: string; label: string; value: string }[];
-  heartbeat: { seen: boolean; kind: "ok" | "warn" | "fail" | "neutral"; text: string; detail?: string; at?: number; mode?: string; version?: string; chain?: string; chainOk?: boolean;
+  heartbeat: { seen: boolean; verified?: boolean; kind: "ok" | "warn" | "fail" | "neutral"; text: string; detail?: string; at?: number; mode?: string; version?: string; chain?: string; chainOk?: boolean;
     capabilities: string[]; backupsKept?: number; approvalKey?: boolean; sealKey?: boolean };
 };
 

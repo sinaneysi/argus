@@ -66,9 +66,9 @@ describe("Jira sync", () => {
     const actions = { mode: "dry-run", stopped: false,
       lists: [{ key: "ARGUS_ACT_HTTP_HOSTS", label: "http.check hosts", values: ["health.example.com"] }, { key: "ARGUS_ACT_GITLAB_PROJECTS", label: "GitLab projects", values: [] }],
       addresses: [{ key: "ARGUS_ACT_GITLAB_URL", label: "GitLab address", value: "" }],
-      heartbeat: { seen: true, kind: "ok", text: "Alive", at: 1763300000, mode: "dry-run", chain: "OK, 4 records", chainOk: true, capabilities: ["http.check"], backupsKept: 0, approvalKey: true, sealKey: true } };
+      heartbeat: { seen: true, verified: true, kind: "ok", text: "Verified", at: 1763300000, mode: "dry-run", chain: "OK, 4 records", chainOk: true, capabilities: ["http.check"], backupsKept: 0, approvalKey: true, sealKey: true } };
     const out = await render({ ...board, actions });
-    for (const w of ['id="actions"', "Capability executor", "dry-run", "Dry run: actd only plans", "Alive", "OK, 4 records", "health.example.com", "empty: not offered", "ARGUS_ACT_GITLAB_PROJECTS",
+    for (const w of ['id="actions"', "Capability executor", "dry-run", "Dry run: actd only plans", "Verified", "OK, 4 records", "health.example.com", "empty: not offered", "ARGUS_ACT_GITLAB_PROJECTS",
       "Stop all actions…", 'name="_to" value="actions"', 'name="stopped" value="1"', "Needs a recent 2FA code"]) expect(out).toContain(w);
     const card = out.slice(out.indexOf('id="actions"'), out.indexOf("</section>", out.indexOf('id="actions"')));
     expect(card.match(/<(input|select|textarea)[^>]*>/g)?.filter((x) => !x.includes('type="hidden"')) ?? []).toEqual([]); // read-only but the switch
@@ -76,6 +76,11 @@ describe("Jira sync", () => {
     const stopped = await render({ ...board, actions: { ...actions, stopped: true } });
     for (const w of ["Stopped", "All actions are stopped", "Resume actions", 'name="stopped" value="0"']) expect(stopped).toContain(w);
     expect(stopped).not.toContain("Stop all actions…");
+    const unverified = await render({ ...board, actions: { ...actions, heartbeat: { seen: false, verified: false, kind: "fail", text: "Not verified", capabilities: [],
+      detail: "actd's status cannot be trusted: the status signature does not verify. Nothing it claims is shown." } } });
+    const uc = unverified.slice(unverified.indexOf('id="actions"'), unverified.indexOf("</section>", unverified.indexOf('id="actions"')));
+    for (const w of ["Not verified", "cannot be trusted"]) expect(uc).toContain(w);
+    for (const w of ["OK, 4 records", "Audit chain", "Backups kept", "approval key stored"]) expect(uc).not.toContain(w);
   });
   it("is for admins", async () => {
     answers["/api/v1/admin/board"] = { status: 403, data: { error: "Admins only" } };
