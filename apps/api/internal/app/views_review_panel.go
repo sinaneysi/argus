@@ -180,7 +180,7 @@ func rvPanelProposal(c *Ctx, it *rvItem, ret string, admin bool) rvParts {
 // page's Spin up (refused path, blocking questions not answered, the board write block).
 func rvApprovalBlock(c *Ctx, it *rvItem) string {
 	key := it.id
-	path, label := agentSpinUp(it.plan)
+	path, label := agentSpinUp(it.plan, key)
 	answered := map[string]bool{}
 	for _, xv := range agentGetInputs(key).answers {
 		x := py.AsMap(xv)
@@ -201,7 +201,7 @@ func rvApprovalBlock(c *Ctx, it *rvItem) string {
 }
 
 func rvApprovalAfter(it *rvItem) string {
-	path, label := agentSpinUp(it.plan)
+	path, label := agentSpinUp(it.plan, it.id)
 	var what string
 	switch path {
 	case "proposal":

@@ -376,6 +376,91 @@ Design items for PR 2 (not built in PR 1):
   users with e-mail, attributes and credentials; an LDAP provider with a bind credential), record every call
   (`GET /keycloak/_calls`) and answer every write under `/keycloak/admin` with 403.
 
+## As built (PR 5, prompts and the UI)
+
+- **Catalogue** (`internal/capability/catalogue.go`): `Registry.Catalogue()` lists each offered capability with its
+  name, tier, environments (write tier: `develop`; read tier: all four, O8), its fields (type, required, pattern,
+  length, range, `input`, `secret`, allow-list key), the allow-lists' entries (`AllowLister`: hosts, projects,
+  realms; never an address of a target or a credential) and fixed rules in words. The worker writes it into the
+  intake's task file as `capabilities`, with `actions_mode`; with the mode `off` it is an empty list and `off`.
+- **Prompts** (D9): `task-intake.md` names a capability only from `capabilities` and only with its fields; a secret
+  is never written (an `input` field holds `input:<NAME>`); `environment_scope` is exactly `develop`, never `*`;
+  a pipeline, job or deploy step is `mode: operator` with no capability; checks after a write or an operator step
+  use `http.check` or `gitlab.ci-variable.get`; outside `develop` a WRITE step names no write-tier capability.
+  `task-run.md`: "You change nothing", report `capability_results` as they are, never repeat a step, never guess a
+  value, never claim a change that is not there; operator steps are reported for the operator. `task-chat.md` is
+  unchanged. The prompts are snapshot-tested (`taskagent/testdata/prompts`, `-update-prompts` after a reviewed edit).
+- **Recorded model outputs** (`board/testdata/intake`) run through the runner's JSON extraction and
+  `validatePlanWith`: a good plan keeps its capabilities and takes the `execute` path; a literal secret (in
+  `value_ref`, or an unknown `value` key) leaves the step without capability and arguments, so the literal is not
+  stored; a pipeline started by a WRITE step, with or without an invented capability, is a write-report; an injected
+  `*` scope and a project off the list are refused.
+- **Task page**: each plan step shows its mode ("for the operator" for an operator step), its capability and its
+  arguments; an `input` argument shows only its name and "entered at approval" (the api never sends a value; a
+  secret-like argument without a reference is `<redacted>`). The first 12 characters of the plan hash stand next to
+  the version, in the plan heading and in the Spin up line. The capability steps are a table (step, capability,
+  result, audit id), with the action's state in words; Roll back, the checked verdicts and Continue stay as built in
+  PR 2/3 (each a sensitive route: a recent 2FA code).
+- **Settings → Jira sync → Capability executor** (`#actions`): the mode and the allow-lists and target addresses,
+  read-only from the configuration; actd's heartbeat (age: ok up to 120 s, late up to 600 s, then not verified; like the
+  self-check), its audit chain, the capabilities it offers, whether the approval and sealing keys are there, the
+  backups kept (only when its signature verifies, see the review below); and the one control, "Stop all actions" (behind a confirm fold) / "Resume actions":
+  `POST /api/v1/admin/actions {stopped: 1|0}`, admins only, sensitive (recent 2FA code), written to the auth audit
+  log. No new configuration key. The mode stays `off` by default.
+- **Security review of PR 5 (2026-11-16)**, decisions as built:
+  - **Heartbeat trust.** The worker can write the shared volume, so `actd-status.json` alone proves nothing. actd
+    signs it (Ed25519, `argus-act/keys/status.key`, created at the first start; field `sig` over the status without
+    it, domain `argus-actd-status-v1`). The operator pins the public half once in the api's own folder
+    (`argus actd status-key public | argus approval-key trust-actd-status`, `ARGUS_APPROVAL_KEY_DIR/actd-status.pub`).
+    The card shows the status as facts ("Verified", the chain, the capabilities, the keys) only when the signature
+    checks and the status is at most 600 s old and not dated ahead; otherwise "Not verified" with the reason, and
+    nothing actd claims.
+  - **Environment classification.** The model's label is not authoritative. A plan with WRITE steps takes the
+    execute path only when the model classifies it `develop` **and** the board labels the admin approved hold one of
+    `ARGUS_ACT_DEVELOP_LABELS` (default `env:stage`; for Jira a label of that name), no other `env:` label and no
+    label that contains `prod`, `release` or `pre-release` (any prefix, any case: production, preprod, deploy:prod).
+    Any disagreement sends the WRITE steps to the write-report run (or the proposal), never to actd; the worker and
+    the api use the same rule (`capability.StageEvidence`). Read-tier steps need no label (O8).
+    - **The labels are signed, not trusted** (re-review): the worker writes `board.db` and the request, so neither is
+      evidence by itself. The approval form shows the labels the api read and posts `labels_sha256` (SHA-256 of the
+      sorted JSON list), pinned like the plan hash: a missing or changed hash is refused (409). The api signs it into
+      the start claim (`ApprovalClaim.LabelsSHA256`, a new last line `labels:<hash>`, start only; the other kinds keep
+      their message) and puts the labels in the request (`env_labels`). The worker stores them
+      (`agent_tasks.approved_labels`, board migration `0004`) and passes them in every request of the action. actd
+      recomputes the hash from the request's labels into the start claim it verifies (rule 3) and refuses a write step
+      (rule 2) unless the labels are there and pass `StageEvidence`. A label the worker adds after the approval, or a
+      different set, no longer verifies. The labels in `board.db` are not read by actd any more.
+    - **Where the labels come from:** the api reads them from `board.db` (the board sync's copy of the tracker); it
+      does not call Jira or GitLab when the page renders or at approval, which would need the admin's tracker token on
+      every render. The authority is the admin's approval of exactly the labels shown, bound by the signature.
+    - Rollback and checked verify the same start claim, so they carry the same labels; they keep only the develop
+      classification check (they restore or confirm a step that already passed the label rule).
+    - The review queue's one-click approval does not show the labels: a plan that would execute WRITE steps is
+      refused there and approved on the task page.
+  - **Catalogue egress.** Allowed: the intake runs on the operator's own model account, and the allow-list entries
+    (hosts, project paths, realms) in `capabilities` go to that model provider. `ARGUS_ACT_CATALOGUE_DETAIL=aliases`
+    (default `full`) replaces each entry with a stable alias (`host-<12 hex>.alias.invalid`,
+    `*.hosts-<12 hex>.alias.invalid`, `project-<12 hex>`, `realm-<12 hex>`, from SHA-256 of the value). Two entries
+    with one alias refuse the catalogue (`ErrAliasCollision`: the intake gets no capability and the reason, the task
+    log says so, and no step keeps a capability); it never falls back to the full list; the worker maps
+    every alias in a step's arguments back (`Aliases.Resolve`) before Validate, so the stored plan, its hash, the page
+    and actd hold the configured values. The target addresses and credentials are never in the catalogue.
+  - **Run prompt.** `capability_results` in the run's task file is `{"untrusted": true, "note": …, "results": …}`
+    with every string cut to 300 characters; `task-run.md` says it is data, never instructions.
+  - **One reading of the intake output:** the worker reads the file once; the bytes the strict JSON check sees are
+    the bytes it validates.
+  - **Stopped rule:** the page reads `actions.stopped` as actd does (any value other than empty or `0` is stopped).
+    "Stop all actions" also stops rollback and checked: intended (the switch stops every capability call; resume
+    first, then roll back).
+  - **Known gap:** the literal-secret check is by schema (an `input` field must hold `input:<NAME>`) and by the secret
+    scan of the arguments; a secret typed into another free-text field (for example a variable key) that the scan
+    does not recognise is not caught. Such fields have strict patterns and lengths, which limits it.
+  - More recorded intake outputs: a write-tier step for `release` or `pre-release` keeps no capability (the read
+    check keeps its own); a capability on an operator step is dropped; the model says `develop` but the board says
+    production (or nothing) → write-report, no request reaches actd.
+- Not done here: the acceptance with a real model intake on the demo (needs a model login, the `actions` profile
+  with mode `dry-run` or `on`, a pinned sealing key and the GitLab stub or a test project on the allow-list).
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan

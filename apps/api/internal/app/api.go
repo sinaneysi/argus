@@ -274,7 +274,7 @@ func apiIsPost(path string) bool {
 		"/api/v1/board/agent/continue", "/api/v1/board/agent/rollback", "/api/v1/board/agent/checked",
 		"/api/v1/board/task/secret", "/api/v1/board/mxpreview", "/api/v1/fix/review", "/api/v1/ideas/act", "/api/v1/ideas/generate",
 		"/api/v1/proposals/act", "/api/v1/proposals/settings", "/api/v1/lessons/act", "/api/v1/lessons/settings",
-		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
+		"/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/actions", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
 		"/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move",
 		"/api/v1/admin/claude-token", "/api/v1/admin/claude-egress", "/api/v1/admin/kube", "/api/v1/admin/sources",
 		"/api/v1/admin/backup-targets", "/api/v1/admin/outline", "/api/v1/admin/gitlab-issues", "/api/v1/admin/writing-style",
@@ -397,7 +397,7 @@ func (h *reqCtx) apiPOST(path string) {
 		v, e = proposalsAPIPost(path, body, sess)
 	case "/api/v1/lessons/act", "/api/v1/lessons/settings":
 		v, e = lessonsAPIPost(path, body, sess)
-	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
+	case "/api/v1/admin/save", "/api/v1/admin/claude", "/api/v1/admin/modules", "/api/v1/admin/actions", "/api/v1/admin/users/act", "/api/v1/admin/users/matrix",
 		"/api/v1/admin/writing-style":
 		v, e = h.adminPost(path, body, sess)
 	case "/api/v1/admin/board", "/api/v1/admin/jira-hosts", "/api/v1/admin/jira-shared", "/api/v1/admin/agent", "/api/v1/admin/agent/fixer-move":

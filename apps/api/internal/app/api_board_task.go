@@ -5,14 +5,18 @@ package app
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
 var (
 	reSectionNote = regexp.MustCompile(`(?s)<p class="section-note">(.*?)</p>`)
 	reHostBox     = regexp.MustCompile(`name="host" value="([^"]*)"( checked)?`)
+	// apiSecretArgRe: argument names that hold a secret unless they carry an input reference
+	apiSecretArgRe = regexp.MustCompile(`(?i)(value|matches|secret|token|password|passwd|credential)`)
 )
 
 // apiFixer is boardFixerBlock as data: its notes, and the host choice when the task can be sent.
@@ -304,7 +308,14 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 			for _, x := range py.AsList(py.Or(s.Get("targets"), []any{})) {
 				tg = append(tg, py.Str(x))
 			}
-			steps = append(steps, map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg})
+			st := map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg}
+			if name := py.OrS(s.Get("capability"), ""); name != "" {
+				st["capability"], st["args"] = name, apiStepArgs(s.Get("args"))
+			}
+			if why := py.OrS(s.Get("capability_error"), ""); why != "" {
+				st["capabilityError"] = why
+			}
+			steps = append(steps, st)
 		}
 		env := ""
 		if v := cl.Get("environment"); v != "none" {
@@ -356,7 +367,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 	}
 	if admin {
 		okWrite, whyW := JiraCanWrite(sess.Username)
-		path, spin := agentSpinUp(plan)
+		path, spin := agentSpinUp(plan, key)
 		can := In(stateS, "ready", "done", "failed", "blocked", "stopped") && py.Truthy(plan) && !blocked && okWrite && path != "refused"
 		reason := ""
 		if !can {
@@ -385,7 +396,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		}
 		// the secret inputs of the capability steps: one write-only field each, sealed to actd at approval
 		inputs := []string{}
-		if agentExecutes(plan) {
+		if agentExecutes(plan, key) {
 			inputs = agentInputNames(agentPlanInputs(a))
 			if len(inputs) > 0 && can {
 				if _, err := agentSealKey(); err != nil {
@@ -397,7 +408,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 			inputs = []string{}
 		}
 		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal",
-			"inputs": inputs}
+			"inputs": inputs, "env": apiSpinEnv(plan, key)}
 	}
 	out["planSha256"] = agentPlanSHA(a)
 	if act := apiAgentAction(a, plan, admin); act != nil {
@@ -620,4 +631,52 @@ func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
 		out["continue"] = wait
 	}
 	return out
+}
+
+// apiStepArgs are a capability step's arguments for the plan view, in key order. A sealed input ("input:<NAME>") is
+// shown by its name only: the admin enters the value at approval, and it is never on the page.
+func apiStepArgs(v any) []map[string]any {
+	out := []map[string]any{}
+	m := py.AsMap(v)
+	if m == nil {
+		return out
+	}
+	keys := m.Keys()
+	sort.Strings(keys)
+	for _, k := range keys {
+		x := m.Get(k)
+		if s, ok := x.(string); ok && capability.InputRefRe.MatchString(s) {
+			out = append(out, map[string]any{"name": k, "value": strings.TrimPrefix(s, "input:"), "input": true})
+			continue
+		}
+		if apiSecretArgRe.MatchString(k) { // an input field without a reference: never shown (validation refuses it)
+			out = append(out, map[string]any{"name": k, "value": capability.Redacted})
+			continue
+		}
+		var val string
+		if b, ok := x.(bool); ok {
+			val = If(b, "true", "false")
+		} else if l, ok := x.([]any); ok {
+			parts := make([]string, 0, len(l))
+			for _, y := range l {
+				parts = append(parts, py.Str(y))
+			}
+			val = strings.Join(parts, ", ")
+		} else {
+			val = py.Str(x)
+		}
+		out = append(out, map[string]any{"name": k, "value": py.Head(val, 300)})
+	}
+	return out
+}
+
+// apiSpinEnv is the classification on the approval and where it comes from (ADR-0022 PR 5 review): the model's
+// label, and whether the task's board labels confirm stage. A write-tier capability executes only with both.
+func apiSpinEnv(plan *py.OMap, key string) map[string]any {
+	cl := py.AsMap(py.Or(plan.Get("classification"), py.NewOMap()))
+	env := py.OrS(cl.Get("environment"), "")
+	ok, why := agentStageEvidence(key)
+	matters := env == "develop" && agentHasWrite(plan) && strings.TrimSpace(ACTIONS_MODE) != "" && ACTIONS_MODE != "off"
+	labels, lsha := agentApprovalLabels(key)
+	return map[string]any{"model": env, "boardOk": ok, "board": why, "matters": matters, "labels": labels, "labelsSha256": lsha}
 }

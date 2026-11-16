@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
 	"flag"
 	"fmt"
 	"io"
@@ -31,6 +32,8 @@ const actdHelp = `usage: argus actd [-once] [-file F]
        argus actd approval-key [-file F] show
        argus actd seal-key [-file F] public     (actd's sealing public key, PEM, for the api's pin)
        argus actd seal-key [-file F] show       (its fingerprint)
+       argus actd status-key [-file F] public   (actd's status signing public key, PEM, for the api's pin)
+       argus actd status-key [-file F] show     (its fingerprint)
 
 actd           the capability executor (ADR-0022): reads action requests from ARGUS_STATE_DIR/actions/in, checks
                the fixed refusal rules before every step, runs the approved capability steps, appends one
@@ -47,6 +50,9 @@ seal-key       actd's X25519 sealing key (keys/act-x25519.key, created at the fi
                published to actions/actd.pub). The api seals the secret inputs of an approval to it, after the key is
                pinned once:
                docker compose exec -T actd /app/argus actd seal-key public | docker compose exec -T api /app/argus approval-key trust-actd
+status-key     actd's Ed25519 status key (keys/status.key, created at the first start). actd signs actions/actd-status.json
+               with it; Settings shows the heartbeat as verified only after the key is pinned once:
+               docker compose exec -T actd /app/argus actd status-key public | docker compose exec -T api /app/argus approval-key trust-actd-status
 `
 
 func runActd(args []string, stdout, stderr io.Writer) int {
@@ -104,6 +110,8 @@ func runActdIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return runActdApprovalKey(fs.Args(), actDir, stdin, stdout, stderr)
 	case "seal-key":
 		return runActdSealKey(fs.Args(), actDir, stdout, stderr)
+	case "status-key":
+		return runActdStatusKey(fs.Args(), actDir, stdout, stderr)
 	case "":
 	default:
 		fmt.Fprint(stderr, actdHelp)
@@ -192,6 +200,9 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 		if o.SealKey, err = actd.LoadSealKey(actDir, true); err != nil {
 			return o, fmt.Errorf("%s: %v", actd.SealKeyPath(actDir), err)
 		}
+		if o.StatusKey, err = actd.LoadStatusKey(actDir, true); err != nil {
+			return o, fmt.Errorf("%s: %v", actd.StatusKeyPath(actDir), err)
+		}
 		// the GitLab token is opened for each call, from argus-act only; the old values go to argus-act/backups
 		ro.GitLab.Token = func() (string, error) { return actd.OpenCredential(actDir, key, capability.GitLabCredential) }
 		// the identity provider's client secret, from argus-act only (keycloak.read)
@@ -203,6 +214,7 @@ func actdOptions(c *config.Config, mode capability.Mode, stderr io.Writer) (actd
 		return o, err
 	}
 	o.Registry = reg
+	o.DevelopLabels = capability.ParseDevelopLabels(c.Values["ARGUS_ACT_DEVELOP_LABELS"].Raw)
 	return o, nil
 }
 
@@ -341,4 +353,32 @@ func kcMaxReads(s string) int {
 		return 0
 	}
 	return n
+}
+
+func runActdStatusKey(args []string, actDir string, stdout, stderr io.Writer) int {
+	if len(args) != 1 || (args[0] != "public" && args[0] != "show") {
+		fmt.Fprint(stderr, actdHelp)
+		return 2
+	}
+	if err := actd.CheckActDir(actDir); err != nil {
+		fmt.Fprintln(stderr, "argus actd status-key:", err)
+		return 1
+	}
+	k, err := actd.LoadStatusKey(actDir, true)
+	if err != nil {
+		fmt.Fprintln(stderr, "argus actd status-key:", err)
+		return 1
+	}
+	pub := k.Public().(ed25519.PublicKey)
+	if args[0] == "show" {
+		fmt.Fprintln(stdout, capability.KeyFingerprint(pub))
+		return 0
+	}
+	b, err := capability.PublicKeyPEM(pub)
+	if err != nil {
+		fmt.Fprintln(stderr, "argus actd status-key:", err)
+		return 1
+	}
+	stdout.Write(b)
+	return 0
 }

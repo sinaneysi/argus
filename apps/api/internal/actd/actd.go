@@ -66,10 +66,14 @@ type Request struct {
 	Approver     string            `json:"approver"`
 	Steps        []ReqStep         `json:"steps"`
 	SealedInputs map[string]string `json:"sealed_inputs,omitempty"` // opened by a later capability; ciphertext only
-	Continue     *Signed           `json:"continue,omitempty"`      // agent-continue: the operator did step Continue.Step
-	Rollback     *Signed           `json:"rollback,omitempty"`      // agent-rollback: roll back step Rollback.Step
-	Stop         *Signed           `json:"stop,omitempty"`          // agent-stop: revoke the task's approvals signed before it
-	Checked      *Signed           `json:"checked,omitempty"`       // agent-checked: an admin checked step Checked.Step's target
+	// EnvLabels are the task's board labels the admin saw at approval; the api signed their hash into the start
+	// (ApprovalClaim.LabelsSHA256), so they verify only as approved. A write step is refused unless they are there,
+	// verify with the signature and say stage (ADR-0022 PR 5 review). null: none (a write step is refused).
+	EnvLabels []string `json:"env_labels"`
+	Continue  *Signed  `json:"continue,omitempty"` // agent-continue: the operator did step Continue.Step
+	Rollback  *Signed  `json:"rollback,omitempty"` // agent-rollback: roll back step Rollback.Step
+	Stop      *Signed  `json:"stop,omitempty"`     // agent-stop: revoke the task's approvals signed before it
+	Checked   *Signed  `json:"checked,omitempty"`  // agent-checked: an admin checked step Checked.Step's target
 }
 
 // Signed is an admin's signed continue or rollback (capability.ApprovalClaim of that kind, signed by the api).
@@ -128,6 +132,10 @@ type Options struct {
 	SealKey *ecdh.PrivateKey
 	// BackupDays is ARGUS_ACTIONS_BACKUP_DAYS (0: 30)
 	BackupDays int
+	// DevelopLabels is ARGUS_ACT_DEVELOP_LABELS: the board labels that mark a stage (develop) task; nil: the default
+	DevelopLabels []string
+	// StatusKey signs actd-status.json (keys/status.key); nil: the status is written unsigned
+	StatusKey ed25519.PrivateKey
 }
 
 // Daemon is one executor. New takes an exclusive lock, so two processes never run at once; Close releases it.
@@ -564,6 +572,14 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	return t, nil
 }
 
+// requestLabels is the hash of the request's board labels for the start claim; "" when it carries none.
+func requestLabels(req Request) string {
+	if req.EnvLabels == nil {
+		return ""
+	}
+	return capability.LabelsSHA256(req.EnvLabels)
+}
+
 // approver reads the user from auth.db: (role admin, not disabled).
 func (d *Daemon) approver(ctx context.Context, by string) (bool, bool, error) {
 	adb, err := openRO(d.o.AuthDB)
@@ -754,6 +770,16 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 			if (ok && cp.Tier() == capability.Write || s.Mode == "WRITE") && t.env != capability.Develop {
 				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write step runs only for develop, the task is %q", s.N, clip(string(t.env), 20)), true)
 			}
+			// the model's classification is not enough: the board labels the admin approved must say stage too. They
+			// are bound to the start signature (rule 3 below fails when the worker changed them after approval).
+			if ok && cp.Tier() == capability.Write || s.Mode == "WRITE" {
+				if req.EnvLabels == nil {
+					return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: the request carries no approved board labels (environment evidence)", s.N), true)
+				}
+				if okL, why := capability.StageEvidence(req.EnvLabels, d.o.DevelopLabels); !okL {
+					return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: %s", s.N, why), true)
+				}
+			}
 		}
 	}
 	if r := capability.CheckGate(d.gate(ctx)); r != nil {
@@ -767,6 +793,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	sealed := capability.SealedSHA256(req.SealedInputs)
 	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover, t.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+	t.approval.RequestLabels = requestLabels(req)
 	if req.Rollback != nil {
 		return d.rollback(ctx, req, t, c)
 	}
@@ -968,6 +995,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover, nt.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+			nt.approval.RequestLabels = requestLabels(req)
 			nt.approval.TTLFrom = t.approval.TTLFrom
 			t.approval = nt.approval
 		}

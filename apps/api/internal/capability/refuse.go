@@ -157,6 +157,7 @@ type Approval struct {
 	RequestSHA256   string
 	RequestApprover string
 	RequestSealed   string // SealedSHA256 of the request's sealed inputs
+	RequestLabels   string // LabelsSHA256 of the request's board labels; "" when the request carries none
 
 	PublicKey ed25519.PublicKey // the api's approval public key (argus-act/keys/approval.pub); nil: every step refused
 	// TTLFrom, when set, is the time the TTL counts from instead of ApprovedAt: a signed continue has its own TTL
@@ -170,7 +171,7 @@ func (a Approval) Claim() ApprovalClaim {
 		at = a.ApprovedAt.Unix()
 	}
 	return ApprovalClaim{Kind: SignStart, TaskKey: a.TaskKey, PlanVersion: a.ApprovedVersion, PlanSHA256: a.ApprovedSHA256,
-		Approver: a.ApprovedBy, At: at, SealedSHA256: a.RequestSealed}
+		Approver: a.ApprovedBy, At: at, SealedSHA256: a.RequestSealed, LabelsSHA256: a.RequestLabels}
 }
 
 func (a Approval) ttlFrom() time.Time {

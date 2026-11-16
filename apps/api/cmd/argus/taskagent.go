@@ -76,6 +76,8 @@ func agentBoardOptions(c *config.Config) *board.AgentOptions {
 		reg, rerr := capability.Default(registryOptions(c)) // no token and no backups here: the worker only validates
 		if rerr == nil {
 			o.ActionsDir, o.ActionsMode, o.Registry = actionsDir(c), string(mode), reg
+			o.DevelopLabels = capability.ParseDevelopLabels(c.Values["ARGUS_ACT_DEVELOP_LABELS"].Raw)
+			o.CatalogueDetail = c.Values["ARGUS_ACT_CATALOGUE_DETAIL"].Raw
 		}
 	}
 	return o

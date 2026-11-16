@@ -42,3 +42,23 @@ func TestLoadCreatesOnce(t *testing.T) {
 		t.Fatal("a readable key was accepted")
 	}
 }
+
+func TestTrustActdStatus(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "k")
+	os.Mkdir(dir, 0o700)
+	if p, err := LoadActdStatus(dir); p != nil || err != nil {
+		t.Fatal("nothing pinned yet must be (nil, nil)", err)
+	}
+	_, pub, _ := capability.NewApprovalKey()
+	p, err := TrustActdStatus(dir, pub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadActdStatus(dir)
+	if err != nil || !got.Equal(p) {
+		t.Fatal("the pinned key does not read back", err)
+	}
+	if _, err := TrustActdStatus(dir, []byte("not a key")); err == nil {
+		t.Fatal("a bad key was pinned")
+	}
+}

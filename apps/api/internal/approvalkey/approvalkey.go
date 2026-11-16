@@ -26,7 +26,53 @@ const (
 	// ActdFile is actd's sealing public key as pinned by the operator (argus approval-key trust-actd): the api seals
 	// secret inputs only to this key, never to the copy in the shared volume (the worker could replace that one)
 	ActdFile = "actd-seal.pub"
+	// ActdStatusFile is actd's status signing public key as pinned by the operator (argus approval-key
+	// trust-actd-status): the api shows actd's heartbeat as verified only with a signature by this key
+	ActdStatusFile = "actd-status.pub"
 )
+
+// TrustActdStatus pins actd's status public key (Ed25519, PKIX PEM) in the key folder.
+func TrustActdStatus(dir string, pemText []byte) (ed25519.PublicKey, error) {
+	if err := CheckDir(dir); err != nil {
+		return nil, err
+	}
+	if len(pemText) > 4096 {
+		return nil, errors.New("the public key is longer than 4096 bytes")
+	}
+	p, err := capability.ParseApprovalPublic(pemText)
+	if err != nil {
+		return nil, err
+	}
+	out, err := capability.PublicKeyPEM(p)
+	if err != nil {
+		return nil, err
+	}
+	tmp := filepath.Join(dir, "."+ActdStatusFile+".tmp")
+	os.Remove(tmp)
+	if err := writeExcl(tmp, out, 0o600); err != nil { // 0600: readNoFollow refuses anything wider
+		return nil, err
+	}
+	if err := os.Rename(tmp, filepath.Join(dir, ActdStatusFile)); err != nil {
+		os.Remove(tmp)
+		return nil, err
+	}
+	return p, nil
+}
+
+// LoadActdStatus is the pinned status key; (nil, nil) when none is pinned.
+func LoadActdStatus(dir string) (ed25519.PublicKey, error) {
+	if err := CheckDir(dir); err != nil {
+		return nil, err
+	}
+	b, err := readNoFollow(filepath.Join(dir, ActdStatusFile))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return capability.ParseApprovalPublic(b)
+}
 
 // TrustActd pins actd's sealing public key (PEM) in the key folder.
 func TrustActd(dir string, pemText []byte) (*ecdh.PublicKey, error) {

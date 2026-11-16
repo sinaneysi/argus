@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -50,6 +51,9 @@ type ApprovalClaim struct {
 	SealedSHA256 string `json:"sealed_sha256"`
 	Step         int    `json:"step,omitempty"`    // continue: the operator step done; rollback: the step to roll back
 	Verdict      string `json:"verdict,omitempty"` // checked only: applied | not-applied
+	// LabelsSHA256 (start only, ADR-0022 PR 5 review): LabelsSHA256 of the task's board labels the admin saw on the
+	// approval form; actd recomputes it from the request's labels, so the worker cannot change them after approval
+	LabelsSHA256 string `json:"labels_sha256,omitempty"`
 }
 
 var (
@@ -77,11 +81,16 @@ func (c ApprovalClaim) Message() ([]byte, error) {
 		return nil, errors.New("bad step")
 	case (c.Kind == SignChecked) != (c.Verdict == VerdictApplied || c.Verdict == VerdictNotApplied) || (c.Kind != SignChecked && c.Verdict != ""):
 		return nil, errors.New("bad verdict")
+	case c.LabelsSHA256 != "" && (c.Kind != SignStart || !hex64Re.MatchString(c.LabelsSHA256)):
+		return nil, errors.New("bad labels hash")
 	}
 	f := []string{approvalDomain, c.Kind, c.TaskKey, strconv.Itoa(c.PlanVersion), c.PlanSHA256, c.Approver,
 		strconv.FormatInt(c.At, 10), c.SealedSHA256, strconv.Itoa(c.Step)}
 	if c.Kind == SignChecked { // the other kinds keep the message of PR 2
 		f = append(f, c.Verdict)
+	}
+	if c.LabelsSHA256 != "" { // a start over the board labels; the other kinds keep their message
+		f = append(f, "labels:"+c.LabelsSHA256)
 	}
 	return []byte(strings.Join(f, "\n")), nil
 }
@@ -193,4 +202,14 @@ func ParseApprovalPublic(b []byte) (ed25519.PublicKey, error) {
 func KeyFingerprint(p ed25519.PublicKey) string {
 	sum := sha256.Sum256(p)
 	return hex.EncodeToString(sum[:8])
+}
+
+// LabelsSHA256 is the hash a start approval binds the task's board labels to: SHA-256 of the JSON list of the labels,
+// sorted, as stored (no labels: []).
+func LabelsSHA256(labels []string) string {
+	l := append([]string{}, labels...)
+	sort.Strings(l)
+	b, _ := json.Marshal(l)
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
 }

@@ -191,6 +191,12 @@ func (h *reqCtx) adminPost(path string, body map[string]any, sess *Session) (any
 			return nil, nil
 		}
 		return map[string]any{"ok": true, "message": msg}, nil
+	case "/api/v1/admin/actions":
+		msg, e := ActionsStopSave(form.Get("stopped"), sess, h.ip())
+		if e != nil {
+			return nil, e
+		}
+		return map[string]any{"ok": true, "message": msg}, nil
 	case "/api/v1/admin/modules":
 		msg, e := ModuleSave(form.Get("module"), form.Get("on"), sess)
 		if e != nil {

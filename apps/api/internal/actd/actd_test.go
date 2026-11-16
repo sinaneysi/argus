@@ -129,6 +129,9 @@ func check(path string, status any) map[string]any {
 		"args": map[string]any{"url": "http://svc.example.test" + path, "expect_status": status}}
 }
 
+// stageLabels are the board labels the fixture's admin approved.
+var stageLabels = []string{"ops", "env:stage"}
+
 // task stores a task with an approved plan and returns the request the worker would write.
 func (f *fx) task(key, env string, steps []map[string]any) Request {
 	f.t.Helper()
@@ -147,10 +150,12 @@ func (f *fx) task(key, env string, steps []map[string]any) Request {
 		VALUES (?, 'approved', ?, 1, 1, 'ada', ?)`, key, string(pb), at)
 	if f.hasHashCol() {
 		sig := f.sign(capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada", At: at,
-			SealedSHA256: capability.SealedSHA256(nil)})
+			SealedSHA256: capability.SealedSHA256(nil), LabelsSHA256: capability.LabelsSHA256(stageLabels)})
 		f.exec(f.board, `UPDATE agent_tasks SET approved_sha256=?, approval_sig=? WHERE key=?`, sha, sig, key)
 	}
-	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada"}
+	// the board labels the admin approved say stage; the start signature covers their hash (ADR-0022 PR 5 review)
+	req := Request{ActionID: capability.ActionID(key, 1, sha), TaskKey: key, PlanVersion: 1, PlanSHA256: sha, Approver: "ada",
+		EnvLabels: append([]string{}, stageLabels...)}
 	for _, s := range steps {
 		n, _ := capability.AsInt(s["n"])
 		st := ReqStep{N: n, Mode: s["mode"].(string)}
@@ -174,7 +179,7 @@ func (f *fx) reapprove(key string, req Request) {
 	db.QueryRow(`SELECT approved_at FROM agent_tasks WHERE key=?`, key).Scan(&at)
 	db.Close()
 	sig := f.sign(capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: key, PlanVersion: req.PlanVersion, PlanSHA256: req.PlanSHA256,
-		Approver: "ada", At: at, SealedSHA256: capability.SealedSHA256(req.SealedInputs)})
+		Approver: "ada", At: at, SealedSHA256: capability.SealedSHA256(req.SealedInputs), LabelsSHA256: requestLabels(req)})
 	f.exec(f.board, `UPDATE agent_tasks SET approval_sig=? WHERE key=?`, sig, key)
 }
 

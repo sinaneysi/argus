@@ -26,6 +26,9 @@ type Status struct {
 	GitLabProjects map[string]string `json:"gitlab_projects,omitempty"`
 	// BackupsKept is the number of sealed old values kept (an applied, not rolled-back write keeps its backup)
 	BackupsKept int `json:"backups_kept"`
+	// Sig is actd's Ed25519 signature (keys/status.key) over the status without it; the api shows the status as
+	// verified only when it checks against the pinned key (argus approval-key trust-actd-status)
+	Sig string `json:"sig,omitempty"`
 }
 
 // ChainStatus is the audit chain's state.
@@ -93,7 +96,11 @@ func (d *Daemon) CurrentStatus() Status {
 
 // WriteStatus writes the heartbeat (0644: names and states only).
 func (d *Daemon) WriteStatus() error {
-	b, err := json.MarshalIndent(d.CurrentStatus(), "", "  ")
+	s := d.CurrentStatus()
+	if d.o.StatusKey != nil {
+		s.Sig = capability.SignStatus(d.o.StatusKey, statusBody(s))
+	}
+	b, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}

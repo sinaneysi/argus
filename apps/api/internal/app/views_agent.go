@@ -103,7 +103,7 @@ func FixerTriggerOn() bool {
 
 // agentSpinUp is bin/task_agent.py spin_up(plan): what Spin up agent does (fixer | proposal | run | refused) and
 // the button's words.
-func agentSpinUp(plan *py.OMap) (string, string) {
+func agentSpinUp(plan *py.OMap, key string) (string, string) {
 	cl := py.AsMap(py.Or(plan.Get("classification"), py.NewOMap()))
 	env := py.OrS(cl.Get("environment"), "")
 	if env == "release" || cl.Get("kind") == "production" {
@@ -125,7 +125,7 @@ func agentSpinUp(plan *py.OMap) (string, string) {
 			}
 		}
 	}
-	if agentExecutes(plan) {
+	if agentExecutes(plan, key) {
 		return "execute", "Spin up agent: run the approved capability steps on " + EnvLabel(env)
 	}
 	if !write {
@@ -390,19 +390,30 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 		return 409, "The plan changed: review v" + I2S(a.I("plan_version"))
 	}
 	plan := py.AsMap(py.Or(agentJSON(a.Get("plan"), "null"), py.NewOMap()))
-	if path, why := agentSpinUp(plan); path == "refused" {
+	if path, why := agentSpinUp(plan, key); path == "refused" {
 		return 409, "Not started: " + why
 	}
 	// the approval binds to the plan hash the page showed (ADR-0022 D4); the api signs it (amendment 1)
 	sha, shown := agentPlanSHA(a), form.Get("plan_sha256")
-	if sha == "" || (shown != "" && shown != sha) || (shown == "" && agentExecutes(plan)) {
+	if sha == "" || (shown != "" && shown != sha) || (shown == "" && agentExecutes(plan, key)) {
 		return 409, "The plan changed: review v" + I2S(a.I("plan_version")) + " (its hash is pinned when you spin up)"
 	}
+	// the board labels the page showed: pinned like the plan hash, signed into the start (ADR-0022 PR 5 review), so
+	// actd can check the stage evidence the admin approved and nothing the worker wrote later
+	labels, lsha := agentApprovalLabels(key)
+	if shownL := form.Get("labels_sha256"); (shownL != "" && shownL != lsha) || (shownL == "" && agentExecutes(plan, key) && agentHasWrite(plan)) {
+		return 409, "The board labels of the task changed since the page was shown (or were not shown): review them on the task page and spin up again"
+	}
 	p := py.NewOMap("kind", "agent-start", "key", key, "plan_version", n)
+	la := make([]any, len(labels))
+	for i, l := range labels {
+		la[i] = l
+	}
+	p.Set("env_labels", la)
 	// the secret inputs the capability steps refer to: sealed here to actd's pinned key, for this action and step;
 	// only the ciphertext goes on (ADR-0022 D4)
 	var sealed map[string]string
-	if agentExecutes(plan) {
+	if agentExecutes(plan, key) {
 		var err error
 		if sealed, err = agentSealInputs(form, agentPlanInputs(a), capability.ActionID(key, int(n), sha), sha); err != nil {
 			return 409, "Not started: " + err.Error()
@@ -420,7 +431,7 @@ func AgentPostSpinUp(c *Ctx, form py.QS, sess *Session) (int, string) {
 			p.Set("sealed_inputs", sm)
 		}
 	}
-	if err := agentSignedPayload(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan), capability.SealedSHA256(sealed)); err != nil {
+	if err := agentSignedPayloadLabels(p, capability.SignStart, key, n, sha, sess.Username, 0, !agentExecutes(plan, key), capability.SealedSHA256(sealed), lsha); err != nil {
 		return 500, "Not started: " + err.Error()
 	}
 	rid, err := BoardWriteRequest(p, sess)

@@ -50,6 +50,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 	t.Cleanup(d.Close)
 	e.ex = d
 
+	e.exec(t, `UPDATE tasks SET labels='["ops","env:stage"]' WHERE id=7`) // the board says stage too (PR 5 review)
 	e.run(t)
 	set := map[string]any{"text": "rotate API_TOKEN", "mode": "WRITE", "capability": capability.GitLabVarSet,
 		"args": map[string]any{"project": "shop/checkout", "key": "API_TOKEN", "environment_scope": "develop", "value_ref": "input:NEW_TOKEN"}}
@@ -65,7 +66,8 @@ func TestSealedInputsPassThrough(t *testing.T) {
 	sealed := map[string]string{capability.InputKey(1, "NEW_TOKEN"): sv}
 	at := time.Now().Unix()
 	sig, _ := capability.SignApproval(e.priv, capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: "OPS-7", PlanVersion: 1, PlanSHA256: sha,
-		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(sealed)})
+		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(sealed), LabelsSHA256: capability.LabelsSHA256([]string{"ops", "env:stage"})})
+	envLabels := []any{"ops", "env:stage"} // the labels the admin saw, signed into the start
 	sealedAny := map[string]any{capability.InputKey(1, "NEW_TOKEN"): sv}
 	// a malformed sealed input is refused by the worker
 	bad := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1, "plan_sha256": sha, "signed_at": at, "signature": sig,
@@ -74,7 +76,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 		t.Fatal(result(st, bad))
 	}
 	ok := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1, "plan_sha256": sha, "signed_at": at, "signature": sig,
-		"sealed_inputs": sealedAny})
+		"sealed_inputs": sealedAny, "env_labels": envLabels})
 	if st := e.run(t); result(st, ok) != "approved; spinning up" {
 		t.Fatal(result(st, ok))
 	}
@@ -88,7 +90,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 		t.Fatal("not set:", v, ok)
 	}
 	job := readJob(t, e.env, "OPS-7.run.json")
-	if asMap(job["capability_results"])["state"] != "done" {
+	if cr := asMap(job["capability_results"]); cr["untrusted"] != true || asMap(cr["results"])["state"] != "done" {
 		t.Fatal(job["capability_results"])
 	}
 	e.out(t, "OPS-7", "run", map[string]any{"status": "done", "summary": "Rotated."}, map[string]any{"cost_usd": 0.1, "is_error": false})

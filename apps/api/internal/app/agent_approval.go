@@ -27,7 +27,51 @@ import (
 var (
 	APPROVAL_KEY_DIR = env("ARGUS_APPROVAL_KEY_DIR", "/var/lib/argus-approve")
 	ACTIONS_MODE     = env("ARGUS_ACTIONS_MODE", "off")
+	// ACT_DEVELOP_LABELS: the board labels that mark a stage task (ARGUS_ACT_DEVELOP_LABELS)
+	ACT_DEVELOP_LABELS = env("ARGUS_ACT_DEVELOP_LABELS", capability.DefaultDevelopLabels)
 )
+
+// agentHasWrite reports whether the plan has a WRITE step.
+func agentHasWrite(plan *py.OMap) bool {
+	for _, sv := range py.AsList(py.Or(plan.Get("plan"), []any{})) {
+		if py.AsMap(sv).Get("mode") == "WRITE" {
+			return true
+		}
+	}
+	return false
+}
+
+// agentTaskLabels are the board labels of the task with this agent key (Jira key, or gl-<task id>).
+func agentTaskLabels(key string) ([]string, bool) {
+	q, arg := "SELECT labels FROM tasks WHERE jira_key=?", any(key)
+	if id, ok := strings.CutPrefix(key, "gl-"); ok {
+		q, arg = "SELECT labels FROM tasks WHERE id=?", id
+	}
+	if key == "" {
+		return nil, false
+	}
+	rows := BoardBQ(q, arg)
+	if len(rows) == 0 {
+		return nil, false
+	}
+	return capability.LabelsJSON(rows[0].S("labels")), true
+}
+
+// agentApprovalLabels are the task's board labels as the approval form shows them, and their hash (the form pins it,
+// the start signature covers it). No task row: no labels.
+func agentApprovalLabels(key string) ([]string, string) {
+	labels, _ := agentTaskLabels(key)
+	if labels == nil {
+		labels = []string{}
+	}
+	return labels, capability.LabelsSHA256(labels)
+}
+
+// agentStageEvidence is whether the task's board labels say stage, and the words for the approval.
+func agentStageEvidence(key string) (bool, string) {
+	labels, _ := agentTaskLabels(key)
+	return capability.StageEvidence(labels, capability.ParseDevelopLabels(ACT_DEVELOP_LABELS))
+}
 
 var approvalKey struct {
 	sync.Mutex
@@ -88,9 +132,17 @@ func agentPlanSHA(a Row) string { return capability.StoredPlanSHA256(a.S("plan")
 
 // agentExecutes reports whether Spin up runs the plan's capability steps (the worker's spinUp path execute):
 // classification develop, ARGUS_ACTIONS_MODE not off, at least one capability step and every WRITE step with one.
-func agentExecutes(plan *py.OMap) bool {
+//
+// A plan with WRITE steps executes only when the task's board labels also say stage (ADR-0022 PR 5 review): the
+// model's classification alone is not authoritative. key "" (no task): no evidence.
+func agentExecutes(plan *py.OMap, key string) bool {
 	if strings.TrimSpace(ACTIONS_MODE) == "" || ACTIONS_MODE == "off" {
 		return false
+	}
+	if agentHasWrite(plan) {
+		if ok, _ := agentStageEvidence(key); !ok {
+			return false
+		}
 	}
 	cl := py.AsMap(py.Or(plan.Get("classification"), py.NewOMap()))
 	if py.OrS(cl.Get("environment"), "") != "develop" || cl.Get("kind") == "production" {
@@ -116,9 +168,14 @@ func agentExecutes(plan *py.OMap) bool {
 // sealedSHA is the hash of the sealed inputs the request carries to actd (capability.SealedSHA256): the start's own,
 // for a continue or rollback the one the api signed at the start (agentStartSealed), {} for a stop.
 func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA string, verdict ...string) error {
+	return agentSignedPayloadLabels(p, kind, key, version, sha, by, step, optional, sealedSHA, "", verdict...)
+}
+
+// agentSignedPayloadLabels is agentSignedPayload with the hash of the board labels the admin approved (start only).
+func agentSignedPayloadLabels(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA, labelsSHA string, verdict ...string) error {
 	at := NowInt()
 	c := capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(version), PlanSHA256: sha, Approver: by,
-		At: at, SealedSHA256: sealedSHA, Step: int(step)}
+		At: at, SealedSHA256: sealedSHA, Step: int(step), LabelsSHA256: labelsSHA}
 	if len(verdict) == 1 {
 		c.Verdict = verdict[0]
 	}
