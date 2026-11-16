@@ -91,9 +91,13 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 | `ARGUS_ACTIONS_PER_DAY` | int | `20` | 1..200 |
 | `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | 1..365 |
 | `ARGUS_ACT_HTTP_HOSTS` | list | empty (`http.check` off) | `[internal:]host[:port]`, `*.suffix` allowed; no IP literal, no bare `*` |
-| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only (`http.check` and `ARGUS_ACT_GITLAB_URL`) |
+| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only (`http.check`, `ARGUS_ACT_GITLAB_URL`, `ARGUS_ACT_KEYCLOAK_URL`) |
 | `ARGUS_ACT_GITLAB_URL` | str | empty | `gitlab.ci-variable.*`: the GitLab, `https://gitlab.example.com` (a path prefix is kept); no credentials, no query. Needed when `ARGUS_ACT_GITLAB_PROJECTS` is set |
 | `ARGUS_ACT_GITLAB_PROJECTS` | list | empty (`gitlab.ci-variable.*` off) | numeric project ids or `group/project` paths; an id and the path of the same project are one project (actd resolves the list at start, retried every minute) |
+| `ARGUS_ACT_KEYCLOAK_URL` | str | empty (`keycloak.read` off) | the identity provider, `https://id.example.com` (a path prefix such as `/auth` is kept); no credentials, no query |
+| `ARGUS_ACT_KEYCLOAK_REALMS` | list | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; realm names `^[A-Za-z0-9_.-]{1,64}$`; the only realms `keycloak.read` may read |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_ID` | str | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; the confidential client (its secret is `argus-act/secrets/keycloak/client.enc`) |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | str | empty (the only realm on the list) | the realm the client lives in; its token endpoint is the only POST allowed. Required when the list has several realms (then normally `master`) |
 | `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
 
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
@@ -131,6 +135,43 @@ admin's "I checked the target: applied / not applied" on the task page.
 Backups of applied writes are never pruned; only those of rolled-back, refused or failed steps older than
 `ARGUS_ACTIONS_BACKUP_DAYS`.
 Off again: empty `ARGUS_ACT_GITLAB_PROJECTS` (the capabilities leave the catalogue), or `ARGUS_ACTIONS_MODE=off`.
+
+Identity provider reads (ADR-0022 PR 4). `keycloak.read` runs four read-only admin queries of a realm on
+`ARGUS_ACT_KEYCLOAK_REALMS`: `users` (`search` required, at most 100 characters, at most 50 rows), `user` (exact user
+name in `search`, with its group names), `ldap-mappers` and `client-scopes` (optional name filter in `search`). The
+identity provider is often shared with production, so the HTTP client is strictly read-only: it allows `POST` only to
+`/realms/<client realm>/protocol/openid-connect/token` and `GET` only of `/admin/realms/<listed realm>/users`,
+`/users/:id/groups`, `/components` and `/client-scopes`; every other method or path is refused before a connection is
+made, and redirects are not followed. The access token (client credentials) is kept in actd's memory until 30 s
+before it expires. A user's result is: user name, enabled, federation link, required actions, group names (`user`
+only) and `first_name_set` / `last_name_set` booleans: never the names, the e-mail, the attributes or a credential.
+An LDAP mapper's result is its name, type and the config keys on a fixed list (attribute names, DNs, filters,
+switches); a bind credential or any other key is dropped. A client scope's result is its name, protocol and mapper
+names.
+
+Minimal client setup in the identity provider (nothing else):
+
+1. In the realm to read (one realm; with several realms, in `master`): **Clients → Create client**, client id e.g.
+   `argus-read`, **Client authentication: on** (confidential), **Service accounts roles: on**; turn off Standard flow,
+   Direct access grants, Implicit flow and every other flow.
+2. **Service account roles → Assign role → Filter by clients**: from `realm-management` (a client in `master`: from
+   `<realm>-realm` for each listed realm) assign exactly:
+
+   | role | needed by | why |
+   |---|---|---|
+   | `view-users` | `users`, `user` | user search, user lookup and the user's groups (it includes `query-users` and `query-groups`) |
+   | `view-realm` | `ldap-mappers` | the components endpoint (LDAP provider and its mappers) needs it; Keycloak masks secret config values in it |
+   | `query-clients` | `client-scopes` | lists the client scopes; prefer it to `view-clients`, which can also read client secrets |
+
+   No `manage-*` role, no `realm-admin`, no `view-clients`, no `impersonation`. A query whose role is missing answers
+   403 and fails with "lacks the realm-management role"; leave a role out to switch its query off.
+3. **Credentials → Client secret**: copy it to actd only:
+   `docker compose exec -T actd /app/argus actd credential set keycloak/client` (the secret on stdin).
+4. Set `ARGUS_ACT_KEYCLOAK_URL`, `ARGUS_ACT_KEYCLOAK_REALMS`, `ARGUS_ACT_KEYCLOAK_CLIENT_ID` (and
+   `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` for a `master` client), then restart actd and the worker.
+
+Off again: empty `ARGUS_ACT_KEYCLOAK_URL` (`keycloak.read` leaves the catalogue); disable the client in the identity
+provider too.
 
 Signed approvals (ADR-0022 amendment 1, PR 2). The worker shares the data volume and the uid with the api, so an
 `approved_*` row in `board.db` proves nothing. The api signs every Spin up, every Continue after an operator step and

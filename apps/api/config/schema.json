@@ -1416,10 +1416,30 @@
       "help": "gitlab.ci-variable: the projects whose CI/CD variables of scope develop may be read and changed, numeric ids or group/project paths (an id and the path of the same project are one project); empty: the capabilities are not offered"
     },
     {
+      "key": "ARGUS_ACT_KEYCLOAK_URL",
+      "type": "str",
+      "help": "keycloak.read: the identity provider, https://id.example.com (a path prefix such as /auth is kept); read-only admin queries of the realms on ARGUS_ACT_KEYCLOAK_REALMS; the client secret is stored only in actd's volume (argus actd credential set keycloak/client), never here; empty: keycloak.read is not offered"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_REALMS",
+      "type": "list",
+      "help": "keycloak.read: the realms that may be read (names, A-Z a-z 0-9 _ . -); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_ID",
+      "type": "str",
+      "help": "keycloak.read: the confidential client with a service account (client credentials); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_REALM",
+      "type": "str",
+      "help": "keycloak.read: the realm the client lives in (its token endpoint is the only POST allowed); empty: the only realm on ARGUS_ACT_KEYCLOAK_REALMS"
+    },
+    {
       "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
       "type": "bool",
       "default": "0",
-      "help": "1: http.check and ARGUS_ACT_GITLAB_URL may use plain http:// (test installations only)"
+      "help": "1: http.check, ARGUS_ACT_GITLAB_URL and ARGUS_ACT_KEYCLOAK_URL may use plain http:// (test installations only)"
     },
     {
       "key": "ARGUS_APPROVAL_KEY_DIR",

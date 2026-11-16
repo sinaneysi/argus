@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 // Registry is the set of capabilities an installation offers. A capability whose allow-list is empty is not in it:
@@ -83,6 +84,8 @@ type Options struct {
 	Transport      http.RoundTripper // the base transport under the guard (nil: a direct one); tests set it
 	// GitLab: the gitlab.ci-variable family; offered when GitLab.Projects is not empty
 	GitLab GitLabOptions
+	// Keycloak: keycloak.read; offered when Keycloak.URL is not empty
+	Keycloak KeycloakOptions
 }
 
 // Default is the registry of the built-in capabilities for these allow-lists.
@@ -102,6 +105,13 @@ func Default(o Options) (*Registry, error) {
 			return nil, err
 		}
 		caps = append(caps, gl.Capabilities()...)
+	}
+	if strings.TrimSpace(o.Keycloak.URL) != "" {
+		kc, err := NewKeycloak(o.Keycloak)
+		if err != nil {
+			return nil, err
+		}
+		caps = append(caps, kc)
 	}
 	r, err := NewRegistry(caps...)
 	if err != nil {
