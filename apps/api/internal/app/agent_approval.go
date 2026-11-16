@@ -57,6 +57,16 @@ func agentTaskLabels(key string) ([]string, bool) {
 	return capability.LabelsJSON(rows[0].S("labels")), true
 }
 
+// agentApprovalLabels are the task's board labels as the approval form shows them, and their hash (the form pins it,
+// the start signature covers it). No task row: no labels.
+func agentApprovalLabels(key string) ([]string, string) {
+	labels, _ := agentTaskLabels(key)
+	if labels == nil {
+		labels = []string{}
+	}
+	return labels, capability.LabelsSHA256(labels)
+}
+
 // agentStageEvidence is whether the task's board labels say stage, and the words for the approval.
 func agentStageEvidence(key string) (bool, string) {
 	labels, _ := agentTaskLabels(key)
@@ -158,9 +168,14 @@ func agentExecutes(plan *py.OMap, key string) bool {
 // sealedSHA is the hash of the sealed inputs the request carries to actd (capability.SealedSHA256): the start's own,
 // for a continue or rollback the one the api signed at the start (agentStartSealed), {} for a stop.
 func agentSignedPayload(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA string, verdict ...string) error {
+	return agentSignedPayloadLabels(p, kind, key, version, sha, by, step, optional, sealedSHA, "", verdict...)
+}
+
+// agentSignedPayloadLabels is agentSignedPayload with the hash of the board labels the admin approved (start only).
+func agentSignedPayloadLabels(p *py.OMap, kind, key string, version int64, sha, by string, step int64, optional bool, sealedSHA, labelsSHA string, verdict ...string) error {
 	at := NowInt()
 	c := capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(version), PlanSHA256: sha, Approver: by,
-		At: at, SealedSHA256: sealedSHA, Step: int(step)}
+		At: at, SealedSHA256: sealedSHA, Step: int(step), LabelsSHA256: labelsSHA}
 	if len(verdict) == 1 {
 		c.Verdict = verdict[0]
 	}

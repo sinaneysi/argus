@@ -4,50 +4,58 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/sinaneysi/argus/internal/capability"
 )
 
-// ADR-0022 PR 5 review: the model's develop classification is not enough for a write step; the request must carry
-// the board's labels and they, and the labels in board.db, must say stage without an other env: label.
-func TestWriteStepNeedsStageLabels(t *testing.T) {
+// ADR-0022 PR 5 review: the model's develop classification is not enough for a write step. The start approval signs
+// the hash of the board labels the admin saw; actd recomputes it from the request's labels and needs them to say
+// stage. Labels the worker writes after the approval do not verify.
+func TestWriteStepNeedsSignedStageLabels(t *testing.T) {
 	w := &fakeWrite{}
 	f := newFx(t, w)
 	d := f.daemon()
-	cases := []struct {
-		name string
-		mut  func(key string, r *Request)
-	}{
-		{"no labels in the request", func(_ string, r *Request) { r.EnvLabels = nil }},
-		{"request says production", func(_ string, r *Request) { r.EnvLabels = []string{"env:stage", "env:production"} }},
-		{"board.db has no stage label", func(k string, _ *Request) {
-			f.exec(f.board, `UPDATE tasks SET labels='["ops"]' WHERE jira_key=?`, k)
-		}},
-		{"board.db says production", func(k string, _ *Request) {
-			f.exec(f.board, `UPDATE tasks SET labels='["env:production"]' WHERE jira_key=?`, k)
-		}},
-		{"no task row", func(k string, _ *Request) { f.exec(f.board, `DELETE FROM tasks WHERE jira_key=?`, k) }},
-	}
-	for i, c := range cases {
-		key := "LB-" + string(rune('a'+i))
+	// signs the start over these labels and returns the request carrying them
+	approved := func(key string, labels []string) Request {
 		req := f.task(key, "develop", []map[string]any{writeStep()})
-		c.mut(key, &req)
-		r := f.submit(d, req)
-		wantRefused(t, r, 2, capability.CodeEnvironment)
-		if !strings.Contains(r.Refusal.Reason, "label") {
-			t.Fatalf("%s: %s", c.name, r.Refusal.Reason)
-		}
+		req.EnvLabels = labels
+		f.reapprove(key, req)
+		return req
 	}
+	refused := func(name string, req Request, rule int, code capability.Code) {
+		t.Helper()
+		r := f.submit(d, req)
+		wantRefused(t, r, rule, code)
+	}
+	// approved labels without stage evidence: rule 2
+	refused("no stage label", approved("LB-a", []string{"ops"}), 2, capability.CodeEnvironment)
+	refused("production label", approved("LB-b", []string{"env:stage", "Production"}), 2, capability.CodeEnvironment)
+	refused("no labels at all", approved("LB-c", nil), 2, capability.CodeEnvironment)
+	// the worker adds env:stage after an approval of ["ops"]: the labels no longer verify with the signature (rule 3)
+	req := approved("LB-d", []string{"ops"})
+	req.EnvLabels = []string{"ops", "env:stage"}
+	refused("label added after approval", req, 3, capability.CodeApproval)
+	// labels hash mismatch: the start signed one set, the request carries another that also says stage
+	req = approved("LB-e", []string{"env:stage", "team-a"})
+	req.EnvLabels = []string{"env:stage"}
+	refused("labels hash mismatch", req, 3, capability.CodeApproval)
+	// the worker drops the labels: the signed hash no longer verifies either
+	req = approved("LB-f", []string{"env:stage"})
+	req.EnvLabels = nil
+	refused("labels dropped", req, 2, capability.CodeEnvironment)
 	if w.applies != 0 {
-		t.Fatal("a write step ran without the board's stage label")
+		t.Fatal("a write step ran without signed stage labels")
+	}
+	// the approved stage labels, unchanged: the write runs
+	if r := f.submit(d, approved("LB-ok", []string{"env:stage", "ops"})); r.State != StateDone || w.applies != 1 {
+		t.Fatalf("approved stage labels: %+v", r)
 	}
 	// a read-tier step needs no label (O8)
-	req := f.task("LB-read", "develop", []map[string]any{check("/ok", 200)})
-	req.EnvLabels = nil
-	f.exec(f.board, `UPDATE tasks SET labels='[]' WHERE jira_key='LB-read'`)
-	if r := f.submit(d, req); r.State != StateDone {
+	rq := f.task("LB-read", "develop", []map[string]any{check("/ok", 200)})
+	rq.EnvLabels = nil
+	f.reapprove("LB-read", rq)
+	if r := f.submit(d, rq); r.State != StateDone {
 		t.Fatalf("read tier: %+v", r)
 	}
 }

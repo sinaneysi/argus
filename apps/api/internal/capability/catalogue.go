@@ -3,6 +3,7 @@ package capability
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net"
 	"net/url"
 	"sort"
@@ -66,11 +67,15 @@ const (
 // aliasDomain ends every host alias: a reserved name (RFC 6761) that never resolves.
 const aliasDomain = ".alias.invalid"
 
-// aliasOf is a stable alias of a value: prefix and the first 8 hex characters of its SHA-256.
-func aliasOf(prefix, v string) string {
+// aliasOf is a stable alias of a value: prefix and the first 12 hex characters of its SHA-256 (tests replace it).
+var aliasOf = func(prefix, v string) string {
 	sum := sha256.Sum256([]byte(v))
-	return prefix + "-" + hex.EncodeToString(sum[:])[:8]
+	return prefix + "-" + hex.EncodeToString(sum[:])[:12]
 }
+
+// ErrAliasCollision: two allow-list entries got the same alias, so an alias could not be mapped back to one value.
+// The catalogue is refused (no capability is offered to the intake) rather than given in full.
+var ErrAliasCollision = errors.New("ARGUS_ACT_CATALOGUE_DETAIL=aliases: two allow-list entries have the same alias; the capability catalogue is refused")
 
 // Aliases maps the aliases the model saw back to the configured values.
 type Aliases struct {
@@ -130,32 +135,45 @@ func (a *Aliases) resolveURL(raw string) string {
 
 // CatalogueDetail is Catalogue at a detail level: with DetailAliases each allow-list entry is replaced by a stable
 // alias, and the Aliases map them back; with DetailFull (or anything else) the entries are as configured and the
-// Aliases are nil.
-func (r *Registry) CatalogueDetail(detail string) ([]CatalogueEntry, *Aliases) {
+// Aliases are nil. A collision of two aliases is ErrAliasCollision: no catalogue (never a fall back to full).
+func (r *Registry) CatalogueDetail(detail string) ([]CatalogueEntry, *Aliases, error) {
 	cat := r.Catalogue()
 	if detail != DetailAliases {
-		return cat, nil
+		return cat, nil, nil
 	}
 	a := &Aliases{values: map[string]string{}, hosts: map[string]string{}, suffix: map[string]string{}}
 	for i := range cat {
 		for key, vals := range cat[i].AllowLists {
 			out := make([]string, 0, len(vals))
 			for _, v := range vals {
-				out = append(out, a.add(key, v))
+				al, err := a.add(key, v)
+				if err != nil {
+					return []CatalogueEntry{}, nil, err
+				}
+				out = append(out, al)
 			}
 			cat[i].AllowLists[key] = out
 		}
 		cat[i].Rules = append(cat[i].Rules, "the allow-list entries are aliases: write them exactly as listed; Argus maps them to the real names")
 	}
-	return cat, a
+	return cat, a, nil
 }
 
-func (a *Aliases) add(key, v string) string {
+// bind records alias -> value in m; the same alias for another value is a collision.
+func bind(m map[string]string, alias, value string) error {
+	if old, ok := m[alias]; ok && old != value {
+		return ErrAliasCollision
+	}
+	m[alias] = value
+	return nil
+}
+
+func (a *Aliases) add(key, v string) (string, error) {
 	switch key {
 	case "ARGUS_ACT_HTTP_HOSTS":
 		e, err := parseHostEntry(v)
 		if err != nil {
-			return v
+			return v, nil
 		}
 		pre := ""
 		if e.internal {
@@ -167,22 +185,18 @@ func (a *Aliases) add(key, v string) string {
 		}
 		if e.wildcard {
 			al := "." + aliasOf("hosts", e.name) + aliasDomain
-			a.suffix[al] = "." + e.name
-			return pre + "*" + al + port
+			return pre + "*" + al + port, bind(a.suffix, al, "."+e.name)
 		}
 		al := aliasOf("host", e.name) + aliasDomain
-		a.hosts[al] = e.name
-		return pre + al + port
+		return pre + al + port, bind(a.hosts, al, e.name)
 	case "ARGUS_ACT_GITLAB_PROJECTS":
 		al := aliasOf("project", v)
-		a.values[al] = v
-		return al
+		return al, bind(a.values, al, v)
 	case "ARGUS_ACT_KEYCLOAK_REALMS":
 		al := aliasOf("realm", v)
-		a.values[al] = v
-		return al
+		return al, bind(a.values, al, v)
 	}
-	return v
+	return v, nil
 }
 
 // Catalogue is the capabilities offered, sorted by name, for the intake's task file. Empty when r is nil.

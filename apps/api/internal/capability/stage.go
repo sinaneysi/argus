@@ -32,9 +32,22 @@ func LabelsJSON(s string) []string {
 	return l
 }
 
+// prodWords: a label (any prefix) that holds one of these points at production or pre-release, so it disagrees with
+// a stage classification even without the env: prefix ("prod", "production", "preprod" all hold "prod").
+var prodWords = []string{"prod", "release", "pre-release"}
+
+func prodWord(k string) bool {
+	for _, w := range prodWords {
+		if strings.Contains(k, w) {
+			return true
+		}
+	}
+	return false
+}
+
 // StageEvidence is the board's evidence that a task is of the develop environment (ADR-0022 PR 5 review): the
 // model's classification alone is not enough for a write-tier capability. ok when the labels hold one of the
-// develop labels and no other "env:" label (a disagreement, e.g. env:stage and env:production, is not ok); why says
+// develop labels, no other "env:" label and no label that names production or pre-release (a disagreement, e.g. env:stage and env:production, is not ok); why says
 // what is missing in words.
 func StageEvidence(labels, develop []string) (bool, string) {
 	if len(develop) == 0 {
@@ -50,7 +63,8 @@ func StageEvidence(labels, develop []string) (bool, string) {
 		switch {
 		case isDev[k]:
 			found = l
-		case strings.HasPrefix(k, "env:") && other == "":
+		case other != "":
+		case strings.HasPrefix(k, "env:") || prodWord(k):
 			other = l
 		}
 	}

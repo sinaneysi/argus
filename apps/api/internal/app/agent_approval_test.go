@@ -52,7 +52,7 @@ func TestAgentApprovalSigned(t *testing.T) {
 	}
 	p, _ := boardReadRequest(t, loc)
 	claim := capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: "gl-4", PlanVersion: 2, PlanSHA256: sha, Approver: e.admin.Username,
-		At: int64(py.Num(p.Get("signed_at"))), SealedSHA256: capability.SealedSHA256(nil)}
+		At: int64(py.Num(p.Get("signed_at"))), SealedSHA256: capability.SealedSHA256(nil), LabelsSHA256: capability.LabelsSHA256(nil)}
 	if p.S("plan_sha256") != sha || capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal("the approval is not signed by the api:", p.PyRepr())
 	}
@@ -92,7 +92,7 @@ func TestAgentApprovalSigned(t *testing.T) {
 		t.Fatal(c, loc)
 	}
 	p, _ = boardReadRequest(t, loc)
-	claim.Kind, claim.Step, claim.At = capability.SignContinue, 2, int64(py.Num(p.Get("signed_at")))
+	claim.Kind, claim.Step, claim.At, claim.LabelsSHA256 = capability.SignContinue, 2, int64(py.Num(p.Get("signed_at"))), "" // labels: start only
 	if p.S("kind") != "agent-continue" || capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal(p.PyRepr())
 	}
@@ -190,8 +190,16 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 	e.json(t, "out/gitlab-issues-status.json", map[string]any{"connected": true})
 	sha := agentPlanSHA(agentRow("gl-5"))
 	id := capability.ActionID("gl-5", 1, sha)
+	lsha := capability.LabelsSHA256([]string{"env:stage"}) // the labels the page showed
 	form := func(kv ...string) py.QS {
-		return boardForm(append([]string{"key", "gl-5", "plan_version", "1", "plan_sha256", sha}, kv...)...)
+		return boardForm(append([]string{"key", "gl-5", "plan_version", "1", "plan_sha256", sha, "labels_sha256", lsha}, kv...)...)
+	}
+	// the board labels are pinned like the plan hash: not shown, or changed since the page was shown, is refused
+	for _, l := range []string{"", capability.LabelsSHA256([]string{"ops"})} {
+		f := boardForm("key", "gl-5", "plan_version", "1", "plan_sha256", sha, "labels_sha256", l, "input_NEW_TOKEN", value)
+		if c, out := AgentPostSpinUp(e.ctx(e.admin), f, e.admin); c != 409 || !strings.Contains(out, "board labels") {
+			t.Fatalf("labels %q: %d %s", l, c, out)
+		}
 	}
 	if names := agentInputNames(agentPlanInputs(agentRow("gl-5"))); len(names) != 1 || names[0] != "NEW_TOKEN" {
 		t.Fatal(names)
@@ -236,9 +244,12 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 		sealed[k] = s
 	}
 	claim := capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: "gl-5", PlanVersion: 1, PlanSHA256: sha, Approver: e.admin.Username,
-		At: int64(py.Num(p.Get("signed_at"))), SealedSHA256: capability.SealedSHA256(sealed)}
+		At: int64(py.Num(p.Get("signed_at"))), SealedSHA256: capability.SealedSHA256(sealed), LabelsSHA256: lsha}
 	if capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
-		t.Fatal("the start is not signed over the sealed inputs")
+		t.Fatal("the start is not signed over the sealed inputs and the board labels")
+	}
+	if l := py.AsList(p.Get("env_labels")); len(l) != 1 || l[0] != "env:stage" {
+		t.Fatal("the request does not carry the approved labels:", p.PyRepr())
 	}
 	// a start that is not sent leaves no record
 	if os.Geteuid() != 0 {
@@ -273,7 +284,7 @@ func TestAgentApprovalSealsInputs(t *testing.T) {
 		t.Fatal(c, loc)
 	}
 	p, _ = boardReadRequest(t, loc)
-	claim.Kind, claim.Step, claim.At = capability.SignContinue, 2, int64(py.Num(p.Get("signed_at")))
+	claim.Kind, claim.Step, claim.At, claim.LabelsSHA256 = capability.SignContinue, 2, int64(py.Num(p.Get("signed_at"))), "" // labels: start only
 	if capability.VerifyApproval(pub, claim, p.S("signature")) != nil {
 		t.Fatal("the continue is not signed over the start's sealed inputs")
 	}

@@ -416,19 +416,33 @@ Design items for PR 2 (not built in PR 1):
     checks and the status is at most 600 s old and not dated ahead; otherwise "Not verified" with the reason, and
     nothing actd claims.
   - **Environment classification.** The model's label is not authoritative. A plan with WRITE steps takes the
-    execute path only when the model classifies it `develop` **and** the task's board labels hold one of
-    `ARGUS_ACT_DEVELOP_LABELS` (default `env:stage`; for Jira a label of that name) and no other `env:` label. Any
-    disagreement (no stage label, `env:production`, both) sends the WRITE steps to the write-report run (or the
-    proposal), never to actd; the worker (`spinUp`) and the api (`agentExecutes`, the approval form) use the same
-    rule (`capability.StageEvidence`). The request carries the labels (`env_labels`); actd refuses a write step
-    (rule 2) when they are missing or disagree, and checks the labels in `board.db` the same way. The approval shows
-    the classification, that it comes from the model, and whether the board confirms it. Read-tier steps need no
-    label (O8). Rollback and checked keep only the develop classification check (they restore or confirm a step that
-    already passed the label rule at its start).
+    execute path only when the model classifies it `develop` **and** the board labels the admin approved hold one of
+    `ARGUS_ACT_DEVELOP_LABELS` (default `env:stage`; for Jira a label of that name), no other `env:` label and no
+    label that contains `prod`, `release` or `pre-release` (any prefix, any case: production, preprod, deploy:prod).
+    Any disagreement sends the WRITE steps to the write-report run (or the proposal), never to actd; the worker and
+    the api use the same rule (`capability.StageEvidence`). Read-tier steps need no label (O8).
+    - **The labels are signed, not trusted** (re-review): the worker writes `board.db` and the request, so neither is
+      evidence by itself. The approval form shows the labels the api read and posts `labels_sha256` (SHA-256 of the
+      sorted JSON list), pinned like the plan hash: a missing or changed hash is refused (409). The api signs it into
+      the start claim (`ApprovalClaim.LabelsSHA256`, a new last line `labels:<hash>`, start only; the other kinds keep
+      their message) and puts the labels in the request (`env_labels`). The worker stores them
+      (`agent_tasks.approved_labels`, board migration `0004`) and passes them in every request of the action. actd
+      recomputes the hash from the request's labels into the start claim it verifies (rule 3) and refuses a write step
+      (rule 2) unless the labels are there and pass `StageEvidence`. A label the worker adds after the approval, or a
+      different set, no longer verifies. The labels in `board.db` are not read by actd any more.
+    - **Where the labels come from:** the api reads them from `board.db` (the board sync's copy of the tracker); it
+      does not call Jira or GitLab when the page renders or at approval, which would need the admin's tracker token on
+      every render. The authority is the admin's approval of exactly the labels shown, bound by the signature.
+    - Rollback and checked verify the same start claim, so they carry the same labels; they keep only the develop
+      classification check (they restore or confirm a step that already passed the label rule).
+    - The review queue's one-click approval does not show the labels: a plan that would execute WRITE steps is
+      refused there and approved on the task page.
   - **Catalogue egress.** Allowed: the intake runs on the operator's own model account, and the allow-list entries
     (hosts, project paths, realms) in `capabilities` go to that model provider. `ARGUS_ACT_CATALOGUE_DETAIL=aliases`
-    (default `full`) replaces each entry with a stable alias (`host-<8 hex>.alias.invalid`,
-    `*.hosts-<8 hex>.alias.invalid`, `project-<8 hex>`, `realm-<8 hex>`, from SHA-256 of the value); the worker maps
+    (default `full`) replaces each entry with a stable alias (`host-<12 hex>.alias.invalid`,
+    `*.hosts-<12 hex>.alias.invalid`, `project-<12 hex>`, `realm-<12 hex>`, from SHA-256 of the value). Two entries
+    with one alias refuse the catalogue (`ErrAliasCollision`: the intake gets no capability and the reason, the task
+    log says so, and no step keeps a capability); it never falls back to the full list; the worker maps
     every alias in a step's arguments back (`Aliases.Resolve`) before Validate, so the stored plan, its hash, the page
     and actd hold the configured values. The target addresses and credentials are never in the catalogue.
   - **Run prompt.** `capability_results` in the run's task file is `{"untrusted": true, "note": …, "results": …}`

@@ -1447,7 +1447,7 @@
       "key": "ARGUS_ACT_DEVELOP_LABELS",
       "type": "list",
       "default": "env:stage",
-      "help": "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, and the develop classification (the model's label alone is not enough)"
+      "help": "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, no label containing prod, release or pre-release, and the develop classification; the approval signs the labels the admin saw (the model's label alone is not enough)"
     },
     {
       "key": "ARGUS_ACT_CATALOGUE_DETAIL",

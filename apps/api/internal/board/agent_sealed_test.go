@@ -66,7 +66,8 @@ func TestSealedInputsPassThrough(t *testing.T) {
 	sealed := map[string]string{capability.InputKey(1, "NEW_TOKEN"): sv}
 	at := time.Now().Unix()
 	sig, _ := capability.SignApproval(e.priv, capability.ApprovalClaim{Kind: capability.SignStart, TaskKey: "OPS-7", PlanVersion: 1, PlanSHA256: sha,
-		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(sealed)})
+		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(sealed), LabelsSHA256: capability.LabelsSHA256([]string{"ops", "env:stage"})})
+	envLabels := []any{"ops", "env:stage"} // the labels the admin saw, signed into the start
 	sealedAny := map[string]any{capability.InputKey(1, "NEW_TOKEN"): sv}
 	// a malformed sealed input is refused by the worker
 	bad := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1, "plan_sha256": sha, "signed_at": at, "signature": sig,
@@ -75,7 +76,7 @@ func TestSealedInputsPassThrough(t *testing.T) {
 		t.Fatal(result(st, bad))
 	}
 	ok := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1, "plan_sha256": sha, "signed_at": at, "signature": sig,
-		"sealed_inputs": sealedAny})
+		"sealed_inputs": sealedAny, "env_labels": envLabels})
 	if st := e.run(t); result(st, ok) != "approved; spinning up" {
 		t.Fatal(result(st, ok))
 	}

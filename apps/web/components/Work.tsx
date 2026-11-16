@@ -205,7 +205,8 @@ export function EnvSource({ e }: { e?: SpinEnv }) {
   return (
     <p className="meta-line"><span>Environment</span><Pill tone={warn ? "warn" : "neutral"}>{e.model}</Pill><span>from the model&apos;s classification;</span>
       <span>{e.boardOk ? e.board : `not confirmed by the board: ${e.board}`}</span>
-      {warn ? <span>The WRITE steps are reported for a person; nothing executes.</span> : null}</p>
+      {warn ? <span>The WRITE steps are reported for a person; nothing executes.</span> : null}
+      <span>Board labels you approve: {e.labels?.length ? <span className="mono">{e.labels.join(", ")}</span> : "none"}</span></p>
   );
 }
 
@@ -226,6 +227,7 @@ function SpinForm({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
       <form action={agentSpin} className="ag-f" autoComplete="off">
         <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
         {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
+        {s.env?.labelsSha256 ? <input type="hidden" name="labels_sha256" value={s.env.labelsSha256} /> : null}
         <p className="muted small">The plan needs {inputs.length === 1 ? "a secret value" : "secret values"}. Type {inputs.length === 1 ? "it" : "them"} here: Argus seals each value to its executor at approval. The model, the page and the logs never see {inputs.length === 1 ? "it" : "them"}.</p>
         {inputs.map((n) => <label key={n} className="field"><span className="mono">{n}</span><input type="password" name={`input_${n}`} autoComplete="new-password" spellCheck={false} maxLength={8192} required /></label>)}
         <div className="actionbar"><Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
@@ -237,6 +239,7 @@ function SpinForm({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
     <form action={agentSpin} className="actionbar">
       <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
       {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
+      {s.env?.labelsSha256 ? <input type="hidden" name="labels_sha256" value={s.env.labelsSha256} /> : null}
       <Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
       <span className="muted small">Pinned to plan v{a.planVersion}{a.planSha256 ? ` (${a.planSha256.slice(0, 12)})` : ""}; if the plan changes, review the new version and spin up again.{s.proposal ? " Production stays read-only: a read-only run writes the proposal and the task is blocked for the operator." : ""}</span>
     </form>

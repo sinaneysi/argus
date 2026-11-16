@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -67,9 +66,10 @@ type Request struct {
 	Approver     string            `json:"approver"`
 	Steps        []ReqStep         `json:"steps"`
 	SealedInputs map[string]string `json:"sealed_inputs,omitempty"` // opened by a later capability; ciphertext only
-	// EnvLabels are the task's board labels when the worker wrote the request: the evidence that the task is of the
-	// stage environment. A write step is refused when they are missing or disagree (ADR-0022 PR 5 review).
-	EnvLabels []string `json:"env_labels,omitempty"`
+	// EnvLabels are the task's board labels the admin saw at approval; the api signed their hash into the start
+	// (ApprovalClaim.LabelsSHA256), so they verify only as approved. A write step is refused unless they are there,
+	// verify with the signature and say stage (ADR-0022 PR 5 review). null: none (a write step is refused).
+	EnvLabels []string `json:"env_labels"`
 	Continue  *Signed  `json:"continue,omitempty"` // agent-continue: the operator did step Continue.Step
 	Rollback  *Signed  `json:"rollback,omitempty"` // agent-rollback: roll back step Rollback.Step
 	Stop      *Signed  `json:"stop,omitempty"`     // agent-stop: revoke the task's approvals signed before it
@@ -464,7 +464,6 @@ type task struct {
 	approval capability.Approval
 	steps    []planStep // the steps actd acts on: capability steps and operator steps, in order
 	writeBad bool       // a WRITE step without a capability: for a person, never executed here
-	labels   []string   // the task's board labels (board.db tasks.labels); nil when not readable
 	badN     string     // a step number is missing, not positive or repeated
 }
 
@@ -534,7 +533,7 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 		return nil, errors.New("the stored plan is not readable")
 	}
 	env, _ := doc.Classification["environment"].(string)
-	t := &task{key: key, env: capability.Env(env), labels: taskLabels(ctx, db, key)}
+	t := &task{key: key, env: capability.Env(env)}
 	t.approval = capability.Approval{PlanVersion: ver, StoredSHA256: stored, ApprovedVersion: aver, HashColumn: hasCol == 2,
 		ApprovedSHA256: sha, ApprovedBy: by, State: state, TaskKey: key, Signature: sig, PublicKey: d.o.ApprovalPub}
 	if at > 0 {
@@ -573,21 +572,12 @@ func (d *Daemon) loadTask(ctx context.Context, key string) (*task, error) {
 	return t, nil
 }
 
-// taskLabels are the task's board labels from board.db (Jira key, or gl-<task id>); nil when not readable.
-func taskLabels(ctx context.Context, db *sql.DB, key string) []string {
-	q, arg := `SELECT COALESCE(labels,'') FROM tasks WHERE jira_key=?`, any(key)
-	if id, ok := strings.CutPrefix(key, "gl-"); ok {
-		n, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			return nil
-		}
-		q, arg = `SELECT COALESCE(labels,'') FROM tasks WHERE id=?`, n
+// requestLabels is the hash of the request's board labels for the start claim; "" when it carries none.
+func requestLabels(req Request) string {
+	if req.EnvLabels == nil {
+		return ""
 	}
-	var raw string
-	if db.QueryRowContext(ctx, q, arg).Scan(&raw) != nil {
-		return nil
-	}
-	return capability.LabelsJSON(raw)
+	return capability.LabelsSHA256(req.EnvLabels)
 }
 
 // approver reads the user from auth.db: (role admin, not disabled).
@@ -780,15 +770,14 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 			if (ok && cp.Tier() == capability.Write || s.Mode == "WRITE") && t.env != capability.Develop {
 				return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: a write step runs only for develop, the task is %q", s.N, clip(string(t.env), 20)), true)
 			}
-			// the model's classification is not enough: the board's label must say stage too, in the request and in board.db
+			// the model's classification is not enough: the board labels the admin approved must say stage too. They
+			// are bound to the start signature (rule 3 below fails when the worker changed them after approval).
 			if ok && cp.Tier() == capability.Write || s.Mode == "WRITE" {
 				if req.EnvLabels == nil {
-					return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: the request carries no board labels (environment evidence)", s.N), true)
+					return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: the request carries no approved board labels (environment evidence)", s.N), true)
 				}
-				for _, ls := range [][]string{req.EnvLabels, t.labels} {
-					if okL, why := capability.StageEvidence(ls, d.o.DevelopLabels); !okL {
-						return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: %s", s.N, why), true)
-					}
+				if okL, why := capability.StageEvidence(req.EnvLabels, d.o.DevelopLabels); !okL {
+					return d.refuseAll(c, id, capability.Refuse(2, capability.CodeEnvironment, "step %d: %s", s.N, why), true)
 				}
 			}
 		}
@@ -804,6 +793,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 	}
 	sealed := capability.SealedSHA256(req.SealedInputs)
 	t.approval.RequestVersion, t.approval.RequestSHA256, t.approval.RequestApprover, t.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+	t.approval.RequestLabels = requestLabels(req)
 	if req.Rollback != nil {
 		return d.rollback(ctx, req, t, c)
 	}
@@ -1005,6 +995,7 @@ func (d *Daemon) Process(ctx context.Context, req Request) *Response {
 				break
 			}
 			nt.approval.RequestVersion, nt.approval.RequestSHA256, nt.approval.RequestApprover, nt.approval.RequestSealed = req.PlanVersion, req.PlanSHA256, req.Approver, sealed
+			nt.approval.RequestLabels = requestLabels(req)
 			nt.approval.TTLFrom = t.approval.TTLFrom
 			t.approval = nt.approval
 		}

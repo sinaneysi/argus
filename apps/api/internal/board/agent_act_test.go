@@ -196,8 +196,20 @@ func (e *actEnv) signed(t *testing.T, kind string, req map[string]any) map[strin
 	ver, _ := req["plan_version"].(int)
 	step, _ := req["step"].(int)
 	at := time.Now().Unix()
-	sig, err := capability.SignApproval(e.priv, capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(ver), PlanSHA256: sha,
-		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(nil), Step: int(step)})
+	c := capability.ApprovalClaim{Kind: kind, TaskKey: key, PlanVersion: int(ver), PlanSHA256: sha,
+		Approver: "alex.admin", At: at, SealedSHA256: capability.SealedSHA256(nil), Step: int(step)}
+	if kind == capability.SignStart { // the api shows the task's board labels and signs their hash into the start
+		labels := capability.LabelsJSON(e.q(t, `SELECT COALESCE(labels,'[]') FROM tasks WHERE jira_key=?`, key))
+		if labels == nil {
+			labels = []string{}
+		}
+		la := []any{}
+		for _, l := range labels {
+			la = append(la, l)
+		}
+		req["env_labels"], c.LabelsSHA256 = la, capability.LabelsSHA256(labels)
+	}
+	sig, err := capability.SignApproval(e.priv, c)
 	if err != nil {
 		t.Fatal(err)
 	}

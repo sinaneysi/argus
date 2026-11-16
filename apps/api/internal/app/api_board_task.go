@@ -677,5 +677,6 @@ func apiSpinEnv(plan *py.OMap, key string) map[string]any {
 	env := py.OrS(cl.Get("environment"), "")
 	ok, why := agentStageEvidence(key)
 	matters := env == "develop" && agentHasWrite(plan) && strings.TrimSpace(ACTIONS_MODE) != "" && ACTIONS_MODE != "off"
-	return map[string]any{"model": env, "boardOk": ok, "board": why, "matters": matters}
+	labels, lsha := agentApprovalLabels(key)
+	return map[string]any{"model": env, "boardOk": ok, "board": why, "matters": matters, "labels": labels, "labelsSha256": lsha}
 }

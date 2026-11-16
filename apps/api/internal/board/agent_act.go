@@ -148,6 +148,9 @@ func storedSealed(row row) map[string]string {
 func actRequest(row row, plan map[string]any, id, sha string) actd.Request {
 	req := actd.Request{ActionID: id, TaskKey: row.s("key"), PlanVersion: int(row.i("plan_version")), PlanSHA256: sha,
 		Approver: row.s("approved_by"), Steps: []actd.ReqStep{}, SealedInputs: storedSealed(row)}
+	if l := row.s("approved_labels"); l != "" { // the labels the start signed: every request of the action carries them
+		req.EnvLabels = capability.LabelsJSON(l)
+	}
 	for _, x := range asList(plan["plan"]) {
 		s := asMap(x)
 		n, _ := capability.AsInt(s["n"])
@@ -180,10 +183,6 @@ func (r *run) dispatchAct(row row, plan map[string]any, resume bool) string {
 		return "act not started"
 	}
 	req := actRequest(row, plan, id, sha)
-	req.EnvLabels = r.taskLabels(key)
-	if req.EnvLabels == nil {
-		req.EnvLabels = []string{}
-	}
 	if resume {
 		req.Continue = &actd.Signed{Step: int(row.i("continue_step")), Approver: row.s("continue_by"), At: row.i("continue_at"), Signature: row.s("continue_sig")}
 	}
@@ -580,22 +579,27 @@ func (r *run) forwardStop(row row, req map[string]any, by string) {
 
 // capabilityCatalogue is the intake's list of capabilities (ADR-0022 D9): built from the registry and its
 // allow-lists, so it holds only what actd would run; empty, with mode "off", when the executor is off. With
-// ARGUS_ACT_CATALOGUE_DETAIL=aliases the allow-list entries are aliases (catalogueAliases maps them back).
-func (r *run) capabilityCatalogue() ([]capability.CatalogueEntry, string) {
+// ARGUS_ACT_CATALOGUE_DETAIL=aliases the allow-list entries are aliases (catalogueAliases maps them back); a
+// collision of aliases refuses the catalogue (empty, with the reason) instead of giving it in full.
+func (r *run) capabilityCatalogue() ([]capability.CatalogueEntry, string, string) {
 	a := r.o.Agent
 	if a == nil || a.ActionsDir == "" || a.ActionsMode == "" || a.ActionsMode == "off" {
-		return []capability.CatalogueEntry{}, "off"
+		return []capability.CatalogueEntry{}, "off", ""
 	}
-	cat, _ := a.Registry.CatalogueDetail(a.CatalogueDetail)
-	return cat, a.ActionsMode
+	cat, _, err := a.Registry.CatalogueDetail(a.CatalogueDetail)
+	if err != nil {
+		return []capability.CatalogueEntry{}, a.ActionsMode, err.Error()
+	}
+	return cat, a.ActionsMode, ""
 }
 
 // catalogueAliases map the aliases of the intake's catalogue back to the configured values; nil without aliases.
-func (r *run) catalogueAliases() *capability.Aliases {
+// ok is false when the catalogue was refused: then no step keeps a capability.
+func (r *run) catalogueAliases() (*capability.Aliases, bool) {
 	a := r.o.Agent
 	if a == nil || a.Registry == nil {
-		return nil
+		return nil, true
 	}
-	_, al := a.Registry.CatalogueDetail(a.CatalogueDetail)
-	return al
+	_, al, err := a.Registry.CatalogueDetail(a.CatalogueDetail)
+	return al, err == nil
 }

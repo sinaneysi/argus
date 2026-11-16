@@ -108,7 +108,9 @@ var agentCols = [][2]string{{"argus_user", "TEXT"}, {"plan_entered_at", "INTEGER
 	{"plan_sha256", "TEXT"}, {"approved_sha256", "TEXT"}, {"approval_sig", "TEXT"}, {"action_id", "TEXT"}, {"action_state", "TEXT"},
 	{"continue_step", "INTEGER"}, {"continue_by", "TEXT"}, {"continue_at", "INTEGER"}, {"continue_sig", "TEXT"}, {"rollback_started", "INTEGER"},
 	// board migration 0003 (ADR-0022 PR 3): the approval's sealed inputs, ciphertext only
-	{"sealed_inputs", "TEXT"}}
+	{"sealed_inputs", "TEXT"},
+	// board migration 0004 (ADR-0022 PR 5 review): the board labels the start approval signed
+	{"approved_labels", "TEXT"}}
 
 func (a *AgentOptions) defaults() {
 	if a.Debounce <= 0 {
@@ -496,7 +498,12 @@ func (r *run) agentRunTick() string {
 			return "intake daily cap reached"
 		}
 		ctxd["phase"], ctxd["context_hash"], ctxd["board_columns"] = "intake", h, r.boardColumns()
-		ctxd["capabilities"], ctxd["actions_mode"] = r.capabilityCatalogue()
+		cat, amode, cerr := r.capabilityCatalogue()
+		ctxd["capabilities"], ctxd["actions_mode"] = cat, amode
+		if cerr != "" {
+			ctxd["capabilities_error"] = cerr
+			r.alog(key, "refused", "No capability catalogue for the intake: "+cerr)
+		}
 		if err := r.writeJob(key+".intake.json", ctxd); err != nil {
 			r.must(`UPDATE agent_tasks SET state='failed', job_started=NULL, error='could not start the intake', error_detail=? WHERE key=?`,
 				r.errorDetail("intake", "could not start the intake", nil, "the job file cannot be written: "+err.Error()), key)
@@ -637,7 +644,12 @@ func (r *run) agentIngest() {
 				r.alog(key, "failed", "Claude usage limit reached: "+strings.TrimSpace(strings.TrimPrefix(me, agentLimitPrefix))+tail)
 				continue
 			}
-			plan, err := validatePlanAliased(d, a.Registry, r.catalogueAliases())
+			al, catOK := r.catalogueAliases()
+			reg := a.Registry
+			if !catOK { // the catalogue was refused: the intake saw no capability, so no step keeps one
+				reg = nil
+			}
+			plan, err := validatePlanAliased(d, reg, al)
 			if err == nil && outBytes != nil {
 				// one reading for the page, the hash and actd: valid UTF-8, no duplicate keys, integers within ±2^53
 				if serr := capability.StrictJSON(outBytes); serr != nil {
@@ -804,18 +816,53 @@ func hasWrite(plan map[string]any) bool {
 // spinUp is what Spin up agent does with a plan while the executor is off.
 func spinUp(plan map[string]any) (string, string) { return spinUpMode(plan, "off", false) }
 
-// spin is spinUpMode with this installation's executor mode ("off" without an actions folder) and the task's board
-// labels as the evidence of the stage environment.
+// spin is spinUpMode with this installation's executor mode ("off" without an actions folder) and the board labels
+// the start approval signed (agent_tasks.approved_labels) as the evidence of the stage environment.
 func (r *run) spin(plan map[string]any, key string) (string, string) {
-	mode := "off"
-	if a := r.o.Agent; a != nil && a.ActionsDir != "" && a.ActionsMode != "" {
-		mode = a.ActionsMode
+	row := r.one(`SELECT approved_labels FROM agent_tasks WHERE key=?`, key)
+	var labels []string
+	if row != nil && row.s("approved_labels") != "" {
+		labels = capability.LabelsJSON(row.s("approved_labels"))
 	}
-	ok, _ := r.stageEvidence(key)
+	return r.spinLabels(plan, labels)
+}
+
+// spinLabels is spinUpMode for these approved board labels (nil: none, a WRITE step does not execute).
+func (r *run) spinLabels(plan map[string]any, labels []string) (string, string) {
+	mode := "off"
+	var dev []string
+	if a := r.o.Agent; a != nil && a.ActionsDir != "" && a.ActionsMode != "" {
+		mode, dev = a.ActionsMode, a.DevelopLabels
+	}
+	ok := false
+	if labels != nil {
+		ok, _ = capability.StageEvidence(labels, dev)
+	}
 	return spinUpMode(plan, mode, ok)
 }
 
-// taskLabels are the board labels of the task with this agent key.
+// approvedLabels reads the board labels a start request carries (the api signed their hash): a list of at most 50
+// strings of at most 200 characters; nil when the request has none. A malformed list is refused.
+func approvedLabels(v any) ([]string, string) {
+	if v == nil {
+		return nil, ""
+	}
+	l, ok := v.([]any)
+	if !ok || len(l) > 50 {
+		return nil, "the approved board labels are not a list of at most 50"
+	}
+	out := []string{}
+	for _, x := range l {
+		s, ok := x.(string)
+		if !ok || len(s) > 200 || strings.ContainsAny(s, "\x00\n\r") {
+			return nil, "an approved board label is not a short text"
+		}
+		out = append(out, s)
+	}
+	return out, ""
+}
+
+// taskLabels are the board labels of the task with this agent key (display and tests only: never authority).
 func (r *run) taskLabels(key string) []string {
 	id := r.taskIDOf(key)
 	if id == nil {
@@ -826,16 +873,6 @@ func (r *run) taskLabels(key string) []string {
 		return nil
 	}
 	return capability.LabelsJSON(t.s("labels"))
-}
-
-// stageEvidence is whether the task's board labels say stage (ADR-0022 PR 5 review): the model's classification
-// alone never lets a write-tier capability execute.
-func (r *run) stageEvidence(key string) (bool, string) {
-	var dev []string
-	if r.o.Agent != nil {
-		dev = r.o.Agent.DevelopLabels
-	}
-	return capability.StageEvidence(r.taskLabels(key), dev)
 }
 
 // spinUpMode is what Spin up agent does with a plan: (path, label); path proposal | execute | write-report | run |
@@ -1394,7 +1431,11 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 		if len(r.unanswered(plan, key)) > 0 {
 			panic(refused("answer the blocking questions first (Save answers & re-plan)"))
 		}
-		path, why := r.spin(plan, key)
+		labels, lerr := approvedLabels(req["env_labels"])
+		if lerr != "" {
+			panic(refused(lerr))
+		}
+		path, why := r.spinLabels(plan, labels)
 		if path == "refused" {
 			panic(refused(why))
 		}
@@ -1402,9 +1443,14 @@ func (r *run) agentHandle(req map[string]any, by, role string) (string, any) {
 			panic(refused(r.budgetNote()))
 		}
 		sealed := sealedInputs(req)
+		var lv any // NULL: the start carries no labels (a WRITE step never executes)
+		if labels != nil {
+			lj, _ := json.Marshal(labels)
+			lv = string(lj)
+		}
 		r.must(`UPDATE agent_tasks SET state='approved', approved_version=?, approved_by=?, approved_at=?, approved_sha256=?, approval_sig=?,
-			sealed_inputs=?, action_id=NULL, action_state=NULL, continue_step=NULL, continue_by=NULL, continue_at=NULL, continue_sig=NULL,
-			error=NULL, updated=? WHERE key=?`, ver, by, at, sha, sig, sealed, r.now(), key)
+			sealed_inputs=?, approved_labels=?, action_id=NULL, action_state=NULL, continue_step=NULL, continue_by=NULL, continue_at=NULL, continue_sig=NULL,
+			error=NULL, updated=? WHERE key=?`, ver, by, at, sha, sig, sealed, lv, r.now(), key)
 		what := map[string]string{"proposal": "write proposal for the operator", "write-report": "a read-only run that reports the WRITE steps",
 			"run": "spin up a read-only run", "execute": "run the capability steps, then a read-only report"}[path]
 		r.alog(key, "approved", fmt.Sprintf("Plan v%d approved by %s: %s", ver, by, what))

@@ -573,7 +573,7 @@ export type Agent = {
 };
 /** The classification on the approval and its source: the model's label, and whether the board's labels confirm
  * stage (a write-tier capability executes only with both). matters: the plan would execute WRITE steps. */
-export type SpinEnv = { model: string; boardOk: boolean; board: string; matters: boolean };
+export type SpinEnv = { model: string; boardOk: boolean; board: string; matters: boolean; labels?: string[]; labelsSha256?: string };
 /** The task's last capability action (ADR-0022): actd's step results, not the model's report. */
 export type AgentAction = {
   id: string; state: string;

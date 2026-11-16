@@ -184,11 +184,12 @@ describe("task page", () => {
   });
   it("says when the board does not confirm the model's environment, and that nothing executes", async () => {
     const a = { ...task.agent, finished: false, spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false,
-      env: { model: "develop", boardOk: false, board: "the board label env:production disagrees with the develop classification", matters: true } } };
+      env: { model: "develop", boardOk: false, board: "the board label env:production disagrees with the develop classification", matters: true, labels: ["ops", "env:production"], labelsSha256: "cd".repeat(32) } } };
     answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
-    for (const w of ["not confirmed by the board: the board label env:production disagrees", "The WRITE steps are reported for a person; nothing executes.", 'class="pill warn">develop<'])
+    for (const w of ["not confirmed by the board: the board label env:production disagrees", "The WRITE steps are reported for a person; nothing executes.", 'class="pill warn">develop<',
+      "Board labels you approve:", "ops, env:production", `name="labels_sha256" value="${"cd".repeat(32)}"`])
       expect(h).toContain(w);
   });
   it("names every action state and step mode in words", async () => {
@@ -304,6 +305,8 @@ describe("writes", () => {
       [a.matrixPreview, { pid: "p1", action: "create", assignee: "sam" }, "/api/v1/board/mxpreview", { pid: "p1", action: "create", assignee: "sam" }],
       [a.agentAct, { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes", other: "no" }, "/api/v1/board/agent", { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes" }],
       [a.agentSpin, { key: "OPS-1", plan_version: "2" }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2" }],
+      [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), labels_sha256: "cd".repeat(32) }, "/api/v1/board/agent/spinup",
+        { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), labels_sha256: "cd".repeat(32) }],
       [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }],
       [a.agentContinue, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }, "/api/v1/board/agent/continue", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }],
       [a.agentRollback, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }, "/api/v1/board/agent/rollback", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }],
