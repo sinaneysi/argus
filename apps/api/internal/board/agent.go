@@ -490,6 +490,7 @@ func (r *run) agentRunTick() string {
 			return "intake daily cap reached"
 		}
 		ctxd["phase"], ctxd["context_hash"], ctxd["board_columns"] = "intake", h, r.boardColumns()
+		ctxd["capabilities"], ctxd["actions_mode"] = r.capabilityCatalogue()
 		if err := r.writeJob(key+".intake.json", ctxd); err != nil {
 			r.must(`UPDATE agent_tasks SET state='failed', job_started=NULL, error='could not start the intake', error_detail=? WHERE key=?`,
 				r.errorDetail("intake", "could not start the intake", nil, "the job file cannot be written: "+err.Error()), key)

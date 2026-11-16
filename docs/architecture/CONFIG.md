@@ -104,7 +104,10 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
 `actions/actd-status.json` (the self-check reads it when the mode is not `off`); in `argus-act`: `audit/actions.jsonl`
 (hash chain, `argus actd verify-audit`), `steps/` (stored step results), `keys/`, `secrets/`, `backups/`. The admin
-switch "Stop all actions" is `auth_settings` key `actions.stopped` (read before every step; its UI comes in PR 5).
+switch "Stop all actions" is `auth_settings` key `actions.stopped` (read before every step), set in Settings → Jira
+sync → Capability executor (`POST /api/v1/admin/actions`, admins, recent 2FA code, in the audit log). That card also
+shows the mode, the allow-lists and the target addresses read-only, and actd's heartbeat from `actd-status.json`.
+With the mode not `off`, the intake's task file lists `capabilities` (the registry with its allow-lists).
 The executor key is only `argus-act/keys/act.key` (no environment variable: `argus.env` is shared by every service).
 `ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with
 `ARGUS_ACT_HTTP_ALLOW_HTTP=1`); without `internal:` a name that resolves to a loopback, link-local, private, shared

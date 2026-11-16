@@ -5,14 +5,18 @@ package app
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
 var (
 	reSectionNote = regexp.MustCompile(`(?s)<p class="section-note">(.*?)</p>`)
 	reHostBox     = regexp.MustCompile(`name="host" value="([^"]*)"( checked)?`)
+	// apiSecretArgRe: argument names that hold a secret unless they carry an input reference
+	apiSecretArgRe = regexp.MustCompile(`(?i)(value|matches|secret|token|password|passwd|credential)`)
 )
 
 // apiFixer is boardFixerBlock as data: its notes, and the host choice when the task can be sent.
@@ -304,7 +308,14 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 			for _, x := range py.AsList(py.Or(s.Get("targets"), []any{})) {
 				tg = append(tg, py.Str(x))
 			}
-			steps = append(steps, map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg})
+			st := map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg}
+			if name := py.OrS(s.Get("capability"), ""); name != "" {
+				st["capability"], st["args"] = name, apiStepArgs(s.Get("args"))
+			}
+			if why := py.OrS(s.Get("capability_error"), ""); why != "" {
+				st["capabilityError"] = why
+			}
+			steps = append(steps, st)
 		}
 		env := ""
 		if v := cl.Get("environment"); v != "none" {
@@ -618,6 +629,43 @@ func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
 	out := map[string]any{"id": id, "state": a.Str("action_state"), "steps": steps}
 	if wait != nil {
 		out["continue"] = wait
+	}
+	return out
+}
+
+// apiStepArgs are a capability step's arguments for the plan view, in key order. A sealed input ("input:<NAME>") is
+// shown by its name only: the admin enters the value at approval, and it is never on the page.
+func apiStepArgs(v any) []map[string]any {
+	out := []map[string]any{}
+	m := py.AsMap(v)
+	if m == nil {
+		return out
+	}
+	keys := m.Keys()
+	sort.Strings(keys)
+	for _, k := range keys {
+		x := m.Get(k)
+		if s, ok := x.(string); ok && capability.InputRefRe.MatchString(s) {
+			out = append(out, map[string]any{"name": k, "value": strings.TrimPrefix(s, "input:"), "input": true})
+			continue
+		}
+		if apiSecretArgRe.MatchString(k) { // an input field without a reference: never shown (validation refuses it)
+			out = append(out, map[string]any{"name": k, "value": capability.Redacted})
+			continue
+		}
+		var val string
+		if b, ok := x.(bool); ok {
+			val = If(b, "true", "false")
+		} else if l, ok := x.([]any); ok {
+			parts := make([]string, 0, len(l))
+			for _, y := range l {
+				parts = append(parts, py.Str(y))
+			}
+			val = strings.Join(parts, ", ")
+		} else {
+			val = py.Str(x)
+		}
+		out = append(out, map[string]any{"name": k, "value": py.Head(val, 300)})
 	}
 	return out
 }

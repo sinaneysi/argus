@@ -163,7 +163,36 @@ describe("task page", () => {
     answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
-    for (const w of ["Capability steps", "run by Argus, not by the model", "audit 0123456789ab", "Continue after step 2", "Roll back step 1", 'name="plan_sha256"', 'name="action_id"']) expect(h).toContain(w);
+    for (const w of ["Capability steps", "run by Argus, not by the model", "<th>Audit</th>", ">0123456789ab<", "Continue after step 2", "Roll back step 1", "Needs a recent 2FA code", 'name="plan_sha256"', 'name="action_id"', "needs the operator"]) expect(h).toContain(w);
+    expect(h.match(/<tr>/g)?.length).toBe(4); // the head and one row per step
+  });
+  it("shows each capability step with its arguments, secrets as entered at approval, and the hash next to the version", async () => {
+    const plan = { ...task.agent.plan, steps: [
+      { text: "rotate the key", mode: "WRITE", targets: ["group/app"], capability: "gitlab.ci-variable.set",
+        args: [{ name: "environment_scope", value: "develop" }, { name: "key", value: "PAYMENT_KEY" }, { name: "value_ref", value: "NEW_PAYMENT_KEY", input: true }] },
+      { text: "start the develop pipeline", mode: "operator", targets: ["group/app"] },
+      { text: "edit the unit by hand", mode: "WRITE", targets: ["web-1"], capabilityError: "no capability: a person does this step" }] };
+    const a = { ...task.agent, finished: false, planVersion: 3, planSha256: "0123456789abcdef".repeat(4), plan, spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["gitlab.ci-variable.set", "<dt class=\"mono\">value_ref</dt>", "NEW_PAYMENT_KEY", "entered at approval", "for the operator", "Argus does not run this step: no capability",
+      "v3 · ", ">0123456789ab<", "Pinned to plan v3 (0123456789ab)"]) expect(h).toContain(w);
+    expect(h.match(/entered at approval/g)?.length).toBe(1);
+  });
+  it("names every action state and step mode in words", async () => {
+    const { actionState, stepMode, stepStatusTone } = await import("@/components/Work");
+    expect(actionState("operator")).toEqual({ label: "needs the operator", tone: "warn" });
+    expect(actionState("outcome-unknown").label).toBe("outcome unknown: check the target");
+    expect(actionState("dry-run").label).toContain("nothing changed");
+    expect(actionState("")).toEqual({ label: "running", tone: "neutral" });
+    for (const s of ["refused", "failed"]) expect(actionState(s).tone).toBe("fail");
+    expect(actionState("done").tone).toBe("ok");
+    expect(stepMode("operator")).toEqual({ label: "for the operator", tone: "info" });
+    expect(stepMode("WRITE").tone).toBe("warn");
+    expect(stepMode("read-only").tone).toBe("neutral");
+    expect(stepStatusTone("rollback-failed")).toBe("fail");
+    expect(stepStatusTone("planned")).toBe("info");
   });
   it("offers the checked verdicts for a step whose outcome is unknown, and no rollback", async () => {
     const a = { ...task.agent, planSha256: "ab".repeat(32), action: { id: "OPS-1.v2.abababababab", state: "outcome-unknown", steps: [
@@ -183,7 +212,9 @@ describe("task page", () => {
     expect(field).toContain('type="password"');
     expect(field).toContain('autoComplete="new-password"');
     expect(field).not.toMatch(/value=/);
+    expect(field).toContain("required");
     expect(h).toMatch(/<form[^>]*autoComplete="off"/);
+    expect(h.match(/name="input_[A-Z_]+"/g)).toEqual(['name="input_NEW_TOKEN"']); // one field per input, nothing else
   });
   it("renders the fixer form on a task Argus does not work", async () => {
     answers["/api/v1/board/task"] = { status: 200, data: { ...taskPlain, fixer: { heading: "Send to the fixer", notes: [], envLabel: "develop", hosts: [{ alias: "web-1", checked: true }] } } };

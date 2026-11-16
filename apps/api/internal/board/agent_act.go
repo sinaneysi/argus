@@ -541,3 +541,13 @@ func (r *run) forwardStop(row row, req map[string]any, by string) {
 		alert("the request file cannot be written: " + err.Error())
 	}
 }
+
+// capabilityCatalogue is the intake's list of capabilities (ADR-0022 D9): built from the registry and its
+// allow-lists, so it holds only what actd would run; empty, with mode "off", when the executor is off.
+func (r *run) capabilityCatalogue() ([]capability.CatalogueEntry, string) {
+	a := r.o.Agent
+	if a == nil || a.ActionsDir == "" || a.ActionsMode == "" || a.ActionsMode == "off" {
+		return []capability.CatalogueEntry{}, "off"
+	}
+	return a.Registry.Catalogue(), a.ActionsMode
+}

@@ -553,8 +553,13 @@ export type Secrets = { items: { name: string; text: string; note?: string; warn
 export type AgentResult = {
   summary: string; evidence: string[]; rollback: string[]; needs: string[]; mr?: string; fixRun?: string; report?: MdDoc; moves?: { col: string; label: string; primary: boolean }[];
 };
+/** One plan step. A capability step (ADR-0022) carries its arguments; an input is a name whose value the admin enters
+ * at approval, never a value. capabilityError: why the step stays for a person. */
+export type PlanStep = {
+  text: string; mode: string; targets: string[]; capability?: string; args?: { name: string; value: string; input?: boolean }[]; capabilityError?: string;
+};
 export type AgentPlan = {
-  summary: string; env: string; kind: string; production: boolean; prodNote: boolean; estimate?: string; steps: { text: string; mode: string; targets: string[] }[]; fix?: Fix; needs: string[];
+  summary: string; env: string; kind: string; production: boolean; prodNote: boolean; estimate?: string; steps: PlanStep[]; fix?: Fix; needs: string[];
 };
 export type Agent = {
   key: string; state: string; label: string; kind: string; meta: string[]; admin: boolean; finished: boolean; chatOn: boolean; planVersion: number;
@@ -720,6 +725,15 @@ export type AdminBoard = {
   agent: { tick: string; error: string; rwUsers: string[]; fixerTasks: { id: number; key: string; tracker: string; env: string; fixState: string; title: string }[];
     settings: { enabled: boolean; assignees: string; column: string; autoDone: boolean; qaEnabled: boolean; qaThreshold: string; qaCap: number; qaOwner: string; fixerTrigger: string; chat: boolean; secrets: boolean } };
   connections: { user: string; identity: string; host: string; mode: string; projects: string; lastSync: number; lastError: string }[];
+  actions?: AdminActions;
+};
+/** Settings → Task agent: the capability executor (ADR-0022 D8). Mode and allow-lists come from the configuration. */
+export type AdminActions = {
+  mode: string; stopped: boolean;
+  lists: { key: string; label: string; values: string[] }[];
+  addresses: { key: string; label: string; value: string }[];
+  heartbeat: { seen: boolean; kind: "ok" | "warn" | "fail" | "neutral"; text: string; detail?: string; at?: number; mode?: string; version?: string; chain?: string; chainOk?: boolean;
+    capabilities: string[]; backupsKept?: number; approvalKey?: boolean; sealKey?: boolean };
 };
 
 export type StatusVerdict = { kind: string; badge: string; head: string; detail: string; act: string; href: string; facts: { kind: string; label: string; value: string; href?: string }[] };

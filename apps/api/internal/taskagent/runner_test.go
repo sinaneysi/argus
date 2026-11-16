@@ -74,9 +74,10 @@ func TestRunOnceWritesPlanMetaProgress(t *testing.T) {
 
 func TestStopAndSkip(t *testing.T) {
 	o, _ := setup(t, "sleep")
+	job := filepath.Join(o.JobsDir, "OPS-7.intake.json") // the goroutine must not read o: it is replaced below
 	go func() {
 		time.Sleep(1500 * time.Millisecond)
-		os.Remove(filepath.Join(o.JobsDir, "OPS-7.intake.json"))
+		os.Remove(job)
 	}()
 	start := time.Now()
 	ran, _ := o.RunOnce(context.Background())

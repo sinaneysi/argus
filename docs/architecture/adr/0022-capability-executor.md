@@ -376,6 +376,40 @@ Design items for PR 2 (not built in PR 1):
   users with e-mail, attributes and credentials; an LDAP provider with a bind credential), record every call
   (`GET /keycloak/_calls`) and answer every write under `/keycloak/admin` with 403.
 
+## As built (PR 5, prompts and the UI)
+
+- **Catalogue** (`internal/capability/catalogue.go`): `Registry.Catalogue()` lists each offered capability with its
+  name, tier, environments (write tier: `develop`; read tier: all four, O8), its fields (type, required, pattern,
+  length, range, `input`, `secret`, allow-list key), the allow-lists' entries (`AllowLister`: hosts, projects,
+  realms; never an address of a target or a credential) and fixed rules in words. The worker writes it into the
+  intake's task file as `capabilities`, with `actions_mode`; with the mode `off` it is an empty list and `off`.
+- **Prompts** (D9): `task-intake.md` names a capability only from `capabilities` and only with its fields; a secret
+  is never written (an `input` field holds `input:<NAME>`); `environment_scope` is exactly `develop`, never `*`;
+  a pipeline, job or deploy step is `mode: operator` with no capability; checks after a write or an operator step
+  use `http.check` or `gitlab.ci-variable.get`; outside `develop` a WRITE step names no write-tier capability.
+  `task-run.md`: "You change nothing", report `capability_results` as they are, never repeat a step, never guess a
+  value, never claim a change that is not there; operator steps are reported for the operator. `task-chat.md` is
+  unchanged. The prompts are snapshot-tested (`taskagent/testdata/prompts`, `-update-prompts` after a reviewed edit).
+- **Recorded model outputs** (`board/testdata/intake`) run through the runner's JSON extraction and
+  `validatePlanWith`: a good plan keeps its capabilities and takes the `execute` path; a literal secret (in
+  `value_ref`, or an unknown `value` key) leaves the step without capability and arguments, so the literal is not
+  stored; a pipeline started by a WRITE step, with or without an invented capability, is a write-report; an injected
+  `*` scope and a project off the list are refused.
+- **Task page**: each plan step shows its mode ("for the operator" for an operator step), its capability and its
+  arguments; an `input` argument shows only its name and "entered at approval" (the api never sends a value; a
+  secret-like argument without a reference is `<redacted>`). The first 12 characters of the plan hash stand next to
+  the version, in the plan heading and in the Spin up line. The capability steps are a table (step, capability,
+  result, audit id), with the action's state in words; Roll back, the checked verdicts and Continue stay as built in
+  PR 2/3 (each a sensitive route: a recent 2FA code).
+- **Settings → Jira sync → Capability executor** (`#actions`): the mode and the allow-lists and target addresses,
+  read-only from the configuration; actd's heartbeat (age: ok up to 120 s, late up to 600 s, then failed, like the
+  self-check), its audit chain, the capabilities it offers, whether the approval and sealing keys are there, the
+  backups kept; and the one control, "Stop all actions" (behind a confirm fold) / "Resume actions":
+  `POST /api/v1/admin/actions {stopped: 1|0}`, admins only, sensitive (recent 2FA code), written to the auth audit
+  log. No new configuration key. The mode stays `off` by default.
+- Not done here: the acceptance with a real model intake on the demo (needs a model login, the `actions` profile
+  with mode `dry-run` or `on`, a pinned sealing key and the GitLab stub or a test project on the allow-list).
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan

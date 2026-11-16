@@ -117,5 +117,5 @@ func apiAdminBoardJSON(qs py.QS, sess *Session) (any, *apiErr) {
 		"notices": notices, "refresh": apiRefresh(c), "connection": facts, "shared": apiJiraShared(js, st),
 		"autoIncidents": py.Truthy(py.AsMap(py.Or(st.Get("settings"), nil)).Get("auto_incidents")),
 		"failed":        apiBoardFails(st), "retrying": apiBoardRetry(st), "agent": apiBoardAgent(st),
-		"hosts": strings.Join(apiStrs(js.Get("allowed_hosts")), "\n"), "connections": apiJiraConnections(js)}, nil
+		"hosts": strings.Join(apiStrs(js.Get("allowed_hosts")), "\n"), "connections": apiJiraConnections(js), "actions": apiAdminActions()}, nil
 }

@@ -8,6 +8,7 @@ import { HelpQ } from "@/components/HelpQ";
 import { qs } from "@/lib/api";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
 import type { AdminBoard } from "@/lib/types";
+import { Pill } from "@/components/Pills";
 import { Button } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
 
@@ -80,6 +81,45 @@ function Rows({ title, head, n, empty, note, children }: { title: string; head: 
   );
 }
 
+const MODE: Record<string, { tone: "ok" | "info" | "neutral" | "fail"; text: string }> = {
+  off: { tone: "neutral", text: "Off: no capability runs; every plan takes the read-only paths." },
+  "dry-run": { tone: "info", text: "Dry run: actd only plans each step and the comment shows what would change; nothing is written." },
+  on: { tone: "ok", text: "On: after an admin approves a develop plan, actd runs its capability steps." },
+  invalid: { tone: "fail", text: "ARGUS_ACTIONS_MODE has an unknown value: actd does not start." },
+};
+
+/** Settings → Task agent: the capability executor (ADR-0022 D8). Read-only facts, one switch. */
+function ActionsCard({ x, csrf }: { x: NonNullable<AdminBoard["actions"]>; csrf: string }) {
+  const m = MODE[x.mode] ?? { tone: "fail" as const, text: "ARGUS_ACTIONS_MODE has an unknown value: actd does not start." };
+  const h = x.heartbeat;
+  return (
+    <PlainCard as="section" id="actions" aria-labelledby="j-x"><div className="card-h"><h2 id="j-x">Capability executor</h2>
+      {x.stopped ? <Pill tone="fail">Stopped</Pill> : <Pill tone={m.tone}>{x.mode}</Pill>}</div>
+      <p className="set-note">{x.stopped ? `All actions are stopped: actd refuses every capability step until an admin resumes (mode ${x.mode}).` : m.text} The mode and the allow-lists come from the configuration (<span className="mono">argus.env</span>) and are read-only here; the credentials live only in actd&apos;s own volume and never show.</p>
+      <dl className="rec">
+        <div><dt>actd</dt><dd><Pill tone={h.kind}>{h.text}</Pill>{h.at ? <> <span className="muted small">last heartbeat <When ts={h.at} /></span></> : null}{h.detail ? <p className="muted small">{h.detail}</p> : null}</dd></div>
+        {h.seen ? <>
+          <div><dt>Audit chain</dt><dd className={h.chainOk ? undefined : "set-err"}>{h.chain}</dd></div>
+          <div><dt>Offers</dt><dd>{h.capabilities.length ? <span className="mono">{h.capabilities.join(", ")}</span> : "nothing: every allow-list is empty"}</dd></div>
+          <div><dt>Keys</dt><dd>{h.approvalKey ? "approval key stored" : "no approval key: every step is refused"} · {h.sealKey ? "sealing key ready" : "no sealing key"}</dd></div>
+          <div><dt>Backups kept</dt><dd className="num">{h.backupsKept ?? 0}</dd></div>
+        </> : null}
+        {x.lists.map((l) => <div key={l.key}><dt>{l.label}</dt><dd>{l.values.length
+          ? <span className="mono">{l.values.join(", ")}</span>
+          : <span className="muted">empty: not offered (<span className="mono">{l.key}</span>)</span>}</dd></div>)}
+        {x.addresses.filter((a) => a.value).map((a) => <div key={a.key}><dt>{a.label}</dt><dd className="mono">{a.value}</dd></div>)}
+      </dl>
+      {x.stopped ? (
+        <form action={settingsGo} className="row-act"><Hidden csrf={csrf} _to="actions" stopped="0" /><Button variant="outline">Resume actions</Button>
+          <span className="muted small">actd runs approved steps again, within the mode. Needs a recent 2FA code.</span></form>
+      ) : (
+        <details className="fold"><summary>Stop all actions…</summary><form action={settingsGo} className="u-confirm"><Hidden csrf={csrf} _to="actions" stopped="1" />
+          <Button variant="destructive" size="sm">Stop all actions</Button><span className="muted small">actd refuses every capability step from the next one on, for every task, until an admin resumes. Running steps finish. Needs a recent 2FA code.</span></form></details>
+      )}
+    </PlainCard>
+  );
+}
+
 /** Settings → Jira sync: the connection, what failed, the task agent and the hosts Argus may call. */
 export default async function JiraSyncPage({ searchParams }: { searchParams: Search }) {
   const q = await pick(searchParams, ["req", "jira"]);
@@ -124,6 +164,7 @@ export default async function JiraSyncPage({ searchParams }: { searchParams: Sea
           <PlainCard as="section" id="agent" aria-labelledby="j-a"><div className="card-h"><h2 id="j-a">Task agent and QA intake</h2></div>
             <p className="set-note">Argus plans (read-only) every issue in the agent column assigned to these admins, asks its questions, and works it after an admin spins up the agent. Last tick: {d.agent.tick}{d.agent.error ? <> · <span className="set-err">{d.agent.error}</span></> : null}</p>
             <SetForm to="agent" page={`${PAGE}#agent`} csrf={csrf} form="agent" fields={agentFields(d)} secondary submit="Save agent settings" note={applied} /></PlainCard>
+          {d.actions ? <ActionsCard x={d.actions} csrf={csrf} /> : null}
           <PlainCard as="section" id="fixer-migration" aria-labelledby="j-f"><div className="card-h"><h2 id="j-f">Retire the fixer column</h2></div>
             {n ? <>
               <p className="set-note">{n} task{n === 1 ? "" : "s"} in Ready for fixer.</p>

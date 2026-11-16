@@ -62,6 +62,21 @@ describe("Jira sync", () => {
       expect(out).toContain(w);
     expect(out.match(/<input[^>]*name="token"[^>]*>/)?.[0]).not.toContain("value=");
   });
+  it("shows the capability executor: mode and allow-lists read-only, the heartbeat, the stop switch", async () => {
+    const actions = { mode: "dry-run", stopped: false,
+      lists: [{ key: "ARGUS_ACT_HTTP_HOSTS", label: "http.check hosts", values: ["health.example.com"] }, { key: "ARGUS_ACT_GITLAB_PROJECTS", label: "GitLab projects", values: [] }],
+      addresses: [{ key: "ARGUS_ACT_GITLAB_URL", label: "GitLab address", value: "" }],
+      heartbeat: { seen: true, kind: "ok", text: "Alive", at: 1763300000, mode: "dry-run", chain: "OK, 4 records", chainOk: true, capabilities: ["http.check"], backupsKept: 0, approvalKey: true, sealKey: true } };
+    const out = await render({ ...board, actions });
+    for (const w of ['id="actions"', "Capability executor", "dry-run", "Dry run: actd only plans", "Alive", "OK, 4 records", "health.example.com", "empty: not offered", "ARGUS_ACT_GITLAB_PROJECTS",
+      "Stop all actions…", 'name="_to" value="actions"', 'name="stopped" value="1"', "Needs a recent 2FA code"]) expect(out).toContain(w);
+    const card = out.slice(out.indexOf('id="actions"'), out.indexOf("</section>", out.indexOf('id="actions"')));
+    expect(card.match(/<(input|select|textarea)[^>]*>/g)?.filter((x) => !x.includes('type="hidden"')) ?? []).toEqual([]); // read-only but the switch
+    for (const w of ["GitLab address", "Resume actions"]) expect(card).not.toContain(w);
+    const stopped = await render({ ...board, actions: { ...actions, stopped: true } });
+    for (const w of ["Stopped", "All actions are stopped", "Resume actions", 'name="stopped" value="0"']) expect(stopped).toContain(w);
+    expect(stopped).not.toContain("Stop all actions…");
+  });
   it("is for admins", async () => {
     answers["/api/v1/admin/board"] = { status: 403, data: { error: "Admins only" } };
     const { default: Page } = await import("@/app/(app)/admin/board/page");
@@ -81,6 +96,14 @@ describe("Settings actions", () => {
     const { settingsAct } = await import("@/app/(app)/admin/settings");
     await expect(settingsAct(null, form({ _to: "agent", qa_cap: "3" }))).rejects.toThrow("REDIRECT /admin/board?req=1");
     expect(posted[0]).toEqual({ path: "/api/v1/admin/agent", body: { qa_cap: "3" }, csrf: "csrf-token-0123456789" });
+  });
+  it("send the stop switch to its own route and come back to the card", async () => {
+    const { settingsGo } = await import("@/app/(app)/admin/settings");
+    answer = { status: 200, data: { ok: true, message: "All capability actions are stopped." } };
+    await expect(settingsGo(form({ _to: "actions", stopped: "1" }))).rejects.toThrow("REDIRECT /admin/board#actions");
+    expect(posted[0]).toEqual({ path: "/api/v1/admin/actions", body: { stopped: "1" }, csrf: "csrf-token-0123456789" });
+    answer = { status: 403, data: { error: "two-factor authentication required", mfa: "stepup", sensitive: true } };
+    await expect(settingsGo(form({ _to: "actions", stopped: "1" }))).rejects.toThrow(/REDIRECT \/account\/confirm\?next=%2Fadmin%2Fboard%23actions&sensitive=1/);
   });
   it("take only a known route", async () => {
     const { settingsAct, settingsGo } = await import("@/app/(app)/admin/settings");

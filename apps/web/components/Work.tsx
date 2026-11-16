@@ -4,7 +4,7 @@ import { EnvPill, Pill } from "./Pills";
 import { Segs, tone } from "./Section";
 import { agentAct, agentChat, agentChecked, agentContinue, agentRollback, agentSpin, boardFixer, boardMove, taskSecret } from "@/app/(app)/board/actions";
 import { full, iso } from "@/lib/format";
-import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, QaMsg, Seg, SecretForm, Secrets, TaskPage } from "@/lib/types";
+import type { Agent, Board, BoardCard, Chat, Chip, FilterRow, MoveChoice, MoveCtl, PlanStep, QaMsg, Seg, SecretForm, Secrets, TaskPage } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PlainCard } from "@/components/ui/card";
 
@@ -212,7 +212,7 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
         <p className="muted small">The plan needs {inputs.length === 1 ? "a secret value" : "secret values"}. Type {inputs.length === 1 ? "it" : "them"} here: Argus seals each value to its executor at approval. The model, the page and the logs never see {inputs.length === 1 ? "it" : "them"}.</p>
         {inputs.map((n) => <label key={n} className="field"><span className="mono">{n}</span><input type="password" name={`input_${n}`} autoComplete="new-password" spellCheck={false} maxLength={8192} required /></label>)}
         <div className="actionbar"><Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
-          <span className="muted small">Pinned to plan v{a.planVersion}; if the plan changes, review the new version and spin up again.</span></div>
+          <span className="muted small">Pinned to plan v{a.planVersion}{a.planSha256 ? ` (${a.planSha256.slice(0, 12)})` : ""}; if the plan changes, review the new version and spin up again.</span></div>
       </form>
     );
   }
@@ -221,40 +221,102 @@ export function SpinBar({ a, csrf, ret }: { a: Agent; csrf: string; ret: string 
       <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
       {a.planSha256 ? <input type="hidden" name="plan_sha256" value={a.planSha256} /> : null}
       <Button variant={s.primary ? "default" : "outline"} title={`Approves exactly plan v${a.planVersion}`}>{s.label}</Button>
-      <span className="muted small">Pinned to plan v{a.planVersion}; if the plan changes, review the new version and spin up again.{s.proposal ? " Production stays read-only: a read-only run writes the proposal and the task is blocked for the operator." : ""}</span>
+      <span className="muted small">Pinned to plan v{a.planVersion}{a.planSha256 ? ` (${a.planSha256.slice(0, 12)})` : ""}; if the plan changes, review the new version and spin up again.{s.proposal ? " Production stays read-only: a read-only run writes the proposal and the task is blocked for the operator." : ""}</span>
     </form>
   );
 }
 
-/** The capability steps actd ran (ADR-0022): results from the executor, Continue after an operator step, rollback. */
+type Tone = "ok" | "warn" | "fail" | "info" | "neutral";
+
+/** A plan step's mode in words: an operator step is for the operator (start a pipeline, play a job). */
+export function stepMode(mode: string): { label: string; tone: Tone } {
+  if (mode === "WRITE") return { label: "WRITE", tone: "warn" };
+  if (mode === "operator") return { label: "for the operator", tone: "info" };
+  return { label: mode || "read-only", tone: "neutral" };
+}
+
+/** The action's state (actd's result, ADR-0022), as a word and a tint. */
+export function actionState(state: string): { label: string; tone: Tone } {
+  const m: Record<string, { label: string; tone: Tone }> = {
+    "": { label: "running", tone: "neutral" },
+    done: { label: "done", tone: "ok" },
+    "dry-run": { label: "dry run: nothing changed", tone: "info" },
+    operator: { label: "needs the operator", tone: "warn" },
+    "outcome-unknown": { label: "outcome unknown: check the target", tone: "warn" },
+    stopped: { label: "stopped", tone: "warn" },
+    refused: { label: "refused", tone: "fail" },
+    failed: { label: "failed", tone: "fail" },
+  };
+  return m[state] ?? { label: state, tone: "neutral" };
+}
+
+/** One capability step's result (actd's word). */
+export function stepStatusTone(status: string): Tone {
+  const m: Record<string, Tone> = { ok: "ok", unchanged: "ok", "done by the operator": "ok", "rolled-back": "warn", "needs the operator": "warn",
+    "outcome-unknown": "warn", waiting: "neutral", planned: "info" };
+  return m[status] ?? "fail";
+}
+
+/** The plan's steps: mode, targets and, for a capability step, the capability and its arguments. A secret is an input
+ * name that the admin enters at approval; the page never holds its value. */
+export function PlanSteps({ steps }: { steps: PlanStep[] }) {
+  return (
+    <ol className="ag-plan">{steps.map((s, i) => {
+      const m = stepMode(s.mode);
+      return (
+        <li key={i}>
+          <p dir="auto">{s.text}</p>
+          <p className="meta-line"><Pill tone={m.tone}>{m.label}</Pill>{s.capability ? <span className="mono small">{s.capability}</span> : null}{s.targets.map((x) => <span key={x} className="mono small">{x}</span>)}</p>
+          {s.args?.length ? (
+            <dl className="rec">{s.args.map((a) => <div key={a.name}><dt className="mono">{a.name}</dt>
+              <dd>{a.input ? <><span className="mono">{a.value}</span> <span className="muted">entered at approval</span></> : <span className="mono" dir="auto">{a.value}</span>}</dd></div>)}</dl>
+          ) : null}
+          {s.capabilityError ? <p className="muted small" dir="auto">Argus does not run this step: {s.capabilityError}</p> : null}
+        </li>
+      );
+    })}</ol>
+  );
+}
+
+/** The capability steps actd ran (ADR-0022): a table of results with audit ids from the executor, not from the model;
+ * Continue after an operator step; per write step Roll back, and the check of a write whose outcome is unknown. Every
+ * one of these needs a recent 2FA code. */
 export function ActionBox({ a, csrf, ret }: { a: Agent; csrf: string; ret: string }) {
   const x = a.action;
   if (!x) return null;
-  const tones: Record<string, "ok" | "warn" | "neutral" | "fail"> = { ok: "ok", unchanged: "ok", "done by the operator": "ok", "rolled-back": "warn", "needs the operator": "warn", "outcome-unknown": "warn", waiting: "neutral", planned: "neutral" };
+  const st = actionState(x.state);
+  const acts = x.steps.filter((s) => s.rollback || s.checked);
   return (
     <>
-      <h3>Capability steps <span className="muted small">run by Argus, not by the model · {x.state || "running"}</span></h3>
-      <ol className="ag-plan">{x.steps.map((s) => (
-        <li key={s.step}>
-          <p dir="auto">{s.step ? `${s.step}. ` : null}{s.text || s.capability || "the action"}</p>
-          <p className="meta-line"><Pill tone={tones[s.status] ?? "fail"}>{s.status}</Pill>{s.capability ? <span className="mono small">{s.capability}</span> : null}{s.audit ? <span className="mono small">audit {s.audit}</span> : null}</p>
-          {s.detail ? <p className="muted small" dir="auto">{s.detail}</p> : null}
-          {s.rollback ? (
-            <form action={agentRollback} className="actionbar">
-              <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
-              <Button variant="outline" size="sm">Roll back step {s.step}</Button>
-            </form>
-          ) : null}
-          {s.checked ? (
-            <form action={agentChecked} className="actionbar">
-              <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
-              <span className="muted small">The write answered an error and the read-back does not show it. Check the target, then say what you found. Argus reads it again before it goes on.</span>
-              <Button variant="outline" size="sm" name="verdict" value="applied">I checked the target: applied</Button>
-              <Button variant="outline" size="sm" name="verdict" value="not-applied">I checked the target: not applied</Button>
-            </form>
-          ) : null}
-        </li>
-      ))}</ol>
+      <h3>Capability steps <span className="muted small">run by Argus, not by the model</span></h3>
+      <p className="meta-line"><Pill tone={st.tone}>{st.label}</Pill><span>action <span className="mono">{x.id}</span></span></p>
+      {x.steps.length ? (
+        <div className="tablewrap" role="region" aria-label="Capability steps" tabIndex={0}><table className="l-table">
+          <thead><tr><th className="num">Step</th><th>Capability</th><th>Result</th><th>Audit</th></tr></thead>
+          <tbody>{x.steps.map((s) => (
+            <tr key={s.step}>
+              <td className="num" data-label="Step">{s.step || "-"}</td>
+              <td data-label="Capability"><span className="mono">{s.capability || "-"}</span>{s.text ? <div className="muted small" dir="auto">{s.text}</div> : null}</td>
+              <td data-label="Result"><Pill tone={stepStatusTone(s.status)}>{s.status}</Pill>{s.detail ? <div className="muted small" dir="auto">{s.detail}</div> : null}</td>
+              <td className="mono small" data-label="Audit">{s.audit || "-"}</td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      ) : <p className="muted small">No step result yet.</p>}
+      {acts.map((s) => s.checked ? (
+        <form key={s.step} action={agentChecked} className="actionbar">
+          <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
+          <span className="muted small">Step {s.step}: the write answered an error and the read-back does not show it. Check the target, then say what you found. Argus reads it again before it goes on.</span>
+          <Button variant="outline" size="sm" name="verdict" value="applied">I checked the target: applied</Button>
+          <Button variant="outline" size="sm" name="verdict" value="not-applied">I checked the target: not applied</Button>
+        </form>
+      ) : (
+        <form key={s.step} action={agentRollback} className="actionbar">
+          <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="action_id" value={x.id} /><input type="hidden" name="step" value={s.step} />
+          <Button variant="outline" size="sm">Roll back step {s.step}</Button>
+          <span className="muted small">Restores the backed-up value of {s.capability || "the step"}. Needs a recent 2FA code.</span>
+        </form>
+      ))}
       {x.continue ? (x.continue.can ? (
         <form action={agentContinue} className="actionbar">
           <Hid csrf={csrf} k={a.key} ret={ret} /><input type="hidden" name="plan_version" value={a.planVersion} />
