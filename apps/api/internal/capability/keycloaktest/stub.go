@@ -148,6 +148,13 @@ func (s *Stub) serve(w http.ResponseWriter, r *http.Request) {
 		var out []map[string]any
 		for i := 1; i <= s.Users; i++ {
 			u := user(i)
+			if q.Get("briefRepresentation") == "true" { // Keycloak's brief form: no attributes, credentials or required actions
+				b := map[string]any{}
+				for _, k := range []string{"id", "username", "firstName", "lastName", "email", "enabled", "emailVerified", "federationLink"} {
+					b[k] = u[k]
+				}
+				u = b
+			}
 			if q.Get("exact") == "true" && q.Get("username") != u["username"] {
 				continue
 			}

@@ -132,14 +132,13 @@ func TestKeycloakEveryEnvironment(t *testing.T) {
 func TestKeycloakFixedFields(t *testing.T) {
 	f := newKC(t)
 	ctx := context.Background()
-	userKeys := "enabled,federation_link,first_name_set,last_name_set,required_actions,username"
 
 	r, _, err := f.kc.Apply(ctx, kcArgs("users", "user"), capability.Plan{})
 	if err != nil || r.Status != "ok" || keys(r.Fields) != "count,query,realm,truncated,users" {
 		t.Fatal(r, err)
 	}
 	rows := r.Fields["users"].([]map[string]any)
-	if len(rows) != 3 || keys(rows[0]) != userKeys || rows[0]["first_name_set"] != true || rows[1]["last_name_set"] != false {
+	if len(rows) != 3 || keys(rows[0]) != "enabled,federation_link,first_name_set,last_name_set,username" || rows[0]["first_name_set"] != true || rows[1]["last_name_set"] != false {
 		t.Fatalf("%+v", rows)
 	}
 	kcNoLeak(t, r)
@@ -193,7 +192,8 @@ func TestKeycloakSearchCap(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, a := range []capability.Args{kcArgs("users", strings.Repeat("a", 101)), kcArgs("users", ""), kcArgs("user", ""),
-		kcArgs("users", "a/b"), kcArgs("roles", "x"), {"realm": "lab", "query": "users", "search": "x", "max": 500}} {
+		kcArgs("users", "a/b"), kcArgs("roles", "x"), kcArgs("users", "*"), kcArgs("users", "**"), kcArgs("users", `"*"`),
+		kcArgs("users", " * "), kcArgs("user", "*"), kcArgs("client-scopes", "*"), {"realm": "lab", "query": "users", "search": "x", "max": 500}} {
 		if err := f.kc.Validate(a, capability.Develop); err == nil {
 			t.Fatalf("accepted %v", a)
 		}
@@ -299,6 +299,8 @@ func TestKeycloakGuardReadOnly(t *testing.T) {
 		{"GET", "/admin/realms/other/users"},
 		{"GET", "/admin/realms/lab/users/../clients"},
 		{"GET", "/admin/realms/lab/users/a%2Fb/groups"},
+		{"GET", "/admin/realms/lab/users/a_b/groups"},
+		{"GET", "/admin/realms/lab/users/a%20b/groups"},
 		{"POST", "/realms/other/protocol/openid-connect/token"},
 		{"GET", "/realms/lab/protocol/openid-connect/token"},
 		{"POST", "/realms/lab/protocol/openid-connect/logout"},
@@ -341,5 +343,94 @@ func TestKeycloakPlanAndRollback(t *testing.T) {
 	}
 	if f.kc.Tier() != capability.Read {
 		t.Fatal("tier")
+	}
+}
+
+// The search text and the user name are never in the plan summary, the detail or the audit's arguments (a digest
+// there).
+func TestKeycloakNoSearchInPlanOrDetail(t *testing.T) {
+	f := newKC(t)
+	a := kcArgs("user", "user02")
+	p, err := f.kc.Plan(context.Background(), a)
+	if err != nil || strings.Contains(p.Summary, "user02") {
+		t.Fatal(p, err)
+	}
+	r, _, err := f.kc.Apply(context.Background(), a, capability.Plan{})
+	if err != nil || strings.Contains(r.Detail, "user02") {
+		t.Fatal(r.Detail, err)
+	}
+	red := f.kc.Schema().Redacted(a)
+	if s, _ := red["search"].(string); !strings.HasPrefix(s, "sha256:") || len(s) != 19 || red["query"] != "user" {
+		t.Fatal(red)
+	}
+	if r, _, _ := f.kc.Apply(context.Background(), kcArgs("user", "nobody"), capability.Plan{}); strings.Contains(r.Detail, "nobody") {
+		t.Fatal(r.Detail)
+	}
+}
+
+// At most ARGUS_ACT_KEYCLOAK_MAX_READS user-returning calls per action; other queries and other actions are not
+// counted against it.
+func TestKeycloakReadBudget(t *testing.T) {
+	f := newKC(t)
+	ctxA := capability.WithStep(context.Background(), capability.StepInfo{ActionID: "OPS-1.v1.aaaaaaaaaaaa", Step: 1})
+	ctxB := capability.WithStep(context.Background(), capability.StepInfo{ActionID: "OPS-2.v1.bbbbbbbbbbbb", Step: 1})
+	for i := 0; i < capability.KeycloakDefaultMaxReads; i++ {
+		q := kcArgs("users", "user")
+		if i%2 == 1 {
+			q = kcArgs("user", "user01")
+		}
+		if _, _, err := f.kc.Apply(ctxA, q, capability.Plan{}); err != nil {
+			t.Fatal(i, err)
+		}
+	}
+	n := len(f.stub.Calls())
+	var r *capability.Refusal
+	if _, _, err := f.kc.Apply(ctxA, kcArgs("users", "user"), capability.Plan{}); !errors.As(err, &r) || r.Code != capability.CodeLimit {
+		t.Fatal(err)
+	}
+	if len(f.stub.Calls()) != n {
+		t.Fatal("a call beyond the budget reached the identity provider")
+	}
+	if _, _, err := f.kc.Apply(ctxA, kcArgs("client-scopes", ""), capability.Plan{}); err != nil {
+		t.Fatal("client-scopes counted:", err)
+	}
+	if _, _, err := f.kc.Apply(ctxB, kcArgs("users", "user"), capability.Plan{}); err != nil {
+		t.Fatal("another action refused:", err)
+	}
+	if _, err := capability.NewKeycloak(capability.KeycloakOptions{URL: keycloaktest.URL, Realms: []string{"lab"}, ClientID: "x", AllowPlain: true, MaxReads: 51}); err == nil {
+		t.Fatal("MaxReads 51 accepted")
+	}
+}
+
+// A failed token request is remembered for 60 s: the next queries get the same error without a new POST.
+func TestKeycloakTokenFailureCached(t *testing.T) {
+	f := newKC(t)
+	reg, _ := capability.Default(capability.Options{Keycloak: capability.KeycloakOptions{URL: keycloaktest.URL, Realms: []string{"lab"},
+		ClientID: keycloaktest.ClientID, AllowPlain: true, Secret: func() (string, error) { return "wrong", nil }, Transport: f.stub.Transport()}})
+	c, _ := reg.Get(capability.KeycloakRead)
+	kc := c.(*capability.Keycloak)
+	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	capability.SetKeycloakClock(kc, func() time.Time { return now })
+	posts := func() int {
+		n := 0
+		for _, c := range f.stub.Calls() {
+			if c.Method == "POST" {
+				n++
+			}
+		}
+		return n
+	}
+	for _, q := range []capability.Args{kcArgs("client-scopes", ""), kcArgs("ldap-mappers", "")} {
+		if _, _, err := kc.Apply(context.Background(), q, capability.Plan{}); err == nil || !strings.Contains(err.Error(), "401") {
+			t.Fatal(err)
+		}
+	}
+	if posts() != 1 {
+		t.Fatal("token POSTs:", posts())
+	}
+	now = now.Add(61 * time.Second)
+	kc.Apply(context.Background(), kcArgs("client-scopes", ""), capability.Plan{})
+	if posts() != 2 {
+		t.Fatal("not retried after 60 s:", posts())
 	}
 }

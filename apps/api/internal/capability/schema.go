@@ -2,6 +2,8 @@ package capability
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"math"
 	"regexp"
@@ -51,7 +53,10 @@ type Field struct {
 	Min, Max int            `json:"-"`                    // Int, IntOrList: the allowed range when Max > 0
 	Secret   bool           `json:"secret,omitempty"`     // never in a plan, the audit, a result or a log
 	// Input: the value is a reference "input:<NAME>" to a secret the admin types at approval (sealed to actd)
-	Input     bool   `json:"input,omitempty"`
+	Input bool `json:"input,omitempty"`
+	// Digest: outside the capability (the audit) the value is shown only as "sha256:<first 12 hex>" (a search text
+	// or a user name that must not be kept in clear)
+	Digest    bool   `json:"-"`
 	AllowList string `json:"allow_list,omitempty"` // the configuration key that limits the value
 }
 
@@ -183,13 +188,21 @@ func (s Schema) Redacted(a Args) Args {
 		switch {
 		case ok && f.Input && isStr && InputRefRe.MatchString(ref):
 			out[k] = v
-		case ok && !f.Secret && !f.Input:
+		case ok && f.Digest && isStr && !f.Secret && !f.Input:
+			out[k] = DigestOf(ref)
+		case ok && !f.Secret && !f.Input && !f.Digest:
 			out[k] = v
 		default:
 			out[clipName(k)] = Redacted
 		}
 	}
 	return out
+}
+
+// DigestOf is "sha256:<first 12 hex>" of s: enough to tell two values apart in the audit, not the value.
+func DigestOf(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return "sha256:" + hex.EncodeToString(sum[:])[:12]
 }
 
 // Catalogue is the schema as JSON-ready fields (type names filled in) for the intake's capability list.

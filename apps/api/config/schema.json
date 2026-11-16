@@ -1433,7 +1433,15 @@
     {
       "key": "ARGUS_ACT_KEYCLOAK_CLIENT_REALM",
       "type": "str",
-      "help": "keycloak.read: the realm the client lives in (its token endpoint is the only POST allowed); empty: the only realm on ARGUS_ACT_KEYCLOAK_REALMS"
+      "help": "keycloak.read: the realm the client lives in; every query first asks this realm's token endpoint (the only POST allowed); required with several realms on ARGUS_ACT_KEYCLOAK_REALMS; empty: the only realm on the list"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_MAX_READS",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 50,
+      "help": "keycloak.read: the most user-returning queries (users, user) one action may run; more are refused"
     },
     {
       "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",

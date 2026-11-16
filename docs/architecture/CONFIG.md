@@ -97,7 +97,8 @@ keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (v
 | `ARGUS_ACT_KEYCLOAK_URL` | str | empty (`keycloak.read` off) | the identity provider, `https://id.example.com` (a path prefix such as `/auth` is kept); no credentials, no query |
 | `ARGUS_ACT_KEYCLOAK_REALMS` | list | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; realm names `^[A-Za-z0-9_.-]{1,64}$`; the only realms `keycloak.read` may read |
 | `ARGUS_ACT_KEYCLOAK_CLIENT_ID` | str | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; the confidential client (its secret is `argus-act/secrets/keycloak/client.enc`) |
-| `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | str | empty (the only realm on the list) | the realm the client lives in; its token endpoint is the only POST allowed. Required when the list has several realms (then normally `master`) |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | str | empty (the only realm on the list) | required with several realms (then normally `master`); the realm the client lives in. Its token endpoint is the only POST allowed, and it always gets the token request, whatever realm a query reads |
+| `ARGUS_ACT_KEYCLOAK_MAX_READS` | int | `5` | 1..50; the most user-returning queries (`users`, `user`) one action may run; more are refused (rule 6, `limit`) |
 | `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
 
 Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
@@ -141,10 +142,13 @@ Identity provider reads (ADR-0022 PR 4). `keycloak.read` runs four read-only adm
 name in `search`, with its group names), `ldap-mappers` and `client-scopes` (optional name filter in `search`). The
 identity provider is often shared with production, so the HTTP client is strictly read-only: it allows `POST` only to
 `/realms/<client realm>/protocol/openid-connect/token` and `GET` only of `/admin/realms/<listed realm>/users`,
-`/users/:id/groups`, `/components` and `/client-scopes`; every other method or path is refused before a connection is
-made, and redirects are not followed. The access token (client credentials) is kept in actd's memory until 30 s
-before it expires. A user's result is: user name, enabled, federation link, required actions, group names (`user`
-only) and `first_name_set` / `last_name_set` booleans: never the names, the e-mail, the attributes or a credential.
+`/users/:id/groups` (`:id` a user id only), `/components` and `/client-scopes`; every other method or path is
+refused before a connection is made, and redirects are not followed. The access token (client credentials) is kept
+in actd's memory until 30 s before it expires; a failed token request is remembered for 60 s (no new POST). A search
+of wildcards, quotes or spaces alone is refused. The search text is never in the plan summary, a detail or the
+audit (the audit keeps `sha256:<12 hex>` of it). A user's result is: user name, enabled, federation link,
+`first_name_set` / `last_name_set` booleans, and for `user` also required actions and group names (`users` reads
+Keycloak's brief form, which has no required actions): never the names, the e-mail, the attributes or a credential.
 An LDAP mapper's result is its name, type and the config keys on a fixed list (attribute names, DNs, filters,
 switches); a bind credential or any other key is dropped. A client scope's result is its name, protocol and mapper
 names.
@@ -168,7 +172,8 @@ Minimal client setup in the identity provider (nothing else):
 3. **Credentials → Client secret**: copy it to actd only:
    `docker compose exec -T actd /app/argus actd credential set keycloak/client` (the secret on stdin).
 4. Set `ARGUS_ACT_KEYCLOAK_URL`, `ARGUS_ACT_KEYCLOAK_REALMS`, `ARGUS_ACT_KEYCLOAK_CLIENT_ID` (and
-   `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` for a `master` client), then restart actd and the worker.
+   `ARGUS_ACT_KEYCLOAK_CLIENT_REALM`, required with several realms, normally `master`), then restart actd and the
+   worker.
 
 Off again: empty `ARGUS_ACT_KEYCLOAK_URL` (`keycloak.read` leaves the catalogue); disable the client in the identity
 provider too.

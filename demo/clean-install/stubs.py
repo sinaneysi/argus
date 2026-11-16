@@ -265,7 +265,11 @@ def keycloak(method, path, query, body, auth):
         if query.get("exact") == ["true"]:
             return 200, [u for u in KC_USERS if u["username"] == query.get("username", [""])[0]]
         s = query.get("search", [""])[0].strip("*").lower()
-        return 200, [u for u in KC_USERS if s in u["username"]][:int(query.get("max", ["100"])[0])]
+        out = [u for u in KC_USERS if s in u["username"]][:int(query.get("max", ["100"])[0])]
+        if query.get("briefRepresentation") == ["true"]:  # Keycloak's brief form
+            keep = ("id", "username", "firstName", "lastName", "email", "enabled", "emailVerified", "federationLink")
+            out = [{k: u[k] for k in keep if k in u} for u in out]
+        return 200, out
     if re.match(r"^users/[A-Za-z0-9-]+/groups$", sub):
         return 200, [{"id": "g1", "name": "developers", "path": "/developers"}]
     if sub == "components" and query.get("type") == ["org.keycloak.storage.UserStorageProvider"]:

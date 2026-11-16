@@ -1,6 +1,7 @@
 package actd
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -42,6 +43,9 @@ func TestKeycloakReadThroughActd(t *testing.T) {
 	}
 	if s := strings.Join(got, ","); !strings.Contains(s, "keycloak.read:apply") {
 		t.Fatal("audit:", s)
+	}
+	if b, _ := os.ReadFile(filepath.Join(f.act, "audit", "actions.jsonl")); len(b) == 0 || strings.Contains(string(b), "user02") {
+		t.Fatal("the search text is in the audit, or no audit")
 	}
 	d.WriteStatus()
 	for _, m := range []string{keycloaktest.Secret, "kc-access-", keycloaktest.Email, keycloaktest.Attribute, keycloaktest.Credential,

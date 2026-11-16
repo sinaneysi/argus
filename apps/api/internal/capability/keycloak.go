@@ -37,6 +37,11 @@ const (
 	kcMaxBody    = 1 << 20
 	kcMaxLDAP    = 10 // LDAP providers looked at in one realm
 	kcMaxValue   = 200
+	// kcFailHold: a failed token request is answered from memory this long, without a new POST
+	kcFailHold = 60 * time.Second
+	// KeycloakDefaultMaxReads is the default of ARGUS_ACT_KEYCLOAK_MAX_READS
+	KeycloakDefaultMaxReads = 5
+	kcBudgetKeep            = 48 * time.Hour
 )
 
 // The four queries.
@@ -77,6 +82,9 @@ type KeycloakOptions struct {
 	// ClientRealm is the realm the client lives in (ARGUS_ACT_KEYCLOAK_CLIENT_REALM); empty: the only realm on Realms
 	ClientRealm string
 	AllowPlain  bool // plain http (test installations only)
+	// MaxReads is the most user-returning calls (users, user) one action may make (ARGUS_ACT_KEYCLOAK_MAX_READS);
+	// 0: KeycloakDefaultMaxReads
+	MaxReads int
 	// Secret is the client secret (actd: from argus-act); nil in the worker, which only validates
 	Secret    func() (string, error)
 	Transport http.RoundTripper // the base transport under the guard (nil: a direct one); tests set it
@@ -92,10 +100,23 @@ type Keycloak struct {
 	secret      func() (string, error)
 	client      *http.Client
 	now         func() time.Time
+	maxReads    int
 
-	mu     sync.Mutex
-	tok    string
-	tokExp time.Time
+	// mu guards the token cache and is held across the token request on purpose: concurrent callers wait for one
+	// POST instead of sending several (actd runs one action at a time, so nothing waits in practice)
+	mu       sync.Mutex
+	tok      string
+	tokExp   time.Time
+	failErr  error // the last token failure, answered until failTill without a new POST
+	failTill time.Time
+
+	bmu    sync.Mutex
+	budget map[string]*kcBudget // action id -> user-returning calls made
+}
+
+type kcBudget struct {
+	n    int
+	last time.Time
 }
 
 // ParseRealmList reads ARGUS_ACT_KEYCLOAK_REALMS: realm names, case kept, no repeats.
@@ -144,8 +165,15 @@ func NewKeycloak(o KeycloakOptions) (*Keycloak, error) {
 	case !kcRealmRe.MatchString(cr) || cr == "." || cr == "..":
 		return nil, fmt.Errorf("ARGUS_ACT_KEYCLOAK_CLIENT_REALM: %q is not a realm name", clipName(cr))
 	}
+	mr := o.MaxReads
+	if mr == 0 {
+		mr = KeycloakDefaultMaxReads
+	}
+	if mr < 1 || mr > 50 {
+		return nil, errors.New("ARGUS_ACT_KEYCLOAK_MAX_READS must be 1..50")
+	}
 	k := &Keycloak{base: u, prefix: strings.TrimSuffix(u.EscapedPath(), "/"), realms: map[string]bool{}, clientID: cid,
-		clientRealm: cr, secret: o.Secret, now: time.Now}
+		clientRealm: cr, secret: o.Secret, now: time.Now, maxReads: mr, budget: map[string]*kcBudget{}}
 	for _, r := range realms {
 		k.realms[r] = true
 	}
@@ -193,9 +221,14 @@ func (k *Keycloak) adminPath(path string) bool {
 		return false
 	}
 	for _, t := range kcAdminTemplates {
-		if MatchPath(k.prefix+"/admin/realms/:realm"+t, path) {
-			return true
+		if !MatchPath(k.prefix+"/admin/realms/:realm"+t, path) {
+			continue
 		}
+		if t == "/users/:id/groups" { // the id segment: a user id only
+			seg := strings.Split(rest, "/")
+			return len(seg) == 4 && kcIDRe.MatchString(seg[2])
+		}
+		return true
 	}
 	return false
 }
@@ -207,7 +240,7 @@ func (k *Keycloak) Schema() Schema {
 	return Schema{Fields: []Field{
 		{Name: "realm", Type: String, Required: true, MaxLen: 64, Pattern: kcRealmRe, AllowList: "ARGUS_ACT_KEYCLOAK_REALMS"},
 		{Name: "query", Type: String, Required: true, MaxLen: 16, Pattern: kcQueryRe},
-		{Name: "search", Type: String, MaxLen: KeycloakMaxSearch, Pattern: kcSearchRe},
+		{Name: "search", Type: String, MaxLen: KeycloakMaxSearch, Pattern: kcSearchRe, Digest: true},
 	}}
 }
 
@@ -223,8 +256,12 @@ func (k *Keycloak) Validate(args Args, env Env) error {
 	if r := argStr(args, "realm"); !k.realms[r] {
 		return Refuse(4, CodeAllowList, "realm %q is not on ARGUS_ACT_KEYCLOAK_REALMS", clipName(r))
 	}
-	if q := argStr(args, "query"); (q == KcUsers || q == KcUser) && argStr(args, "search") == "" {
+	q := argStr(args, "query")
+	if (q == KcUsers || q == KcUser) && argStr(args, "search") == "" {
 		return Refuse(4, CodeArguments, "argument \"search\" is required for the query %s", q)
+	}
+	if s := argStr(args, "search"); s != "" && strings.Trim(s, "*\"' ") == "" {
+		return Refuse(4, CodeArguments, "argument \"search\" must name something: wildcards, quotes or spaces alone list everyone")
 	}
 	return nil
 }
@@ -234,11 +271,8 @@ func (k *Keycloak) Plan(_ context.Context, args Args) (Plan, error) {
 	if err := k.Validate(args, Develop); err != nil {
 		return Plan{}, err
 	}
-	s := ""
-	if v := argStr(args, "search"); v != "" {
-		s = fmt.Sprintf(", search %q", v)
-	}
-	return Plan{Change: "none", Summary: fmt.Sprintf("read %s of realm %s%s (at most %d rows)", argStr(args, "query"), argStr(args, "realm"), s, KeycloakMaxRows)}, nil
+	// the search text is not in the summary (the audit keeps only its digest)
+	return Plan{Change: "none", Summary: fmt.Sprintf("read %s of realm %s (at most %d rows)", argStr(args, "query"), argStr(args, "realm"), KeycloakMaxRows)}, nil
 }
 
 // Apply runs the query.
@@ -267,6 +301,11 @@ func (k *Keycloak) read(ctx context.Context, args Args) (Result, error) {
 		det string
 		err error
 	)
+	if q == KcUsers || q == KcUser {
+		if err := k.spend(ctx); err != nil {
+			return failed(err), err
+		}
+	}
 	switch q {
 	case KcUsers:
 		f, det, err = k.users(ctx, realm, search)
@@ -286,6 +325,35 @@ func (k *Keycloak) read(ctx context.Context, args Args) (Result, error) {
 	return Result{Status: "ok", Detail: det, Fields: f}, nil
 }
 
+// spend counts one user-returning call against the action's budget (ARGUS_ACT_KEYCLOAK_MAX_READS) and refuses
+// beyond it. Outside actd (no step) the calls share one budget. The count is in memory: an actd restart starts it
+// again, which the single-use start approval bounds.
+func (k *Keycloak) spend(ctx context.Context) error {
+	id := "-"
+	if s, ok := StepFrom(ctx); ok {
+		id = s.ActionID
+	}
+	now := k.now()
+	k.bmu.Lock()
+	defer k.bmu.Unlock()
+	for a, b := range k.budget {
+		if now.Sub(b.last) > kcBudgetKeep {
+			delete(k.budget, a)
+		}
+	}
+	b := k.budget[id]
+	if b == nil {
+		b = &kcBudget{}
+		k.budget[id] = b
+	}
+	if b.n >= k.maxReads {
+		return Refuse(6, CodeLimit, "keycloak.read: this action already made %d user queries (ARGUS_ACT_KEYCLOAK_MAX_READS)", k.maxReads)
+	}
+	b.n++
+	b.last = now
+	return nil
+}
+
 // ---- the client ---------------------------------------------------------------------------------------------
 
 // token is the service account's access token, cached until kcTokenSlack before it expires.
@@ -295,7 +363,10 @@ func (k *Keycloak) token(ctx context.Context) (string, error) {
 	if k.tok != "" && k.now().Before(k.tokExp) {
 		return k.tok, nil
 	}
-	k.tok, k.tokExp = "", time.Time{}
+	if k.failErr != nil && k.now().Before(k.failTill) {
+		return "", k.failErr
+	}
+	k.tok, k.tokExp, k.failErr = "", time.Time{}, nil
 	if k.secret == nil {
 		return "", errors.New("no Keycloak credential in this process (argus actd credential set " + KeycloakCredential + ")")
 	}
@@ -315,12 +386,16 @@ func (k *Keycloak) token(ctx context.Context) (string, error) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "argus-actd/keycloak.read")
-	code, b, err := k.do(req)
-	if err != nil {
+	fail := func(err error) (string, error) { // remembered: no new POST for kcFailHold
+		k.failErr, k.failTill = err, k.now().Add(kcFailHold)
 		return "", err
 	}
+	code, b, err := k.do(req)
+	if err != nil {
+		return fail(err)
+	}
 	if code != http.StatusOK {
-		return "", fmt.Errorf("Keycloak answered %d to the token request (check the client id, its secret and that the service account is enabled)", code)
+		return fail(fmt.Errorf("Keycloak answered %d to the token request (check the client id, its secret and that the service account is enabled)", code))
 	}
 	var t struct {
 		Access    string `json:"access_token"`
@@ -328,7 +403,7 @@ func (k *Keycloak) token(ctx context.Context) (string, error) {
 		Type      string `json:"token_type"`
 	}
 	if json.Unmarshal(b, &t) != nil || t.Access == "" || !strings.EqualFold(t.Type, "bearer") {
-		return "", errors.New("the Keycloak token answer is not a bearer token")
+		return fail(errors.New("the Keycloak token answer is not a bearer token"))
 	}
 	if life := time.Duration(t.ExpiresIn) * time.Second; life > kcTokenSlack {
 		k.tok, k.tokExp = t.Access, k.now().Add(life-kcTokenSlack)
@@ -443,7 +518,8 @@ func (u kcUser) row() map[string]any {
 
 func (k *Keycloak) users(ctx context.Context, realm, search string) (map[string]any, string, error) {
 	var list []kcUser
-	q := url.Values{"search": {search}, "first": {"0"}, "max": {fmt.Sprint(KeycloakMaxRows + 1)}, "briefRepresentation": {"false"}}
+	// the brief form: no attributes, no required actions (those are in the query user only)
+	q := url.Values{"search": {search}, "first": {"0"}, "max": {fmt.Sprint(KeycloakMaxRows + 1)}, "briefRepresentation": {"true"}}
 	if err := k.get(ctx, realm, "/users", q, &list); err != nil {
 		return nil, "", err
 	}
@@ -453,7 +529,9 @@ func (k *Keycloak) users(ctx context.Context, realm, search string) (map[string]
 	}
 	rows := make([]map[string]any, 0, len(list))
 	for _, u := range list {
-		rows = append(rows, u.row())
+		r := u.row()
+		delete(r, "required_actions") // not in the brief form
+		rows = append(rows, r)
 	}
 	det := fmt.Sprintf("%d users match", len(rows))
 	if truncated {
@@ -476,7 +554,7 @@ func (k *Keycloak) user(ctx context.Context, realm, username string) (map[string
 		}
 	}
 	if hit == nil {
-		return map[string]any{"exists": false}, fmt.Sprintf("no user %q", clipValue(username, 100)), nil
+		return map[string]any{"exists": false}, "the user does not exist", nil
 	}
 	if !kcIDRe.MatchString(hit.ID) {
 		return nil, "", errors.New("the Keycloak answer has no usable user id")
@@ -498,7 +576,7 @@ func (k *Keycloak) user(ctx context.Context, realm, username string) (map[string
 	}
 	row := hit.row()
 	row["groups"], row["groups_truncated"] = names, gt
-	return map[string]any{"exists": true, "user": row}, fmt.Sprintf("user %q found, %d groups", clipValue(hit.Username, 100), len(names)), nil
+	return map[string]any{"exists": true, "user": row}, fmt.Sprintf("1 user found, %d groups", len(names)), nil
 }
 
 type kcComponent struct {

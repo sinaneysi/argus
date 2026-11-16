@@ -213,7 +213,8 @@ func registryOptions(c *config.Config) capability.Options {
 	return capability.Options{HTTPHosts: splitList(v("ARGUS_ACT_HTTP_HOSTS")), HTTPAllowPlain: plain,
 		GitLab: capability.GitLabOptions{URL: v("ARGUS_ACT_GITLAB_URL"), Projects: splitList(v("ARGUS_ACT_GITLAB_PROJECTS")), AllowPlain: plain},
 		Keycloak: capability.KeycloakOptions{URL: v("ARGUS_ACT_KEYCLOAK_URL"), Realms: splitList(v("ARGUS_ACT_KEYCLOAK_REALMS")),
-			ClientID: v("ARGUS_ACT_KEYCLOAK_CLIENT_ID"), ClientRealm: v("ARGUS_ACT_KEYCLOAK_CLIENT_REALM"), AllowPlain: plain}}
+			ClientID: v("ARGUS_ACT_KEYCLOAK_CLIENT_ID"), ClientRealm: v("ARGUS_ACT_KEYCLOAK_CLIENT_REALM"), AllowPlain: plain,
+			MaxReads: kcMaxReads(v("ARGUS_ACT_KEYCLOAK_MAX_READS"))}}
 }
 
 func runActdSealKey(args []string, actDir string, stdout, stderr io.Writer) int {
@@ -331,4 +332,13 @@ func runActdCredential(args []string, actDir string, stdin io.Reader, stdout, st
 	}
 	fmt.Fprint(stderr, actdHelp)
 	return 2
+}
+
+// kcMaxReads reads ARGUS_ACT_KEYCLOAK_MAX_READS; empty or unreadable: the default (the config check bounds it).
+func kcMaxReads(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return 0
+	}
+	return n
 }
