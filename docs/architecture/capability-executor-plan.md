@@ -24,6 +24,8 @@ Gates for every step (AGENTS.md): Go vet and tests with and without `-tags demo`
 | `ARGUS_ACT_KEYCLOAK_URL` | https URL | empty (`keycloak.read` off) | for `keycloak.read` | `actd` | https |
 | `ARGUS_ACT_KEYCLOAK_REALMS` | comma list | empty | for `keycloak.read` | `actd`, worker | `^[A-Za-z0-9_.-]{1,64}$` each |
 | `ARGUS_ACT_KEYCLOAK_CLIENT_ID` | string | empty | for `keycloak.read` | `actd` | the client secret is `secrets/keycloak/client.enc` |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | realm name | empty: the only realm on `ARGUS_ACT_KEYCLOAK_REALMS` | with several realms | `actd`, worker | the client's realm; its token endpoint is the only POST allowed |
+| `ARGUS_ACT_KEYCLOAK_MAX_READS` | int | `5` | no | `actd` | 1..50 user-returning queries per action |
 | `auth_settings` `actions.stopped` | `0` \| `1` | `0` | no | `actd` before every step | set by the admin switch (PR 5) |
 
 A capability whose allow-list is empty is not in the catalogue: the intake cannot plan it and `actd` refuses it.

@@ -331,6 +331,51 @@ Design items for PR 2 (not built in PR 1):
   (`GET /gitlab/_calls`) and answer a pipeline, job or trigger start with 403.
 - Mode stays `off` by default; without `ARGUS_ACT_GITLAB_PROJECTS` nothing changes.
 
+## As built (PR 4, `keycloak.read`)
+
+- **`keycloak.read`** (`internal/capability/keycloak.go`), Read tier, every classification (O8). Offered when
+  `ARGUS_ACT_KEYCLOAK_URL` is not empty; then `ARGUS_ACT_KEYCLOAK_REALMS` and `ARGUS_ACT_KEYCLOAK_CLIENT_ID` are
+  required (a start error otherwise). Rollback: empty `ARGUS_ACT_KEYCLOAK_URL`, the capability leaves the catalogue.
+- **Arguments:** `realm` (on the list, `^[A-Za-z0-9_.-]{1,64}$`), `query` = `users` | `user` | `ldap-mappers` |
+  `client-scopes`, `search` (at most 100 characters of letters, digits, space and `@._+*'"-`). `users` needs
+  `search` (Keycloak's search); `user` needs the exact user name in `search`; for `ldap-mappers` and
+  `client-scopes` `search` is an optional local name filter. A search of wildcards, quotes or spaces alone is refused.
+  The search text is never in the plan summary (query, realm and the row cap only) or a detail; the audit keeps
+  `sha256:<first 12 hex>` of it (schema field option `Digest`).
+- **Read budget** (security review): user names are returned on purpose (to find the users a task is about), but an
+  action may run at most `ARGUS_ACT_KEYCLOAK_MAX_READS` (default 5, 1..50) user-returning queries (`users`, `user`);
+  beyond it the step is refused (rule 6, `limit`) before any call. The count is per action id, in actd's memory
+  (an actd restart starts it again; the single-use start approval bounds that).
+- **Fixed result fields.** `users`: `username`, `enabled`, `federation_link`, `first_name_set`, `last_name_set`, read
+  with `briefRepresentation=true` (Keycloak's brief form keeps the user name, the names, the e-mail, enabled and the
+  federation link, and drops attributes, credentials and required actions, so the names still arrive and the
+  booleans stay true to them). `user` (full form) adds `required_actions`, `groups` (names) and `groups_truncated`. The user is decoded into a struct of exactly
+  those source fields, so e-mail, attributes and credentials are never read. LDAP mappers: `provider`, `name`, `type`
+  and `config` limited to a fixed list of keys (attribute names, DNs, filters, switches); a key off the list, a key
+  with a credential word, and a masked value are dropped. Client scopes: `name`, `protocol`, `mappers` (names). Every
+  list holds at most 50 rows (`truncated` says when more exist); `users` asks for 51 and cuts, whatever Keycloak
+  returns. Keycloak's error bodies are never kept.
+- **Credential:** a confidential client with a service account (client credentials). The secret is
+  `argus-act/secrets/keycloak/client.enc` (`argus actd credential set keycloak/client`), opened only when a token is
+  needed, never in `argus.env`. The access token lives in actd's memory, cached until 30 s before it expires and
+  dropped on a 401. A failed token request is remembered for 60 s and answered without a new POST. The token
+  mutex is held across the token request on purpose (concurrent callers wait for one POST; actd runs one action
+  at a time). Neither is in a plan, a result, an error, the audit or a log (tests grep actd's volume, the
+  actions folder, the ops database and the log).
+- **The guard** (the identity provider may be shared with production): `POST` only of
+  `<prefix>/realms/<client realm>/protocol/openid-connect/token`; `GET` only of
+  `<prefix>/admin/realms/<listed realm>/users`, `/users/:id/groups` (`:id` must match `^[A-Za-z0-9-]{1,64}$`),
+  `/components`, `/client-scopes`. Every other
+  method and path (a user by id, credentials, clients, client secrets, the realm itself, a realm off the list, sync,
+  logout) is refused before a connection; only the configured host; redirects are not followed.
+  `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` names the client's realm (required with several realms, normally `master`;
+  default: the only realm on the list); every query's token request goes to it, whatever realm it reads. This key is an addition to the plan's table.
+- **Roles** (CONFIG.md): `realm-management` `view-users` (users, user), `view-realm` (the components endpoint for
+  LDAP mappers), `query-clients` (client scopes). Nothing else. A missing role makes its query answer 403.
+- The clean-install stubs (`demo/clean-install/stubs.py`) serve an identity provider under `/keycloak` (realm `lab`,
+  users with e-mail, attributes and credentials; an LDAP provider with a bind credential), record every call
+  (`GET /keycloak/_calls`) and answer every write under `/keycloak/admin` with 403.
+
 ## Relation to other decisions
 
 - **ADR-0003 / ACCESS.md:** this is the broker's first slice. `actd`, plan/apply/verify/rollback, approval by plan
