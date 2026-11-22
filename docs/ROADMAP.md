@@ -125,7 +125,7 @@ Goal: the images work at another company after the data sources are set; nothing
 | **P0** | ADR-0021 and this plan; embedded migrations + `argus migrate` + the one-volume layout (`ARGUS_LAYOUT=volume`), the demo on the same migrations; the clean-install test and gate (`demo/clean-install/`, backlog `docs/CLEAN-INSTALL.md`); the worker as in-process scheduler with in-volume settings and secrets (no host root jobs); the data-source registry with "Connect X to enable" states and Settings → Data sources; the `marketing` module switch (off by default) | in progress |
 | P1 | `argus import <dir>`: one-time import of an earlier installation's data into the volume | planned |
 | P2 | evidence jobs as worker jobs (alerts, incidents, CI/CD watch, inventory, capacity, credentials) | in progress: incidents, inventory + VM state + pulse, capacity, alert hygiene, selfcheck, credentials |
-| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | planned |
+| P3 | decision jobs as worker jobs (board, proposals, review, notices, chat intake); every model prompt through `style.Prepend` | in progress: problem records |
 | P4 | the model runner inside the worker (no host user); the runner prepends the writing style to every prompt | planned |
 | P5 | host access only through access-broker machine identities (ADR-0019, ADR-0020) | planned |
 | P6 | jobs of the optional modules (marketing: search health, crawler traffic, search console, CDN); `ARGUS_LAYOUT=legacy` removed after the cut-over | marketing jobs built; legacy removal open |
@@ -138,9 +138,10 @@ features (`internal/needs`): "Connect X to enable this page" on pages, `{"notCon
 jobs that name the missing source. Secrets in the volume are encrypted
 with the master key (PR #18: `internal/secret`, `argus secrets rekey`). In the volume layout the worker also consumes
 the Kubernetes, catalogue-action and board requests, runs discovery hourly once a source is enabled for the agent,
-and runs the board sync with the Jira entry of Settings → Data sources (PR #20). Still open in P0: the per-user Jira
-connections (`jira-connect`) and the GitLab issues tracker
-(`gitlab-issues`) have no Go consumer yet (their requests wait); kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
+and runs the board sync with the Jira entry of Settings → Data sources (PR #20). The Jira connection requests
+(`jira-connect`: Account and Settings → Jira sync; tokens sealed in `ARGUS_ETC_DIR/jira`) are applied at the start of
+each board sync, with parity to the earlier job on an 18-step scenario; the pulls and writes with a user's own token
+are not ported yet (the shared connection is used). Still open in P0: kubeconfigs are not sealed with the master key. The marketing module switch is built (PR #15): `ARGUS_MODULES=marketing` or
 Settings → General; off by default, on in the demo.
 
 Writing style (2026-11-08): `internal/style` holds the default style (embedded `default.md`, about 80% ASD-STE100
@@ -155,6 +156,14 @@ the Settings -> Claude token) and `api` (an `anthropic` data source), `ARGUS_MOD
 `style.Prepend`, the usage switch, the egress guard, limits, the secret scan and a `runs` record; `argus claude run`.
 Every ported model job calls it (ADR-0021 "As built (P3/P4)").
 
+Ideas, the decision side (P3, 2026-11-09): `internal/ideas`, `argus ideas apply|status`; the worker applies the
+Ideas review's requests (explore, accept, reject, built) within 3 s and rewrites `ideas-status.json` every hour. An
+accepted idea gets its deterministic build prompt from the template `ARGUS_ETC_DIR/ideas-build.md` (built-in neutral
+default) and the advisers and build values of `ARGUS_ETC_DIR/ideas.json` (built-in default). Same rows, events, build
+prompts and status file as the reference job on synthetic ideas. Not ported yet: the advisers' weekly model run (the
+workspace of facts, the run through `internal/model`, the validation and dedupe of the answer) and the optional
+model refinement of the build prompt.
+
 Documentation publisher (P2, 2026-11-08): `internal/outline`, `argus outline requests|publish`; the worker applies
 the Settings → Integrations → Outline requests within 3 s and publishes once a day (publish mode only). Pages go under
 the parent document `OUTLINE_PARENT` only: a missing, trashed, archived or moved parent stops the run with the reason
@@ -163,6 +172,15 @@ only, and a person's text outside the block is kept (merge parity with the earli
 sealed with the master key (`ARGUS_ETC_DIR/outline.token`); without one, the Outline entry of Settings → Data sources
 (purpose docs) is used for its own address. Block markers: `OUTLINE_MARKER`. Still open: the page render job (it
 builds `outline_pages` from the service catalogue) and the Data sources two-way table (Next item 4).
+
+Problem records (P3, 2026-11-09): `internal/problems`, `argus problems tick|suggest`; the worker applies the Problems
+page's requests within 3 s and every 15 minutes closes the problems resolved for `PROBLEMS_CLOSE_DAYS`, rewrites
+`problems.json` and runs the deterministic link suggester (suggestions only unless `PROBLEMS_AUTO_ACCEPT=1`).
+Same tables, events, state file and refusals as the reference job on a synthetic scenario (nine steps: create, link,
+accept, reject, primary, status, edit, unlink, merge, resolve with incidents, recurrence, auto-close, suggestions with
+auto-accept, the switches off). Settings: `FEATURE_PROBLEMS`, `PROBLEMS_*`, admin overrides in
+`ARGUS_ETC_DIR/problems.json`; host-name prefixes and skipped hosts as the incident job has them. Not ported: the
+one-time backfill from earlier RCA reports and the purge.
 
 CI/CD watcher (P2, 2026-11-08): `internal/cicd`, `argus cicd scan|watch`; the worker runs `cicd-daily` (the scan, then the branch and
 variable audit) daily and `cicd-watch` every 5 minutes once Settings → Data sources has a GitLab entry with purpose agent (read-only; Argus

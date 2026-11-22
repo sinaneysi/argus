@@ -83,6 +83,9 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "board-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "board-requests"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
+	jobs = append(jobs, worker.Job{Name: "jira-connect-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "jira-connect"), func() error {
+		return boardSyncJob(context.Background(), c)
+	})})
 	jobs = append(jobs, worker.Job{Name: "gitlab-issues-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "gitlab-issues"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
@@ -100,6 +103,28 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	// ideas: the Ideas review's requests within seconds, the status file every hour
+	jobs = append(jobs, worker.Job{Name: "idea-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "idea-actions"), func() error {
+		_, err := ideasRun(c, "apply")
+		return err
+	})})
+	jobs = append(jobs, worker.Job{Name: "ideas-status", Every: time.Hour, Run: func(context.Context) error {
+		_, err := ideasRun(c, "status")
+		return err
+	}})
+	// problems: the Problems page's requests within seconds; closing, the state file and the link suggester every
+	// 15 minutes (each does nothing while FEATURE_PROBLEMS is not 1)
+	jobs = append(jobs, worker.Job{Name: "problem-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "problem-actions"), func() error {
+		_, err := problemsRun(c, "tick")
+		return err
+	})})
+	jobs = append(jobs, worker.Job{Name: "problems", Every: 15 * time.Minute, Run: func(context.Context) error {
+		if _, err := problemsRun(c, "tick"); err != nil {
+			return err
+		}
+		_, err := problemsRun(c, "suggest")
+		return err
+	}})
 	jobs = append(jobs, credJobs(c, stderr)...) // credential expiry (daily, Check now) and the hourly credential status
 	// the host estate (internal/estate): inventory and VM state every 6 hours, the pulse every 5 minutes, the
 	// capacity and the alert hygiene daily, once a Prometheus site is configured (a Grafana entry enabled for the agent, a Prometheus

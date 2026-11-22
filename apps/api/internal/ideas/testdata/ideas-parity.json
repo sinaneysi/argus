@@ -1,0 +1,438 @@
+{
+ "requests": [
+  [
+   "20251009090000-00000001.json",
+   {
+    "action": "explore",
+    "by": "admin.one",
+    "id": 1,
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090001-00000002.json",
+   {
+    "action": "accept",
+    "by": "admin.one",
+    "id": 1,
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090002-00000003.json",
+   {
+    "action": "accept",
+    "by": "admin.one",
+    "id": 2,
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090003-00000004.json",
+   {
+    "action": "reject",
+    "by": "admin.one",
+    "id": 3,
+    "reason": "  covered\tby the\nhygiene page  ",
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090004-00000005.json",
+   {
+    "action": "reject",
+    "by": "admin.one",
+    "id": 3,
+    "reason": "no",
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090005-00000006.json",
+   {
+    "action": "built",
+    "by": "admin.one",
+    "id": 1,
+    "ref": "!42",
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090006-00000007.json",
+   {
+    "action": "built",
+    "by": "admin.one",
+    "id": 2,
+    "ref": "main",
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090007-00000008.json",
+   {
+    "action": "explore",
+    "by": "admin.one",
+    "id": 4,
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090008-00000009.json",
+   {
+    "action": "explore",
+    "by": "admin.one",
+    "id": 99,
+    "role": "admin"
+   }
+  ],
+  [
+   "20251009090009-0000000a.json",
+   {
+    "action": "explore",
+    "by": "viewer.one",
+    "id": 3,
+    "role": "viewer"
+   }
+  ],
+  [
+   "20251009090010-0000000b.json",
+   {
+    "action": "explore",
+    "by": "admin.one",
+    "id": true,
+    "role": "admin"
+   }
+  ]
+ ],
+ "seed": [
+  "INSERT INTO ideas (id, persona, title, area, problem, evidence, proposal, value, effort, risk, prerequisites, success_metric, changed, revives, evidence_hash, status, created_at, updated_at, decided_at, decided_by, reason) VALUES (1, 'devops', 'Alert when a backup is older than a day', 'backup', 'Backups failed silently twice last month.', '[{\"text\": \"two silent failures\", \"link\": \"/backups\"}, {\"text\": \"\", \"link\": \"/incidents?status=open\"}]', 'Add a freshness check per backup set.', 'Faster detection of a missed backup', 'S', 'Noise if a set is retired', '', 'A missed backup pages within 26 hours', NULL, NULL, 'h1', 'new', 1759568000, 1759568000, NULL, NULL, NULL),(2, 'qa', 'Smoke test after every deploy', 'qa', 'Deploys broke the checkout twice.', '[{\"text\": \"two broken deploys\", \"link\": \"\"}]', 'Run a smoke suite after each deploy.', 'QA sees breakage first', 'M', 'Slow pipelines', 'a test account', 'Every deploy has a smoke result', 'Two more broken deploys since', 5, 'h2', 'review', 1759827200, 1759913600, NULL, NULL, NULL),(3, 'noc', 'Group flapping alerts', 'monitoring', 'One alert fired 300 times.', '[]', 'Group by fingerprint.', 'Less noise', 'L', 'Missed alert', '', 'Half the pages', NULL, NULL, 'h3', 'new', 1759913600, 1759913600, NULL, NULL, NULL),(4, 'noc', 'Old rejected one', 'monitoring', 'x', '[]', 'y', 'z', 'S', 'r', '', 'm', NULL, NULL, 'h4', 'rejected', 1758272000, 1758272000, 1758358400, 'admin.one', 'not now'),(5, 'qa', 'Smoke tests', 'qa', 'p', '[]', 'q', 'v', 'S', 'r', '', 'm', NULL, NULL, 'h5', 'rejected', 1757408000, 1757408000, 1757494400, 'admin.one', 'no test account yet')",
+  "INSERT INTO idea_events (idea_id, persona, at, kind, actor, text, run_id, cost_usd, trigger) VALUES (NULL, 'devops', 1759740800, 'run', 'argus', 'OK: 1 new idea from DevOps adviser (devops)', 7, 0.41234, 'schedule'),(NULL, 'qa', 1759999400, 'run', 'argus', 'OK: 1 new idea', 8, NULL, 'manual'),(NULL, 'qa', 1759827200, 'run', 'argus', 'WARN: no answer', 6, 0.2, 'schedule')"
+ ],
+ "t0": 1760000000,
+ "want": {
+  "db": {
+   "idea_events": [
+    {
+     "actor": "argus",
+     "at": 1759740800,
+     "cost_usd": 0.41234,
+     "id": 1,
+     "idea_id": null,
+     "kind": "run",
+     "persona": "devops",
+     "run_id": 7,
+     "text": "OK: 1 new idea from DevOps adviser (devops)",
+     "trigger": "schedule"
+    },
+    {
+     "actor": "argus",
+     "at": 1759999400,
+     "cost_usd": null,
+     "id": 2,
+     "idea_id": null,
+     "kind": "run",
+     "persona": "qa",
+     "run_id": 8,
+     "text": "OK: 1 new idea",
+     "trigger": "manual"
+    },
+    {
+     "actor": "argus",
+     "at": 1759827200,
+     "cost_usd": 0.2,
+     "id": 3,
+     "idea_id": null,
+     "kind": "run",
+     "persona": "qa",
+     "run_id": 6,
+     "text": "WARN: no answer",
+     "trigger": "schedule"
+    },
+    {
+     "actor": "admin.one",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 4,
+     "idea_id": 1,
+     "kind": "explore",
+     "persona": "devops",
+     "run_id": null,
+     "text": "Under review",
+     "trigger": null
+    },
+    {
+     "actor": "admin.one",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 5,
+     "idea_id": 1,
+     "kind": "accept",
+     "persona": "devops",
+     "run_id": null,
+     "text": "Accepted",
+     "trigger": null
+    },
+    {
+     "actor": "argus",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 6,
+     "idea_id": 1,
+     "kind": "prompt",
+     "persona": "devops",
+     "run_id": null,
+     "text": "Build prompt written",
+     "trigger": "template"
+    },
+    {
+     "actor": "admin.one",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 7,
+     "idea_id": 2,
+     "kind": "accept",
+     "persona": "qa",
+     "run_id": null,
+     "text": "Accepted",
+     "trigger": null
+    },
+    {
+     "actor": "argus",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 8,
+     "idea_id": 2,
+     "kind": "prompt",
+     "persona": "qa",
+     "run_id": null,
+     "text": "Build prompt written",
+     "trigger": "template"
+    },
+    {
+     "actor": "admin.one",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 9,
+     "idea_id": 3,
+     "kind": "reject",
+     "persona": "noc",
+     "run_id": null,
+     "text": "covered by the hygiene page",
+     "trigger": null
+    },
+    {
+     "actor": "admin.one",
+     "at": 1760000000,
+     "cost_usd": null,
+     "id": 10,
+     "idea_id": 1,
+     "kind": "built",
+     "persona": "devops",
+     "run_id": null,
+     "text": "!42",
+     "trigger": null
+    }
+   ],
+   "ideas": [
+    {
+     "area": "backup",
+     "build_prompt": "# Build Argus feature: Alert when a backup is older than a day\n\nYou are a coding agent working in the Argus repository.\nBuild the feature below end to end: code, configuration, tests, documentation and verification.\nThis prompt is self-contained; read the files it names before you change anything.\n\n## Goal\nAlert when a backup is older than a day. Done when: A missed backup pages within 26 hours\n\n## User story\nAs the operator who runs Argus, I want to alert when a backup is older than a day, so that faster detection of a missed backup\n\n## Why: the evidence\nIdea #1, proposed by DevOps adviser (Senior DevOps) on 2025-10-04, accepted by admin.one on 2025-10-09.\n\nProblem:\nBackups failed silently twice last month.\n\nEvidence (pages of Argus: ):\n- two silent failures: /backups\n- /incidents?status=open: /incidents?status=open\n\n## What to build\nAdd a freshness check per backup set.\n\n- **Value:** Faster detection of a missed backup\n- **Effort (estimate):** S (under a week)\n- **Risk:** Noise if a set is retired\n- **Prerequisites:** none\n- **Success metric:** A missed backup pages within 26 hours\n\n## Scope and non-goals\n- In scope: the proposal above, its configuration, tests and documentation.\n- Not in scope: anything the proposal does not name; changes to unrelated pages or jobs; new access for Argus\n  (if the feature needs a token, an account or a firewall rule, stop and list it under \"Needs from the operator\").\n- If a prerequisite is missing, build what does not depend on it behind a switch (off) and report the gap.\n\n## Where in the code (area: backup)\nStart here, then follow the imports:\n- `apps/api/internal/app/views_backup.go`\n\nRead first: `README.md`, `AGENTS.md`, `DESIGN.md` (UI changes) and the ADRs in `docs/`.\n\n## Rules\n1. Every installation-specific value is configuration with a default, never a literal in code or prompts.\n2. Production systems are read-only for Argus: a change there is a proposal with a backup, a rollback and\n   a person's approval.\n3. Tests use synthetic data only; never copy live data.\n4. Small commits on a branch; never force-push. \n\n## Tests (all must pass)\nRun the repository's gates (Go vet and tests, lint, type check, web tests, build) and add tests for the new behaviour.\n\n## Report\nWhat was built, the tests that cover it, what is still open, and \"Needs from the operator\".\n",
+     "built_at": 1760000000,
+     "built_by": "admin.one",
+     "built_ref": "!42",
+     "changed": null,
+     "created_at": 1759568000,
+     "decided_at": 1760000000,
+     "decided_by": "admin.one",
+     "effort": "S",
+     "evidence": "[{\"text\": \"two silent failures\", \"link\": \"/backups\"}, {\"text\": \"\", \"link\": \"/incidents?status=open\"}]",
+     "evidence_hash": "h1",
+     "id": 1,
+     "persona": "devops",
+     "prerequisites": "",
+     "problem": "Backups failed silently twice last month.",
+     "prompt_at": 1760000000,
+     "prompt_refined": 0,
+     "proposal": "Add a freshness check per backup set.",
+     "reason": null,
+     "revives": null,
+     "risk": "Noise if a set is retired",
+     "run_id": null,
+     "status": "built",
+     "success_metric": "A missed backup pages within 26 hours",
+     "title": "Alert when a backup is older than a day",
+     "updated_at": 1760000000,
+     "value": "Faster detection of a missed backup"
+    },
+    {
+     "area": "qa",
+     "build_prompt": "# Build Argus feature: Smoke test after every deploy\n\nYou are a coding agent working in the Argus repository.\nBuild the feature below end to end: code, configuration, tests, documentation and verification.\nThis prompt is self-contained; read the files it names before you change anything.\n\n## Goal\nSmoke test after every deploy. Done when: Every deploy has a smoke result\n\n## User story\nAs the operator who runs Argus, I want to smoke test after every deploy, so that QA sees breakage first\n\n## Why: the evidence\nIdea #2, proposed by QA adviser (QA specialist) on 2025-10-07, accepted by admin.one on 2025-10-09.\nIt was rejected before as idea #5 (reason then: no test account yet); it came back because the evidence changed: Two more broken deploys since\n\nProblem:\nDeploys broke the checkout twice.\n\nEvidence (pages of Argus: ):\n- two broken deploys\n\n## What to build\nRun a smoke suite after each deploy.\n\n- **Value:** QA sees breakage first\n- **Effort (estimate):** M (one to three weeks)\n- **Risk:** Slow pipelines\n- **Prerequisites:** a test account\n- **Success metric:** Every deploy has a smoke result\n\n## Scope and non-goals\n- In scope: the proposal above, its configuration, tests and documentation.\n- Not in scope: anything the proposal does not name; changes to unrelated pages or jobs; new access for Argus\n  (if the feature needs a token, an account or a firewall rule, stop and list it under \"Needs from the operator\").\n- If a prerequisite is missing, build what does not depend on it behind a switch (off) and report the gap.\n\n## Where in the code (area: qa)\nStart here, then follow the imports:\n- `apps/api/internal/app/views_qa.go`\n\nRead first: `README.md`, `AGENTS.md`, `DESIGN.md` (UI changes) and the ADRs in `docs/`.\n\n## Rules\n1. Every installation-specific value is configuration with a default, never a literal in code or prompts.\n2. Production systems are read-only for Argus: a change there is a proposal with a backup, a rollback and\n   a person's approval.\n3. Tests use synthetic data only; never copy live data.\n4. Small commits on a branch; never force-push. \n\n## Tests (all must pass)\nRun the repository's gates (Go vet and tests, lint, type check, web tests, build) and add tests for the new behaviour.\n\n## Report\nWhat was built, the tests that cover it, what is still open, and \"Needs from the operator\".\n",
+     "built_at": null,
+     "built_by": null,
+     "built_ref": null,
+     "changed": "Two more broken deploys since",
+     "created_at": 1759827200,
+     "decided_at": 1760000000,
+     "decided_by": "admin.one",
+     "effort": "M",
+     "evidence": "[{\"text\": \"two broken deploys\", \"link\": \"\"}]",
+     "evidence_hash": "h2",
+     "id": 2,
+     "persona": "qa",
+     "prerequisites": "a test account",
+     "problem": "Deploys broke the checkout twice.",
+     "prompt_at": 1760000000,
+     "prompt_refined": 0,
+     "proposal": "Run a smoke suite after each deploy.",
+     "reason": null,
+     "revives": 5,
+     "risk": "Slow pipelines",
+     "run_id": null,
+     "status": "accepted",
+     "success_metric": "Every deploy has a smoke result",
+     "title": "Smoke test after every deploy",
+     "updated_at": 1760000000,
+     "value": "QA sees breakage first"
+    },
+    {
+     "area": "monitoring",
+     "build_prompt": null,
+     "built_at": null,
+     "built_by": null,
+     "built_ref": null,
+     "changed": null,
+     "created_at": 1759913600,
+     "decided_at": 1760000000,
+     "decided_by": "admin.one",
+     "effort": "L",
+     "evidence": "[]",
+     "evidence_hash": "h3",
+     "id": 3,
+     "persona": "noc",
+     "prerequisites": "",
+     "problem": "One alert fired 300 times.",
+     "prompt_at": null,
+     "prompt_refined": 0,
+     "proposal": "Group by fingerprint.",
+     "reason": "covered by the hygiene page",
+     "revives": null,
+     "risk": "Missed alert",
+     "run_id": null,
+     "status": "rejected",
+     "success_metric": "Half the pages",
+     "title": "Group flapping alerts",
+     "updated_at": 1760000000,
+     "value": "Less noise"
+    },
+    {
+     "area": "monitoring",
+     "build_prompt": null,
+     "built_at": null,
+     "built_by": null,
+     "built_ref": null,
+     "changed": null,
+     "created_at": 1758272000,
+     "decided_at": 1758358400,
+     "decided_by": "admin.one",
+     "effort": "S",
+     "evidence": "[]",
+     "evidence_hash": "h4",
+     "id": 4,
+     "persona": "noc",
+     "prerequisites": "",
+     "problem": "x",
+     "prompt_at": null,
+     "prompt_refined": 0,
+     "proposal": "y",
+     "reason": "not now",
+     "revives": null,
+     "risk": "r",
+     "run_id": null,
+     "status": "rejected",
+     "success_metric": "m",
+     "title": "Old rejected one",
+     "updated_at": 1758272000,
+     "value": "z"
+    },
+    {
+     "area": "qa",
+     "build_prompt": null,
+     "built_at": null,
+     "built_by": null,
+     "built_ref": null,
+     "changed": null,
+     "created_at": 1757408000,
+     "decided_at": 1757494400,
+     "decided_by": "admin.one",
+     "effort": "S",
+     "evidence": "[]",
+     "evidence_hash": "h5",
+     "id": 5,
+     "persona": "qa",
+     "prerequisites": "",
+     "problem": "p",
+     "prompt_at": null,
+     "prompt_refined": 0,
+     "proposal": "q",
+     "reason": "no test account yet",
+     "revives": null,
+     "risk": "r",
+     "run_id": null,
+     "status": "rejected",
+     "success_metric": "m",
+     "title": "Smoke tests",
+     "updated_at": 1757408000,
+     "value": "v"
+    }
+   ]
+  },
+  "left": [],
+  "status": {
+   "caps": {
+    "budget_usd": 0.33,
+    "max_ideas": 5,
+    "max_turns": 60
+   },
+   "enabled": true,
+   "personas": {
+    "devops": {
+     "days": [
+      "Mon"
+     ],
+     "last_cost": 0.4123,
+     "last_result": "OK: 1 new idea from DevOps adviser (devops)",
+     "last_run": 1759740800,
+     "last_trigger": "schedule",
+     "manual_today": false,
+     "name": "DevOps adviser",
+     "role": "Senior DevOps"
+    },
+    "noc": {
+     "days": [],
+     "last_cost": null,
+     "last_result": null,
+     "last_run": null,
+     "last_trigger": null,
+     "manual_today": false,
+     "name": "NOC adviser",
+     "role": "NOC engineer"
+    },
+    "qa": {
+     "days": [
+      "Tue",
+      "Thu"
+     ],
+     "last_cost": 0,
+     "last_result": "OK: 1 new idea",
+     "last_run": 1759999400,
+     "last_trigger": "manual",
+     "manual_today": true,
+     "name": "QA adviser",
+     "role": "QA specialist"
+    }
+   },
+   "refine": false,
+   "running": null
+  }
+ }
+}

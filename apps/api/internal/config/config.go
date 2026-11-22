@@ -149,6 +149,9 @@ var Fields = []Field{
 	{Key: "ARGUS_SEO_HOSTS", Kind: List, Help: "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"},
 	{Key: "FEATURE_TODAY", Kind: Bool, Default: "0", Help: "show the Today page without the root switch"},
 	{Key: "FEATURE_PROBLEMS", Kind: Bool, Default: "0", Help: "show Problems without the root switch"},
+	{Key: "FEATURE_IDEAS", Kind: Bool, Default: "0", Help: "Ideas: the advisers and the Ideas review are on"},
+	{Key: "IDEAS_*", Kind: Str, Pattern: true, Help: "Ideas: IDEAS_SCHEDULE, IDEAS_MAX_TURNS, IDEAS_BUDGET_USD, IDEAS_TIMEOUT_MIN, IDEAS_MODEL, IDEAS_MAX_PER_RUN, IDEAS_DAILY_USD (out of range: clamped)"},
+	{Key: "PROBLEMS_*", Kind: Str, Pattern: true, Help: "problem records: PROBLEMS_SUGGEST, PROBLEMS_AUTO_ACCEPT, PROBLEMS_CLOSE_DAYS, ... (argus problems -h; out of range: the default)"},
 	{Key: "CICD_STUCK_MINUTES", Kind: Int, Default: "10", Help: "a pipeline waiting longer than this is stuck"},
 	// site display values (internal/app/site.go): names and links shown on the pages
 	{Key: "ARGUS_SSH_ALIAS", Kind: Str, Default: "argus-01", Help: "the operator's SSH alias of the Argus server"},
@@ -246,6 +249,7 @@ var Fields = []Field{
 	{Key: "ARGUS_BOARD_AUTH_DB", Aliases: []string{"BOARD_AUTH_DB"}, Kind: Path, Help: "users and roles the board sync checks, read only (empty: ARGUS_AUTH_DB)"},
 	{Key: "ARGUS_BOARD_ENV_FILES", Aliases: []string{"BOARD_ENV_FILES"}, Kind: Str, Help: "colon-separated root-owned files with the JIRA_* settings; the first that sets a key wins (empty: ARGUS_ETC_DIR/jira.env)"},
 	{Key: "ARGUS_GITLAB_ISSUES_REQ_DIR", Aliases: []string{"GITLAB_ISSUES_REQ_DIR"}, Kind: Path, Help: "GitLab issues connection requests from Settings -> Integrations (empty: ARGUS_SETTINGS_IN/gitlab-issues)"},
+	{Key: "ARGUS_JIRA_CONNECT_DIR", Aliases: []string{"JIRA_CONNECT_DIR"}, Kind: Path, Help: "Jira connection requests from Account and Settings -> Jira sync (empty: ARGUS_SETTINGS_IN/jira-connect)"},
 	{Key: "ARGUS_GITLAB_ISSUES_ENV_FILE", Aliases: []string{"GITLAB_ISSUES_ENV_FILE"}, Kind: Path, Help: "a KEY=value file whose GITLAB_URL gives the default GitLab URL and allowed host (empty: ARGUS_ETC_DIR/env)"},
 	{Key: "ARGUS_BOARD_PAT_FILE", Aliases: []string{"BOARD_PAT_FILE"}, Kind: Path, Help: "the Jira personal access token, root-owned 0600 (empty: ARGUS_ETC_DIR/jira.pat)"},
 	{Key: "ARGUS_BOARD_OWNER_UID", Aliases: []string{"BOARD_OWNER_UID"}, Kind: Int, Default: "0", Min: 0, Max: 2147483647, Help: "the owner the Jira settings and token files must have"},
