@@ -112,6 +112,20 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 		_, err := ideasRun(c, "status")
 		return err
 	}})
+	// the advisers' weekly model run: the adviser whose slot is due (nothing when none is, or Ideas are off)
+	jobs = append(jobs, worker.Job{Name: "ideas", Every: time.Hour, Sources: needs.Jobs["ideas"],
+		Ready: func() (bool, string) {
+			if miss := det.Now().Missing(needs.Jobs["ideas"]); len(miss) > 0 {
+				return false, needs.Reason(miss)
+			}
+			return true, ""
+		},
+		Run: func(ctx context.Context) error {
+			ctx, cancel := context.WithTimeout(ctx, 35*time.Minute)
+			defer cancel()
+			_, err := ideasModelRun(ctx, c, "auto")
+			return err
+		}})
 	// problems: the Problems page's requests within seconds; closing, the state file and the link suggester every
 	// 15 minutes (each does nothing while FEATURE_PROBLEMS is not 1)
 	jobs = append(jobs, worker.Job{Name: "problem-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "problem-actions"), func() error {

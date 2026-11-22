@@ -95,6 +95,7 @@ var Jobs = map[string][]string{
 	"cicd-watch":     {"gitlab"},
 	"cicd-daily":     {"gitlab"},
 	"task-agent":     {"claude"},
+	"ideas":          {"claude"},
 	// the marketing module (its jobs also need the module on)
 	"googlebot-watch": {"grafana"},
 	"gsc":             {"google"},
