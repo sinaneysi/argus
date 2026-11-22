@@ -103,6 +103,7 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 			return true, ""
 		},
 		Run: func(context.Context) error { return incidentsTick(c, true) }})
+	jobs = append(jobs, todayJobs(c, stderr)...) // the Today planner: tick every 30 minutes, the page's requests within seconds
 	// ideas: the Ideas review's requests within seconds, the status file every hour
 	jobs = append(jobs, worker.Job{Name: "idea-actions", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "idea-actions"), func() error {
 		_, err := ideasRun(c, "apply")

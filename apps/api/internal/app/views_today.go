@@ -1,6 +1,6 @@
 package app
 
-// Today (/today): the day's triaged, time-boxed plan (bin/today.py writes ops.db today_plans / today_items and
+// Today (/today): the day's triaged, time-boxed plan (argus today writes ops.db today_plans / today_items and
 // today-status.json). Admins mark items done, start, skip, defer, undo, pull a Later item into the day, re-plan and
 // change the budget through request files (settings-in/today-actions, applied by argus); viewers read it.
 // The same item renderer draws the "Act now" box on top of the long pages (Incidents, Problems, Vulnerabilities,
@@ -167,7 +167,7 @@ func todayIntField(form py.QS, k string, lo, hi int64) (int64, bool) {
 	return n, lo <= n && n <= hi
 }
 
-// TodayPostAct is POST /today/act: one request file per action, applied by bin/today.py apply (argus).
+// TodayPostAct is POST /today/act: one request file per action, applied by argus today apply (the worker job today-actions).
 func TodayPostAct(c *Ctx, form py.QS, sess *Session) (int, string) {
 	if sess.Role != "admin" {
 		return 403, "Only admins change the plan."

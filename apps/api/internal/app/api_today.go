@@ -118,7 +118,7 @@ func todaySentBanner(qs py.QS, p Row) *apiBanner {
 	if NowInt()-t < 30 {
 		return &apiBanner{Text: "Saving: Argus applies it in a second; this page refreshes by itself.", Kind: "info", Refresh: 2}
 	}
-	return &apiBanner{Text: "Not applied yet. The today-actions job may be stopped: check argus-today-actions on " + ARGUS_HOSTNAME + ".", Kind: "warn"}
+	return &apiBanner{Text: "Not applied yet. The worker applies Today actions: check that it is running.", Kind: "warn"}
 }
 
 // todayWaitingFor leaves out decisions this user cannot open: a viewer has no proposals in Review, so a link there is a dead end.

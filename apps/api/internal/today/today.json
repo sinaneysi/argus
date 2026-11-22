@@ -1,0 +1,185 @@
+{
+ "_comment": "Today planner defaults (argus today). Kinds: label, area (the page the item belongs to), minutes = base estimate, per_unit = minutes per member of a batch (added to minutes), max = cap of a batch, change = a change somewhere, risky = a production change that needs a window (one a day by default), approval = the operator approves it, own = marking the source's own action done closes the item. Learned ratios (ops.db today_learn) multiply the base after at least one recorded actual. ARGUS_TODAY_CONFIG names a file that replaces this one.",
+ "defaults": {
+  "focus_min": 180,
+  "max_items": 8,
+  "max_risky": 1,
+  "proposals_batch": 10,
+  "ideas_batch": 5,
+  "done_quiet_days": 7,
+  "learn_alpha": 0.3,
+  "learn_min": 0.5,
+  "learn_max": 3.0,
+  "plan_at": "07:30",
+  "later_show": 15
+ },
+ "size": {
+  "S": 0.75,
+  "M": 1.0,
+  "L": 1.5
+ },
+ "kinds": {
+  "proposals": {
+   "label": "Decide proposed tasks",
+   "area": "proposals",
+   "minutes": 0,
+   "per_unit": 2,
+   "max": 30,
+   "own": true
+  },
+  "agent_questions": {
+   "label": "Answer the task agent",
+   "area": "board",
+   "minutes": 0,
+   "per_unit": 5,
+   "max": 30,
+   "own": true
+  },
+  "incident_review": {
+   "label": "Review an RCA (Lazy reading)",
+   "area": "incidents",
+   "minutes": 3
+  },
+  "incident_triage": {
+   "label": "Triage an incident without an RCA",
+   "area": "incidents",
+   "minutes": 10
+  },
+  "problem_review": {
+   "label": "Review a problem",
+   "area": "problems",
+   "minutes": 5
+  },
+  "problem_fix": {
+   "label": "Production fix of a known error",
+   "area": "problems",
+   "minutes": 60,
+   "change": true,
+   "approval": true
+  },
+  "cicd_release": {
+   "label": "Unblock a release pipeline",
+   "area": "cicd",
+   "minutes": 20,
+   "change": true
+  },
+  "cicd_stuck": {
+   "label": "Free a stuck deploy lock",
+   "area": "cicd",
+   "minutes": 10,
+   "change": true
+  },
+  "cicd_class": {
+   "label": "Fix one class of CI failures",
+   "area": "cicd",
+   "minutes": 30,
+   "change": true
+  },
+  "cicd_security": {
+   "label": "CI/CD security finding",
+   "area": "cicd",
+   "minutes": 45,
+   "change": true,
+   "approval": true
+  },
+  "cicd_readiness": {
+   "label": "CI/CD readiness blockers",
+   "area": "cicd",
+   "minutes": 30
+  },
+  "reboot_wave": {
+   "label": "Plan a kernel reboot wave",
+   "area": "vulns",
+   "minutes": 30,
+   "change": true,
+   "risky": true,
+   "approval": true
+  },
+  "patch_wave": {
+   "label": "Plan a package patch wave",
+   "area": "vulns",
+   "minutes": 45,
+   "change": true,
+   "risky": true,
+   "approval": true
+  },
+  "cve_upgrade": {
+   "label": "Production upgrade with backup and rollback",
+   "area": "vulns",
+   "minutes": 60,
+   "change": true,
+   "risky": true,
+   "approval": true
+  },
+  "cve_nonprod": {
+   "label": "Upgrade on develop or pre-release",
+   "area": "vulns",
+   "minutes": 20,
+   "change": true
+  },
+  "disk_full": {
+   "label": "Free disk space before it fills",
+   "area": "capacity",
+   "minutes": 30,
+   "change": true,
+   "approval": true
+  },
+  "backup_failing": {
+   "label": "Fix failing backup sets",
+   "area": "backups",
+   "minutes": 10,
+   "per_unit": 10,
+   "max": 60,
+   "change": true
+  },
+  "cert_renew": {
+   "label": "Renew certificates",
+   "area": "certs",
+   "minutes": 10,
+   "per_unit": 5,
+   "max": 45,
+   "change": true
+  },
+  "selfcheck": {
+   "label": "Repair a failing self-check",
+   "area": "argus",
+   "minutes": 10
+  },
+  "cred_rotate": {
+   "label": "Rotate a credential before it expires",
+   "area": "argus",
+   "minutes": 10,
+   "change": true
+  },
+  "qa_needs_info": {
+   "label": "Chase QA reports that need info",
+   "area": "qa",
+   "minutes": 2,
+   "per_unit": 3,
+   "max": 15
+  },
+  "ideas": {
+   "label": "Triage new ideas",
+   "area": "ideas",
+   "minutes": 0,
+   "per_unit": 2,
+   "max": 10,
+   "own": true
+  },
+  "board_task": {
+   "label": "Work on a Jira task",
+   "area": "board",
+   "minutes": 45
+  },
+  "decision_token": {
+   "label": "Create a token",
+   "area": "decisions",
+   "minutes": 10
+  },
+  "decision": {
+   "label": "Make a decision",
+   "area": "decisions",
+   "minutes": 15
+  }
+ }
+}

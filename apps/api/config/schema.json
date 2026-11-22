@@ -585,6 +585,78 @@
       "help": "show the Today page without the root switch"
     },
     {
+      "key": "ARGUS_TODAY_PLAN_AT",
+      "aliases": [
+        "TODAY_PLAN_AT"
+      ],
+      "type": "str",
+      "help": "worker job today: HH:MM in ARGUS_TZ when the day's plan is built (empty: 07:30, from the planner config)"
+    },
+    {
+      "key": "ARGUS_TODAY_FOCUS_MIN",
+      "aliases": [
+        "TODAY_FOCUS_MIN"
+      ],
+      "type": "int",
+      "min": 15,
+      "max": 600,
+      "help": "worker job today: focus minutes a day (empty: 180); an admin's Today settings win"
+    },
+    {
+      "key": "ARGUS_TODAY_MAX_ITEMS",
+      "aliases": [
+        "TODAY_MAX_ITEMS"
+      ],
+      "type": "int",
+      "min": 1,
+      "max": 20,
+      "help": "worker job today: tasks a day (empty: 8)"
+    },
+    {
+      "key": "ARGUS_TODAY_MAX_RISKY",
+      "aliases": [
+        "TODAY_MAX_RISKY"
+      ],
+      "type": "int",
+      "min": 0,
+      "max": 3,
+      "help": "worker job today: production changes with a window a day (empty: 1)"
+    },
+    {
+      "key": "ARGUS_TODAY_OPERATOR",
+      "aliases": [
+        "TODAY_OPERATOR"
+      ],
+      "type": "str",
+      "help": "worker job today: the user whose tracker tasks are in the plan (empty: the first of ARGUS_ADMINS)"
+    },
+    {
+      "key": "ARGUS_TODAY_JIRA_STATUSES",
+      "aliases": [
+        "TODAY_JIRA_STATUSES"
+      ],
+      "type": "str",
+      "default": "In Progress",
+      "help": "worker job today: tracker statuses of the operator's tasks that go in the plan, comma separated"
+    },
+    {
+      "key": "ARGUS_TODAY_CONFIG",
+      "aliases": [
+        "TODAY_CONFIG"
+      ],
+      "type": "path",
+      "help": "worker job today: planner kinds and defaults that replace the built-in ones (empty: built in)"
+    },
+    {
+      "key": "ARGUS_TODAY_DECISIONS",
+      "aliases": [
+        "TODAY_DECISIONS"
+      ],
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/today-decisions.json",
+      "help": "worker job today: the operator's open decisions (\"Waiting on you\"); a missing file is none"
+    },
+    {
       "key": "FEATURE_PROBLEMS",
       "type": "bool",
       "default": "0",
