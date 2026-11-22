@@ -241,7 +241,8 @@ func TestRequestsLocalMode(t *testing.T) {
 		"refused: no such task":                          {"kind": "move", "task": 99, "to": "done"},
 		"refused: unknown column":                        {"kind": "move", "task": 1, "to": "sideways"},
 		"refused: GitLab issues is not connected (Settings → Integrations → GitLab issues)": {"kind": "create", "title": "x", "tracker": "gitlab"},
-		"refused: lessons requests are not handled by this board sync yet":                  {"kind": "lesson"},
+		"refused: bad lesson action":          {"kind": "lesson"},
+		"refused: only admins review lessons": {"kind": "lesson", "action": "approve", "lesson_id": 1, "by": "sam.viewer"},
 	}
 	rids := map[string]string{}
 	for want, r := range bad {

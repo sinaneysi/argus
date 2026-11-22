@@ -1,6 +1,10 @@
 #!/bin/sh
 # A fake Claude CLI: answers a task-agent prompt with a fixed plan in stream-json (no network).
-cat >/dev/null
+if [ -n "${FAKE_CLAUDE_DUMP:-}" ]; then
+  cat >"$FAKE_CLAUDE_DUMP"; cp lessons.md "$FAKE_CLAUDE_DUMP.lessons" 2>/dev/null || true
+else
+  cat >/dev/null
+fi
 case "${FAKE_CLAUDE_MODE:-plan}" in
   sleep) echo '{"type":"system","subtype":"init"}'; sleep 30 ;;
 esac
