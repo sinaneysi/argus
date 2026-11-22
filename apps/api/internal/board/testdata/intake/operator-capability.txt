@@ -1,0 +1,7 @@
+{"classification": {"environment": "develop", "kind": "change"},
+ "summary": "Start the pipeline through a capability.",
+ "plan": [
+  {"text": "Start the develop pipeline", "mode": "operator", "targets": ["group/app"],
+   "capability": "http.check", "args": {"url": "https://health.example.com/healthz", "expect_status": 200}}
+ ],
+ "questions": [], "needs": [], "estimate": {"effort": "5 min", "cost_usd": 0.1}, "confidence": "medium", "suggested_column": "Review"}

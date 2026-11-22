@@ -1,0 +1,1391 @@
+{
+ "triage": [
+  {
+   "name": "no-hosts",
+   "job": {
+    "name": "systemd_ci",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "INFO: Treating unresolved optional variable SYSTEMD_JOB_TIMEOUT as undefined\n[WARNING]: Could not match supplied host pattern, ignoring: pre-release\nERROR! Specified inventory, host pattern and/or --limit leaves us with no hosts to target.\nERROR: Job failed: exit code 1",
+   "want": {
+    "klass": "variable",
+    "rule": "no-hosts-to-target",
+    "line": "ERROR! Specified inventory, host pattern and/or --limit leaves us with no hosts to target.",
+    "signature": "bf5d89d95b9ef111",
+    "excerpt": "[WARNING]: Could not match supplied host pattern, ignoring: pre-release\nERROR! Specified inventory, host pattern and/or --limit leaves us with no hosts to target.",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "candidate",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "TASK [Stop with every failed parallel mode build] ****\n    msg: Candidate is missing or not on the application filesystem\nhost-a : ok=12 changed=1 failed=1",
+   "want": {
+    "klass": "deploy",
+    "rule": "candidate-missing",
+    "line": "msg: Candidate is missing or not on the application filesystem",
+    "signature": "51949210cd0aeedc",
+    "excerpt": "TASK [Stop with every failed parallel mode build] ****\n    msg: Candidate is missing or not on the application filesystem\nhost-a : ok=12 changed=1 failed=1",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "mongo",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "node[1]: [CRON] Startup failed: MongoParseError: Invalid scheme, expected connection string to start with \"mongodb://\"\nsystemd[1]: x.service: Main process exited, code=exited, status=1/FAILURE",
+   "want": {
+    "klass": "variable",
+    "rule": "mongo-uri",
+    "line": "node[1]: [CRON] Startup failed: MongoParseError: Invalid scheme, expected connection string to start with \"mongodb://\"",
+    "signature": "8969ecb11b7ed4eb",
+    "excerpt": "node[1]: [CRON] Startup failed: MongoParseError: Invalid scheme, expected connection string to start with \"mongodb://\"\nsystemd[1]: x.service: Main process exited, code=exited, status=1/FAILURE",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "db-auth",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "node[2]:   context: { label: 'seller_db', cause: 'Authentication failed.' },\nnode[2]:   code: 'DATABASE_ERROR'\nsystemd[1]: x.service: Failed with result 'exit-code'.",
+   "want": {
+    "klass": "variable",
+    "rule": "db-auth",
+    "line": "node[2]:   context: { label: 'seller_db', cause: 'Authentication failed.' },",
+    "signature": "547b3aa4b08fda2d",
+    "excerpt": "node[2]:   context: { label: 'seller_db', cause: 'Authentication failed.' },\nnode[2]:   code: 'DATABASE_ERROR'\nsystemd[1]: x.service: Failed with result 'exit-code'.",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unhealthy",
+   "job": {
+    "name": "deploy",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "fatal: [stage-host]: FAILED! => {\"msg\": \"1 of 1 service(s) in app did not become healthy: app_api. See the report above.\"}",
+   "want": {
+    "klass": "health",
+    "rule": "unhealthy",
+    "line": "fatal: [stage-host]: FAILED! => {\"msg\": \"1 of 1 service(s) in app did not become healthy: app_api. See the report above.\"}",
+    "signature": "a74e4022b5ee3046",
+    "excerpt": "fatal: [stage-host]: FAILED! => {\"msg\": \"1 of 1 service(s) in app did not become healthy: app_api. See the report above.\"}",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "placeholder",
+   "job": {
+    "name": "deploy",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "fatal: [stage-host]: FAILED! => {\"msg\": \"docker-compose.yml was not updated for 20261020T230141Z-0e6ccdde. It still references the placeholder image: image: \\\"reg/x:NOTAG\\\"\"}",
+   "want": {
+    "klass": "deploy",
+    "rule": "placeholder-image",
+    "line": "fatal: [stage-host]: FAILED! => {\"msg\": \"docker-compose.yml was not updated for 20261020T230141Z-0e6ccdde. It still references the placeholder image: image: \\\"reg/x:NOTAG\\\"\"}",
+    "signature": "b72bc402b14f28be",
+    "excerpt": "fatal: [stage-host]: FAILED! => {\"msg\": \"docker-compose.yml was not updated for 20261020T230141Z-0e6ccdde. It still references the placeholder image: image: \\\"reg/x:NOTAG\\\"\"}",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "lock-sync",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "npm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync.\nnpm ERR! Missing: lodash@4.17.21 from lock file",
+   "want": {
+    "klass": "lockfile",
+    "rule": "lock-out-of-sync",
+    "line": "npm ERR! Missing: lodash@4.17.21 from lock file",
+    "signature": "0ab32d4c8850e134",
+    "excerpt": "npm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync.\nnpm ERR! Missing: lodash@4.17.21 from lock file",
+    "props_develop": [
+     [
+      "pin_lockfile",
+      false,
+      "projects/5/merge_requests",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "pin_lockfile",
+      false,
+      "projects/5/merge_requests",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "node14",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "/data/services/x/node_modules/colorspace/index.js:12\n  a ||= b\nSyntaxError: Unexpected token '||='",
+   "want": {
+    "klass": "lockfile",
+    "rule": "node14-syntax",
+    "line": "SyntaxError: Unexpected token '||='",
+    "signature": "13c528570f4aed1f",
+    "excerpt": "/data/services/x/node_modules/colorspace/index.js:12\n  a ||= b\nSyntaxError: Unexpected token '||='",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/NODE_VERSION",
+      "NODE_VERSION"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/NODE_VERSION",
+      "NODE_VERSION"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ts",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "types/bill.ts(23,5): error TS2300: Duplicate identifier 'fix_commission'.\nERROR: failed to solve: process \"/bin/sh -c npm run ${BUILD_SCRIPT}\" did not complete successfully: exit code: 1",
+   "want": {
+    "klass": "code",
+    "rule": "ts-error",
+    "line": "types/bill.ts(23,5): error TS2300: Duplicate identifier 'fix_commission'.",
+    "signature": "84c5b39a3a255c64",
+    "excerpt": "types/bill.ts(23,5): error TS2300: Duplicate identifier 'fix_commission'.\nERROR: failed to solve: process \"/bin/sh -c npm run ${BUILD_SCRIPT}\" did not complete successfully: exit code: 1",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "publish",
+   "job": {
+    "name": "publish",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "[ERROR] Publishing the same version again is not allowed.",
+   "want": {
+    "klass": "package",
+    "rule": "publish-version",
+    "line": "[ERROR] Publishing the same version again is not allowed.",
+    "signature": "f8e4676c7714fb43",
+    "excerpt": "[ERROR] Publishing the same version again is not allowed.",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "testcontainers",
+   "job": {
+    "name": "integration",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "Error: Could not find a working container runtime strategy\n[ELIFECYCLE] Command failed with exit code 1.",
+   "want": {
+    "klass": "runner",
+    "rule": "docker-daemon",
+    "line": "Error: Could not find a working container runtime strategy",
+    "signature": "f0053ca3fea030e8",
+    "excerpt": "Error: Could not find a working container runtime strategy\n[ELIFECYCLE] Command failed with exit code 1.",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ],
+     [
+      "retry_job",
+      true,
+      "projects/5/jobs/9/retry",
+      9
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "runner-reason",
+   "job": {
+    "name": "prepare_systemd",
+    "failure_reason": "runner_system_failure",
+    "status": "failed"
+   },
+   "trace": "WARNING: Failed to pull image with policy",
+   "want": {
+    "klass": "runner",
+    "rule": "gitlab:runner_system_failure",
+    "line": "runner_system_failure",
+    "signature": "9458118d71038cae",
+    "excerpt": "WARNING: Failed to pull image with policy",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ],
+     [
+      "retry_job",
+      true,
+      "projects/5/jobs/9/retry",
+      9
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "registry",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "denied: requested access to the resource is denied",
+   "want": {
+    "klass": "registry",
+    "rule": "registry-auth",
+    "line": "denied: requested access to the resource is denied",
+    "signature": "40b7f5b862a0cec0",
+    "excerpt": "denied: requested access to the resource is denied",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ssh",
+   "job": {
+    "name": "deploy",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "fatal: [h]: UNREACHABLE! => {\"msg\": \"Failed to connect to the host via ssh: ssh: connect to host 10.0.0.1 port 8090: Connection timed out\"}",
+   "want": {
+    "klass": "ssh",
+    "rule": "ssh-unreachable",
+    "line": "fatal: [h]: UNREACHABLE! => {\"msg\": \"Failed to connect to the host via ssh: ssh: connect to host 10.0.0.1 port 8090: Connection timed out\"}",
+    "signature": "94e1353370a9bd9a",
+    "excerpt": "fatal: [h]: UNREACHABLE! => {\"msg\": \"Failed to connect to the host via ssh: ssh: connect to host 10.0.0.1 port 8090: Connection timed out\"}",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unit-file",
+   "job": {
+    "name": "prepare_systemd",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "INFO: Prepared DOTENV for pre-release without printing its content\nERROR: SYSTEMD_UNIT_FILE must point to a readable GitLab file variable",
+   "want": {
+    "klass": "variable",
+    "rule": "env-undefined",
+    "line": "ERROR: SYSTEMD_UNIT_FILE must point to a readable GitLab file variable",
+    "signature": "9bb38fe01e29b15b",
+    "excerpt": "INFO: Prepared DOTENV for pre-release without printing its content\nERROR: SYSTEMD_UNIT_FILE must point to a readable GitLab file variable",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/SYSTEMD_UNIT_FILE",
+      "SYSTEMD_UNIT_FILE"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/SYSTEMD_UNIT_FILE",
+      "SYSTEMD_UNIT_FILE"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "disk",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "write /var/lib/docker/tmp/x: no space left on device",
+   "want": {
+    "klass": "runner",
+    "rule": "disk-full",
+    "line": "write /var/lib/docker/tmp/x: no space left on device",
+    "signature": "dab73e7db9246442",
+    "excerpt": "write /var/lib/docker/tmp/x: no space left on device",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ],
+     [
+      "retry_job",
+      true,
+      "projects/5/jobs/9/retry",
+      9
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "inode-mimetype",
+   "job": {
+    "name": "systemd_ci",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "mimetype: inode/symlink\nTASK [Stop after candidate preparation failure] ***",
+   "want": {
+    "klass": "code",
+    "rule": "candidate-build",
+    "line": "TASK [Stop after candidate preparation failure] ***",
+    "signature": "6222e0fb0a489283",
+    "excerpt": "mimetype: inode/symlink\nTASK [Stop after candidate preparation failure] ***",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unknown",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed"
+   },
+   "trace": "something odd happened\nERROR: Job failed: exit code 1",
+   "want": {
+    "klass": "unknown",
+    "rule": "unknown",
+    "line": "something odd happened",
+    "signature": "3bae912c45276114",
+    "excerpt": "something odd happened",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "native-abi",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "Error: No native build was found for platform=linux abi=115",
+   "want": {
+    "klass": "lockfile",
+    "rule": "native-abi",
+    "line": "Error: No native build was found for platform=linux abi=115",
+    "signature": "baf281c3e27d11da",
+    "excerpt": "Error: No native build was found for platform=linux abi=115",
+    "props_develop": [
+     [
+      "pin_lockfile",
+      false,
+      "projects/5/merge_requests",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "pin_lockfile",
+      false,
+      "projects/5/merge_requests",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "mongo-timeout",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "MongoNetworkTimeoutError: connection 1 to 10.0.0.9:27017 timed out",
+   "want": {
+    "klass": "health",
+    "rule": "mongo-timeout",
+    "line": "MongoNetworkTimeoutError: connection 1 to 10.0.0.9:27017 timed out",
+    "signature": "9762fcf2c5ef87e4",
+    "excerpt": "MongoNetworkTimeoutError: connection 1 to 10.0.0.9:27017 timed out",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "enoent-runtime",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "Error: ENOENT: no such file or directory, open 'Logs/app.log'",
+   "want": {
+    "klass": "code",
+    "rule": "runtime-enoent",
+    "line": "Error: ENOENT: no such file or directory, open 'Logs/app.log'",
+    "signature": "bde87500b63f4d81",
+    "excerpt": "Error: ENOENT: no such file or directory, open 'Logs/app.log'",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "enoent-deps",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "Error: ENOENT: no such file or directory, open '/data/services/x/node_modules/a/b.json'",
+   "want": {
+    "klass": "code",
+    "rule": "missing-file",
+    "line": "Error: ENOENT: no such file or directory, open '/data/services/x/node_modules/a/b.json'",
+    "signature": "ec568bae7d171667",
+    "excerpt": "Error: ENOENT: no such file or directory, open '/data/services/x/node_modules/a/b.json'",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unit-missing",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "TASK [Verify every target without a supplied unit is already loaded] ***\nok: [h]\nfatal: [h]: FAILED! => {}",
+   "want": {
+    "klass": "variable",
+    "rule": "unit-missing",
+    "line": "unit-missing",
+    "signature": "3668ebb1b7eaa447",
+    "excerpt": "TASK [Verify every target without a supplied unit is already loaded] ***\nok: [h]\nfatal: [h]: FAILED! => {}",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unit-other-task",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "TASK [Verify every target without a supplied unit is already loaded] ***\nok: [h]\nTASK [next] ***\nfatal: [h]: FAILED! => {}",
+   "want": {
+    "klass": "unknown",
+    "rule": "unknown",
+    "line": "fatal: [h]: FAILED! => {}",
+    "signature": "823eccf791d491f9",
+    "excerpt": "TASK [Verify every target without a supplied unit is already loaded] ***\nok: [h]\nTASK [next] ***\nfatal: [h]: FAILED! => {}",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "unit-notfound",
+   "job": {
+    "name": "deploy_systemd",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "Unit app-x.service could not be found.",
+   "want": {
+    "klass": "variable",
+    "rule": "unit-missing",
+    "line": "Unit app-x.service could not be found.",
+    "signature": "80133073f0feb1e6",
+    "excerpt": "Unit app-x.service could not be found.",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/DOTENV",
+      "DOTENV"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "canceled-lock",
+   "job": {
+    "name": "trigger_deploy",
+    "failure_reason": "",
+    "status": "canceled",
+    "started_at": ""
+   },
+   "trace": "",
+   "want": {
+    "klass": "lock",
+    "rule": "canceled-waiting",
+    "line": "canceled while waiting for the deploy lock",
+    "signature": "e3d58fafb22e2e71",
+    "excerpt": "",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "canceled-person",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "canceled",
+    "started_at": "2026-10-20T10:00:00Z"
+   },
+   "trace": "",
+   "want": {
+    "klass": "canceled",
+    "rule": "canceled",
+    "line": "canceled",
+    "signature": "f86b1071eca88842",
+    "excerpt": "",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "timeout",
+   "job": {
+    "name": "build",
+    "failure_reason": "stuck_or_timeout_failure",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "Running\n",
+   "want": {
+    "klass": "runner",
+    "rule": "gitlab:stuck_or_timeout_failure",
+    "line": "stuck_or_timeout_failure",
+    "signature": "10abe337791f36f5",
+    "excerpt": "Running",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ],
+     [
+      "retry_job",
+      true,
+      "projects/5/jobs/9/retry",
+      9
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "downstream",
+   "job": {
+    "name": "trigger_deploy",
+    "failure_reason": "downstream_failed_no_job",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "",
+   "want": {
+    "klass": "deploy",
+    "rule": "downstream-no-failed-job",
+    "line": "deploy pipeline failed with no failed job",
+    "signature": "dd8d993586cb55f7",
+    "excerpt": "",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "creation",
+   "job": {
+    "name": "trigger_deploy",
+    "failure_reason": "downstream_pipeline_creation_failed",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "",
+   "want": {
+    "klass": "deploy",
+    "rule": "downstream-creation",
+    "line": "downstream_pipeline_creation_failed",
+    "signature": "ce7237c2929c663a",
+    "excerpt": "",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "sig-a",
+   "job": {
+    "name": "j",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "ERROR: x at 2026-10-20T10:00:01Z job 73120 host [h-1]\nleaves us with no hosts to target",
+   "want": {
+    "klass": "variable",
+    "rule": "no-hosts-to-target",
+    "line": "leaves us with no hosts to target",
+    "signature": "6cc8226b3dadac58",
+    "excerpt": "ERROR: x at 2026-10-20T10:00:01Z job 73120 host [h-1]\nleaves us with no hosts to target",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "sig-b",
+   "job": {
+    "name": "j",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "ERROR: x at 2026-10-21T11:22:33Z job 73999 host [h-2]\nleaves us with no hosts to target",
+   "want": {
+    "klass": "variable",
+    "rule": "no-hosts-to-target",
+    "line": "leaves us with no hosts to target",
+    "signature": "6cc8226b3dadac58",
+    "excerpt": "ERROR: x at 2026-10-21T11:22:33Z job 73999 host [h-2]\nleaves us with no hosts to target",
+    "props_develop": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ],
+     [
+      "new_pipeline",
+      true,
+      "projects/5/pipeline",
+      "develop"
+     ]
+    ],
+    "props_release": [
+     [
+      "set_variable",
+      false,
+      "projects/5/variables/TARGET_HOSTS",
+      "TARGET_HOSTS"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "trailing",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "line one\nsomething odd\n\nERROR: Job failed: exit code 1\n",
+   "want": {
+    "klass": "unknown",
+    "rule": "unknown",
+    "line": "something odd",
+    "signature": "c7b05679e9f157d7",
+    "excerpt": "line one\nsomething odd",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "name": "var-key",
+   "job": {
+    "name": "build",
+    "failure_reason": "",
+    "status": "failed",
+    "started_at": ""
+   },
+   "trace": "ERROR: API_BASE_URL is not set in this scope",
+   "want": {
+    "klass": "unknown",
+    "rule": "unknown",
+    "line": "ERROR: API_BASE_URL is not set in this scope",
+    "signature": "cd2106e7648430df",
+    "excerpt": "ERROR: API_BASE_URL is not set in this scope",
+    "props_develop": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ],
+    "props_release": [
+     [
+      "none",
+      false,
+      "",
+      null
+     ]
+    ]
+   }
+  }
+ ],
+ "ci": {
+  "text": "include:\n  - project: grp/engine\n    ref: main\n    file: cicd/app.gitlab-ci.yml\nvariables:\n  TARGET_HOSTS: main-shop\n",
+  "incs": [
+   [
+    "main",
+    "cicd/app.gitlab-ci.yml"
+   ]
+  ],
+  "target": "main-shop",
+  "kind_pkg": "package"
+ },
+ "inventory": {
+  "text": "[shop]\napp-01 ansible_host=10.0.0.21\napp-02 ansible_host=10.0.0.22\n[main-shop:children]\nshop\n[develop]\nstg ansible_host=10.0.1.5\n[all:vars]\nx=1\n",
+  "groups": {
+   "shop": [
+    "app-01",
+    "app-02"
+   ],
+   "develop": [
+    "stg"
+   ],
+   "main-shop": [
+    "app-01",
+    "app-02"
+   ]
+  },
+  "ips": {
+   "app-01": "10.0.0.21",
+   "app-02": "10.0.0.22",
+   "stg": "10.0.1.5"
+  },
+  "hosts": [
+   "app-01",
+   "app-02"
+  ],
+  "group": "main-shop"
+ },
+ "drift": {
+  "compare": {
+   "commits": [
+    {
+     "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "short_id": "aaaa",
+     "title": "feat: x",
+     "parent_ids": [
+      "1"
+     ],
+     "author_name": "dev"
+    },
+    {
+     "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     "title": "Merge branch 'pre-release' into 'release'",
+     "parent_ids": [
+      "1",
+      "2"
+     ]
+    },
+    {
+     "id": "cccccccccccccccccccccccccccccccccccccccc",
+     "title": "hotfix: payment",
+     "parent_ids": [
+      "1"
+     ]
+    },
+    {
+     "id": "dddddddddddddddddddddddddddddddddddddddd",
+     "title": "fix",
+     "message": "fix\n\n(cherry picked from commit 123)",
+     "parent_ids": [
+      "1"
+     ]
+    }
+   ]
+  },
+  "titles": [
+   "feat: x"
+  ]
+ },
+ "locks": {
+  "waiting": {
+   "id": 500,
+   "ref": "develop",
+   "status": "waiting_for_resource",
+   "project_id": 7
+  },
+  "cases": {
+   "older-develop": [
+    {
+     "id": 400,
+     "ref": "develop",
+     "status": "running",
+     "bridge_status": "running"
+    },
+    {
+     "id": 450,
+     "ref": "develop",
+     "status": "waiting_for_resource"
+    }
+   ],
+   "release-manual": [
+    {
+     "id": 300,
+     "ref": "release",
+     "status": "running",
+     "bridge_status": "running",
+     "prod_deploy": "manual"
+    }
+   ],
+   "release-running": [
+    {
+     "id": 300,
+     "ref": "release",
+     "status": "running",
+     "bridge_status": "running",
+     "prod_deploy": "running"
+    }
+   ],
+   "newer": [
+    {
+     "id": 600,
+     "ref": "develop",
+     "status": "running",
+     "bridge_status": "running"
+    }
+   ],
+   "phantom": [],
+   "pre-release": [
+    {
+     "id": 100,
+     "ref": "pre-release",
+     "status": "running",
+     "bridge_status": "running"
+    }
+   ]
+  },
+  "want": {
+   "older-develop": {
+    "holder": 400,
+    "ahead": [
+     450
+    ],
+    "props": [
+     [
+      "cancel_pipeline",
+      true,
+      "projects/7/pipelines/450/cancel"
+     ],
+     [
+      "cancel_pipeline",
+      true,
+      "projects/7/pipelines/400/cancel"
+     ]
+    ]
+   },
+   "release-manual": {
+    "holder": 300,
+    "ahead": [],
+    "props": [
+     [
+      "cancel_pipeline",
+      true,
+      "projects/7/pipelines/300/cancel"
+     ]
+    ]
+   },
+   "release-running": {
+    "holder": 300,
+    "ahead": [],
+    "props": [
+     [
+      "cancel_pipeline",
+      false,
+      "projects/7/pipelines/300/cancel"
+     ]
+    ]
+   },
+   "newer": {
+    "holder": 600,
+    "ahead": [],
+    "props": [
+     [
+      "cancel_pipeline",
+      false,
+      "projects/7/pipelines/600/cancel"
+     ]
+    ]
+   },
+   "phantom": {
+    "holder": 0,
+    "ahead": [],
+    "props": [
+     [
+      "none",
+      false,
+      ""
+     ]
+    ]
+   },
+   "pre-release": {
+    "holder": 100,
+    "ahead": [],
+    "props": [
+     [
+      "cancel_pipeline",
+      false,
+      "projects/7/pipelines/100/cancel"
+     ]
+    ]
+   }
+  }
+ }
+}

@@ -15,7 +15,7 @@ services:
       - demo-data:/data
       - demo-auth:/auth
     read_only: true
-    tmpfs: [/tmp]
+    tmpfs: ["/tmp:mode=1777"]   # Go images ship no /tmp: without mode the tmpfs is root 0755 and uid 65534 cannot write
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
@@ -62,7 +62,7 @@ services:
       - demo-data:/data:ro
       - demo-auth:/auth
     read_only: true
-    tmpfs: [/tmp]
+    tmpfs: ["/tmp:mode=1777"]   # Go images ship no /tmp: without mode the tmpfs is root 0755 and uid 65534 cannot write
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m

@@ -1,0 +1,10 @@
+{"classification": {"environment": "develop", "kind": "change"},
+ "summary": "Redeploy develop after the variable change.",
+ "plan": [
+  {"text": "Check the health page", "mode": "read-only", "targets": ["https://health.example.com/healthz"],
+   "capability": "http.check", "args": {"url": "https://health.example.com/healthz", "expect_status": 200}},
+  {"text": "Start the develop pipeline of group/app", "mode": "WRITE", "targets": ["group/app"],
+   "capability": "gitlab.pipeline.run", "args": {"project": "group/app", "ref": "develop"}},
+  {"text": "Play the deploy job of the develop pipeline", "mode": "WRITE", "targets": ["group/app"]}
+ ],
+ "questions": [], "needs": [], "estimate": {"effort": "10 min", "cost_usd": 0.2}, "confidence": "medium", "suggested_column": "Review"}

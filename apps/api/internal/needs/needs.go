@@ -42,6 +42,7 @@ var Kinds = []Kind{
 	{Key: "sentry", Label: "Sentry", Settings: "/admin/sources", Registry: "sentry"},
 	{Key: "matrix", Label: "Matrix", Settings: "/admin/sources", Keys: []string{"MATRIX_HOMESERVER"}, Registry: "matrix", Hint: "or set MATRIX_HOMESERVER"},
 	{Key: "claude", Label: "Claude", Settings: "/admin/claude", Registry: "anthropic"},
+	{Key: "google", Label: "Google Search Console", Settings: "/admin/sources", Registry: "google"},
 	{Key: "teleport", Label: "Teleport", Settings: "/admin/sources", Keys: []string{"ARGUS_TELEPORT_PROXY"}, Registry: "teleport", Hint: "or set ARGUS_TELEPORT_PROXY"},
 }
 
@@ -90,7 +91,15 @@ var Jobs = map[string][]string{
 	"incidents":      {"alertmanager"},
 	"inventory":      {"grafana", "alertmanager"},
 	"vm-pulse":       {"grafana", "alertmanager"},
+	"capacity":       {"grafana", "alertmanager"},
+	"cicd-watch":     {"gitlab"},
+	"cicd-daily":     {"gitlab"},
 	"task-agent":     {"claude"},
+	// the marketing module (its jobs also need the module on)
+	"googlebot-watch": {"grafana"},
+	"gsc":             {"google"},
+	"seo-suggest":     {"google"},
+	"cdn-watch":       {"elasticsearch"},
 }
 
 // Match is the need of the longest entry that covers path; ok false when none does.

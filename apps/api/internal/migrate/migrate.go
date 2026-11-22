@@ -6,7 +6,8 @@
 //     again; a recorded migration whose sha256 changed is an error;
 //   - a database that records a version above the newest one this binary knows is refused (ErrDowngrade);
 //   - an existing database is adopted: a CREATE TABLE or CREATE INDEX for an object that already exists is skipped, and
-//     the columns the statement defines but the table lacks are added (ALTER TABLE ... ADD COLUMN);
+//     the columns the statement defines but the table lacks are added (ALTER TABLE ... ADD COLUMN); an ALTER TABLE ...
+//     ADD COLUMN for a column the table already has (added by an older binary's own schema code) is skipped;
 //   - a database file that cannot be written (a read-only mount) is not touched (ErrReadOnly).
 package migrate
 
@@ -38,6 +39,9 @@ const (
 	Ops   = "ops"   // evidence database (ARGUS_DB)
 	Board = "board" // decisions and tasks (ARGUS_BOARD_DB)
 	Auth  = "auth"  // users and sessions (ARGUS_AUTH_DB)
+	// Googlebot is the crawler traffic database of the marketing module (ARGUS_GOOGLEBOT_DB). It is not in DBs: the
+	// module's job migrates it when it opens the file, so an installation without the module never creates it.
+	Googlebot = "googlebot"
 )
 
 // DBs lists every database, in apply order.
@@ -219,10 +223,38 @@ func firstLine(s string) string {
 	return s
 }
 
-var createRe = regexp.MustCompile(`(?is)^CREATE\s+(UNIQUE\s+)?(TABLE|INDEX)\s+(IF\s+NOT\s+EXISTS\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+var (
+	createRe    = regexp.MustCompile(`(?is)^CREATE\s+(UNIQUE\s+)?(TABLE|INDEX)\s+(IF\s+NOT\s+EXISTS\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+	addColumnRe = regexp.MustCompile(`(?is)^ALTER\s+TABLE\s+["\x60]?([A-Za-z_][A-Za-z0-9_]*)["\x60]?\s+ADD\s+(?:COLUMN\s+)?["\x60]?([A-Za-z_][A-Za-z0-9_]*)`)
+)
 
 // execStmt runs one statement, adopting an existing table or index.
 func execStmt(ctx context.Context, q Q, scratch *sql.DB, st string) ([]string, error) {
+	if a := addColumnRe.FindStringSubmatch(strings.TrimSpace(st)); a != nil {
+		have, ok, err := columnShape(ctx, q, a[1], a[2])
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			_, err = q.ExecContext(ctx, st)
+			return nil, err
+		}
+		// the column exists: adopt it only when it is the column the statement defines (type, NOT NULL, default)
+		for _, x := range []string{`DROP TABLE IF EXISTS "` + a[1] + `"`, `CREATE TABLE "` + a[1] + `" (argus_adopt_placeholder INTEGER)`, st} {
+			if _, err := scratch.ExecContext(ctx, x); err != nil {
+				return nil, err
+			}
+		}
+		want, _, err := columnShape(ctx, scratch, a[1], a[2])
+		if err != nil {
+			return nil, err
+		}
+		if !strings.EqualFold(have.typ, want.typ) || have.notNull != want.notNull || have.dflt != want.dflt {
+			return nil, fmt.Errorf("adopt %s.%s: the existing column is %q (not null %v, default %v), the migration defines %q (not null %v, default %v)",
+				a[1], a[2], have.typ, have.notNull, have.dflt.String, want.typ, want.notNull, want.dflt.String)
+		}
+		return []string{a[1] + "." + a[2]}, nil
+	}
 	m := createRe.FindStringSubmatch(st)
 	if m == nil {
 		_, err := q.ExecContext(ctx, st)
@@ -299,6 +331,18 @@ func columnsOf(ctx context.Context, scratch *sql.DB, name, st string) ([]column,
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// columnShape is one column's type, NOT NULL and default; ok is false when the table has no such column.
+func columnShape(ctx context.Context, q Q, table, col string) (column, bool, error) {
+	var c column
+	var nn int
+	err := q.QueryRowContext(ctx, `SELECT name, type, "notnull", dflt_value FROM pragma_table_info(?) WHERE name=?`, table, col).Scan(&c.name, &c.typ, &nn, &c.dflt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return c, false, nil
+	}
+	c.notNull = nn != 0
+	return c, err == nil, err
 }
 
 func tableInfo(ctx context.Context, q Q, name string) (map[string]bool, error) {

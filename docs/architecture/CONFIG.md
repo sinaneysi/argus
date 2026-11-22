@@ -77,6 +77,142 @@ still the target design.
 - `ARGUS_MIGRATE=auto` (default): `argus-api` and `argus worker` apply `internal/migrate` at start; a read-only
   database is skipped; demo mode never migrates. `off`: only `argus migrate` does.
 
+### Capability executor (ADR-0022, PR 1, 2026-11-15)
+
+`argus actd` runs in the optional compose service `actd` (profile `actions`, its own volume `argus-act`). These keys
+replace the older `ACTIONS_*` / `ACTION_*` draft of §3.11 for this executor. Credentials are never configuration
+keys: `docker compose exec -T actd argus actd credential set <family>/<name>` (value on stdin).
+
+| key | type | default | validation |
+|---|---|---|---|
+| `ARGUS_ACTIONS_MODE` | enum | `off` | `off` \| `dry-run` \| `on`; another value: `actd` does not start |
+| `ARGUS_ACT_DIR` | path | `/var/lib/argus-act` | mode ≠ off: exists, owned by the executor's user, 0700 |
+| `ARGUS_ACTIONS_APPROVAL_TTL` | dur | `24h` | 5m..168h |
+| `ARGUS_ACTIONS_PER_DAY` | int | `20` | 1..200 |
+| `ARGUS_ACTIONS_BACKUP_DAYS` | int | `30` | 1..365 |
+| `ARGUS_ACT_HTTP_HOSTS` | list | empty (`http.check` off) | `[internal:]host[:port]`, `*.suffix` allowed; no IP literal, no bare `*` |
+| `ARGUS_ACT_HTTP_ALLOW_HTTP` | bool | `0` | plain http for test installs only (`http.check`, `ARGUS_ACT_GITLAB_URL`, `ARGUS_ACT_KEYCLOAK_URL`) |
+| `ARGUS_ACT_GITLAB_URL` | str | empty | `gitlab.ci-variable.*`: the GitLab, `https://gitlab.example.com` (a path prefix is kept); no credentials, no query. Needed when `ARGUS_ACT_GITLAB_PROJECTS` is set |
+| `ARGUS_ACT_GITLAB_PROJECTS` | list | empty (`gitlab.ci-variable.*` off) | numeric project ids or `group/project` paths; an id and the path of the same project are one project (actd resolves the list at start, retried every minute) |
+| `ARGUS_ACT_KEYCLOAK_URL` | str | empty (`keycloak.read` off) | the identity provider, `https://id.example.com` (a path prefix such as `/auth` is kept); no credentials, no query |
+| `ARGUS_ACT_KEYCLOAK_REALMS` | list | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; realm names `^[A-Za-z0-9_.-]{1,64}$`; the only realms `keycloak.read` may read |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_ID` | str | empty | required with `ARGUS_ACT_KEYCLOAK_URL`; the confidential client (its secret is `argus-act/secrets/keycloak/client.enc`) |
+| `ARGUS_ACT_KEYCLOAK_CLIENT_REALM` | str | empty (the only realm on the list) | required with several realms (then normally `master`); the realm the client lives in. Its token endpoint is the only POST allowed, and it always gets the token request, whatever realm a query reads |
+| `ARGUS_ACT_KEYCLOAK_MAX_READS` | int | `5` | 1..50; the most user-returning queries (`users`, `user`) one action may run; more are refused (rule 6, `limit`) |
+| `ARGUS_ACT_DEVELOP_LABELS` | list | `env:stage` | the board labels that mark a stage task; a WRITE step executes only with one of them, no other `env:` label, no label containing `prod`, `release` or `pre-release`, and the classification `develop`. The approval signs the labels the admin saw; actd checks those (read by the worker, the api and actd) |
+| `ARGUS_ACT_CATALOGUE_DETAIL` | `full` \| `aliases` | `full` | `full`: the intake's capability list gives the model provider the allow-list entries (hosts, project paths, realms); `aliases`: stable aliases (12 hex characters), mapped back by Go before validation; a collision of two aliases refuses the catalogue |
+| `ARGUS_APPROVAL_KEY_DIR` | path | `/var/lib/argus-approve` | read by the api only; 0700, owned by the api's user; missing: approvals are not signed and `actd` refuses every step |
+
+Files: requests `ARGUS_STATE_DIR/actions/in/<action-id>.json`, results `actions/out/<action-id>.json`, heartbeat
+`actions/actd-status.json` (the self-check reads it when the mode is not `off`); in `argus-act`: `audit/actions.jsonl`
+(hash chain, `argus actd verify-audit`), `steps/` (stored step results), `keys/`, `secrets/`, `backups/`. The admin
+switch "Stop all actions" is `auth_settings` key `actions.stopped` (read before every step), set in Settings → Jira
+sync → Capability executor (`POST /api/v1/admin/actions`, admins, recent 2FA code, in the audit log). That card also
+shows the mode, the allow-lists and the target addresses read-only, and actd's heartbeat from `actd-status.json`,
+as facts only when actd's signature (`argus-act/keys/status.key`) checks with the key pinned in the api's folder
+(`argus actd status-key public | argus approval-key trust-actd-status`, file `actd-status.pub`) and the status is fresh.
+With the mode not `off`, the intake's task file lists `capabilities` (the registry with its allow-lists).
+The executor key is only `argus-act/keys/act.key` (no environment variable: `argus.env` is shared by every service).
+`ARGUS_ACT_HTTP_HOSTS` entries are `[internal:]host[:port]`: without a port only 443 (and 80 with
+`ARGUS_ACT_HTTP_ALLOW_HTTP=1`); without `internal:` a name that resolves to a loopback, link-local, private, shared
+(100.64/10), unique local, multicast or unspecified address is refused.
+
+GitLab CI/CD variables (ADR-0022 PR 3). `gitlab.ci-variable.get|set|delete` read and change the project variables
+of environment scope `develop` (exactly; `*`, empty, another environment or another case are refused before any
+call) of the projects on `ARGUS_ACT_GITLAB_PROJECTS`. Every write seals the old value and attributes to
+`argus-act/backups/<action-id>/<step>.enc` first; `set` and `delete` roll back from it. The HTTP client allows only
+`GET|POST|PUT|DELETE /api/v4/projects/:id/variables[/:key]` and the lookup of the listed projects; pipeline, job,
+trigger and deployment paths are refused even if a capability asked (Argus never starts a pipeline or plays a job).
+
+| what | where | how |
+|---|---|---|
+| the GitLab token: one group access token, role Maintainer, scope `api`, short expiry | `argus-act/secrets/gitlab/token.enc` (sealed with `act.key`), never in `argus.env` | `docker compose exec -T actd /app/argus actd credential set gitlab/token` (the token on stdin); `credential list` shows its last four characters |
+| actd's sealing key (X25519) | `argus-act/keys/act-x25519.key` (0600); public half `ARGUS_STATE_DIR/actions/actd.pub` | created at actd's first start; `argus actd seal-key show` prints its fingerprint |
+| the api's pin of that key | `ARGUS_APPROVAL_KEY_DIR/actd-seal.pub` | once: `docker compose exec -T actd /app/argus actd seal-key public \| docker compose exec -T api /app/argus approval-key trust-actd` |
+
+Secret inputs: a plan never holds a value, only `"value_ref": "input:<NAME>"` (or `"matches": "input:<NAME>"` for a
+read). The approval form shows one write-only field per name (`autocomplete=off`, never echoed). The api seals the
+value to the pinned key (X25519 + HKDF-SHA256 + AES-256-GCM, bound to the action, the step and the name) and signs
+the approval over the hash of the sealed inputs; the worker and `board.db` (`agent_tasks.sealed_inputs`) hold the
+ciphertext only, and actd opens it just before the step. The api refuses to seal when no key is pinned or when
+`actions/actd.pub` is not the pinned key (actd got a new key: compare the fingerprints, then pin again). The review
+panel's one-click approval cannot carry inputs: approve such a plan on the task page. The api keeps the sealed hash
+of each start it signed and sent in `ARGUS_APPROVAL_KEY_DIR/starts/<task>/<action-id>.json` and signs Continue,
+rollback and "I checked the target" over it only. A write whose outcome is unknown (`outcome-unknown`) waits for an
+admin's "I checked the target: applied / not applied" on the task page.
+Backups of applied writes are never pruned; only those of rolled-back, refused or failed steps older than
+`ARGUS_ACTIONS_BACKUP_DAYS`.
+Off again: empty `ARGUS_ACT_GITLAB_PROJECTS` (the capabilities leave the catalogue), or `ARGUS_ACTIONS_MODE=off`.
+
+Identity provider reads (ADR-0022 PR 4). `keycloak.read` runs four read-only admin queries of a realm on
+`ARGUS_ACT_KEYCLOAK_REALMS`: `users` (`search` required, at most 100 characters, at most 50 rows), `user` (exact user
+name in `search`, with its group names), `ldap-mappers` and `client-scopes` (optional name filter in `search`). The
+identity provider is often shared with production, so the HTTP client is strictly read-only: it allows `POST` only to
+`/realms/<client realm>/protocol/openid-connect/token` and `GET` only of `/admin/realms/<listed realm>/users`,
+`/users/:id/groups` (`:id` a user id only), `/components` and `/client-scopes`; every other method or path is
+refused before a connection is made, and redirects are not followed. The access token (client credentials) is kept
+in actd's memory until 30 s before it expires; a failed token request is remembered for 60 s (no new POST). A search
+of wildcards, quotes or spaces alone is refused. The search text is never in the plan summary, a detail or the
+audit (the audit keeps `sha256:<12 hex>` of it). A user's result is: user name, enabled, federation link,
+`first_name_set` / `last_name_set` booleans, and for `user` also required actions and group names (`users` reads
+Keycloak's brief form, which has no required actions): never the names, the e-mail, the attributes or a credential.
+An LDAP mapper's result is its name, type and the config keys on a fixed list (attribute names, DNs, filters,
+switches); a bind credential or any other key is dropped. A client scope's result is its name, protocol and mapper
+names.
+
+Minimal client setup in the identity provider (nothing else):
+
+1. In the realm to read (one realm; with several realms, in `master`): **Clients → Create client**, client id e.g.
+   `argus-read`, **Client authentication: on** (confidential), **Service accounts roles: on**; turn off Standard flow,
+   Direct access grants, Implicit flow and every other flow.
+2. **Service account roles → Assign role → Filter by clients**: from `realm-management` (a client in `master`: from
+   `<realm>-realm` for each listed realm) assign exactly:
+
+   | role | needed by | why |
+   |---|---|---|
+   | `view-users` | `users`, `user` | user search, user lookup and the user's groups (it includes `query-users` and `query-groups`) |
+   | `view-realm` | `ldap-mappers` | the components endpoint (LDAP provider and its mappers) needs it; Keycloak masks secret config values in it |
+   | `query-clients` | `client-scopes` | lists the client scopes; prefer it to `view-clients`, which can also read client secrets |
+
+   No `manage-*` role, no `realm-admin`, no `view-clients`, no `impersonation`. A query whose role is missing answers
+   403 and fails with "lacks the realm-management role"; leave a role out to switch its query off.
+3. **Credentials → Client secret**: copy it to actd only:
+   `docker compose exec -T actd /app/argus actd credential set keycloak/client` (the secret on stdin).
+4. Set `ARGUS_ACT_KEYCLOAK_URL`, `ARGUS_ACT_KEYCLOAK_REALMS`, `ARGUS_ACT_KEYCLOAK_CLIENT_ID` (and
+   `ARGUS_ACT_KEYCLOAK_CLIENT_REALM`, required with several realms, normally `master`), then restart actd and the
+   worker.
+
+Off again: empty `ARGUS_ACT_KEYCLOAK_URL` (`keycloak.read` leaves the catalogue); disable the client in the identity
+provider too.
+
+Signed approvals (ADR-0022 amendment 1, PR 2). The worker shares the data volume and the uid with the api, so an
+`approved_*` row in `board.db` proves nothing. The api signs every Spin up, every Continue after an operator step and
+every manual rollback with an Ed25519 key; `actd` holds only the public key and refuses a step without a valid
+signature. The signature covers the task key, the plan version, the plan sha256, the approver, the approval time,
+the sha256 of the sealed inputs and (continue, rollback) the step.
+
+| file | where | made by |
+|---|---|---|
+| `approval.key` (PKCS#8 PEM, 0600) | `ARGUS_APPROVAL_KEY_DIR`, compose volume `argus-approve`, mounted by the api only | the api at its first start, or `argus approval-key init` in the api service; `openssl genpkey -algorithm ed25519` also works |
+| `approval.pub` (PKIX PEM) | the same folder | written next to the key |
+| `keys/approval.pub` | `argus-act` | `docker compose exec api /app/argus approval-key public \| docker compose exec -T actd /app/argus actd approval-key set` |
+
+The key is never a configuration value and never in `argus.env` (that file is shared by every service). Compare the
+fingerprints with `argus approval-key show` (api) and `argus actd approval-key show` (actd); `actd-status.json`
+carries it as `approval_key`. Rotation: stop `actd`, move `approval.key` away, restart the api (a new key is made),
+set the new public key in `actd`; approvals signed with the old key are refused from then on. Without the public key
+`actd` starts and refuses every step with the reason.
+Without the key the api refuses to approve a plan that would execute, a continue and a rollback (HTTP 500 with the
+reason); read-only and proposal runs and Stop still work unsigned. A signed Stop is passed to `actd`, which then
+refuses every approval of the task signed before it. `actd` keeps its approval records in `argus-act/approvals/`
+and `argus-act/steps/<action-id>/` (back them up with the volume).
+Approval times are unix seconds from the api's clock, compared at one-second granularity: a start approval must be
+strictly newer than the last accepted start, and a stop revokes every approval signed in the same second or before.
+Two approvals in the same second count as one (approve again a second later). A clock stepped back on the api host
+makes new approvals look older: they are refused with both times in the reason until the clock passes the last
+accepted time; keep the api's clock synchronised (NTP) and avoid large steps. The refusal reason is shown on the task
+page. A dry-run consumes no approval and confirms no operator step.
+
 ## 1. Files
 
 | file | owner / mode | holds | read by |

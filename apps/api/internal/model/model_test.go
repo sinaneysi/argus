@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/sinaneysi/argus/internal/claudegate"
+	"github.com/sinaneysi/argus/internal/sandbox"
 	"github.com/sinaneysi/argus/internal/secret"
 	"github.com/sinaneysi/argus/internal/style"
 
@@ -25,6 +27,14 @@ var (
 	tokenPrefix = "sk-" + "ant-oat01-"
 	fakeToken   = tokenPrefix + strings.Repeat("fake", 8) + "0001"
 )
+
+// The test binary is also the model-exec helper (ARGUS_TEST_MODEL_EXEC=1), as the argus binary is in production.
+func TestMain(m *testing.M) {
+	if os.Getenv("ARGUS_TEST_MODEL_EXEC") == "1" {
+		os.Exit(sandbox.Main(os.Args[1:], os.Stderr))
+	}
+	os.Exit(m.Run())
+}
 
 func opsDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "ops.db"))
@@ -154,8 +164,96 @@ func TestLimits(t *testing.T) {
 		t.Fatalf("%+v", q)
 	}
 	if got := r.cliArgs(Request{MaxTurns: 4, BudgetUSD: 0.5, Tools: []string{"Read", "Grep"}}); strings.Join(got, " ") !=
-		"-p --output-format stream-json --verbose --no-session-persistence --max-turns 4 --max-budget-usd 0.50 --tools Read,Grep" {
+		"-p --output-format stream-json --verbose --no-session-persistence --max-turns 4 --max-budget-usd 0.50 --tools Read,Grep"+
+			" --restricted --strict-mcp-config --settings "+cliSettings+" --disallowedTools "+
+			"Read(//var/lib/argus/**),Read(//proc/**),Read(//sys/**),Read(//etc/**),Read(//dev/**)" {
 		t.Fatal(got)
+	}
+}
+
+func TestCLIDenyRulesAlways(t *testing.T) {
+	r := New(Options{StateDir: "/srv/argus/"})
+	got := r.cliArgs(Request{Tools: []string{"Read"}, Disallow: []string{"Read(//var/lib/argus/keys)", "Bash"}})
+	i := len(got) - 2
+	if got[i] != "--disallowedTools" || strings.Count(strings.Join(got, " "), "--disallowedTools") != 1 {
+		t.Fatal("one deny list, last:", got)
+	}
+	deny := strings.Split(got[i+1], ",")
+	for _, want := range []string{"Read(//var/lib/argus/**)", "Read(//proc/**)", "Read(//etc/**)", "Read(//srv/argus/**)", "Bash"} {
+		found := false
+		for _, d := range deny {
+			found = found || d == want
+		}
+		if !found {
+			t.Fatalf("%s missing from %v", want, deny)
+		}
+	}
+	if !strings.Contains(strings.Join(got, " "), "--restricted") || !strings.Contains(cliSettings, `"blockReadsOutsideWorkingDirectories":true`) {
+		t.Fatal(got)
+	}
+	// the state folder is not listed twice, and / is never a rule
+	if n := strings.Count(strings.Join(New(Options{StateDir: "/var/lib/argus"}).denyRules(), ","), "argus"); n != 1 {
+		t.Fatal(n)
+	}
+	if rs := New(Options{StateDir: "/"}).denyRules(); len(rs) != len(denyRead) {
+		t.Fatal(rs)
+	}
+}
+
+func TestSandboxRules(t *testing.T) {
+	home, dir := t.TempDir(), t.TempDir()
+	r := sandboxRules("/nonexistent/claude", home, dir)
+	all := append(append(append([]string{}, r.Exec...), r.Read...), r.Write...)
+	for _, p := range all {
+		if p == "/" || p == "/etc" || p == "/var" || p == "/tmp" || strings.HasPrefix(p, "/var/lib/argus") {
+			t.Fatalf("rule %q opens what must stay closed: %v", p, all)
+		}
+	}
+	if strings.Join(r.Write, " ") != "/dev/null "+home+" "+dir {
+		t.Fatal(r.Write)
+	}
+	if got := sandboxRules("/nonexistent/claude", home, home); len(got.Write) != 2 {
+		t.Fatal("the HOME twice:", got.Write)
+	}
+}
+
+func TestCLISandboxFailsClosed(t *testing.T) {
+	o := setup(t)
+	o.SandboxExec = []string{os.Args[0]}
+	o.ExtraEnv = []string{"ARGUS_TEST_MODEL_EXEC=1"}
+	defer func(f func() int) { landlockABI = f }(landlockABI)
+	landlockABI = func() int { return 0 }
+	res := New(o).Run(context.Background(), Request{Prompt: "x"})
+	if !res.IsError || res.ExitCode != sandbox.Unavailable || res.Sandbox != "unavailable" || !strings.Contains(res.Error, "ARGUS_MODEL_SANDBOX=off") {
+		t.Fatalf("%+v", res)
+	}
+	o.SandboxExec = nil // ARGUS_MODEL_SANDBOX=off
+	if res := New(o).Run(context.Background(), Request{Prompt: "x"}); res.IsError || res.Sandbox != "off" {
+		t.Fatalf("%+v", res)
+	}
+}
+
+func TestCLISandboxBlocksOutside(t *testing.T) {
+	if sandbox.ABI() < 1 {
+		t.Skip("Landlock is not available on this kernel")
+	}
+	o := setup(t)
+	o.SandboxExec = []string{os.Args[0]}
+	work := t.TempDir()
+	os.WriteFile(filepath.Join(work, "task.json"), []byte("task-inside"), 0o644)
+	run := func(file string) Result {
+		o.ExtraEnv = []string{"ARGUS_TEST_MODEL_EXEC=1", "FAKE_CLAUDE_MODE=read", "FAKE_CLAUDE_READ=" + file}
+		return New(o).Run(context.Background(), Request{Prompt: "x", Dir: work})
+	}
+	if res := run(filepath.Join(work, "task.json")); res.Text != "OK task-inside|yes" || !strings.HasPrefix(res.Sandbox, "landlock-v") {
+		t.Fatalf("inside the working folder: %+v", res)
+	}
+	// the Claude env file sits next to the throwaway HOME, like the volume next to /tmp
+	if res := run(o.EnvFile); res.Text != "OK denied|yes" {
+		t.Fatalf("outside the working folder: %+v", res)
+	}
+	if res := run(fmt.Sprintf("/proc/%d/environ", os.Getpid())); res.Text != "OK denied|yes" {
+		t.Fatalf("the worker's environment: %+v", res)
 	}
 }
 

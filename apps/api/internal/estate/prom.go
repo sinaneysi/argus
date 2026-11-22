@@ -185,15 +185,21 @@ func results(v any) []any {
 
 // Instant is an instant query. A failure is counted and gives no series (the jobs treat it as "no data").
 func (c *Client) Instant(ctx context.Context, s *Site, q string) []Sample {
+	out, _ := c.InstantErr(ctx, s, q)
+	return out
+}
+
+// InstantErr is Instant with the failure (counted as well).
+func (c *Client) InstantErr(ctx context.Context, s *Site, q string) ([]Sample, error) {
 	px, err := c.prefix(ctx, s)
 	if err != nil {
 		c.fail()
-		return nil
+		return nil, err
 	}
 	v, err := c.get(ctx, s, px+"/api/v1/query", url.Values{"query": {q}})
 	if err != nil {
 		c.fail()
-		return nil
+		return nil, err
 	}
 	var out []Sample
 	for _, r := range results(v) {
@@ -210,7 +216,7 @@ func (c *Client) Instant(ctx context.Context, s *Site, q string) []Sample {
 			break
 		}
 	}
-	return out
+	return out, nil
 }
 
 // Range is a range query over the last since seconds (at most 8 days) ending at end, one point per step seconds.

@@ -191,6 +191,7 @@ describe("pages", () => {
     const out = await html(Review({ searchParams: Promise.resolve({ kind: "approvals", sel: "approvals:OPS-238", step: "plan" }) }));
     expect(out).toContain("Review plan v2 before approving");
     expect(out).toContain('name="plan_version" value="2"');
+    expect(out).toContain('name="plan_sha256" value="' + "ab".repeat(32) + '"');
     expect(out).toContain('aria-current="step"');
   });
 

@@ -320,7 +320,7 @@ func apiReviewDetail(c *Ctx, it *rvItem, f rvQuery) map[string]any {
 // apiPlan is the plan review step of an action approval (rvPlanStep) as data.
 func apiPlan(c *Ctx, it *rvItem) map[string]any {
 	a, plan := it.row, it.plan
-	path, label := agentSpinUp(plan)
+	path, label := agentSpinUp(plan, it.id)
 	steps := []map[string]any{}
 	writes := 0
 	for _, sv := range py.AsList(py.Or(plan.Get("plan"), []any{})) {
@@ -355,7 +355,7 @@ func apiPlan(c *Ctx, it *rvItem) map[string]any {
 			questions = append(questions, map[string]any{"text": py.Str(q.Get("text")), "blocking": py.Truthy(q.Get("blocking"))})
 		}
 	}
-	return map[string]any{"version": a.I("plan_version"), "steps": steps, "writes": writes, "estimate": est,
+	return map[string]any{"version": a.I("plan_version"), "sha256": agentPlanSHA(a), "steps": steps, "writes": writes, "estimate": est,
 		"spentUsd": a.F("spent_usd"), "limits": limits, "path": path, "pathLabel": label, "questions": questions,
 		"taskHref": agentTaskURL(it.id) + "#agent", "blocked": rvApprovalBlock(c, it)}
 }
@@ -388,7 +388,7 @@ func apiReviewActions(c *Ctx, it *rvItem, f rvQuery) ([]apiAction, string) {
 	case "approvals":
 		block := rvApprovalBlock(c, it)
 		if f.step == "plan" {
-			_, label := agentSpinUp(it.plan)
+			_, label := agentSpinUp(it.plan, it.id)
 			acts = append(acts, apiAction{Action: "approve", Label: "Approve plan v" + I2S(r.I("plan_version")) + " & start", Style: "primary", Disabled: block},
 				apiAction{Href: f.with(func(g *rvQuery) { g.step = "" }).href(), Label: "Back to the summary", Style: "secondary"})
 			note = py.OrS(block, label)
@@ -445,7 +445,7 @@ var apiReviewVerbs = map[string][]string{"proposals": {"accept", "snooze", "reje
 	"lessons": {"approve", "reject", "retire"}, "ideas": {"accept", "explore", "reject"}, "replies": {"create", "discard"},
 	"links": {"accept", "reject"}}
 
-// apiReviewAct is POST /api/v1/review/act {sel, action, reason?, plan_version?, return?}: the kind's own handler with
+// apiReviewAct is POST /api/v1/review/act {sel, action, reason?, plan_version?, plan_sha256?, return?}: the kind's own handler with
 // the fields its panel form posts, after the policy of that handler's route (2FA class, admins only).
 func (h *reqCtx) apiReviewAct(body map[string]any, sess *Session) (any, *apiErr) {
 	c := &Ctx{Sess: sess, Theme: "auto", Path: "/review"}
@@ -478,7 +478,11 @@ func (h *reqCtx) apiReviewAct(body map[string]any, sess *Session) (any, *apiErr)
 		if pv != I2S(it.row.I("plan_version")) {
 			return nil, &apiErr{409, "the plan changed: review the new version"}
 		}
-		return apiResult(BoardPost(c, route, py.NewQS("key", id, "plan_version", pv, "return", ret), sess))
+		// the hash the panel showed is pinned like on the task page (ADR-0022 D4); with a signing key it is required
+		if bodyStr(body, "plan_sha256") == "" && approvalSigner() != nil {
+			return nil, &apiErr{409, "the plan hash is missing: reload the review and approve again"}
+		}
+		return apiResult(BoardPost(c, route, py.NewQS("key", id, "plan_version", pv, "plan_sha256", bodyStr(body, "plan_sha256"), "return", ret), sess))
 	case "lessons":
 		return apiResult(LessonsPost(c, route, py.NewQS("action", act, "id", id, "return", ret), sess))
 	case "ideas":

@@ -1,0 +1,1206 @@
+{
+ "allok": {
+  "input": {
+   "expect": {},
+   "pins": [],
+   "results": [
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-03-19T21:20:00Z",
+      "sans": [
+       "ok.example.com",
+       "ok2.example.com",
+       "ok3.example.com"
+      ],
+      "subject_cn": ""
+     },
+     "error": "",
+     "host": "ok.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-03-19T21:20:00Z",
+      "sans": [
+       "ok.example.com",
+       "ok2.example.com",
+       "ok3.example.com"
+      ],
+      "subject_cn": ""
+     },
+     "error": "",
+     "host": "ok2.example.com",
+     "port": 443
+    }
+   ]
+  },
+  "notice": {
+   "certs": 1,
+   "facts": [],
+   "level": "OK",
+   "names": 2,
+   "sev": "ok",
+   "unreachable": 0,
+   "what": "1 certificate on 2 names OK, soonest 80 days"
+  },
+  "report": {
+   "expected": [],
+   "fail_days": 14,
+   "generated": 1767000000,
+   "groups": [
+    {
+     "days_left": 80,
+     "gid": "9396bf9096",
+     "issuer": "Example CA R3",
+     "label": "ok.example.com +2 SANs",
+     "n_names": 2,
+     "names": [
+      "ok.example.com",
+      "ok2.example.com"
+     ],
+     "not_after": "2026-03-19T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "ok.example.com",
+      "ok2.example.com",
+      "ok3.example.com"
+     ],
+     "sev": "ok",
+     "status": "OK",
+     "wildcard": false
+    }
+   ],
+   "hosts": [
+    {
+     "days_left": 80,
+     "error": "",
+     "group": "9396bf9096",
+     "host": "ok.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-03-19T21:20:00Z",
+     "status": "OK"
+    },
+    {
+     "days_left": 80,
+     "error": "",
+     "group": "9396bf9096",
+     "host": "ok2.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-03-19T21:20:00Z",
+     "status": "OK"
+    }
+   ],
+   "names": 2,
+   "page_days": 7,
+   "pins": [],
+   "stale_days": 14,
+   "unreachable": [],
+   "warn_days": 30
+  },
+  "rows": [
+   [
+    1,
+    "cert",
+    "9396bf9096",
+    "ok.example.com +2 SANs",
+    "OK",
+    "ok",
+    80,
+    "2026-03-19T21:20:00Z",
+    "Example CA R3",
+    2,
+    "[\"ok.example.com\", \"ok2.example.com\"]",
+    "[\"ok.example.com\", \"ok2.example.com\", \"ok3.example.com\"]",
+    "[]",
+    ""
+   ]
+  ],
+  "summary": [
+   "# cert-check: 2 names, 2 answered TLS with 1 distinct certificates, 0 unreachable (not certificate failures). WARN < 30 d, page < 7 d.",
+   "# GROUP OK ok.example.com +2 SANs - 80 days (2026-03-19) - Example CA R3 - used by 2 names"
+  ],
+  "tsv": [
+   "status\thost\tdays_left\tnot_after\tissuer\tgroup\terror",
+   "OK\tok.example.com\t80\t2026-03-19T21:20:00Z\tExample CA R3\t9396bf9096\t",
+   "OK\tok2.example.com\t80\t2026-03-19T21:20:00Z\tExample CA R3\t9396bf9096\t"
+  ]
+ },
+ "empty": {
+  "input": {
+   "expect": {},
+   "pins": [],
+   "results": []
+  },
+  "notice": null,
+  "report": {
+   "expected": [],
+   "fail_days": 14,
+   "generated": 1767000000,
+   "groups": [],
+   "hosts": [],
+   "names": 0,
+   "page_days": 7,
+   "pins": [],
+   "stale_days": 14,
+   "unreachable": [],
+   "warn_days": 30
+  },
+  "rows": [],
+  "summary": [
+   "# cert-check: 0 names, 0 answered TLS with 0 distinct certificates, 0 unreachable (not certificate failures). WARN < 30 d, page < 7 d."
+  ],
+  "tsv": [
+   "status\thost\tdays_left\tnot_after\tissuer\tgroup\terror"
+  ]
+ },
+ "full": {
+  "input": {
+   "expect": {
+    "delivery.example.com": {
+     "expect": "san-mismatch",
+     "reason": "served by the CDN"
+    },
+    "fixed.example.com": {
+     "expect": "san-mismatch",
+     "reason": "was on the CDN"
+    }
+   },
+   "pins": [
+    {
+     "host": "pay.example.net",
+     "label": "Payment",
+     "note": "renew by hand",
+     "pinned_expiry": "2026-01-03"
+    },
+    {
+     "host": "ok.example.com",
+     "label": "Main site",
+     "note": "",
+     "pinned_expiry": "2026-01-08"
+    },
+    {
+     "host": "slow.example.com",
+     "label": "Slow",
+     "note": "",
+     "pinned_expiry": "2026-01-01"
+    },
+    {
+     "host": "nothere.example.com",
+     "label": "Nowhere",
+     "note": "",
+     "pinned_expiry": "2026-01-01"
+    }
+   ],
+   "results": [
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-01-16T21:20:00Z",
+      "sans": [
+       "*.shop.example.com",
+       "shop.example.com"
+      ],
+      "subject_cn": "*.shop.example.com"
+     },
+     "error": "",
+     "host": "www.shop.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-01-16T21:20:00Z",
+      "sans": [
+       "*.shop.example.com",
+       "shop.example.com"
+      ],
+      "subject_cn": "*.shop.example.com"
+     },
+     "error": "",
+     "host": "api.shop.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-01-16T21:20:00Z",
+      "sans": [
+       "*.shop.example.com",
+       "shop.example.com"
+      ],
+      "subject_cn": "*.shop.example.com"
+     },
+     "error": "",
+     "host": "shop.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-01-16T21:20:00Z",
+      "sans": [
+       "*.shop.example.com",
+       "shop.example.com"
+      ],
+      "subject_cn": "*.shop.example.com"
+     },
+     "error": "",
+     "host": "deep.a.shop.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Other Trust Org Other CA",
+      "not_after": "2026-01-03T21:20:00Z",
+      "sans": [
+       "pay.example.net",
+       "pay2.example.net"
+      ],
+      "subject_cn": "pay.example.net"
+     },
+     "error": "",
+     "host": "pay.example.net",
+     "port": 8443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2025-11-19T21:20:00Z",
+      "sans": [
+       "old.example.org"
+      ],
+      "subject_cn": "old.example.org"
+     },
+     "error": "",
+     "host": "old.example.org",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2025-12-26T21:20:00Z",
+      "sans": [
+       "late.example.org"
+      ],
+      "subject_cn": "late.example.org"
+     },
+     "error": "",
+     "host": "late.example.org",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-03-19T21:20:00Z",
+      "sans": [
+       "ok.example.com",
+       "ok2.example.com",
+       "ok3.example.com"
+      ],
+      "subject_cn": ""
+     },
+     "error": "",
+     "host": "ok.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-03-19T21:20:00Z",
+      "sans": [
+       "ok.example.com",
+       "ok2.example.com",
+       "ok3.example.com"
+      ],
+      "subject_cn": ""
+     },
+     "error": "",
+     "host": "ok2.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-02-27T21:20:00Z",
+      "sans": [
+       "cdn.example.com"
+      ],
+      "subject_cn": "cdn.example.com"
+     },
+     "error": "",
+     "host": "delivery.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "Example CA R3",
+      "not_after": "2026-02-27T21:20:00Z",
+      "sans": [
+       "fixed.example.com"
+      ],
+      "subject_cn": "fixed.example.com"
+     },
+     "error": "",
+     "host": "fixed.example.com",
+     "port": 443
+    },
+    {
+     "cert": null,
+     "error": "no DNS",
+     "host": "gone.example.com",
+     "port": 443
+    },
+    {
+     "cert": null,
+     "error": "timeout",
+     "host": "slow.example.com",
+     "port": 443
+    },
+    {
+     "cert": {
+      "issuer": "It's CA",
+      "not_after": "2026-01-23T21:20:00Z",
+      "sans": [
+       "quote's.example.com"
+      ],
+      "subject_cn": "x"
+     },
+     "error": "",
+     "host": "quote's.example.com",
+     "port": 443
+    }
+   ]
+  },
+  "notice": {
+   "certs": 8,
+   "facts": [
+    [
+     "Payment",
+     "pay.example.net: 5 days (2026-01-03)"
+    ],
+    [
+     "Main site",
+     "ok.example.com renewed, now 2026-03-19"
+    ],
+    [
+     "Expected name mismatch",
+     "delivery.example.com: served by the CDN"
+    ],
+    [
+     "Expected mismatch gone",
+     "fixed.example.com now matches its certificate (remove it from config/cert-expect.tsv)"
+    ],
+    [
+     "late.example.org",
+     "-3 days \u00b7 used by 1 name"
+    ],
+    [
+     "pay.example.net +1 SANs",
+     "5 days \u00b7 used by 1 name"
+    ],
+    [
+     "*.shop.example.com wildcard",
+     "18 days \u00b7 used by 4 names \u00b7 SAN mismatch 1"
+    ],
+    [
+     "x",
+     "25 days \u00b7 used by 1 name"
+    ],
+    [
+     "Expired long ago",
+     "old.example.org (40 d, 1)"
+    ],
+    [
+     "Unreachable",
+     "2 names (not certificate failures)"
+    ]
+   ],
+   "level": "FAIL",
+   "names": 14,
+   "sev": "page",
+   "unreachable": 2,
+   "what": "late.example.org EXPIRED 3 days ago; 3 more within 26 days"
+  },
+  "report": {
+   "expected": [
+    {
+     "gid": "a11a9ac9b2",
+     "host": "delivery.example.com",
+     "reason": "served by the CDN",
+     "sans": [
+      "cdn.example.com"
+     ],
+     "state": "mismatch"
+    },
+    {
+     "gid": "93763a7efa",
+     "host": "fixed.example.com",
+     "reason": "was on the CDN",
+     "sans": [
+      "fixed.example.com"
+     ],
+     "state": "matches"
+    }
+   ],
+   "fail_days": 14,
+   "generated": 1767000000,
+   "groups": [
+    {
+     "days_left": -3,
+     "gid": "f8bd469bd5",
+     "issuer": "Example CA R3",
+     "label": "late.example.org",
+     "n_names": 1,
+     "names": [
+      "late.example.org"
+     ],
+     "not_after": "2025-12-26T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "late.example.org"
+     ],
+     "sev": "page",
+     "status": "FAIL",
+     "wildcard": false
+    },
+    {
+     "days_left": 5,
+     "gid": "078fcfe252",
+     "issuer": "Other Trust Org Other CA",
+     "label": "pay.example.net +1 SANs",
+     "n_names": 1,
+     "names": [
+      "pay.example.net:8443"
+     ],
+     "not_after": "2026-01-03T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "pay.example.net",
+      "pay2.example.net"
+     ],
+     "sev": "page",
+     "status": "FAIL",
+     "wildcard": false
+    },
+    {
+     "days_left": 18,
+     "gid": "0df7df6fc1",
+     "issuer": "Example CA R3",
+     "label": "*.shop.example.com wildcard",
+     "n_names": 4,
+     "names": [
+      "api.shop.example.com",
+      "deep.a.shop.example.com",
+      "shop.example.com",
+      "www.shop.example.com"
+     ],
+     "not_after": "2026-01-16T21:20:00Z",
+     "san_mismatch": [
+      "deep.a.shop.example.com"
+     ],
+     "sans": [
+      "*.shop.example.com",
+      "shop.example.com"
+     ],
+     "sev": "warn",
+     "status": "WARN",
+     "wildcard": true
+    },
+    {
+     "days_left": 25,
+     "gid": "70094b44f9",
+     "issuer": "It's CA",
+     "label": "x",
+     "n_names": 1,
+     "names": [
+      "quote's.example.com"
+     ],
+     "not_after": "2026-01-23T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "quote's.example.com"
+     ],
+     "sev": "warn",
+     "status": "WARN",
+     "wildcard": false
+    },
+    {
+     "days_left": 60,
+     "gid": "a11a9ac9b2",
+     "issuer": "Example CA R3",
+     "label": "cdn.example.com",
+     "n_names": 1,
+     "names": [
+      "delivery.example.com"
+     ],
+     "not_after": "2026-02-27T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "cdn.example.com"
+     ],
+     "sev": "ok",
+     "status": "OK",
+     "wildcard": false
+    },
+    {
+     "days_left": 60,
+     "gid": "93763a7efa",
+     "issuer": "Example CA R3",
+     "label": "fixed.example.com",
+     "n_names": 1,
+     "names": [
+      "fixed.example.com"
+     ],
+     "not_after": "2026-02-27T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "fixed.example.com"
+     ],
+     "sev": "ok",
+     "status": "OK",
+     "wildcard": false
+    },
+    {
+     "days_left": 80,
+     "gid": "9396bf9096",
+     "issuer": "Example CA R3",
+     "label": "ok.example.com +2 SANs",
+     "n_names": 2,
+     "names": [
+      "ok.example.com",
+      "ok2.example.com"
+     ],
+     "not_after": "2026-03-19T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "ok.example.com",
+      "ok2.example.com",
+      "ok3.example.com"
+     ],
+     "sev": "ok",
+     "status": "OK",
+     "wildcard": false
+    },
+    {
+     "days_left": -40,
+     "gid": "226679c451",
+     "issuer": "Example CA R3",
+     "label": "old.example.org",
+     "n_names": 1,
+     "names": [
+      "old.example.org"
+     ],
+     "not_after": "2025-11-19T21:20:00Z",
+     "san_mismatch": [],
+     "sans": [
+      "old.example.org"
+     ],
+     "sev": "warn",
+     "status": "EXPIRED",
+     "wildcard": false
+    }
+   ],
+   "hosts": [
+    {
+     "days_left": -3,
+     "error": "",
+     "group": "f8bd469bd5",
+     "host": "late.example.org",
+     "issuer": "Example CA R3",
+     "not_after": "2025-12-26T21:20:00Z",
+     "status": "FAIL"
+    },
+    {
+     "days_left": 5,
+     "error": "",
+     "group": "078fcfe252",
+     "host": "pay.example.net:8443",
+     "issuer": "Other Trust Org Other CA",
+     "not_after": "2026-01-03T21:20:00Z",
+     "status": "FAIL"
+    },
+    {
+     "days_left": 18,
+     "error": "",
+     "group": "0df7df6fc1",
+     "host": "api.shop.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-01-16T21:20:00Z",
+     "status": "WARN"
+    },
+    {
+     "days_left": 18,
+     "error": "",
+     "group": "0df7df6fc1",
+     "host": "deep.a.shop.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-01-16T21:20:00Z",
+     "status": "WARN(SAN)"
+    },
+    {
+     "days_left": 18,
+     "error": "",
+     "group": "0df7df6fc1",
+     "host": "shop.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-01-16T21:20:00Z",
+     "status": "WARN"
+    },
+    {
+     "days_left": 18,
+     "error": "",
+     "group": "0df7df6fc1",
+     "host": "www.shop.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-01-16T21:20:00Z",
+     "status": "WARN"
+    },
+    {
+     "days_left": 25,
+     "error": "",
+     "group": "70094b44f9",
+     "host": "quote's.example.com",
+     "issuer": "It's CA",
+     "not_after": "2026-01-23T21:20:00Z",
+     "status": "WARN"
+    },
+    {
+     "days_left": 60,
+     "error": "",
+     "group": "a11a9ac9b2",
+     "host": "delivery.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-02-27T21:20:00Z",
+     "status": "WARN(EXPECTED)"
+    },
+    {
+     "days_left": 60,
+     "error": "",
+     "group": "93763a7efa",
+     "host": "fixed.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-02-27T21:20:00Z",
+     "status": "OK"
+    },
+    {
+     "days_left": 80,
+     "error": "",
+     "group": "9396bf9096",
+     "host": "ok.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-03-19T21:20:00Z",
+     "status": "OK"
+    },
+    {
+     "days_left": 80,
+     "error": "",
+     "group": "9396bf9096",
+     "host": "ok2.example.com",
+     "issuer": "Example CA R3",
+     "not_after": "2026-03-19T21:20:00Z",
+     "status": "OK"
+    },
+    {
+     "days_left": -40,
+     "error": "",
+     "group": "226679c451",
+     "host": "old.example.org",
+     "issuer": "Example CA R3",
+     "not_after": "2025-11-19T21:20:00Z",
+     "status": "EXPIRED"
+    },
+    {
+     "days_left": "",
+     "error": "no DNS",
+     "group": "",
+     "host": "gone.example.com",
+     "issuer": "",
+     "not_after": "",
+     "status": "UNREACH"
+    },
+    {
+     "days_left": "",
+     "error": "timeout",
+     "group": "",
+     "host": "slow.example.com",
+     "issuer": "",
+     "not_after": "",
+     "status": "UNREACH"
+    }
+   ],
+   "names": 14,
+   "page_days": 7,
+   "pins": [
+    {
+     "days_left": 5,
+     "gid": "078fcfe252",
+     "host": "pay.example.net",
+     "label": "Payment",
+     "label_group": "pay.example.net +1 SANs",
+     "not_after": "2026-01-03T21:20:00Z",
+     "note": "renew by hand",
+     "pinned_expiry": "2026-01-03",
+     "state": "open"
+    },
+    {
+     "days_left": 80,
+     "gid": "9396bf9096",
+     "host": "ok.example.com",
+     "label": "Main site",
+     "label_group": "ok.example.com +2 SANs",
+     "not_after": "2026-03-19T21:20:00Z",
+     "note": "",
+     "pinned_expiry": "2026-01-08",
+     "state": "renewed"
+    },
+    {
+     "days_left": null,
+     "host": "slow.example.com",
+     "label": "Slow",
+     "not_after": "",
+     "note": "",
+     "pinned_expiry": "2026-01-01",
+     "state": "unreachable"
+    },
+    {
+     "days_left": null,
+     "host": "nothere.example.com",
+     "label": "Nowhere",
+     "not_after": "",
+     "note": "",
+     "pinned_expiry": "2026-01-01",
+     "state": "not checked"
+    }
+   ],
+   "stale_days": 14,
+   "unreachable": [
+    {
+     "error": "no DNS",
+     "host": "gone.example.com",
+     "port": 443
+    },
+    {
+     "error": "timeout",
+     "host": "slow.example.com",
+     "port": 443
+    }
+   ],
+   "warn_days": 30
+  },
+  "rows": [
+   [
+    1,
+    "cert",
+    "f8bd469bd5",
+    "late.example.org",
+    "FAIL",
+    "page",
+    -3,
+    "2025-12-26T21:20:00Z",
+    "Example CA R3",
+    1,
+    "[\"late.example.org\"]",
+    "[\"late.example.org\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "078fcfe252",
+    "pay.example.net +1 SANs",
+    "FAIL",
+    "page",
+    5,
+    "2026-01-03T21:20:00Z",
+    "Other Trust Org Other CA",
+    1,
+    "[\"pay.example.net:8443\"]",
+    "[\"pay.example.net\", \"pay2.example.net\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "0df7df6fc1",
+    "*.shop.example.com wildcard",
+    "WARN",
+    "warn",
+    18,
+    "2026-01-16T21:20:00Z",
+    "Example CA R3",
+    4,
+    "[\"api.shop.example.com\", \"deep.a.shop.example.com\", \"shop.example.com\", \"www.shop.example.com\"]",
+    "[\"*.shop.example.com\", \"shop.example.com\"]",
+    "[\"deep.a.shop.example.com\"]",
+    "wildcard"
+   ],
+   [
+    1,
+    "cert",
+    "70094b44f9",
+    "x",
+    "WARN",
+    "warn",
+    25,
+    "2026-01-23T21:20:00Z",
+    "It's CA",
+    1,
+    "[\"quote's.example.com\"]",
+    "[\"quote's.example.com\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "a11a9ac9b2",
+    "cdn.example.com",
+    "OK",
+    "ok",
+    60,
+    "2026-02-27T21:20:00Z",
+    "Example CA R3",
+    1,
+    "[\"delivery.example.com\"]",
+    "[\"cdn.example.com\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "93763a7efa",
+    "fixed.example.com",
+    "OK",
+    "ok",
+    60,
+    "2026-02-27T21:20:00Z",
+    "Example CA R3",
+    1,
+    "[\"fixed.example.com\"]",
+    "[\"fixed.example.com\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "9396bf9096",
+    "ok.example.com +2 SANs",
+    "OK",
+    "ok",
+    80,
+    "2026-03-19T21:20:00Z",
+    "Example CA R3",
+    2,
+    "[\"ok.example.com\", \"ok2.example.com\"]",
+    "[\"ok.example.com\", \"ok2.example.com\", \"ok3.example.com\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "cert",
+    "226679c451",
+    "old.example.org",
+    "EXPIRED",
+    "warn",
+    -40,
+    "2025-11-19T21:20:00Z",
+    "Example CA R3",
+    1,
+    "[\"old.example.org\"]",
+    "[\"old.example.org\"]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "unreachable",
+    "",
+    "gone.example.com",
+    "UNREACH",
+    "ok",
+    null,
+    "",
+    "",
+    1,
+    "[\"gone.example.com\"]",
+    "[]",
+    "[]",
+    "no DNS"
+   ],
+   [
+    1,
+    "unreachable",
+    "",
+    "slow.example.com",
+    "UNREACH",
+    "ok",
+    null,
+    "",
+    "",
+    1,
+    "[\"slow.example.com\"]",
+    "[]",
+    "[]",
+    "timeout"
+   ],
+   [
+    1,
+    "pin",
+    "078fcfe252",
+    "Payment",
+    "open",
+    "",
+    5,
+    "2026-01-03T21:20:00Z",
+    "2026-01-03",
+    1,
+    "[\"pay.example.net\"]",
+    "[]",
+    "[]",
+    "renew by hand"
+   ],
+   [
+    1,
+    "pin",
+    "9396bf9096",
+    "Main site",
+    "renewed",
+    "",
+    80,
+    "2026-03-19T21:20:00Z",
+    "2026-01-08",
+    1,
+    "[\"ok.example.com\"]",
+    "[]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "pin",
+    "",
+    "Slow",
+    "unreachable",
+    "",
+    null,
+    "",
+    "2026-01-01",
+    1,
+    "[\"slow.example.com\"]",
+    "[]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "pin",
+    "",
+    "Nowhere",
+    "not checked",
+    "",
+    null,
+    "",
+    "2026-01-01",
+    1,
+    "[\"nothere.example.com\"]",
+    "[]",
+    "[]",
+    ""
+   ],
+   [
+    1,
+    "expect",
+    "a11a9ac9b2",
+    "delivery.example.com",
+    "WARN(EXPECTED)",
+    "warn",
+    null,
+    "",
+    "",
+    1,
+    "[\"delivery.example.com\"]",
+    "[\"cdn.example.com\"]",
+    "[]",
+    "served by the CDN"
+   ],
+   [
+    1,
+    "expect",
+    "93763a7efa",
+    "fixed.example.com",
+    "MATCHES",
+    "info",
+    null,
+    "",
+    "",
+    1,
+    "[\"fixed.example.com\"]",
+    "[\"fixed.example.com\"]",
+    "[]",
+    "was on the CDN"
+   ]
+  ],
+  "summary": [
+   "# cert-check: 14 names, 12 answered TLS with 8 distinct certificates, 2 unreachable (not certificate failures). WARN < 30 d, page < 7 d.",
+   "# PINNED Payment pay.example.net: 5 days left (expires 2026-01-03) - not renewed. renew by hand",
+   "# PINNED Main site ok.example.com: renewed, now expires 2026-03-19 (remove from config/cert-pins.tsv)",
+   "# PINNED Slow slow.example.com: unreachable (pinned expiry 2026-01-01)",
+   "# PINNED Nowhere nothere.example.com: not checked (pinned expiry 2026-01-01)",
+   "# EXPECTED WARN delivery.example.com: certificate does not cover the name (serves cdn.example.com), known: served by the CDN",
+   "# EXPECTED fixed.example.com: the certificate now covers the name (remove it from config/cert-expect.tsv)",
+   "# GROUP FAIL late.example.org - -3 days (2025-12-26) - Example CA R3 - used by 1 name",
+   "# GROUP FAIL pay.example.net +1 SANs - 5 days (2026-01-03) - Other Trust Org Other CA - used by 1 name",
+   "# GROUP WARN *.shop.example.com wildcard - 18 days (2026-01-16) - Example CA R3 - used by 4 names; SAN mismatch: deep.a.shop.example.com",
+   "# GROUP WARN x - 25 days (2026-01-23) - It's CA - used by 1 name",
+   "# GROUP OK cdn.example.com - 60 days (2026-02-27) - Example CA R3 - used by 1 name",
+   "# GROUP OK fixed.example.com - 60 days (2026-02-27) - Example CA R3 - used by 1 name",
+   "# GROUP OK ok.example.com +2 SANs - 80 days (2026-03-19) - Example CA R3 - used by 2 names",
+   "# GROUP EXPIRED old.example.org - -40 days (2025-11-19) - Example CA R3 - used by 1 name",
+   "# UNREACHABLE 2: gone.example.com (no DNS), slow.example.com (timeout)"
+  ],
+  "tsv": [
+   "status\thost\tdays_left\tnot_after\tissuer\tgroup\terror",
+   "FAIL\tlate.example.org\t-3\t2025-12-26T21:20:00Z\tExample CA R3\tf8bd469bd5\t",
+   "FAIL\tpay.example.net:8443\t5\t2026-01-03T21:20:00Z\tOther Trust Org Other CA\t078fcfe252\t",
+   "WARN\tapi.shop.example.com\t18\t2026-01-16T21:20:00Z\tExample CA R3\t0df7df6fc1\t",
+   "WARN(SAN)\tdeep.a.shop.example.com\t18\t2026-01-16T21:20:00Z\tExample CA R3\t0df7df6fc1\t",
+   "WARN\tshop.example.com\t18\t2026-01-16T21:20:00Z\tExample CA R3\t0df7df6fc1\t",
+   "WARN\twww.shop.example.com\t18\t2026-01-16T21:20:00Z\tExample CA R3\t0df7df6fc1\t",
+   "WARN\tquote's.example.com\t25\t2026-01-23T21:20:00Z\tIt's CA\t70094b44f9\t",
+   "WARN(EXPECTED)\tdelivery.example.com\t60\t2026-02-27T21:20:00Z\tExample CA R3\ta11a9ac9b2\t",
+   "OK\tfixed.example.com\t60\t2026-02-27T21:20:00Z\tExample CA R3\t93763a7efa\t",
+   "OK\tok.example.com\t80\t2026-03-19T21:20:00Z\tExample CA R3\t9396bf9096\t",
+   "OK\tok2.example.com\t80\t2026-03-19T21:20:00Z\tExample CA R3\t9396bf9096\t",
+   "EXPIRED\told.example.org\t-40\t2025-11-19T21:20:00Z\tExample CA R3\t226679c451\t",
+   "UNREACH\tgone.example.com\t\t\t\t\tno DNS",
+   "UNREACH\tslow.example.com\t\t\t\t\ttimeout"
+  ]
+ },
+ "unreach": {
+  "input": {
+   "expect": {},
+   "pins": [],
+   "results": [
+    {
+     "cert": null,
+     "error": "no DNS",
+     "host": "gone.example.com",
+     "port": 443
+    },
+    {
+     "cert": null,
+     "error": "timeout",
+     "host": "slow.example.com",
+     "port": 443
+    }
+   ]
+  },
+  "notice": {
+   "certs": 0,
+   "facts": [
+    [
+     "Unreachable",
+     "2 names (not certificate failures)"
+    ]
+   ],
+   "level": "OK",
+   "names": 2,
+   "sev": "ok",
+   "unreachable": 2,
+   "what": "0 certificates on 2 names OK"
+  },
+  "report": {
+   "expected": [],
+   "fail_days": 14,
+   "generated": 1767000000,
+   "groups": [],
+   "hosts": [
+    {
+     "days_left": "",
+     "error": "no DNS",
+     "group": "",
+     "host": "gone.example.com",
+     "issuer": "",
+     "not_after": "",
+     "status": "UNREACH"
+    },
+    {
+     "days_left": "",
+     "error": "timeout",
+     "group": "",
+     "host": "slow.example.com",
+     "issuer": "",
+     "not_after": "",
+     "status": "UNREACH"
+    }
+   ],
+   "names": 2,
+   "page_days": 7,
+   "pins": [],
+   "stale_days": 14,
+   "unreachable": [
+    {
+     "error": "no DNS",
+     "host": "gone.example.com",
+     "port": 443
+    },
+    {
+     "error": "timeout",
+     "host": "slow.example.com",
+     "port": 443
+    }
+   ],
+   "warn_days": 30
+  },
+  "rows": [
+   [
+    1,
+    "unreachable",
+    "",
+    "gone.example.com",
+    "UNREACH",
+    "ok",
+    null,
+    "",
+    "",
+    1,
+    "[\"gone.example.com\"]",
+    "[]",
+    "[]",
+    "no DNS"
+   ],
+   [
+    1,
+    "unreachable",
+    "",
+    "slow.example.com",
+    "UNREACH",
+    "ok",
+    null,
+    "",
+    "",
+    1,
+    "[\"slow.example.com\"]",
+    "[]",
+    "[]",
+    "timeout"
+   ]
+  ],
+  "summary": [
+   "# cert-check: 2 names, 0 answered TLS with 0 distinct certificates, 2 unreachable (not certificate failures). WARN < 30 d, page < 7 d.",
+   "# UNREACHABLE 2: gone.example.com (no DNS), slow.example.com (timeout)"
+  ],
+  "tsv": [
+   "status\thost\tdays_left\tnot_after\tissuer\tgroup\terror",
+   "UNREACH\tgone.example.com\t\t\t\t\tno DNS",
+   "UNREACH\tslow.example.com\t\t\t\t\ttimeout"
+  ]
+ }
+}

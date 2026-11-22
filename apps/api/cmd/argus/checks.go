@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"sort"
@@ -16,6 +18,7 @@ import (
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/migrate"
 	"github.com/sinaneysi/argus/internal/needs"
+	"github.com/sinaneysi/argus/internal/notify"
 	"github.com/sinaneysi/argus/internal/sources"
 )
 
@@ -85,9 +88,103 @@ func registryAlertSources(c *config.Config, have []collect.AlertSource) []collec
 	return out
 }
 
+// certTargets are ARGUS_CERT_TARGETS, the names of ARGUS_CERT_DOMAINS_FILE and, with ARGUS_CERT_FROM_SERVICE_MAP=1,
+// the public TLS names of the service map that resolve; each once.
+func certTargets(ctx context.Context, c *config.Config) []string {
+	var out []string
+	seen := map[string]bool{}
+	add := func(t string) {
+		k := t
+		if _, _, err := net.SplitHostPort(t); err != nil {
+			k = t + ":443"
+		}
+		if !seen[k] {
+			seen[k] = true
+			out = append(out, t)
+		}
+	}
+	for _, t := range list(c, "ARGUS_CERT_TARGETS") {
+		add(t)
+	}
+	if f := c.Values["ARGUS_CERT_DOMAINS_FILE"].Raw; f != "" {
+		if ds, err := collect.ReadCertDomains(f); err == nil {
+			for _, d := range ds {
+				add(d)
+			}
+		} else if !os.IsNotExist(err) {
+			collect.Logger.Warn("domains file", "collector", "certs", "err", err)
+		}
+	}
+	if c.Values["ARGUS_CERT_FROM_SERVICE_MAP"].Raw == "1" {
+		ds, err := collect.ServiceMapDomains(ctx, c.Values["ARGUS_SERVICE_MAP_FILE"].Raw, true)
+		if err != nil {
+			collect.Logger.Warn("service map", "collector", "certs", "err", err)
+		}
+		for _, d := range ds {
+			add(d)
+		}
+	}
+	return out
+}
+
+// registryS3 are the S3 entries of Settings -> Data sources by name: the access key is the entry's user name, the
+// secret key its credential.
+func registryS3(c *config.Config) map[string]collect.S3Lister {
+	o := sourcesOptions(c)
+	out := map[string]collect.S3Lister{}
+	for _, e := range o.Registry() {
+		if e.Type != "s3" || e.Username == "" {
+			continue
+		}
+		u, err := sources.CleanURL(e.URL)
+		if err != nil {
+			continue
+		}
+		region := c.Values["ARGUS_BACKUP_S3_REGION"].Raw
+		if r, ok := e.Facts["region"].(string); ok && r != "" {
+			region = r
+		}
+		out[e.Name] = &collect.S3{Endpoint: u, Region: region, AccessKey: e.Username, SecretKey: o.Credential(e)}
+	}
+	return out
+}
+
+// certNotice posts the grouped certificate notice (best effort) after a run that is not OK.
+func certNotice(c *config.Config) func(string, collect.CertNotice, bool) {
+	return func(level string, n collect.CertNotice, untrusted bool) {
+		var facts []string
+		for _, f := range n.Facts {
+			facts = append(facts, f[0]+": "+f[1])
+		}
+		if untrusted {
+			facts = append(facts, "Chain: a certificate chain is not trusted (see the run)")
+		}
+		notify.SetAppName(c.DisplayName)
+		f := notify.Formatter{Base: c.PublicURL}
+		msg := notify.Message{Level: level, Title: "Certificates", Summary: n.What, Facts: facts, Link: f.Page("/certs"),
+			Meta: []string{fmt.Sprintf("%d names, %d certificates, %d unreachable", n.Names, n.Certs, n.Unreachable)}}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := senderFrom(c).Send(ctx, msg.Render(), "notify:cert-check"); err != nil && !errors.Is(err, notify.ErrNotSent) {
+			collect.Logger.Warn("certificate notice not sent", "err", err)
+		}
+	}
+}
+
 func enabled(c *config.Config, name string) bool {
 	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && len(needs.Jobs["collect-"+name]) > 0 {
 		return true // the volume layout runs a collector when its data source is connected (the worker's Ready)
+	}
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && name == "certs" {
+		_, err := os.Stat(c.Values["ARGUS_CERT_DOMAINS_FILE"].Raw)
+		if err == nil || len(list(c, "ARGUS_CERT_TARGETS")) > 0 || len(list(c, "ARGUS_CERT_FILES")) > 0 || c.Values["ARGUS_CERT_FROM_SERVICE_MAP"].Raw == "1" {
+			return true // the volume layout checks the certificates once there is something to probe
+		}
+	}
+	if c.Values["ARGUS_LAYOUT"].Raw == "volume" && name == "backups" {
+		if _, err := os.Stat(c.Values["ARGUS_BACKUP_SETS_FILE"].Raw); err == nil {
+			return true // the volume layout checks the backups once a sets file is there
+		}
 	}
 	return c.Values["ARGUS_COLLECT_"+strings.ToUpper(name)].Raw == "1"
 }
@@ -137,13 +234,15 @@ func runCollector(ctx context.Context, c *config.Config, name string) error {
 	case "certs":
 		cctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
-		res, err = collect.Certs(cctx, collect.CertsOptions{Targets: list(c, "ARGUS_CERT_TARGETS"), Files: list(c, "ARGUS_CERT_FILES"),
+		res, err = collect.Certs(cctx, collect.CertsOptions{Targets: certTargets(cctx, c), Files: list(c, "ARGUS_CERT_FILES"),
 			DB: c.DB, CAFile: c.Values["ARGUS_CERT_CA_FILE"].Raw, WarnDays: num(c, "ARGUS_CERT_WARN_DAYS"),
-			FailDays: num(c, "ARGUS_CERT_FAIL_DAYS"), Timeout: time.Duration(num(c, "ARGUS_CERT_TIMEOUT")) * time.Second})
+			FailDays: num(c, "ARGUS_CERT_FAIL_DAYS"), PageDays: num(c, "ARGUS_CERT_PAGE_DAYS"), StaleDays: num(c, "ARGUS_CERT_STALE_DAYS"),
+			PinsFile: c.Values["ARGUS_CERT_PINS_FILE"].Raw, ExpectFile: c.Values["ARGUS_CERT_EXPECT_FILE"].Raw,
+			Timeout: time.Duration(num(c, "ARGUS_CERT_TIMEOUT")) * time.Second, Notify: certNotice(c)})
 	case "backups":
 		cctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
-		res, err = collect.Backups(cctx, collect.BackupsOptions{SetsFile: c.Values["ARGUS_BACKUP_SETS_FILE"].Raw, DB: c.DB})
+		res, err = collect.Backups(cctx, collect.BackupsOptions{SetsFile: c.Values["ARGUS_BACKUP_SETS_FILE"].Raw, DB: c.DB, S3: registryS3(c)})
 	default:
 		return fmt.Errorf("unknown collector %q", name)
 	}

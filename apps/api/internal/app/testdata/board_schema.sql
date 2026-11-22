@@ -50,7 +50,14 @@ CREATE TABLE agent_tasks (
   approved_version INTEGER, approved_by TEXT, approved_at INTEGER,
   run_started INTEGER, run_finished INTEGER, run_cost REAL, result TEXT, fix_request TEXT,
   error TEXT, updated INTEGER, plan_entered_at INTEGER, spent_usd REAL DEFAULT 0,
-  retry_at INTEGER, limit_since INTEGER, error_detail TEXT
+  retry_at INTEGER, limit_since INTEGER, error_detail TEXT,
+  plan_sha256 TEXT, approved_sha256 TEXT, approval_sig TEXT, action_id TEXT, action_state TEXT,
+  continue_step INTEGER, continue_by TEXT, continue_at INTEGER, continue_sig TEXT, rollback_started INTEGER, sealed_inputs TEXT
+);
+CREATE TABLE agent_actions (
+  action_id TEXT NOT NULL, step INTEGER NOT NULL, key TEXT NOT NULL, capability TEXT, phase TEXT, status TEXT,
+  summary TEXT, detail TEXT, backup_ref TEXT, audit_sha256 TEXT, at INTEGER,
+  PRIMARY KEY (action_id, step)
 );
 CREATE TABLE agent_inputs (key TEXT PRIMARY KEY, instructions TEXT, answers TEXT, post_jira INTEGER DEFAULT 1,
   by TEXT, at INTEGER);
