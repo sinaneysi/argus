@@ -108,6 +108,7 @@ type Meta struct {
 	IsError  bool    `json:"is_error"`
 	ExitCode int     `json:"exit_code"`
 	Skipped  string  `json:"skipped,omitempty"`
+	Sandbox  string  `json:"sandbox,omitempty"` // the model call's file sandbox ("landlock-v<ABI>", "off", "unavailable")
 }
 
 // Pending is the oldest job file that has no result yet (by name: key, phase); ok false when there is none.
@@ -220,7 +221,8 @@ func (o *Options) runJob(ctx context.Context, key, phase string) error {
 	if status == "" || res.IsError {
 		status = firstNonEmpty(res.Error, res.Text, "FAIL: no result")
 	}
-	meta := Meta{Finished: o.now().Unix(), CostUSD: res.CostUSD, Status: model.Redact(status, 300), IsError: res.IsError, ExitCode: res.ExitCode}
+	meta := Meta{Finished: o.now().Unix(), CostUSD: res.CostUSD, Status: model.Redact(status, 300), IsError: res.IsError, ExitCode: res.ExitCode,
+		Sandbox: res.Sandbox}
 	if res.RunID > 0 {
 		meta.RunID = fmt.Sprint(res.RunID)
 	}

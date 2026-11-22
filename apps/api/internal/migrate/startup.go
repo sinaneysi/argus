@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/secret"
@@ -37,6 +38,15 @@ func All(ctx context.Context, c *config.Config, logf func(string, ...any)) ([]Re
 		out = append(out, r)
 		if len(r.Applied) > 0 {
 			logf("migrate: %s %d -> %d (%d object(s) adopted)", db, r.From, r.To, len(r.Adopted))
+		}
+		var cols []string
+		for _, x := range r.Adopted {
+			if strings.Contains(x, ".") {
+				cols = append(cols, x)
+			}
+		}
+		if len(cols) > 0 {
+			logf("migrate: WARNING: %s: columns that already existed were adopted (same type, NOT NULL and default): %s", db, strings.Join(cols, ", "))
 		}
 	}
 	return out, nil

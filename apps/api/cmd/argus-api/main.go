@@ -73,6 +73,11 @@ func main() {
 	} else {
 		fmt.Println("single sign-on: off")
 	}
+	if fp, err := app.InitApprovalKey(); err != nil {
+		fmt.Fprintln(os.Stderr, "argus-api: approval key (ARGUS_APPROVAL_KEY_DIR):", err, "- approvals are not signed; actd refuses every step")
+	} else if fp != "" {
+		fmt.Printf("approval key %s (copy the public key to actd: argus approval-key public)\n", fp)
+	}
 	app.PreloadStatic()
 	i := strings.LastIndex(app.BIND, ":")
 	host, port := app.BIND[:i], app.BIND[i+1:]

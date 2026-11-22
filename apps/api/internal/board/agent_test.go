@@ -111,12 +111,16 @@ func TestAgentPlanApproveRun(t *testing.T) {
 		t.Fatal(s)
 	}
 	// a stale version is refused; the shown one starts a read-only run
-	stale := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1})
+	sha := e.q(t, `SELECT plan_sha256 FROM agent_tasks WHERE key='OPS-7'`)
+	if len(sha) != 64 || sha != storedPlanSHA(e.q(t, `SELECT plan FROM agent_tasks WHERE key='OPS-7'`)) {
+		t.Fatal("no plan hash at intake:", sha)
+	}
+	stale := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 1, "plan_sha256": sha})
 	st = e.run(t)
 	if !strings.Contains(result(st, stale), "the plan changed") {
 		t.Fatal(result(st, stale))
 	}
-	ok := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 2})
+	ok := e.req(t, map[string]any{"kind": "agent-start", "key": "OPS-7", "plan_version": 2, "plan_sha256": sha})
 	st = e.run(t)
 	if result(st, ok) != "approved; spinning up" || e.q(t, `SELECT state FROM agent_tasks WHERE key='OPS-7'`) != "running" {
 		t.Fatal(result(st, ok), e.q(t, `SELECT state FROM agent_tasks WHERE key='OPS-7'`))

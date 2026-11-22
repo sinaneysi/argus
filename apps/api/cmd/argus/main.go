@@ -16,6 +16,7 @@
 //	argus sources list [type]     the data sources the agent may read (apply, check: root; record: the agent's DB copy)
 //	argus sources routes|unmapped where each service lives (discover, catalogue, actions: the agent's user, ADR-0017 P2)
 //	argus sources find ...        which instance to read for a service or a question (ADR-0017 P3)
+//	argus actd                    the capability executor (ADR-0022): its own service, profile actions
 //
 // Exit codes: 0 success, 1 failure (for config check: invalid configuration), 2 usage error.
 package main
@@ -27,6 +28,8 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+
+	"github.com/sinaneysi/argus/internal/sandbox"
 
 	_ "time/tzdata" // ARGUS_TZ is validated in a scratch image too
 )
@@ -49,6 +52,7 @@ var commands = []command{
 	{"checks", "run collectors once: alerts snapshot, certificates, backups", runChecks},
 	{"worker", "run the enabled collectors on their intervals", runWorker},
 	{"notify", "send a notice (Matrix, Telegram or a webhook) or print a formatted one", func(a []string, o, e io.Writer) int { return runNotify(a, os.Stdin, o, e) }},
+	{"model-exec", "run a program confined by Landlock to the paths given (the model runtime starts the Claude CLI this way)", func(a []string, _, e io.Writer) int { return sandbox.Main(a, e) }},
 	{"claude", "the egress-country guard in front of every Claude run (check, egress); one call through the model runtime (run)", runClaude},
 	{"settings", "root: apply Settings -> General (apply), switch Claude usage (claude) or QA questions (qa)", runSettings},
 	{"secrets", "root: apply Settings -> Claude and -> Kubernetes requests (apply-claude, apply-kube, install-kubectl)", runSecrets},
@@ -62,6 +66,8 @@ var commands = []command{
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"marketing", "the marketing module's jobs: crawler logs, sitemaps, the SEO page's Googlebot table (googlebot ...)", runMarketing},
 	{"sources", "data sources: list, routes, find, unmapped (the agent); apply, check (root); record, discover, catalogue, actions", runSources},
+	{"actd", "the capability executor: approved capability steps, refusal rules, audit chain (credential, verify-audit)", runActd},
+	{"approval-key", "the api's approval signing key: init, public (copy the public key to actd)", runApprovalKey},
 	{"ingest", "read alerts and chat messages", nil},
 	{"dispatch", "act on request files written by the web app", nil},
 }

@@ -66,6 +66,14 @@ func modelOptions(c *config.Config, db *sql.DB) model.Options {
 	if o.Provider == "" {
 		o.Provider = model.CLI
 	}
+	o.StateDir = c.StateDir
+	if strings.ToLower(v("ARGUS_MODEL_SANDBOX")) != "off" {
+		self, err := os.Executable()
+		if err != nil {
+			self = "/proc/self/exe" // never reached on Linux; the helper then fails closed
+		}
+		o.SandboxExec = []string{self, "model-exec"}
+	}
 	if o.Provider == model.API {
 		if e := firstSource(c, "anthropic"); e != nil {
 			so := sourcesOptions(c)
@@ -122,7 +130,8 @@ func runClaudeRun(args []string, stdout, stderr io.Writer) int {
 	} else if res.IsError {
 		fmt.Fprintln(stderr, "failed:", res.Error)
 	} else {
-		fmt.Fprintf(stdout, "%s (provider %s, %d ms, $%.4f)\n", model.Redact(res.Text, 300), res.Provider, res.DurationMS, res.CostUSD)
+		fmt.Fprintf(stdout, "%s (provider %s, sandbox %s, %d ms, $%.4f)\n", model.Redact(res.Text, 300), res.Provider,
+			sandboxName(res.Sandbox), res.DurationMS, res.CostUSD)
 	}
 	switch {
 	case res.Skipped != "":
@@ -131,4 +140,12 @@ func runClaudeRun(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// sandboxName is the run's file sandbox for the check line ("none" for the api provider).
+func sandboxName(s string) string {
+	if s == "" {
+		return "none"
+	}
+	return s
 }
