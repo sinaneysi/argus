@@ -196,7 +196,8 @@ known incident ("Known incident #N") are never candidates. Not ported: hub servi
 As built (P3/P4, the model runtime): `internal/model` is the one way a job calls a model. `ARGUS_MODEL_PROVIDER=cli`
 (the default) runs the Claude CLI that the `argus` image now holds (`/usr/local/bin/claude`, the pinned native musl
 build; `--build-arg CLAUDE_CODE_VERSION=` leaves it out) with the token of Settings -> Claude, a clean environment, a
-throwaway HOME and config folder in `/tmp` and no saved session; `api` sends one Messages API request with the key of
+throwaway HOME and config folder in `/tmp` and no saved session, its file tools confined to the working folder
+(`--restricted`, Read deny rules, and a Landlock sandbox applied by `argus model-exec`; `ARGUS_MODEL_SANDBOX`); `api` sends one Messages API request with the key of
 a Settings -> Data sources entry of type `anthropic` (its check looks at the key's shape only and never calls the API,
 so no call leaves a blocked egress country). Every call: `style.Prepend`, the Claude usage switch and the egress
 guard (a skip, not a failure), a budget, turn and time cap (`ARGUS_MODEL_MAX_BUDGET_USD`, `ARGUS_MODEL_MAX_MINUTES`;
@@ -282,6 +283,32 @@ Company specifics are configuration: the edge groups and their log formats, the 
 (`ARGUS_SEO_HOSTS`), the Loki host label; the service map (`ARGUS_SERVICE_MAP_FILE`) names a backend. Listed differences from the earlier job:
 upstream kinds have neutral names (origin, edge, local, external, cache); the primary edge group is the first line of the
 groups file; days are in `ARGUS_TZ`; the page's verified share uses the full range lists and its p50/p95 the histogram.
+
+As built (P6, marketing search): `internal/marketing/google` and `internal/marketing/seo` port the Search Console job
+and the SEO suggestions (parity of the rules with the earlier job: `internal/marketing/seo/testdata`). Data-source
+type `google` (Settings -> Data sources, purpose marketing): address `https://www.googleapis.com`, credential the
+service-account key's JSON (sealed with the master key); its check signs in with the read-only Search Console scope and
+lists the properties the key reads. The key signs a JWT (RS256) in the process; the earlier installation's openssl
+call and its SSH tunnel are gone: the worker reaches Google directly, or through `HTTPS_PROXY` / `NO_PROXY` in its
+environment when the installation has no direct way out. Jobs, only while the module is on: `gsc` every 6 hours
+(`gsc_daily`, `gsc_urls`, `gsc_sitemaps`; property `ARGUS_GSC_SITE`, key URLs `ARGUS_GSC_URLS_FILE`), `seo-suggest` once a
+day (`seo_suggestions`; `ARGUS_SEO_BRAND`, GA4 bounce rule with `ARGUS_GA_PROPERTY`), `seo-send` for the page's Send
+requests (consumed before the send; one notice for all of them). `argus import` turns the earlier `gsc-key.json` (or
+`GSC_KEY`) into the `google/main` data source and copies `seo-urls.txt`. `seo-summary` (once a day, when the
+model runtime is configured) writes the model's short summary of the newest suggestions to `seo_summary` through
+`internal/model` (the writing style, the Claude usage switch, the egress guard, a $0.15 budget, one turn, a `runs`
+row); a call that did not run is stored with its reason and no text, and is not retried the same day.
+
+As built (P6, marketing CDN): `internal/marketing/cdn` ports the CDN log job (parity of the search body and the rows
+with the earlier job: `internal/marketing/cdn/testdata`). Job `cdn-watch` every 5 minutes, only while the module is on,
+with an Elasticsearch / OpenSearch data source (`ARGUS_CDN_SOURCE`, else the first; the search is a guarded POST that
+only reads) and `ARGUS_CDN_INDEX`: the counts of the finished 5-minute buckets of the last 55 minutes into `cdn_gbot`
+and `cdn_buckets` (ops migration 0003; the same tables as before, so an imported `ops.db` is adopted). The index's
+documents need the keyword fields `remote_addr`, `http_user_agent`, `is_known_bot`, `request_host`, `status`,
+`fw_rule_name`, `fw_rule_action`, `fw_blocked`, `upstream_status`, `cache_status`. Not ported: the earlier CDN log
+sampling job. It switched a CDN vendor's log forwarder on and off with a token that can change the whole CDN, and
+Argus data sources only read. Without it, a bucket with no documents is a gap (`ok=0`); rows stored as "off by plan"
+(`ok=2`) by the earlier installation are kept and not read again.
 
 ## Consequences
 

@@ -16,6 +16,7 @@ const ROUTES: Record<string, [api: string, page: string]> = {
   "jira-shared": ["/api/v1/admin/jira-shared", "/admin/board#shared"],
   agent: ["/api/v1/admin/agent", "/admin/board#agent"],
   "fixer-move": ["/api/v1/admin/agent/fixer-move", "/admin/board#agent"],
+  actions: ["/api/v1/admin/actions", "/admin/board#actions"],
   "claude-token": ["/api/v1/admin/claude-token", "/admin/claude#claude-token"],
   "claude-check": ["/api/v1/admin/claude-token", "/admin/claude#claude-egress"], // Check now is an action of the token route
   "claude-egress": ["/api/v1/admin/claude-egress", "/admin/claude#claude-egress"],

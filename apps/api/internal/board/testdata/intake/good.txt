@@ -1,0 +1,17 @@
+The variable exists on develop; the plan rotates it and checks the service.
+
+```json
+{"classification": {"environment": "develop", "kind": "change"},
+ "summary": "Rotate the CI/CD variable PAYMENT_API_KEY of group/app on develop, then start the develop pipeline and check the health page.",
+ "plan": [
+  {"text": "Read the current attributes of PAYMENT_API_KEY on develop", "mode": "read-only", "targets": ["group/app"],
+   "capability": "gitlab.ci-variable.get", "args": {"project": "group/app", "key": "PAYMENT_API_KEY", "environment_scope": "develop"}},
+  {"text": "Set PAYMENT_API_KEY to the new value the admin types at approval", "mode": "WRITE", "targets": ["group/app"],
+   "capability": "gitlab.ci-variable.set", "args": {"project": "group/app", "key": "PAYMENT_API_KEY", "environment_scope": "develop",
+   "value_ref": "input:NEW_PAYMENT_API_KEY", "masked": true, "protected": false}},
+  {"text": "Start the pipeline of branch develop in group/app", "mode": "operator", "targets": ["group/app"]},
+  {"text": "Check the health page answers 200", "mode": "read-only", "targets": ["https://health.example.com/healthz"],
+   "capability": "http.check", "args": {"url": "https://health.example.com/healthz", "expect_status": 200, "timeout_sec": 10}}
+ ],
+ "questions": [], "needs": [], "estimate": {"effort": "15 min", "cost_usd": 0.4}, "confidence": "high", "suggested_column": "Review"}
+```

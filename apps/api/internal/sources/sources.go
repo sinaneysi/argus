@@ -79,6 +79,7 @@ var Types = map[string]Type{
 	"matrix":        {Label: "Matrix", Purposes: []string{"notify"}},
 	"anthropic":     {Label: "Anthropic API", Purposes: []string{"model"}},
 	"s3":            {Label: "S3 / MinIO", Purposes: []string{"backups"}, Username: true},
+	"google":        {Label: "Google Search Console", Purposes: []string{"marketing"}},
 }
 
 var (
@@ -250,6 +251,14 @@ func fetch(method, base, path string, hdr map[string]string, body []byte, maxBod
 func GetRaw(base, path string, hdr map[string]string, maxBody int64, timeout time.Duration) (int, []byte, error) {
 	var raw []byte
 	st, _, _, err := fetchTo("GET", base, path, hdr, nil, maxBody, true, timeout, &raw)
+	return st, raw, err
+}
+
+// PostRead is one guarded read that needs a body (an Elasticsearch / OpenSearch search): (status, body). The same
+// guard as Get; the body is a query, never a change.
+func PostRead(base, path string, hdr map[string]string, body []byte, maxBody int64, timeout time.Duration) (int, []byte, error) {
+	var raw []byte
+	st, _, _, err := fetchTo("POST", base, path, hdr, body, maxBody, true, timeout, &raw)
 	return st, raw, err
 }
 

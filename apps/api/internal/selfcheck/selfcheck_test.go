@@ -250,3 +250,23 @@ INSERT INTO runs (task, started_at, status, summary) VALUES ('log-rca', 17999990
 		t.Errorf("mode %v", st.Mode())
 	}
 }
+
+func TestActdCheck(t *testing.T) {
+	ok := map[string]any{"mode": "dry-run", "chain": map[string]any{"ok": true, "records": float64(4)}}
+	if c := Actd(ok, 30, "dry-run"); c.Status != "OK" || !strings.Contains(c.Detail, "4 records") {
+		t.Fatalf("%+v", c)
+	}
+	if c := Actd(ok, 300, "on"); c.Status != "WARN" {
+		t.Fatalf("stale heartbeat: %+v", c)
+	}
+	if c := Actd(ok, 3600, "on"); c.Status != "FAIL" {
+		t.Fatalf("old heartbeat: %+v", c)
+	}
+	if c := Actd(nil, -1, "on"); c.Status != "FAIL" {
+		t.Fatalf("no status: %+v", c)
+	}
+	broken := map[string]any{"mode": "on", "chain": map[string]any{"ok": false, "error": "line 3 was changed"}}
+	if c := Actd(broken, 10, "on"); c.Status != "FAIL" || !strings.Contains(c.Detail, "line 3") {
+		t.Fatalf("broken chain: %+v", c)
+	}
+}

@@ -3,6 +3,11 @@
 #   docker compose -f deploy/compose.yml up -d --build
 # Then open the web port behind your TLS proxy, sign in as ARGUS_ADMIN_USER and connect the data sources in Settings.
 # Back up the volume (and ARGUS_MASTER_KEY when you set it from outside): it holds every database, setting and secret.
+# Optional fourth service (ADR-0022): the capability executor `actd`, only with `--profile actions`. It has its own
+# volume argus-act that no other service mounts (its key, credentials, backups and the audit chain); back it up too.
+# The api signs every approval with a key in its own volume argus-approve (mounted by the api only; created at its
+# first start). actd needs the public half once, before it runs any step:
+#   docker compose exec api /app/argus approval-key public | docker compose exec -T actd /app/argus actd approval-key set
 name: argus
 x-hardening: &hardening
   read_only: true
@@ -23,6 +28,7 @@ services:
       - "${ARGUS_API_BIND:-127.0.0.1}:${ARGUS_API_PORT:-8080}:8080"
     volumes:
       - argus-data:/var/lib/argus
+      - argus-approve:/var/lib/argus-approve  # the approval signing key: mounted by the api only
     <<: *hardening
   worker:
     image: ${ARGUS_IMAGE:-argus:latest}
@@ -37,6 +43,20 @@ services:
     networks: [argus]
     volumes:
       - argus-data:/var/lib/argus
+    <<: *hardening
+  actd:
+    image: ${ARGUS_IMAGE:-argus:latest}
+    profiles: [actions]
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }   # the api creates and migrates the databases first
+    env_file: ${ARGUS_ENV_FILE:-argus.env}
+    entrypoint: ["/app/argus", "actd"]
+    healthcheck: { disable: true }          # the worker's self-check reads actd's heartbeat
+    networks: [argus]
+    volumes:
+      - argus-data:/var/lib/argus
+      - argus-act:/var/lib/argus-act        # mounted by actd only
     <<: *hardening
   web:
     build: { context: .., dockerfile: deploy/Dockerfile, target: web }
@@ -61,3 +81,5 @@ networks:
         - subnet: 172.30.240.0/24
 volumes:
   argus-data:
+  argus-act:
+  argus-approve:

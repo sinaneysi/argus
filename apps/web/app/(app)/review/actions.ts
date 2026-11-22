@@ -11,7 +11,7 @@ export async function reviewAct(fd: FormData): Promise<void> {
   const here = safeNext(field(fd, "here"), ret);
   const r = await apiPost<{ ok?: boolean; redirect?: string }>("/api/v1/review/act", {
     sel: field(fd, "sel"), action: field(fd, "action"), reason: field(fd, "reason") || undefined,
-    plan_version: field(fd, "plan_version") || undefined, return: ret,
+    plan_version: field(fd, "plan_version") || undefined, plan_sha256: field(fd, "plan_sha256") || undefined, return: ret,
   }, formCsrf(fd));
   if (r.status === 200 && r.data.ok) return back(safeNext(r.data.redirect, ret));
   const up = stepUpPath(r.data, here);

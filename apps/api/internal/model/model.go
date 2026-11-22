@@ -7,6 +7,9 @@
 //     token of Settings -> Claude (CLAUDE_CODE_OAUTH_TOKEN in the volume's claude.env, sealed with the master key).
 //     Each call gets a throwaway HOME and CLAUDE_CONFIG_DIR under the temporary folder (the root file system may be
 //     read-only), a clean environment (PATH, HOME, LANG, TZ, the login, the proxies) and no session persistence.
+//     Its file tools reach the working folder only: --restricted, Read deny rules for the volume, /proc, /sys, /etc
+//     and /dev, and (ARGUS_MODEL_SANDBOX=landlock, the default) a Landlock sandbox applied by `argus model-exec`
+//     before the CLI starts (see cli.go).
 //   - api: the Anthropic Messages API with the API key of a Settings -> Data sources entry of type anthropic. One
 //     request, no tools: the job puts every fact the model needs into the prompt.
 //
@@ -67,7 +70,7 @@ type Request struct {
 	Timeout   time.Duration // 0: 10 minutes; never above Options.MaxTimeout
 	Dir       string        // CLI: the working directory (a workspace the job prepared); "": the throwaway HOME
 	Tools     []string      // CLI: the only tools the model gets (--tools); nil: none at all
-	Disallow  []string      // CLI: --disallowedTools
+	Disallow  []string      // CLI: --disallowedTools, added to the default deny rules (never instead of them)
 	OnEvent   func(Event)   // CLI: called for each event while the model works
 }
 
@@ -85,6 +88,7 @@ type Result struct {
 	Error      string  `json:"error,omitempty"`   // could not start, or failed: short and redacted
 	RunID      int64   `json:"run_id,omitempty"`  // the ops.db runs row (0: not recorded)
 	Started    int64   `json:"started"`
+	Sandbox    string  `json:"sandbox,omitempty"` // CLI: "landlock-v<ABI>", or "off" (only the CLI's own rules)
 }
 
 // Status is the first word of the record: OK, WARN, FAIL from the text, else ERROR or WARN (the reference recorder's
@@ -111,6 +115,11 @@ type Options struct {
 	Key       secret.Key // the volume's master key (nil: the token is plaintext, the legacy layout)
 	TempDir   string     // where each call's throwaway HOME is made ("": os.TempDir())
 	ExtraEnv  []string   // KEY=value added to the CLI's clean environment (tests; never a secret)
+	// SandboxExec is the helper that confines the CLI's file access with Landlock before it execs it (cmd/argus:
+	// the argus binary and "model-exec"). Empty: no OS sandbox, only the CLI's own rules (ARGUS_MODEL_SANDBOX=off).
+	// When set and the kernel has no Landlock, a call fails closed: it never starts the CLI unconfined.
+	SandboxExec []string
+	StateDir    string // the volume (ARGUS_STATE_DIR): denied to the CLI's file tools like the default paths
 
 	// api
 	APIURL     string // e.g. https://api.anthropic.com
