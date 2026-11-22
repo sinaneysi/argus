@@ -1,0 +1,8 @@
+#!/bin/sh
+# A fake Claude CLI for the ideas run: checks the workspace and the agent flag, answers with one idea (no network).
+cat >/dev/null
+agent=""
+while [ $# -gt 0 ]; do [ "$1" = "--agent" ] && agent=$2; shift; done
+[ -f "$PWD/INDEX.md" ] && [ -f "$PWD/.claude/agents/$agent.md" ] || { echo '{"type":"result","is_error":true,"result":"no workspace"}'; exit 0; }
+echo '{"type":"system","subtype":"init"}'
+printf '%s\n' '{"type":"result","is_error":false,"num_turns":4,"total_cost_usd":0.12,"duration_ms":900,"result":"{\"ideas\":[{\"title\":\"Page on-call when backups go stale\",\"area\":\"backup\",\"problem\":\"Two backup sets are stale or missing this week.\",\"evidence\":[{\"text\":\"files-media STALE\",\"link\":\"/backups\"}],\"proposal\":\"Open an incident when a backup set is older than 36 hours.\",\"value\":\"No silent gaps\",\"effort\":\"S\",\"risk\":\"Noise\",\"success_metric\":\"Stale sets open an incident\"}]}"}'
