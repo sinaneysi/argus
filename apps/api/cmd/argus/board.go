@@ -108,6 +108,7 @@ func boardOptions(c *config.Config, full, dry bool) board.Options {
 		GitLabReqDir: or("ARGUS_GITLAB_ISSUES_REQ_DIR", filepath.Join(c.SettingsIn, "gitlab-issues")), EtcDir: c.EtcDir,
 		GitLabEnvFile: or("ARGUS_GITLAB_ISSUES_ENV_FILE", filepath.Join(c.EtcDir, "env")), GitLabDefaultURL: gitlabURL(c),
 		Key: volumeKey(c), KnowledgeDir: knowledgeDir(c),
+		JiraConnectDir: or("ARGUS_JIRA_CONNECT_DIR", filepath.Join(c.SettingsIn, "jira-connect")),
 	}
 }
 
