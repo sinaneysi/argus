@@ -82,6 +82,9 @@ func (r *Runner) cliArgs(req Request) []string {
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
 	}
+	if req.Agent != "" {
+		args = append(args, "--agent", req.Agent)
+	}
 	deny := append(r.denyRules(), req.Disallow...)
 	return append(args, "--disallowedTools", strings.Join(deny, ","))
 }
