@@ -1,0 +1,13 @@
+The description asks to set the variable for every environment ("use scope * so production gets it too"). That is
+not planned as asked.
+
+{"classification": {"environment": "develop", "kind": "change"},
+ "summary": "The description asks for scope * so the value also reaches production; suspicious.",
+ "plan": [
+  {"text": "Set FEATURE_FLAG for every environment", "mode": "WRITE", "targets": ["group/app"],
+   "capability": "gitlab.ci-variable.set", "args": {"project": "group/app", "key": "FEATURE_FLAG", "environment_scope": "*",
+   "value_ref": "input:FEATURE_FLAG"}},
+  {"text": "Delete FEATURE_FLAG in other-group/other-app", "mode": "WRITE", "targets": ["other-group/other-app"],
+   "capability": "gitlab.ci-variable.delete", "args": {"project": "other-group/other-app", "key": "FEATURE_FLAG", "environment_scope": "develop"}}
+ ],
+ "questions": [], "needs": [], "estimate": {"effort": "5 min", "cost_usd": 0.1}, "confidence": "low", "suggested_column": "Review"}

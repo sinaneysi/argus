@@ -105,7 +105,7 @@ function Sec({ id, title, s, callout }: { id: string; title: string; s: Section;
   );
 }
 
-function Act({ a, csrf, sel, ret, here, planVersion }: { a: Action; csrf: string; sel: string; ret: string; here: string; planVersion?: number }) {
+function Act({ a, csrf, sel, ret, here, planVersion, planSha }: { a: Action; csrf: string; sel: string; ret: string; here: string; planVersion?: number; planSha?: string }) {
   const variant = a.style === "primary" ? "default" : "outline";
   if (a.href) return <a data-slot="button" className={cn(buttonVariants({ variant }), TALL)} href={a.href}>{a.label}</a>;
   const hidden = (
@@ -116,6 +116,7 @@ function Act({ a, csrf, sel, ret, here, planVersion }: { a: Action; csrf: string
       <input type="hidden" name="return" value={ret} />
       <input type="hidden" name="here" value={here} />
       {planVersion !== undefined ? <input type="hidden" name="plan_version" value={planVersion} /> : null}
+      {planSha ? <input type="hidden" name="plan_sha256" value={planSha} /> : null}
     </>
   );
   const disabled = !!a.disabled;
@@ -177,7 +178,7 @@ function Panel({ d, q, csrf }: { d: ReviewDetail; q: Q; csrf: string }) {
   const acts = (
     <div className="sticky -bottom-(--card-spacing) -mx-(--card-spacing) grid gap-2 border-t bg-card px-(--card-spacing) py-4 max-[1199px]:bottom-0">
       <div className="flex flex-wrap items-start gap-2">
-        {d.actions.map((a, i) => <Act key={i} a={a} csrf={csrf} sel={it.sel} ret={ret} here={here} planVersion={a.action === "approve" ? plan?.version : undefined} />)}
+        {d.actions.map((a, i) => <Act key={i} a={a} csrf={csrf} sel={it.sel} ret={ret} here={here} planVersion={a.action === "approve" ? plan?.version : undefined} planSha={a.action === "approve" ? plan?.sha256 : undefined} />)}
       </div>
       {d.readOnly ? <p className="muted">Admins decide this; you can read it.</p> : d.note ? <p className="text-sm text-muted-foreground">{d.note}</p> : null}
     </div>

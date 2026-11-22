@@ -2,11 +2,18 @@
 """Fake data sources for the clean-install test: GitLab, Jira, Alertmanager and Matrix behind one HTTP port, each
 under its own path prefix, and for the marketing module: Grafana with Loki (edge access lines of Google crawlers),
 Google's token and search APIs, an OpenSearch with a CDN log index, the site's sitemaps and Google's crawler ranges.
-Synthetic data only; every write is answered and forgotten. Standard library only.
+Synthetic data only; every write is answered and forgotten, except the GitLab project CI/CD variables (scope develop),
+which the gitlab.ci-variable capabilities of actd read and change: they are kept in memory and every call is
+recorded (GET /gitlab/_calls). Pipeline, job and trigger calls are answered 403 and recorded, so a test can show
+none was made. An identity provider under /keycloak answers keycloak.read: the client-credentials token of realm
+"lab" and the admin reads of its users, a user's groups, LDAP components and client scopes. Its users carry an
+e-mail, attributes and credentials and its LDAP provider a bind credential, which the capability must drop; every
+call is recorded (GET /keycloak/_calls) and every write under /keycloak/admin is answered 403. Standard library only.
 
   python3 -I stubs.py [port]      # default 8099
 """
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -153,6 +160,132 @@ def model_answer(body):
             "usage": {"input_tokens": len(body) // 4, "output_tokens": 5}}
 
 
+# GitLab project CI/CD variables (ADR-0022 PR 3): "<project id>/<key>" -> variable; scope develop only
+GL_VARS = {}
+GL_CALLS = []
+GL_PROJECTS = {101: "shop/checkout", 102: "shop/catalog"}
+GL_VAR_RE = re.compile(r"^/gitlab/api/v4/projects/([0-9]+)/variables(?:/([A-Za-z0-9_]+))?$")
+GL_DENIED = re.compile(r"/(pipeline|pipelines|jobs|trigger|triggers|deployments)(/|$)")
+
+
+def gl_var_json(key, v):
+    return {"key": key, "value": v["value"], "variable_type": v.get("variable_type", "env_var"), "protected": v.get("protected", False),
+            "masked": v.get("masked", False), "raw": v.get("raw", False), "environment_scope": "develop", "hidden": False}
+
+
+def gitlab_vars(method, raw_path, query, body):
+    """The variables API of the stub GitLab: (code, body) or None when the path is not a variables call."""
+    path = raw_path.rstrip("/")
+    if not path.startswith("/gitlab/api/v4/projects/"):
+        return None
+    if method != "GET" and GL_DENIED.search(path):  # reads of pipelines and jobs are the CI collectors' and pass on
+        GL_CALLS.append({"method": method, "path": path})
+        return 403, {"message": "the stub refuses to start pipelines and jobs: Argus never starts them"}
+    rest = path[len("/gitlab/api/v4/projects/"):]
+    if "/" not in rest and method == "GET":  # a project lookup by id or URL-encoded path
+        ref = urllib.parse.unquote(rest).lower()
+        for pid, p in GL_PROJECTS.items():
+            if ref in (str(pid), p):
+                GL_CALLS.append({"method": method, "path": path})
+                return 200, {"id": pid, "path_with_namespace": p}
+        return None
+    m = GL_VAR_RE.match(path)
+    if not m:
+        return None
+    GL_CALLS.append({"method": method, "path": path})
+    pid, key = int(m.group(1)), m.group(2)
+    try:
+        data = json.loads(body or b"{}")
+    except ValueError:
+        data = {}
+    if key is None:
+        if method != "POST":
+            return 405, {"message": "method"}
+        key = data.get("key", "")
+        if data.get("environment_scope") != "develop" or not re.match(r"^[A-Za-z0-9_]{1,255}$", key):
+            return 400, {"message": "bad request"}
+        if "%d/%s" % (pid, key) in GL_VARS:
+            return 400, {"message": "key has already been taken"}
+        GL_VARS["%d/%s" % (pid, key)] = {k: data[k] for k in ("value", "variable_type", "protected", "masked", "raw") if k in data}
+        return 201, gl_var_json(key, GL_VARS["%d/%s" % (pid, key)])
+    if query.get("filter[environment_scope]") != ["develop"]:
+        return 409, {"message": "the scope filter is missing"}
+    cur = GL_VARS.get("%d/%s" % (pid, key))
+    if cur is None:
+        return 404, {"message": "404 Variable Not Found"}
+    if method == "GET":
+        return 200, gl_var_json(key, cur)
+    if method == "PUT":
+        cur.update({k: data[k] for k in ("value", "variable_type", "protected", "masked", "raw") if k in data})
+        return 200, gl_var_json(key, cur)
+    if method == "DELETE":
+        del GL_VARS["%d/%s" % (pid, key)]
+        return 204, None
+    return 405, {"message": "method"}
+
+
+# identity provider (ADR-0022 PR 4): realm "lab", client "argus-read", synthetic users; read-only
+KC_CALLS = []
+KC_CLIENT = ("argus-read", "stub-" + "client-secret")
+KC_TOKENS = []
+KC_TOKEN_PATH = "/keycloak/realms/lab/protocol/openid-connect/token"
+
+
+def kc_user(i):
+    return {"id": "0000-%04d" % i, "username": "user%02d" % i, "enabled": i % 2 == 1, "email": "user%02d@example.com" % i,
+            "firstName": "First", "lastName": "" if i == 2 else "Last", "federationLink": "ldap-1",
+            "requiredActions": ["UPDATE_PASSWORD"] if i == 3 else [], "attributes": {"phone": ["+1-555-0100"]},
+            "credentials": [{"type": "password", "secretData": "stub-hash"}]}
+
+
+KC_USERS = [kc_user(i) for i in range(1, 6)]
+
+
+def keycloak(method, path, query, body, auth):
+    """The stub identity provider: (code, body) or None when the path is not under /keycloak."""
+    if not path.startswith("/keycloak/"):
+        return None
+    KC_CALLS.append({"method": method, "path": path})
+    if path == KC_TOKEN_PATH and method == "POST":
+        form = urllib.parse.parse_qs(body.decode("utf-8", "replace"))
+        if form.get("grant_type") != ["client_credentials"] or (form.get("client_id", [""])[0], form.get("client_secret", [""])[0]) != KC_CLIENT:
+            return 401, {"error": "unauthorized_client"}
+        KC_TOKENS.append("stub-access-%d" % (len(KC_TOKENS) + 1))
+        return 200, {"access_token": KC_TOKENS[-1], "expires_in": 300, "token_type": "Bearer"}
+    if not path.startswith("/keycloak/admin/realms/"):
+        return 404, {"error": "not in the stub"}
+    if method != "GET":
+        return 403, {"error": "the stub refuses writes: keycloak.read only reads"}
+    if not KC_TOKENS or auth != "Bearer " + KC_TOKENS[-1]:
+        return 401, {"error": "HTTP 401 Unauthorized"}
+    realm, _, sub = path[len("/keycloak/admin/realms/"):].partition("/")
+    if realm != "lab":
+        return 404, {"error": "Realm not found."}
+    if sub == "users":
+        if query.get("exact") == ["true"]:
+            return 200, [u for u in KC_USERS if u["username"] == query.get("username", [""])[0]]
+        s = query.get("search", [""])[0].strip("*").lower()
+        out = [u for u in KC_USERS if s in u["username"]][:int(query.get("max", ["100"])[0])]
+        if query.get("briefRepresentation") == ["true"]:  # Keycloak's brief form
+            keep = ("id", "username", "firstName", "lastName", "email", "enabled", "emailVerified", "federationLink")
+            out = [{k: u[k] for k in keep if k in u} for u in out]
+        return 200, out
+    if re.match(r"^users/[A-Za-z0-9-]+/groups$", sub):
+        return 200, [{"id": "g1", "name": "developers", "path": "/developers"}]
+    if sub == "components" and query.get("type") == ["org.keycloak.storage.UserStorageProvider"]:
+        return 200, [{"id": "ldap-1", "name": "directory", "providerId": "ldap",
+                      "config": {"bindDn": ["cn=reader,dc=example,dc=com"], "bindCredential": ["**********"]}}]
+    if sub == "components" and query.get("parent") == ["ldap-1"]:
+        return 200, [{"id": "m1", "name": "username", "providerId": "user-attribute-ldap-mapper",
+                      "config": {"ldap.attribute": ["uid"], "user.model.attribute": ["username"], "read.only": ["true"]}},
+                     {"id": "m2", "name": "groups", "providerId": "group-ldap-mapper",
+                      "config": {"groups.dn": ["ou=groups,dc=example,dc=com"], "mode": ["READ_ONLY"]}}]
+    if sub == "client-scopes":
+        return 200, [{"id": "s1", "name": "profile", "protocol": "openid-connect", "protocolMappers": [{"name": "given name"}]},
+                     {"id": "s2", "name": "email", "protocol": "openid-connect", "protocolMappers": [{"name": "email"}]}]
+    return 404, {"error": "not in the stub"}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "stubs/1"
 
@@ -160,6 +293,11 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("stubs %s %s\n" % (self.command, self.path))
 
     def send(self, code, body):
+        if body is None:
+            self.send_response(code)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         data = json.dumps(body).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
@@ -180,6 +318,16 @@ class Handler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
         if path == "/healthz":
             return self.send(200, {"ok": True})
+        if path == "/gitlab/_calls":
+            return self.send(200, GL_CALLS)
+        if path == "/keycloak/_calls":
+            return self.send(200, KC_CALLS)
+        out = keycloak("GET", path, query, b"", self.headers.get("Authorization", ""))
+        if out is not None:
+            return self.send(*out)
+        out = gitlab_vars("GET", path, query, b"")
+        if out is not None:
+            return self.send(*out)
         if path == "/grafana/api/datasources/proxy/uid/loki-1/loki/api/v1/query_range":
             return self.send(200, loki(query))
         if path == "/google/webmasters/v3/sites":
@@ -221,6 +369,13 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(min(n, 1 << 20))
         path = self.path.split("?", 1)[0]
+        query = urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+        out = keycloak(self.command, path, query, body, self.headers.get("Authorization", ""))
+        if out is not None:
+            return self.send(*out)
+        out = gitlab_vars(self.command, path, query, body)
+        if out is not None:
+            return self.send(*out)
         if path.startswith("/google/"):
             out = google_post(path, body)
             return self.send(200, out) if out is not None else self.send(404, {"error": "not in the stub"})
@@ -233,6 +388,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(200, {"ok": True})
 
     do_PUT = do_POST
+    do_DELETE = do_POST
 
 
 if __name__ == "__main__":

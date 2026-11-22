@@ -1,0 +1,10 @@
+{"classification": {"environment": "release", "kind": "production"},
+ "summary": "Rotate the key on production.",
+ "plan": [
+  {"text": "Set PAYMENT_API_KEY", "mode": "WRITE", "targets": ["group/app"],
+   "capability": "gitlab.ci-variable.set", "args": {"project": "group/app", "key": "PAYMENT_API_KEY", "environment_scope": "develop",
+   "value_ref": "input:NEW_PAYMENT_API_KEY"}},
+  {"text": "Check the health page", "mode": "read-only", "targets": ["https://health.example.com/healthz"],
+   "capability": "http.check", "args": {"url": "https://health.example.com/healthz", "expect_status": 200}}
+ ],
+ "questions": [], "needs": [], "estimate": {"effort": "5 min", "cost_usd": 0.1}, "confidence": "medium", "suggested_column": "Review"}
