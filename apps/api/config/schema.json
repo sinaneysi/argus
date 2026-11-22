@@ -1269,6 +1269,16 @@
       "help": "one call never runs longer than this"
     },
     {
+      "key": "ARGUS_MODEL_SANDBOX",
+      "type": "str",
+      "default": "landlock",
+      "enum": [
+        "landlock",
+        "off"
+      ],
+      "help": "landlock: the cli provider's Claude CLI can open only its working folder, HOME, programs and CA files (Linux 5.13+; without Landlock a call fails instead of running unconfined); off: only the CLI's own rules"
+    },
+    {
       "key": "ARGUS_MODEL_LOG_DIR",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/model-runs",
@@ -1350,6 +1360,116 @@
       "min": 0,
       "max": 1800,
       "help": "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_MODE",
+      "type": "str",
+      "default": "off",
+      "enum": [
+        "off",
+        "dry-run",
+        "on"
+      ],
+      "help": "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"
+    },
+    {
+      "key": "ARGUS_ACT_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-act",
+      "help": "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"
+    },
+    {
+      "key": "ARGUS_ACTIONS_APPROVAL_TTL",
+      "type": "str",
+      "default": "24h",
+      "help": "an approval older than this is refused (5m..168h)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_PER_DAY",
+      "type": "int",
+      "default": "20",
+      "min": 1,
+      "max": 200,
+      "help": "actions started a day at most (ARGUS_TZ days)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_BACKUP_DAYS",
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "how long the sealed old values of write steps are kept"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_HOSTS",
+      "type": "list",
+      "help": "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"
+    },
+    {
+      "key": "ARGUS_ACT_GITLAB_URL",
+      "type": "str",
+      "help": "gitlab.ci-variable: the GitLab the variables are in, https://gitlab.example.com (a path prefix is allowed); the group access token is stored only in actd's volume (argus actd credential set gitlab/token), never here"
+    },
+    {
+      "key": "ARGUS_ACT_GITLAB_PROJECTS",
+      "type": "list",
+      "help": "gitlab.ci-variable: the projects whose CI/CD variables of scope develop may be read and changed, numeric ids or group/project paths (an id and the path of the same project are one project); empty: the capabilities are not offered"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_URL",
+      "type": "str",
+      "help": "keycloak.read: the identity provider, https://id.example.com (a path prefix such as /auth is kept); read-only admin queries of the realms on ARGUS_ACT_KEYCLOAK_REALMS; the client secret is stored only in actd's volume (argus actd credential set keycloak/client), never here; empty: keycloak.read is not offered"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_REALMS",
+      "type": "list",
+      "help": "keycloak.read: the realms that may be read (names, A-Z a-z 0-9 _ . -); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_ID",
+      "type": "str",
+      "help": "keycloak.read: the confidential client with a service account (client credentials); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_REALM",
+      "type": "str",
+      "help": "keycloak.read: the realm the client lives in; every query first asks this realm's token endpoint (the only POST allowed); required with several realms on ARGUS_ACT_KEYCLOAK_REALMS; empty: the only realm on the list"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_MAX_READS",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 50,
+      "help": "keycloak.read: the most user-returning queries (users, user) one action may run; more are refused"
+    },
+    {
+      "key": "ARGUS_ACT_DEVELOP_LABELS",
+      "type": "list",
+      "default": "env:stage",
+      "help": "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, no label containing prod, release or pre-release, and the develop classification; the approval signs the labels the admin saw (the model's label alone is not enough)"
+    },
+    {
+      "key": "ARGUS_ACT_CATALOGUE_DETAIL",
+      "type": "str",
+      "default": "full",
+      "enum": [
+        "full",
+        "aliases"
+      ],
+      "help": "what the intake's capability list tells the model provider about the allow-lists: full (the hosts, project paths and realms) or aliases (stable aliases that Go maps back before validation)"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: http.check, ARGUS_ACT_GITLAB_URL and ARGUS_ACT_KEYCLOAK_URL may use plain http:// (test installations only)"
+    },
+    {
+      "key": "ARGUS_APPROVAL_KEY_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-approve",
+      "help": "the api's approval signing key (approval.key, approval.pub), in a folder only the api mounts (compose volume argus-approve; 0700, owned by the api's user); created at the api's first start; missing: approvals are not signed and actd refuses every step"
     },
     {
       "key": "ARGUS_KUBE_DIR",
@@ -1516,6 +1636,16 @@
       ],
       "type": "str",
       "help": "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"
+    },
+    {
+      "key": "ARGUS_CDN_INDEX",
+      "type": "str",
+      "help": "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"
+    },
+    {
+      "key": "ARGUS_CDN_SOURCE",
+      "type": "str",
+      "help": "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"
     },
     {
       "key": "DEMO_MODE",

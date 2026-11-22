@@ -6,7 +6,7 @@ import { Reload } from "@/components/Infra";
 import { Markdown } from "@/components/Markdown";
 import { EnvPill, Pill } from "@/components/Pills";
 import { Banners, Crumb, FixCards, pick, Report, type Search, tone, When } from "@/components/Section";
-import { AgentForm, ChatBox, FixerBox, MoveChoiceForm, MoveForm, Progress, SecretsBox, SpinBar } from "@/components/Work";
+import { ActionBox, AgentForm, ChatBox, FixerBox, MoveChoiceForm, MoveForm, PlanSteps, Progress, SecretsBox, SpinBar } from "@/components/Work";
 import { qs } from "@/lib/api";
 import { full, iso } from "@/lib/format";
 import { apiGet, csrfToken, readFlash } from "@/lib/server";
@@ -46,8 +46,8 @@ function Plan({ a, t, csrf }: { a: Agent; t: TaskPage; csrf: string }) {
         <p dir="auto">{p.summary}</p>
         <p className="meta-line">{p.env ? <EnvPill env={p.env} /> : null}<Pill>{p.kind}</Pill>{p.estimate ? <span className="small">{p.estimate}</span> : null}</p>
         {p.prodNote ? <Banners list={[{ kind: "info", text: "Production: Argus never executes this. Write proposal produces the full change proposal (command, backup, rollback, verify) for a human." }]} /> : null}
-        <h3>Plan</h3>
-        <ol className="ag-plan">{p.steps.map((s, i) => <li key={i}><p dir="auto">{s.text}</p><p className="meta-line"><Pill tone={s.mode === "WRITE" ? "warn" : "neutral"}>{s.mode}</Pill>{s.targets.map((x) => <span key={x} className="mono small">{x}</span>)}</p></li>)}</ol>
+        <h3>Plan <span className="muted small">v{a.planVersion}{a.planSha256 ? <> · <span className="mono" title={`plan sha256 ${a.planSha256}`}>{a.planSha256.slice(0, 12)}</span></> : null}</span></h3>
+        <PlanSteps steps={p.steps} />
         {p.needs.length ? <><h3>Needs from you</h3><ul className="ag-l">{p.needs.map((x, i) => <li key={i} dir="auto">{x}</li>)}</ul></> : null}
       </> : null}
       {a.questions.length && a.chatOn ? <>
@@ -56,6 +56,7 @@ function Plan({ a, t, csrf }: { a: Agent; t: TaskPage; csrf: string }) {
       </> : null}
       {a.emptyDesc ? <Banners list={[{ kind: "warn", text: "The issue description is empty. Tell Argus what to do; it plans again from that." }]} /> : null}
       {a.pause ? <p><a data-slot="button" className={buttonVariants({ variant: "outline" })} href={a.pause.href}>{a.pause.text}</a> <span className="muted small">The page stops refreshing while you write.</span></p> : null}
+      <ActionBox a={a} csrf={csrf} ret={t.return} />
       <AgentForm a={a} csrf={csrf} ret={t.return} />
       <SpinBar a={a} csrf={csrf} ret={t.return} />
     </>

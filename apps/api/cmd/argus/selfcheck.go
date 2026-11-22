@@ -51,6 +51,8 @@ func selfcheckOptions(c *config.Config, s *worker.Scheduler, started time.Time, 
 		Started:     started,
 		Jobs:        func() []selfcheck.Job { return jobStates(s) },
 		Key:         func() selfcheck.Check { return keyCheck(c) },
+		ActionsMode: v("ARGUS_ACTIONS_MODE"),
+		ActdStatus:  filepath.Join(c.StateDir, "actions", "actd-status.json"),
 		Notify: func(text string) error {
 			notify.SetAppName(c.DisplayName)
 			msg := notify.Formatter{Base: c.PublicURL}.Text("selfcheck", text, "")

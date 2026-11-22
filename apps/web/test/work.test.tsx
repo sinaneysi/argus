@@ -154,6 +154,80 @@ describe("task page", () => {
     const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
     for (const w of ["Plan again", "What failed exactly", "Stop refreshing", 'id="agent-stop"', 'name="plan_version"', "Move to Done", "Provide DB_TOKEN", 'type="password"', 'aria-current="step"']) expect(h).toContain(w);
   });
+  it("renders the capability steps from the executor, Continue and rollback", async () => {
+    const a = { ...task.agent, state: "operator", planSha256: "ab".repeat(32), action: { id: "OPS-1.v2.abababababab", state: "operator", steps: [
+      { step: 1, capability: "http.check", status: "ok", detail: "200 in 12 ms", audit: "0123456789ab", text: "check the health URL", rollback: true },
+      { step: 2, capability: "", status: "needs the operator", detail: "", audit: "", text: "start the deploy pipeline" },
+      { step: 3, capability: "http.check", status: "waiting", detail: "", audit: "", text: "check again" }],
+      continue: { step: 2, text: "start the deploy pipeline", can: true } } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["Capability steps", "run by Argus, not by the model", "<th>Audit</th>", ">0123456789ab<", "Continue after step 2", "Roll back step 1", "Needs a recent 2FA code", 'name="plan_sha256"', 'name="action_id"', "needs the operator"]) expect(h).toContain(w);
+    expect(h.match(/<tr>/g)?.length).toBe(4); // the head and one row per step
+  });
+  it("shows each capability step with its arguments, secrets as entered at approval, and the hash next to the version", async () => {
+    const plan = { ...task.agent.plan, steps: [
+      { text: "rotate the key", mode: "WRITE", targets: ["group/app"], capability: "gitlab.ci-variable.set",
+        args: [{ name: "environment_scope", value: "develop" }, { name: "key", value: "PAYMENT_KEY" }, { name: "value_ref", value: "NEW_PAYMENT_KEY", input: true }] },
+      { text: "start the develop pipeline", mode: "operator", targets: ["group/app"] },
+      { text: "edit the unit by hand", mode: "WRITE", targets: ["web-1"], capabilityError: "no capability: a person does this step" }] };
+    const a = { ...task.agent, finished: false, planVersion: 3, planSha256: "0123456789abcdef".repeat(4), plan,
+      spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false, env: { model: "develop", boardOk: true, board: "board label env:stage", matters: true } } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["gitlab.ci-variable.set", "<dt class=\"mono\">value_ref</dt>", "NEW_PAYMENT_KEY", "entered at approval", "for the operator", "Argus does not run this step: no capability",
+      "v3 · ", ">0123456789ab<", "Pinned to plan v3 (0123456789ab)", "from the model&#x27;s classification;", "board label env:stage"]) expect(h).toContain(w);
+    expect(h).not.toContain("not confirmed by the board");
+    expect(h.match(/entered at approval/g)?.length).toBe(1);
+  });
+  it("says when the board does not confirm the model's environment, and that nothing executes", async () => {
+    const a = { ...task.agent, finished: false, spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false,
+      env: { model: "develop", boardOk: false, board: "the board label env:production disagrees with the develop classification", matters: true, labels: ["ops", "env:production"], labelsSha256: "cd".repeat(32) } } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["not confirmed by the board: the board label env:production disagrees", "The WRITE steps are reported for a person; nothing executes.", 'class="pill warn">develop<',
+      "Board labels you approve:", "ops, env:production", `name="labels_sha256" value="${"cd".repeat(32)}"`])
+      expect(h).toContain(w);
+  });
+  it("names every action state and step mode in words", async () => {
+    const { actionState, stepMode, stepStatusTone } = await import("@/components/Work");
+    expect(actionState("operator")).toEqual({ label: "needs the operator", tone: "warn" });
+    expect(actionState("outcome-unknown").label).toBe("outcome unknown: check the target");
+    expect(actionState("dry-run").label).toContain("nothing changed");
+    expect(actionState("")).toEqual({ label: "running", tone: "neutral" });
+    for (const s of ["refused", "failed"]) expect(actionState(s).tone).toBe("fail");
+    expect(actionState("done").tone).toBe("ok");
+    expect(stepMode("operator")).toEqual({ label: "for the operator", tone: "info" });
+    expect(stepMode("WRITE").tone).toBe("warn");
+    expect(stepMode("read-only").tone).toBe("neutral");
+    expect(stepStatusTone("rollback-failed")).toBe("fail");
+    expect(stepStatusTone("planned")).toBe("info");
+  });
+  it("offers the checked verdicts for a step whose outcome is unknown, and no rollback", async () => {
+    const a = { ...task.agent, planSha256: "ab".repeat(32), action: { id: "OPS-1.v2.abababababab", state: "outcome-unknown", steps: [
+      { step: 1, capability: "gitlab.ci-variable.set", status: "outcome-unknown", detail: "the outcome is unknown", audit: "0123456789ab", text: "rotate", checked: true }] } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    for (const w of ["I checked the target: applied", "I checked the target: not applied", 'value="not-applied"']) expect(h).toContain(w);
+    expect(h).not.toContain("Roll back step 1");
+  });
+  it("renders a write-only field per secret input of the plan, and no value", async () => {
+    const a = { ...task.agent, planSha256: "ab".repeat(32), spin: { can: true, label: "Spin up agent", reason: "", primary: true, proposal: false, inputs: ["NEW_TOKEN"] } };
+    answers["/api/v1/board/task"] = { status: 200, data: { ...task, agent: a } };
+    const { default: Page } = await import("@/app/(app)/board/task/page");
+    const h = await html(await Page({ searchParams: sp({ key: task.ref }) as never }));
+    const field = h.match(/<input[^>]*name="input_NEW_TOKEN"[^>]*>/)?.[0] ?? "";
+    expect(field).toContain('type="password"');
+    expect(field).toContain('autoComplete="new-password"');
+    expect(field).not.toMatch(/value=/);
+    expect(field).toContain("required");
+    expect(h).toMatch(/<form[^>]*autoComplete="off"/);
+    expect(h.match(/name="input_[A-Z_]+"/g)).toEqual(['name="input_NEW_TOKEN"']); // one field per input, nothing else
+  });
   it("renders the fixer form on a task Argus does not work", async () => {
     answers["/api/v1/board/task"] = { status: 200, data: { ...taskPlain, fixer: { heading: "Send to the fixer", notes: [], envLabel: "develop", hosts: [{ alias: "web-1", checked: true }] } } };
     const { default: Page } = await import("@/app/(app)/board/task/page");
@@ -231,6 +305,12 @@ describe("writes", () => {
       [a.matrixPreview, { pid: "p1", action: "create", assignee: "sam" }, "/api/v1/board/mxpreview", { pid: "p1", action: "create", assignee: "sam" }],
       [a.agentAct, { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes", other: "no" }, "/api/v1/board/agent", { key: "OPS-1", action: "answers", instructions: "i", a_q1: "yes" }],
       [a.agentSpin, { key: "OPS-1", plan_version: "2" }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2" }],
+      [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), labels_sha256: "cd".repeat(32) }, "/api/v1/board/agent/spinup",
+        { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), labels_sha256: "cd".repeat(32) }],
+      [a.agentSpin, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }, "/api/v1/board/agent/spinup", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32) }],
+      [a.agentContinue, { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }, "/api/v1/board/agent/continue", { key: "OPS-1", plan_version: "2", plan_sha256: "ab".repeat(32), step: "2" }],
+      [a.agentRollback, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }, "/api/v1/board/agent/rollback", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1" }],
+      [a.agentChecked, { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1", verdict: "applied" }, "/api/v1/board/agent/checked", { key: "OPS-1", action_id: "OPS-1.v2.abababababab", step: "1", verdict: "applied" }],
       [a.agentChat, { key: "OPS-1", text: "t".repeat(3000) }, "/api/v1/board/agent/chat", { key: "OPS-1", text: "t".repeat(3000) }],
     ];
     for (const [fn, f, path, body] of cases) {
@@ -250,6 +330,18 @@ describe("writes", () => {
     expect((posted[0]!.body as { value: string }).value.length).toBe(4000);
     expect(to).toBe("REDIRECT /board/task?key=OPS-1");
     expect(flashes.join()).not.toContain("vvvv");
+  });
+  it("passes the secret inputs to the API only, never to a flash", async () => {
+    const { agentSpin } = await import("@/app/(app)/board/actions");
+    const value = "S3cret-" + "x".repeat(2500);
+    posted.length = 0;
+    answer = { status: 409, data: { error: "Not started: type the value of OTHER" } };
+    const to = await thrown(agentSpin(form({ key: "OPS-1", plan_version: "2", input_NEW_TOKEN: value, input_bad: "no", return: "/board/task?key=OPS-1" })));
+    expect(to).toBe("REDIRECT /board/task?key=OPS-1");
+    expect((posted[0]!.body as Record<string, string>).input_NEW_TOKEN).toBe(value);
+    expect(posted[0]!.body).not.toHaveProperty("input_bad");
+    expect(flashes.join()).not.toContain("S3cret");
+    expect(to).not.toContain("S3cret");
   });
   it("sends a stale session to the step-up page and back", async () => {
     const { agentSpin } = await import("@/app/(app)/board/actions");
