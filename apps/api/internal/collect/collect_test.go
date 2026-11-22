@@ -208,6 +208,11 @@ func certFixture(t *testing.T) (CertsOptions, string) {
 
 func TestCerts(t *testing.T) {
 	o, dbPath := certFixture(t)
+	dir := filepath.Dir(dbPath)
+	o.PinsFile = filepath.Join(dir, "pins.tsv")
+	os.WriteFile(o.PinsFile, []byte("# host\texpiry\tlabel\nlocalhost\t2099-01-01\tPayment\tby hand\n"), 0o644)
+	var noticed []string
+	o.Notify = func(level string, n CertNotice, untrusted bool) { noticed = append(noticed, level+" "+n.What) }
 	res, err := Certs(context.Background(), o)
 	if err != nil {
 		t.Fatal(err)
@@ -215,55 +220,63 @@ func TestCerts(t *testing.T) {
 	if res.Status != "FAIL" || res.Items != 5 {
 		t.Fatalf("result %+v", res)
 	}
+	if len(noticed) != 1 || !strings.HasPrefix(noticed[0], "FAIL pay.example expires in 5 days, used by 2 names") {
+		t.Fatalf("notice %v", noticed)
+	}
 	db, _ := sql.Open("sqlite", dbPath)
 	defer db.Close()
 	var task, status, summary string
 	db.QueryRow("SELECT task, status, summary FROM runs").Scan(&task, &status, &summary)
-	if task != "cert-check" || status != "FAIL" || !strings.Contains(summary, "**pay.example** expires in 5 days") || !strings.Contains(summary, "unreachable") {
+	if task != "cert-check" || status != "FAIL" || !strings.Contains(summary, "FAIL: pay.example expires in 5 days") ||
+		!strings.Contains(summary, "**Payment**: localhost: 5 days") || !strings.Contains(summary, "**Unreachable**: 1 name") {
 		t.Fatalf("run %s %s %q", task, status, summary)
 	}
-	rows, _ := db.Query("SELECT kind, label, status, days_left, issuer, n_names, sans, san_mismatch, COALESCE(note,'') FROM cert_groups ORDER BY kind, label")
+	rows, _ := db.Query("SELECT kind, label, status, sev, days_left, issuer, n_names, names, san_mismatch, COALESCE(note,'') FROM cert_groups ORDER BY kind, label")
 	got := map[string][]any{}
 	for rows.Next() {
-		var kind, label, st, issuer, sans, mism, note string
+		var kind, label, st, sev, issuer, names, mism, note string
 		var days sql.NullInt64
 		var n int
-		var iss sql.NullString
-		rows.Scan(&kind, &label, &st, &days, &iss, &n, &sans, &mism, &note)
-		issuer = iss.String
-		got[label] = []any{kind, st, days.Int64, issuer, n, sans, mism, note}
+		rows.Scan(&kind, &label, &st, &sev, &days, &issuer, &n, &names, &mism, &note)
+		got[kind+" "+label] = []any{st, sev, days.Int64, issuer, n, names, mism, note}
 	}
-	if g := got["*.shop.example (wildcard)"]; g == nil || g[1] != "OK" || g[2].(int64) != 80 || g[3] != "Example Test CA" ||
-		g[5] != `["*.shop.example","shop.example","127.0.0.1"]` || g[6] != "[]" {
-		t.Fatalf("wildcard group %v", g)
+	if g := got["cert *.shop.example wildcard"]; g == nil || g[0] != "OK" || g[2].(int64) != 80 || g[3] != "Example Test CA" || g[7] != "wildcard" {
+		t.Fatalf("wildcard group %v (%v)", g, got)
 	}
-	if g := got["pay.example"]; g == nil || g[1] != "FAIL" || g[2].(int64) != 5 || g[4] != 2 || g[6] != `["localhost"]` {
+	if g := got["cert pay.example"]; g == nil || g[0] != "FAIL" || g[1] != "page" || g[2].(int64) != 5 || g[4] != 2 || !strings.Contains(g[6].(string), "localhost") {
 		t.Fatalf("expiring group %v", g)
 	}
-	if g := got["api.example"]; g == nil || g[1] != "WARN" || g[2].(int64) != 20 {
+	if g := got["cert api.example"]; g == nil || g[0] != "WARN" || g[2].(int64) != 20 || g[6] != "[]" {
 		t.Fatalf("file group %v", g)
 	}
+	if g := got["pin Payment"]; g == nil || g[0] != "open" || g[2].(int64) != 5 {
+		t.Fatalf("pin %v", g)
+	}
 	found := false
-	for label, g := range got {
-		if g[0] == "unreachable" {
+	for k, g := range got {
+		if strings.HasPrefix(k, "unreachable 127.0.0.1") {
 			found = true
-			if !strings.HasPrefix(label, "127.0.0.1") || g[7] == "" {
-				t.Fatalf("unreachable %s %v", label, g)
+			if g[0] != "UNREACH" || g[1] != "ok" || g[7] == "" {
+				t.Fatalf("unreachable %s %v", k, g)
 			}
 		}
 	}
 	if !found {
-		t.Fatal("no unreachable row")
+		t.Fatalf("no unreachable row: %v", got)
 	}
-	// the chain check: without the CA file the test CA is unknown, which is reported
+	var hosts int
+	db.QueryRow("SELECT count(*) FROM cert_results WHERE run_id=1").Scan(&hosts)
+	if hosts != 5 {
+		t.Fatalf("%d cert_results rows", hosts)
+	}
+	// the chain check: without the CA file the test CA is unknown, which the run summary reports
 	o.CAFile = ""
 	if _, err := Certs(context.Background(), o); err != nil {
 		t.Fatal(err)
 	}
-	var note string
-	db.QueryRow("SELECT note FROM cert_groups WHERE run_id=2 AND label='*.shop.example (wildcard)'").Scan(&note)
-	if !strings.Contains(note, "chain not trusted") {
-		t.Fatalf("chain note %q", note)
+	db.QueryRow("SELECT summary FROM runs WHERE id=2").Scan(&summary)
+	if !strings.Contains(summary, "chain not trusted") {
+		t.Fatalf("chain note %q", summary)
 	}
 }
 

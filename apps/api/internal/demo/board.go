@@ -1,9 +1,11 @@
 package demo
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
@@ -52,6 +54,8 @@ func (g *Gen) boardData() {
 			"rca", "51-3", sl("observability"), 4},
 		{"OPS-238", "Staging: move coupon-service health check to /healthz", "progress", "In Progress", "alex.doe", "Medium",
 			"pre-release", "stg-app-01", nil, nil, sl("staging"), 1},
+		{"OPS-240", "Develop: check the checkout health URLs around the deploy", "progress", "In Progress", "alex.doe", "Medium",
+			"develop", "", nil, nil, sl("develop"), 0},
 	}
 	jira := "https://jira.northwind.example"
 	orStr := func(v any, def string) any {
@@ -65,6 +69,9 @@ func (g *Gen) boardData() {
 		ago := float64(k*7+2) * H
 		if t.key == "OPS-238" {
 			k = 30 // ids 16-18 are the GitLab tasks
+		}
+		if t.key == "OPS-240" {
+			k = 31
 		}
 		fpv := ""
 		if sid, ok := t.sid.(string); ok && t.sk == "incident" && (sid == "141" || sid == "148" || sid == "149") {
@@ -575,6 +582,39 @@ func (g *Gen) agentProgressCases() {
 	g.ins(b, "agent_log", "key", "OPS-211", "at", g.t(72*M), "kind", "intake", "text", "Reading the task and planning (read-only)")
 	g.ins(b, "agent_log", "key", "OPS-211", "at", g.t(70*M), "kind", "failed",
 		"text", "Intake failed: Your organization has disabled Claude subscription access for Claude Code")
+	g.agentOperatorCase()
+}
+
+// agentOperatorCase is the capability executor's demo (ADR-0022 PR 2): a develop plan with two http.check steps and
+// an operator step between them; the first check ran, the action waits for the operator and Continue.
+func (g *Gen) agentOperatorCase() {
+	b := g.board
+	check := func(n int, text, url string) *py.OMap {
+		return om("n", n, "text", text, "mode", "read-only", "targets", sl("checkout.dev.northwind.example"), "capability", "http.check",
+			"args", om("url", url, "expect_status", 200))
+	}
+	plan := om("summary", "Check the checkout health URLs before and after the deploy pipeline on develop.",
+		"classification", om("environment", "develop", "kind", "change"),
+		"estimate", om("effort", "15 min", "cost_usd", 0.2), "confidence", "high",
+		"plan", L(check(1, "Check that the checkout health URL answers 200 before the deploy", "https://checkout.dev.northwind.example/healthz"),
+			om("n", 2, "text", "Start the checkout deploy pipeline on develop", "mode", "operator", "targets", sl("checkout")),
+			check(3, "Check the health URL again after the deploy", "https://checkout.dev.northwind.example/healthz")),
+		"questions", L(), "needs", L())
+	var raw struct{ Classification, Plan any }
+	json.Unmarshal([]byte(jd(plan)), &raw)
+	sha, _ := capability.PlanSHA256(raw.Classification, raw.Plan)
+	id := capability.ActionID("OPS-240", 1, sha)
+	g.ins(b, "agent_tasks", "key", "OPS-240", "state", "operator", "phase", "act", "assignee", "alex.doe", "argus_user", "alex.doe",
+		"plan_version", 1, "plan", jd(plan), "plan_sha256", sha, "intake_at", g.t(50*M), "intake_cost", 0.2, "spent_usd", 0.2,
+		"approved_version", 1, "approved_by", "alex.doe", "approved_at", g.t(20*M), "approved_sha256", sha, "action_id", id,
+		"action_state", "operator", "run_started", g.t(20*M), "plan_entered_at", g.t(2*H), "updated", g.t(19*M))
+	g.ins(b, "agent_actions", "action_id", id, "step", 1, "key", "OPS-240", "capability", "http.check", "phase", "apply", "status", "ok",
+		"detail", "200 in 84 ms (expected 200)", "audit_sha256", "6f1d0c2b9a7e4d3c", "at", g.t(19*M))
+	g.ins(b, "agent_actions", "action_id", id, "step", 2, "key", "OPS-240", "capability", "", "phase", "operator", "status", "needs the operator",
+		"at", g.t(19*M))
+	g.ins(b, "agent_actions", "action_id", id, "step", 3, "key", "OPS-240", "capability", "http.check", "status", "waiting", "at", g.t(19*M))
+	g.ins(b, "agent_log", "key", "OPS-240", "at", g.t(20*M), "kind", "act", "text", "Capability steps of plan v1 sent to the executor (approved by alex.doe)")
+	g.ins(b, "agent_log", "key", "OPS-240", "at", g.t(19*M), "kind", "operator", "text", "Needs the operator: step 2. Then an admin presses Continue")
 }
 
 // agentProgressLive writes the running demo job's progress file (bin side: the task-agent runner), relative to now.

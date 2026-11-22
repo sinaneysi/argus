@@ -1,0 +1,8 @@
+# Edge groups of the marketing module's crawler job (ARGUS_GOOGLEBOT_EDGES_FILE, default <volume>/etc/googlebot-edges.tsv).
+# label <TAB> parser <TAB> LogQL stream selector [<TAB> site host, for a cache group]
+#   json   nginx access log with escape=json and the fields remote_addr, status, request_time, body_bytes_sent,
+#          server_name, upstream, request_uri, http_user_agent
+#   cache  a cache edge's short JSON log with ip, s, rt, b, c (cache status), u (URI), ua; it serves one site host
+# The first group is the primary one: an hour counts for the detector once every bucket of it is stored.
+primary	json	{job="nginx", filename="/var/log/nginx/access.log"}
+cache	cache	{job="cache-edge"}	www.example.com

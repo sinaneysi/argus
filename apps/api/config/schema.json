@@ -504,6 +504,81 @@
       "help": "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"
     },
     {
+      "key": "ARGUS_GOOGLEBOT_DB",
+      "aliases": [
+        "GW_DB"
+      ],
+      "type": "path",
+      "default": "${ARGUS_STATE_DIR}/googlebot.db",
+      "help": "crawler traffic database of the marketing module (its own file: several GB)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_EDGES_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-edges.tsv",
+      "help": "edge groups to read from Loki: label<TAB>json|cache<TAB>{stream selector}[<TAB>site host of a cache group]; the first is the primary group"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_PATHS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/googlebot-paths.tsv",
+      "help": "path classes: class<TAB>regex, first match wins (missing: a built-in generic list)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_SITEMAP",
+      "aliases": [
+        "GW_SITEMAP"
+      ],
+      "type": "str",
+      "help": "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_INTERVAL",
+      "aliases": [
+        "GW_INTERVAL"
+      ],
+      "type": "int",
+      "default": "300",
+      "min": 60,
+      "max": 600,
+      "help": "bucket width of a new crawler database, seconds (60, 300 or 600; it adapts itself afterwards)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_STORE_LIMIT_MB",
+      "type": "int",
+      "default": "6144",
+      "min": 0,
+      "max": 10000000,
+      "help": "above this size of the crawler database the per-URL rows stop and an alert opens (0: no limit)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_GRAFANA",
+      "type": "str",
+      "help": "the Grafana data source (its name in Settings -> Data sources) whose Loki holds the edge logs (empty: the first Grafana)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_LOKI_UID",
+      "type": "str",
+      "help": "the Loki data source uid in that Grafana (empty: its first Loki data source)"
+    },
+    {
+      "key": "ARGUS_GOOGLEBOT_HOST_LABEL",
+      "type": "str",
+      "default": "hostname",
+      "help": "the Loki stream label that names the edge host"
+    },
+    {
+      "key": "ARGUS_GOOGLE_RANGES_URLS",
+      "type": "list",
+      "default": "https://developers.google.com/static/crawling/ipranges/common-crawlers.json,https://developers.google.com/static/crawling/ipranges/special-crawlers.json,https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers.json",
+      "help": "Google's crawler address lists, fetched once a day (HTTPS_PROXY applies)"
+    },
+    {
+      "key": "ARGUS_SEO_HOSTS",
+      "type": "list",
+      "help": "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"
+    },
+    {
       "key": "FEATURE_TODAY",
       "type": "bool",
       "default": "0",
@@ -827,6 +902,52 @@
       "help": "seconds per TLS probe"
     },
     {
+      "key": "ARGUS_CERT_PAGE_DAYS",
+      "aliases": [
+        "CERT_PAGE_DAYS"
+      ],
+      "type": "int",
+      "default": "7",
+      "min": 0,
+      "max": 365,
+      "help": "fewer days left (or expired): the certificate notice pings"
+    },
+    {
+      "key": "ARGUS_CERT_STALE_DAYS",
+      "aliases": [
+        "CERT_STALE_EXPIRED_DAYS"
+      ],
+      "type": "int",
+      "default": "14",
+      "min": 1,
+      "max": 3650,
+      "help": "expired longer ago than this: a stale name, a warning, not a page"
+    },
+    {
+      "key": "ARGUS_CERT_DOMAINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/domains.txt",
+      "help": "names to probe: one host[:port] per line, # comments"
+    },
+    {
+      "key": "ARGUS_CERT_FROM_SERVICE_MAP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: also probe every public TLS name of ARGUS_SERVICE_MAP_FILE that resolves in DNS"
+    },
+    {
+      "key": "ARGUS_CERT_PINS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-pins.tsv",
+      "help": "pinned names (host, pinned expiry, label, note; TSV): a notice line until renewed"
+    },
+    {
+      "key": "ARGUS_CERT_EXPECT_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/cert-expect.tsv",
+      "help": "expected name mismatches (host, san-mismatch, reason; TSV)"
+    },
+    {
       "key": "ARGUS_COLLECT_BACKUPS",
       "type": "bool",
       "default": "0",
@@ -836,7 +957,13 @@
       "key": "ARGUS_BACKUP_SETS_FILE",
       "type": "path",
       "default": "${ARGUS_ETC_DIR}/backup-sets.json",
-      "help": "the backup sets to check (JSON)"
+      "help": "the backup sets to check (JSON; a .tsv file: name, <S3 source>/<bucket>/<prefix>, max age in hours, min size)"
+    },
+    {
+      "key": "ARGUS_BACKUP_S3_REGION",
+      "type": "str",
+      "default": "us-east-1",
+      "help": "the signing region of the S3 data sources of the backup check (an entry's region fact wins)"
     },
     {
       "key": "ARGUS_PROM_SOURCES",
@@ -871,7 +998,7 @@
       "key": "ARGUS_SERVICE_MAP_FILE",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/service-map.json",
-      "help": "the service map (domains, edges, backends) the inventory and VM state read"
+      "help": "the service map (domains, edges, backends) the inventory, the VM state and the certificate check read"
     },
     {
       "key": "ARGUS_INCIDENT_AUTORESOLVE_HOURS",
@@ -1154,6 +1281,16 @@
       "help": "one call never runs longer than this"
     },
     {
+      "key": "ARGUS_MODEL_SANDBOX",
+      "type": "str",
+      "default": "landlock",
+      "enum": [
+        "landlock",
+        "off"
+      ],
+      "help": "landlock: the cli provider's Claude CLI can open only its working folder, HOME, programs and CA files (Linux 5.13+; without Landlock a call fails instead of running unconfined); off: only the CLI's own rules"
+    },
+    {
       "key": "ARGUS_MODEL_LOG_DIR",
       "type": "path",
       "default": "${ARGUS_STATE_DIR}/model-runs",
@@ -1235,6 +1372,116 @@
       "min": 0,
       "max": 1800,
       "help": "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_MODE",
+      "type": "str",
+      "default": "off",
+      "enum": [
+        "off",
+        "dry-run",
+        "on"
+      ],
+      "help": "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"
+    },
+    {
+      "key": "ARGUS_ACT_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-act",
+      "help": "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"
+    },
+    {
+      "key": "ARGUS_ACTIONS_APPROVAL_TTL",
+      "type": "str",
+      "default": "24h",
+      "help": "an approval older than this is refused (5m..168h)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_PER_DAY",
+      "type": "int",
+      "default": "20",
+      "min": 1,
+      "max": 200,
+      "help": "actions started a day at most (ARGUS_TZ days)"
+    },
+    {
+      "key": "ARGUS_ACTIONS_BACKUP_DAYS",
+      "type": "int",
+      "default": "30",
+      "min": 1,
+      "max": 365,
+      "help": "how long the sealed old values of write steps are kept"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_HOSTS",
+      "type": "list",
+      "help": "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"
+    },
+    {
+      "key": "ARGUS_ACT_GITLAB_URL",
+      "type": "str",
+      "help": "gitlab.ci-variable: the GitLab the variables are in, https://gitlab.example.com (a path prefix is allowed); the group access token is stored only in actd's volume (argus actd credential set gitlab/token), never here"
+    },
+    {
+      "key": "ARGUS_ACT_GITLAB_PROJECTS",
+      "type": "list",
+      "help": "gitlab.ci-variable: the projects whose CI/CD variables of scope develop may be read and changed, numeric ids or group/project paths (an id and the path of the same project are one project); empty: the capabilities are not offered"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_URL",
+      "type": "str",
+      "help": "keycloak.read: the identity provider, https://id.example.com (a path prefix such as /auth is kept); read-only admin queries of the realms on ARGUS_ACT_KEYCLOAK_REALMS; the client secret is stored only in actd's volume (argus actd credential set keycloak/client), never here; empty: keycloak.read is not offered"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_REALMS",
+      "type": "list",
+      "help": "keycloak.read: the realms that may be read (names, A-Z a-z 0-9 _ . -); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_ID",
+      "type": "str",
+      "help": "keycloak.read: the confidential client with a service account (client credentials); required when ARGUS_ACT_KEYCLOAK_URL is set"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_CLIENT_REALM",
+      "type": "str",
+      "help": "keycloak.read: the realm the client lives in; every query first asks this realm's token endpoint (the only POST allowed); required with several realms on ARGUS_ACT_KEYCLOAK_REALMS; empty: the only realm on the list"
+    },
+    {
+      "key": "ARGUS_ACT_KEYCLOAK_MAX_READS",
+      "type": "int",
+      "default": "5",
+      "min": 1,
+      "max": 50,
+      "help": "keycloak.read: the most user-returning queries (users, user) one action may run; more are refused"
+    },
+    {
+      "key": "ARGUS_ACT_DEVELOP_LABELS",
+      "type": "list",
+      "default": "env:stage",
+      "help": "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, no label containing prod, release or pre-release, and the develop classification; the approval signs the labels the admin saw (the model's label alone is not enough)"
+    },
+    {
+      "key": "ARGUS_ACT_CATALOGUE_DETAIL",
+      "type": "str",
+      "default": "full",
+      "enum": [
+        "full",
+        "aliases"
+      ],
+      "help": "what the intake's capability list tells the model provider about the allow-lists: full (the hosts, project paths and realms) or aliases (stable aliases that Go maps back before validation)"
+    },
+    {
+      "key": "ARGUS_ACT_HTTP_ALLOW_HTTP",
+      "type": "bool",
+      "default": "0",
+      "help": "1: http.check, ARGUS_ACT_GITLAB_URL and ARGUS_ACT_KEYCLOAK_URL may use plain http:// (test installations only)"
+    },
+    {
+      "key": "ARGUS_APPROVAL_KEY_DIR",
+      "type": "path",
+      "default": "/var/lib/argus-approve",
+      "help": "the api's approval signing key (approval.key, approval.pub), in a folder only the api mounts (compose volume argus-approve; 0700, owned by the api's user); created at the api's first start; missing: approvals are not signed and actd refuses every step"
     },
     {
       "key": "ARGUS_KUBE_DIR",
@@ -1371,6 +1618,46 @@
       "type": "str",
       "pattern": true,
       "help": "the Grafana of one monitoring site; with the grafana-<id>-token secret it is listed as data source grafana/<id>"
+    },
+    {
+      "key": "ARGUS_GSC_SITE",
+      "aliases": [
+        "GSC_SITE"
+      ],
+      "type": "str",
+      "help": "the Search Console property (sc-domain:example.com or https://www.example.com/)"
+    },
+    {
+      "key": "ARGUS_GSC_URLS_FILE",
+      "type": "path",
+      "default": "${ARGUS_ETC_DIR}/seo-urls.txt",
+      "help": "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"
+    },
+    {
+      "key": "ARGUS_SEO_BRAND",
+      "aliases": [
+        "SEO_BRAND"
+      ],
+      "type": "str",
+      "help": "brand words, | separated: a brand query gets no low-CTR suggestion"
+    },
+    {
+      "key": "ARGUS_GA_PROPERTY",
+      "aliases": [
+        "GA_PROPERTY"
+      ],
+      "type": "str",
+      "help": "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"
+    },
+    {
+      "key": "ARGUS_CDN_INDEX",
+      "type": "str",
+      "help": "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"
+    },
+    {
+      "key": "ARGUS_CDN_SOURCE",
+      "type": "str",
+      "help": "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"
     },
     {
       "key": "DEMO_MODE",

@@ -5,14 +5,18 @@ package app
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/sinaneysi/argus/internal/capability"
 	"github.com/sinaneysi/argus/internal/py"
 )
 
 var (
 	reSectionNote = regexp.MustCompile(`(?s)<p class="section-note">(.*?)</p>`)
 	reHostBox     = regexp.MustCompile(`name="host" value="([^"]*)"( checked)?`)
+	// apiSecretArgRe: argument names that hold a secret unless they carry an input reference
+	apiSecretArgRe = regexp.MustCompile(`(?i)(value|matches|secret|token|password|passwd|credential)`)
 )
 
 // apiFixer is boardFixerBlock as data: its notes, and the host choice when the task can be sent.
@@ -304,7 +308,14 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 			for _, x := range py.AsList(py.Or(s.Get("targets"), []any{})) {
 				tg = append(tg, py.Str(x))
 			}
-			steps = append(steps, map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg})
+			st := map[string]any{"text": py.Str(s.Get("text")), "mode": py.Str(s.Get("mode")), "targets": tg}
+			if name := py.OrS(s.Get("capability"), ""); name != "" {
+				st["capability"], st["args"] = name, apiStepArgs(s.Get("args"))
+			}
+			if why := py.OrS(s.Get("capability_error"), ""); why != "" {
+				st["capabilityError"] = why
+			}
+			steps = append(steps, st)
 		}
 		env := ""
 		if v := cl.Get("environment"); v != "none" {
@@ -356,7 +367,7 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 	}
 	if admin {
 		okWrite, whyW := JiraCanWrite(sess.Username)
-		path, spin := agentSpinUp(plan)
+		path, spin := agentSpinUp(plan, key)
 		can := In(stateS, "ready", "done", "failed", "blocked", "stopped") && py.Truthy(plan) && !blocked && okWrite && path != "refused"
 		reason := ""
 		if !can {
@@ -383,7 +394,25 @@ func apiAgent(c *Ctx, t Row, sess *Session) map[string]any {
 		if path == "refused" {
 			spin = "Spin up agent"
 		}
-		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal"}
+		// the secret inputs of the capability steps: one write-only field each, sealed to actd at approval
+		inputs := []string{}
+		if agentExecutes(plan, key) {
+			inputs = agentInputNames(agentPlanInputs(a))
+			if len(inputs) > 0 && can {
+				if _, err := agentSealKey(); err != nil {
+					can, reason = false, "The plan needs secret inputs, but "+err.Error()
+				}
+			}
+		}
+		if inputs == nil {
+			inputs = []string{}
+		}
+		out["spin"] = map[string]any{"can": can, "label": spin, "reason": reason, "primary": stateS == "ready", "proposal": path == "proposal",
+			"inputs": inputs, "env": apiSpinEnv(plan, key)}
+	}
+	out["planSha256"] = agentPlanSHA(a)
+	if act := apiAgentAction(a, plan, admin); act != nil {
+		out["action"] = act
 	}
 	out["chat"] = apiChat(c, key, sess)
 	out["secrets"] = apiSecrets(key, a, py.OrS(t.Get("env"), ""), sess)
@@ -557,4 +586,97 @@ func apiBoardNewJSON(qs py.QS, sess *Session) (any, *apiErr) {
 		out["trackers"] = map[string]any{"jira": py.OrS(BoardWriteBlock(sess), "Your Jira connection, else the shared one."), "gitlab": sub, "projects": projects, "project": gitlabDefaultProject(st)}
 	}
 	return out, nil
+}
+
+// apiAgentAction is the task's last capability action (ADR-0022): its steps from agent_actions (actd's results, not
+// the model's), the operator step it waits for and, for an admin, Continue and the rollback of each backed-up step.
+func apiAgentAction(a Row, plan *py.OMap, admin bool) map[string]any {
+	id := a.Str("action_id")
+	if id == "" {
+		return nil
+	}
+	texts := map[int64]string{}
+	for _, sv := range py.AsList(py.Or(plan.Get("plan"), []any{})) {
+		s := py.AsMap(sv)
+		texts[int64(py.Num(py.Or(s.Get("n"), int64(0))))] = py.Str(s.Get("text"))
+	}
+	busy := In(a.Str("state"), "planning", "running", "approved") || a.T("rollback_started")
+	steps := []map[string]any{}
+	var wait map[string]any
+	for _, r := range BoardBQ("SELECT * FROM agent_actions WHERE action_id=? ORDER BY step", id) {
+		audit := r.Str("audit_sha256")
+		if len(audit) > 12 {
+			audit = audit[:12]
+		}
+		st := map[string]any{"step": r.I("step"), "capability": r.Str("capability"), "status": r.Str("status"), "detail": py.OrS(r.Get("detail"), r.Str("summary")),
+			"audit": audit, "text": texts[r.I("step")]}
+		unknown := r.Str("status") == "outcome-unknown"
+		if admin && !busy && r.T("backup_ref") && r.Str("phase") != "rollback" && !unknown {
+			st["rollback"] = true
+		}
+		// a write whose outcome is unknown: an admin checks the target and says applied or not-applied
+		if admin && !busy && unknown && a.Str("action_state") == "outcome-unknown" {
+			st["checked"] = true
+		}
+		steps = append(steps, st)
+	}
+	// the step to continue after comes from actd's result file, not from board.db (the worker writes that)
+	if a.Str("state") == "operator" {
+		if n := agentWaitingStep(id); n > 0 {
+			wait = map[string]any{"step": n, "text": texts[n], "can": admin}
+		}
+	}
+	out := map[string]any{"id": id, "state": a.Str("action_state"), "steps": steps}
+	if wait != nil {
+		out["continue"] = wait
+	}
+	return out
+}
+
+// apiStepArgs are a capability step's arguments for the plan view, in key order. A sealed input ("input:<NAME>") is
+// shown by its name only: the admin enters the value at approval, and it is never on the page.
+func apiStepArgs(v any) []map[string]any {
+	out := []map[string]any{}
+	m := py.AsMap(v)
+	if m == nil {
+		return out
+	}
+	keys := m.Keys()
+	sort.Strings(keys)
+	for _, k := range keys {
+		x := m.Get(k)
+		if s, ok := x.(string); ok && capability.InputRefRe.MatchString(s) {
+			out = append(out, map[string]any{"name": k, "value": strings.TrimPrefix(s, "input:"), "input": true})
+			continue
+		}
+		if apiSecretArgRe.MatchString(k) { // an input field without a reference: never shown (validation refuses it)
+			out = append(out, map[string]any{"name": k, "value": capability.Redacted})
+			continue
+		}
+		var val string
+		if b, ok := x.(bool); ok {
+			val = If(b, "true", "false")
+		} else if l, ok := x.([]any); ok {
+			parts := make([]string, 0, len(l))
+			for _, y := range l {
+				parts = append(parts, py.Str(y))
+			}
+			val = strings.Join(parts, ", ")
+		} else {
+			val = py.Str(x)
+		}
+		out = append(out, map[string]any{"name": k, "value": py.Head(val, 300)})
+	}
+	return out
+}
+
+// apiSpinEnv is the classification on the approval and where it comes from (ADR-0022 PR 5 review): the model's
+// label, and whether the task's board labels confirm stage. A write-tier capability executes only with both.
+func apiSpinEnv(plan *py.OMap, key string) map[string]any {
+	cl := py.AsMap(py.Or(plan.Get("classification"), py.NewOMap()))
+	env := py.OrS(cl.Get("environment"), "")
+	ok, why := agentStageEvidence(key)
+	matters := env == "develop" && agentHasWrite(plan) && strings.TrimSpace(ACTIONS_MODE) != "" && ACTIONS_MODE != "off"
+	labels, lsha := agentApprovalLabels(key)
+	return map[string]any{"model": env, "boardOk": ok, "board": why, "matters": matters, "labels": labels, "labelsSha256": lsha}
 }

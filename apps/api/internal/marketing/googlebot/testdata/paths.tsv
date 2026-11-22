@@ -1,0 +1,13 @@
+# Path classes for the parity test: first matching regex wins.
+robots	^/robots\.txt$
+sitemap	^/sitemap[^/]*\.xml(\.gz)?$
+api	^/(api|_next/data)(/|$)
+jscss	^/(_next/static|static)/|\.(js|css|map|woff2?|ttf|eot)$
+image	\.(jpe?g|png|gif|webp|avif|svg|ico)$|^/(image|images|media|uploads)/
+blog	^/blog(/|$)
+pdp	^/product-[0-9]+(/|$)
+facet	^/category/.+/(type|color|size|price)-[^/]+$
+plp	^/category/[^/]+(/[^/]+)*$
+brand	^/brand/[^/]+$
+static	^/page/
+home	^/$

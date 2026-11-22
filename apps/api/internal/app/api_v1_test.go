@@ -6,6 +6,8 @@ package app
 // and the demo refusal.
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -312,6 +314,14 @@ func TestAPIv1Acting(t *testing.T) {
 	}
 	if r := e.v1Post("/api/v1/review/act", ck(adm), map[string]any{"sel": "approvals:OPS-238", "action": "approve", "plan_version": "1"}, nil); r.status != 409 {
 		t.Fatal("stale plan version", r.status, r.body)
+	}
+	if _, priv, err := ed25519.GenerateKey(rand.Reader); err == nil { // with a signing key, the review approval pins the hash
+		SetApprovalKey(priv)
+		r := e.v1Post("/api/v1/review/act", ck(adm), map[string]any{"sel": "approvals:OPS-238", "action": "approve", "plan_version": "2"}, nil)
+		SetApprovalKey(nil)
+		if r.status != 409 || !strings.Contains(r.body, "plan hash is missing") {
+			t.Fatal("a review approval without the plan hash", r.status, r.body)
+		}
 	}
 	r = e.v1Post("/api/v1/review/act", ck(adm), map[string]any{"sel": "proposals:16", "action": "snooze", "return": "/review?kind=proposals"}, nil)
 	if m := v1JSON(t, r); r.status != 200 || m["ok"] != true || !strings.HasPrefix(m["redirect"].(string), "/review") {

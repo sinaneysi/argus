@@ -1,0 +1,258 @@
+{
+ "store/db-backups/billing/": [
+  {
+   "key": "billing_01.sql",
+   "lastModified": "2025-12-18T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_02.sql",
+   "lastModified": "2025-12-19T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_03.sql",
+   "lastModified": "2025-12-20T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_04.sql",
+   "lastModified": "2025-12-21T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_05.sql",
+   "lastModified": "2025-12-22T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_06.sql",
+   "lastModified": "2025-12-23T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_07.sql",
+   "lastModified": "2025-12-24T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_08.sql",
+   "lastModified": "2025-12-25T09:20:00Z",
+   "size": 2000
+  },
+  {
+   "key": "billing_09.sql",
+   "lastModified": "2025-12-26T09:20:00Z",
+   "size": 2000
+  }
+ ],
+ "store/db-backups/empty/": [],
+ "store/db-backups/orders/": [
+  {
+   "key": "orders-20261201.dump.gz",
+   "lastModified": "2025-12-21T07:20:00Z",
+   "size": 1001000
+  },
+  {
+   "key": "orders-20261202.dump.gz",
+   "lastModified": "2025-12-22T07:20:00Z",
+   "size": 1002000
+  },
+  {
+   "key": "orders-20261203.dump.gz",
+   "lastModified": "2025-12-23T07:20:00Z",
+   "size": 1003000
+  },
+  {
+   "key": "orders-20261204.dump.gz",
+   "lastModified": "2025-12-24T07:20:00Z",
+   "size": 1004000
+  },
+  {
+   "key": "orders-20261205.dump.gz",
+   "lastModified": "2025-12-25T07:20:00Z",
+   "size": 1005000
+  },
+  {
+   "key": "orders-20261206.dump.gz",
+   "lastModified": "2025-12-26T07:20:00Z",
+   "size": 1006000
+  },
+  {
+   "key": "orders-20261207.dump.gz",
+   "lastModified": "2025-12-27T07:20:00Z",
+   "size": 1007000
+  },
+  {
+   "key": "orders-20261208.dump.gz",
+   "lastModified": "2025-12-28T07:20:00Z",
+   "size": 1008000
+  },
+  {
+   "key": "config/orders-cfg-20261201.tar",
+   "lastModified": "2025-12-21T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261202.tar",
+   "lastModified": "2025-12-22T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261203.tar",
+   "lastModified": "2025-12-23T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261204.tar",
+   "lastModified": "2025-12-24T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261205.tar",
+   "lastModified": "2025-12-25T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261206.tar",
+   "lastModified": "2025-12-26T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261207.tar",
+   "lastModified": "2025-12-27T06:20:00Z",
+   "size": 5000
+  },
+  {
+   "key": "config/orders-cfg-20261208.tar",
+   "lastModified": "2025-12-28T06:20:00Z",
+   "size": 5000
+  }
+ ],
+ "store/db-backups/search/": [
+  {
+   "key": "idx-1.snap",
+   "lastModified": "2025-12-25T20:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-2.snap",
+   "lastModified": "2025-12-26T08:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-3.snap",
+   "lastModified": "2025-12-26T20:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-4.snap",
+   "lastModified": "2025-12-27T08:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-5.snap",
+   "lastModified": "2025-12-27T20:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-6.snap",
+   "lastModified": "2025-12-28T08:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-7.snap",
+   "lastModified": "2025-12-28T20:20:00Z",
+   "size": 900000
+  },
+  {
+   "key": "idx-8.snap",
+   "lastModified": "2025-12-29T08:20:00Z",
+   "size": 100
+  }
+ ],
+ "store/logs/app/": [
+  {
+   "key": "hourly/001.log",
+   "lastModified": "2025-12-29T00:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/002.log",
+   "lastModified": "2025-12-29T01:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/003.log",
+   "lastModified": "2025-12-29T02:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/004.log",
+   "lastModified": "2025-12-29T03:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/005.log",
+   "lastModified": "2025-12-29T04:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/006.log",
+   "lastModified": "2025-12-29T05:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/007.log",
+   "lastModified": "2025-12-29T06:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/008.log",
+   "lastModified": "2025-12-29T07:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/009.log",
+   "lastModified": "2025-12-29T08:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "hourly/010.log",
+   "lastModified": "2025-12-29T09:20:00Z",
+   "size": 300
+  },
+  {
+   "key": "old/weekly-1.tgz",
+   "lastModified": "2025-10-13T09:20:00Z",
+   "size": 9999
+  },
+  {
+   "key": "old/weekly-2.tgz",
+   "lastModified": "2025-10-06T09:20:00Z",
+   "size": 9999
+  },
+  {
+   "key": "old/weekly-3.tgz",
+   "lastModified": "2025-09-29T09:20:00Z",
+   "size": 9999
+  }
+ ],
+ "store/media/thumbs/": [
+  {
+   "key": "t-1.zip",
+   "lastModified": "2025-12-28T03:20:00Z",
+   "size": 50
+  },
+  {
+   "key": "t-2.zip",
+   "lastModified": "2025-12-28T03:30:00Z",
+   "size": 50
+  },
+  {
+   "key": "t-3.zip",
+   "lastModified": "2025-12-29T03:20:00Z",
+   "size": 40
+  }
+ ]
+}

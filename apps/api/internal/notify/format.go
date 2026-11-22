@@ -54,7 +54,8 @@ var Titles = map[string]string{"backup-check": "Backups", "cert-check": "Certifi
 // Pages are the web pages the messages of a source link to (default "/").
 var Pages = map[string]string{"backup-check": "/backups", "cert-check": "/certs", "log-rca": "/alerts",
 	"chat-triage": "/incidents", "incident": "/incidents", "admin": "/admin", "ops-watch": "/alerts", "setup": "/",
-	"rca-deep": "/rca", "disk-explain": "/capacity", "vm-explain": "/inventory"}
+	"rca-deep": "/rca", "disk-explain": "/capacity", "vm-explain": "/inventory",
+	"googlebot": "/seo", "seo": "/seo"}
 
 // Content is one chat message: msgtype, body, format, formatted_body. It marshals with its keys in that order and
 // non-ASCII text as is, like the reference formatter's output.
