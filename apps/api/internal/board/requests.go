@@ -25,7 +25,6 @@ var unsupported = map[string]string{
 	"agent-answers": "the task agent", "agent-replan": "the task agent", "agent-start": "the task agent",
 	"agent-stop": "the task agent", "agent-settings": "the task agent", "agent-fixer-move": "the task agent",
 	"agent-continue": "the task agent", "agent-rollback": "the task agent", "agent-checked": "the task agent",
-	"lesson": "lessons", "lesson-settings": "lessons",
 }
 
 func readRequest(path string) (map[string]any, error) {
@@ -276,6 +275,9 @@ func (r *run) handle(req map[string]any, rid string) (string, any) {
 	}
 	if strings.HasPrefix(kind, "agent-") && r.o.Agent != nil {
 		return r.agentHandle(req, by, role)
+	}
+	if kind == "lesson" || kind == "lesson-settings" { // /admin/lessons: approve / edit / reject / retire, the switch
+		return r.lessonHandle(req, by, role)
 	}
 	tracker := "jira"
 	switch kind {
