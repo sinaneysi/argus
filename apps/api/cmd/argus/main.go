@@ -62,6 +62,7 @@ var commands = []command{
 	{"outline", "documentation publisher: apply the Outline requests, publish the service pages under the parent document", runOutline},
 	{"problems", "problem records: apply the Problems page's requests (tick); the link suggester (suggest)", runProblems},
 	{"cicd", "CI/CD watcher: scan the GitLab estate, watch pipelines (failures, stuck pipelines, deploys)", runCicd},
+	{"ideas", "Ideas: apply the review's requests and write the build prompts (apply); the status file (status)", runIdeas},
 	{"incidents", "incident records: apply the incident page's requests and auto-resolve (tick); attach, backfill", runIncidents},
 	{"import", "one-time import of an earlier installation into the one volume (names only; -dry-run first)", runImport},
 	{"marketing", "the marketing module's jobs: crawler logs, sitemaps, the SEO page's Googlebot table (googlebot ...)", runMarketing},
