@@ -149,6 +149,7 @@ var Fields = []Field{
 	{Key: "ARGUS_SEO_HOSTS", Kind: List, Help: "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"},
 	{Key: "FEATURE_TODAY", Kind: Bool, Default: "0", Help: "show the Today page without the root switch"},
 	{Key: "FEATURE_PROBLEMS", Kind: Bool, Default: "0", Help: "show Problems without the root switch"},
+	{Key: "PROBLEMS_*", Kind: Str, Pattern: true, Help: "problem records: PROBLEMS_SUGGEST, PROBLEMS_AUTO_ACCEPT, PROBLEMS_CLOSE_DAYS, ... (argus problems -h; out of range: the default)"},
 	{Key: "CICD_STUCK_MINUTES", Kind: Int, Default: "10", Help: "a pipeline waiting longer than this is stuck"},
 	// site display values (internal/app/site.go): names and links shown on the pages
 	{Key: "ARGUS_SSH_ALIAS", Kind: Str, Default: "argus-01", Help: "the operator's SSH alias of the Argus server"},
