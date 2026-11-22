@@ -24,6 +24,7 @@ var unsupported = map[string]string{
 	"proposal": "approval proposals", "proposal-settings": "approval proposals", "mx-preview": "Matrix requests",
 	"agent-answers": "the task agent", "agent-replan": "the task agent", "agent-start": "the task agent",
 	"agent-stop": "the task agent", "agent-settings": "the task agent", "agent-fixer-move": "the task agent",
+	"agent-continue": "the task agent", "agent-rollback": "the task agent", "agent-checked": "the task agent",
 	"lesson": "lessons", "lesson-settings": "lessons",
 }
 

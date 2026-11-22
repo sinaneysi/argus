@@ -1,0 +1,3 @@
+<?xml version='1.0'?><sitemapindex><sitemap><loc> https://www.example.com/sitemap-pdp-1.xml </loc><lastmod>2026-10-28T10:00:00+03:30</lastmod></sitemap><sitemap><loc>https://www.example.com/sitemap-images-1.xml</loc></sitemap><url><loc>https://www.example.com/a?x=1&amp;y=2</loc><lastmod>2026-10-28</lastmod></url><url><lastmod>2026-10-27</lastmod></url><url>
+<loc>https://other.example.org/p</loc>
+<lastmod>2026-10-27T01:02:03Z</lastmod></url><url><loc>https://www.example.com/b</loc><lastmod>2026-10-27T01:02:03.250Z</lastmod></url></sitemapindex>

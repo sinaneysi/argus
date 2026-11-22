@@ -135,10 +135,23 @@ var Fields = []Field{
 	{Key: "TOTP_KEY_FILE_OLD", Kind: Path, Help: "the previous key, for argus-api mfa rekey"},
 	{Key: "TOTP_LEGACY_LABEL", Kind: Str, Help: "label of 2FA secrets an earlier install wrote under another product name (<name>-totp); read as a fallback, rewritten by argus-api mfa rekey"},
 	{Key: "ARGUS_MODULES", Kind: List, Help: "optional modules that are on (ADR-0021 D6): marketing; an admin's switch in Settings -> General wins"},
+	// the marketing module's crawler traffic job (internal/marketing/googlebot)
+	{Key: "ARGUS_GOOGLEBOT_DB", Aliases: []string{"GW_DB"}, Kind: Path, Default: "${ARGUS_STATE_DIR}/googlebot.db", Help: "crawler traffic database of the marketing module (its own file: several GB)"},
+	{Key: "ARGUS_GOOGLEBOT_EDGES_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/googlebot-edges.tsv", Help: "edge groups to read from Loki: label<TAB>json|cache<TAB>{stream selector}[<TAB>site host of a cache group]; the first is the primary group"},
+	{Key: "ARGUS_GOOGLEBOT_PATHS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/googlebot-paths.tsv", Help: "path classes: class<TAB>regex, first match wins (missing: a built-in generic list)"},
+	{Key: "ARGUS_GOOGLEBOT_SITEMAP", Aliases: []string{"GW_SITEMAP"}, Kind: Str, Help: "the site's sitemap index (https://www.example.com/sitemap.xml; http only for test sites); its host is the site host of crawl waste"},
+	{Key: "ARGUS_GOOGLEBOT_INTERVAL", Aliases: []string{"GW_INTERVAL"}, Kind: Int, Default: "300", Min: 60, Max: 600, Help: "bucket width of a new crawler database, seconds (60, 300 or 600; it adapts itself afterwards)"},
+	{Key: "ARGUS_GOOGLEBOT_STORE_LIMIT_MB", Kind: Int, Default: "6144", Min: 0, Max: 10000000, Help: "above this size of the crawler database the per-URL rows stop and an alert opens (0: no limit)"},
+	{Key: "ARGUS_GOOGLEBOT_GRAFANA", Kind: Str, Help: "the Grafana data source (its name in Settings -> Data sources) whose Loki holds the edge logs (empty: the first Grafana)"},
+	{Key: "ARGUS_GOOGLEBOT_LOKI_UID", Kind: Str, Help: "the Loki data source uid in that Grafana (empty: its first Loki data source)"},
+	{Key: "ARGUS_GOOGLEBOT_HOST_LABEL", Kind: Str, Default: "hostname", Help: "the Loki stream label that names the edge host"},
+	{Key: "ARGUS_GOOGLE_RANGES_URLS", Kind: List, Default: "https://developers.google.com/static/crawling/ipranges/common-crawlers.json,https://developers.google.com/static/crawling/ipranges/special-crawlers.json,https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers.json", Help: "Google's crawler address lists, fetched once a day (HTTPS_PROXY applies)"},
+	{Key: "ARGUS_SEO_HOSTS", Kind: List, Help: "site hosts on the SEO page's Googlebot table (empty: every host the edges serve)"},
 	{Key: "FEATURE_TODAY", Kind: Bool, Default: "0", Help: "show the Today page without the root switch"},
 	{Key: "FEATURE_PROBLEMS", Kind: Bool, Default: "0", Help: "show Problems without the root switch"},
 	{Key: "FEATURE_IDEAS", Kind: Bool, Default: "0", Help: "Ideas: the advisers and the Ideas review are on"},
 	{Key: "IDEAS_*", Kind: Str, Pattern: true, Help: "Ideas: IDEAS_SCHEDULE, IDEAS_MAX_TURNS, IDEAS_BUDGET_USD, IDEAS_TIMEOUT_MIN, IDEAS_MODEL, IDEAS_MAX_PER_RUN, IDEAS_DAILY_USD, IDEAS_SIMILARITY (out of range: clamped)"},
+	{Key: "PROBLEMS_*", Kind: Str, Pattern: true, Help: "problem records: PROBLEMS_SUGGEST, PROBLEMS_AUTO_ACCEPT, PROBLEMS_CLOSE_DAYS, ... (argus problems -h; out of range: the default)"},
 	{Key: "CICD_STUCK_MINUTES", Kind: Int, Default: "10", Help: "a pipeline waiting longer than this is stuck"},
 	// site display values (internal/app/site.go): names and links shown on the pages
 	{Key: "ARGUS_SSH_ALIAS", Kind: Str, Default: "argus-01", Help: "the operator's SSH alias of the Argus server"},
@@ -192,15 +205,22 @@ var Fields = []Field{
 	{Key: "ARGUS_CERT_WARN_DAYS", Aliases: []string{"CERT_WARN_DAYS"}, Kind: Int, Default: "30", Min: 1, Max: 365, Help: "fewer days left: WARN"},
 	{Key: "ARGUS_CERT_FAIL_DAYS", Aliases: []string{"CERT_FAIL_DAYS"}, Kind: Int, Default: "14", Min: 0, Max: 365, Help: "fewer days left: FAIL"},
 	{Key: "ARGUS_CERT_TIMEOUT", Kind: Int, Default: "10", Min: 1, Max: 120, Help: "seconds per TLS probe"},
+	{Key: "ARGUS_CERT_PAGE_DAYS", Aliases: []string{"CERT_PAGE_DAYS"}, Kind: Int, Default: "7", Min: 0, Max: 365, Help: "fewer days left (or expired): the certificate notice pings"},
+	{Key: "ARGUS_CERT_STALE_DAYS", Aliases: []string{"CERT_STALE_EXPIRED_DAYS"}, Kind: Int, Default: "14", Min: 1, Max: 3650, Help: "expired longer ago than this: a stale name, a warning, not a page"},
+	{Key: "ARGUS_CERT_DOMAINS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/domains.txt", Help: "names to probe: one host[:port] per line, # comments"},
+	{Key: "ARGUS_CERT_FROM_SERVICE_MAP", Kind: Bool, Default: "0", Help: "1: also probe every public TLS name of ARGUS_SERVICE_MAP_FILE that resolves in DNS"},
+	{Key: "ARGUS_CERT_PINS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/cert-pins.tsv", Help: "pinned names (host, pinned expiry, label, note; TSV): a notice line until renewed"},
+	{Key: "ARGUS_CERT_EXPECT_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/cert-expect.tsv", Help: "expected name mismatches (host, san-mismatch, reason; TSV)"},
 	{Key: "ARGUS_COLLECT_BACKUPS", Kind: Bool, Default: "0", Help: "1: argus checks backups records a backup-check run in ARGUS_DB"},
-	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON)"},
+	{Key: "ARGUS_BACKUP_SETS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/backup-sets.json", Help: "the backup sets to check (JSON; a .tsv file: name, <S3 source>/<bucket>/<prefix>, max age in hours, min size)"},
+	{Key: "ARGUS_BACKUP_S3_REGION", Kind: Str, Default: "us-east-1", Help: "the signing region of the S3 data sources of the backup check (an entry's region fact wins)"},
 	// the host estate (argus estate; worker jobs inventory and vm-pulse): Prometheus through Settings -> Data sources
 	{Key: "ARGUS_PROM_SOURCES", Kind: List, Help: "name=url, ...: Prometheus base URLs for the inventory and VM state, besides the Grafana and Prometheus entries of Settings -> Data sources"},
 	{Key: "ARGUS_PROM_CA_FILE", Kind: Path, Help: "extra CA certificates for the Prometheus and Grafana sites of the inventory"},
 	{Key: "ARGUS_PROM_TIMEOUT", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "seconds per Prometheus query of the inventory and VM state"},
 	{Key: "ARGUS_INVENTORY_ENV_PREFIXES", Kind: List, Help: "env=address prefix, ...: the environment of a VM without an env label, by its address (first match wins), e.g. develop=10.0.9.,release=10.0."},
 	{Key: "ARGUS_VM_APP_UNITS", Kind: List, Default: "app-", Help: "name prefixes of the application systemd units (letters, digits, - and _)"},
-	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory and VM state read"},
+	{Key: "ARGUS_SERVICE_MAP_FILE", Kind: Path, Default: "${ARGUS_STATE_DIR}/service-map.json", Help: "the service map (domains, edges, backends) the inventory, the VM state and the certificate check read"},
 	// notifications (argus notify; every job that posts a notice): Matrix, else Telegram, else a webhook, else none
 	{Key: "ARGUS_INCIDENT_AUTORESOLVE_HOURS", Aliases: []string{"INCIDENT_AUTORESOLVE_HOURS"}, Kind: Int, Default: "6", Min: 1, Max: 720, Help: "an alert-backed incident resolves after this many hours with no matching alert firing"},
 	{Key: "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", Aliases: []string{"INCIDENT_CHAT_RESOLVE_HOURS"}, Kind: Int, Default: "24", Min: 1, Max: 720, Help: "an incident with no alert behind it (a chat report) resolves after this many hours with no new report"},
@@ -229,6 +249,7 @@ var Fields = []Field{
 	{Key: "ARGUS_BOARD_AUTH_DB", Aliases: []string{"BOARD_AUTH_DB"}, Kind: Path, Help: "users and roles the board sync checks, read only (empty: ARGUS_AUTH_DB)"},
 	{Key: "ARGUS_BOARD_ENV_FILES", Aliases: []string{"BOARD_ENV_FILES"}, Kind: Str, Help: "colon-separated root-owned files with the JIRA_* settings; the first that sets a key wins (empty: ARGUS_ETC_DIR/jira.env)"},
 	{Key: "ARGUS_GITLAB_ISSUES_REQ_DIR", Aliases: []string{"GITLAB_ISSUES_REQ_DIR"}, Kind: Path, Help: "GitLab issues connection requests from Settings -> Integrations (empty: ARGUS_SETTINGS_IN/gitlab-issues)"},
+	{Key: "ARGUS_JIRA_CONNECT_DIR", Aliases: []string{"JIRA_CONNECT_DIR"}, Kind: Path, Help: "Jira connection requests from Account and Settings -> Jira sync (empty: ARGUS_SETTINGS_IN/jira-connect)"},
 	{Key: "ARGUS_GITLAB_ISSUES_ENV_FILE", Aliases: []string{"GITLAB_ISSUES_ENV_FILE"}, Kind: Path, Help: "a KEY=value file whose GITLAB_URL gives the default GitLab URL and allowed host (empty: ARGUS_ETC_DIR/env)"},
 	{Key: "ARGUS_BOARD_PAT_FILE", Aliases: []string{"BOARD_PAT_FILE"}, Kind: Path, Help: "the Jira personal access token, root-owned 0600 (empty: ARGUS_ETC_DIR/jira.pat)"},
 	{Key: "ARGUS_BOARD_OWNER_UID", Aliases: []string{"BOARD_OWNER_UID"}, Kind: Int, Default: "0", Min: 0, Max: 2147483647, Help: "the owner the Jira settings and token files must have"},
@@ -247,6 +268,7 @@ var Fields = []Field{
 	{Key: "ARGUS_MODEL_API_URL", Kind: Str, Help: "the Messages API address when no anthropic data source gives one (empty: https://api.anthropic.com)"},
 	{Key: "ARGUS_MODEL_MAX_BUDGET_USD", Kind: Str, Default: "5", Help: "one call never spends more than this (USD; the CLI's --max-budget-usd)"},
 	{Key: "ARGUS_MODEL_MAX_MINUTES", Kind: Int, Default: "65", Min: 1, Max: 240, Help: "one call never runs longer than this"},
+	{Key: "ARGUS_MODEL_SANDBOX", Kind: Str, Default: "landlock", Choices: []string{"landlock", "off"}, Help: "landlock: the cli provider's Claude CLI can open only its working folder, HOME, programs and CA files (Linux 5.13+; without Landlock a call fails instead of running unconfined); off: only the CLI's own rules"},
 	{Key: "ARGUS_MODEL_LOG_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/model-runs", Help: "the final result of each model call as JSON (redacted), one file per call"},
 	// the task agent (internal/board agent.go plans, internal/taskagent runs the model jobs; volume layout)
 	{Key: "ARGUS_TASK_AGENT_DIR", Kind: Path, Default: "${ARGUS_STATE_DIR}/task-agent", Help: "the task agent's job files (jobs/) and results and progress files (out/; the task page reads them)"},
@@ -258,6 +280,24 @@ var Fields = []Field{
 	{Key: "ARGUS_TASK_CHAT_MINUTES", Kind: Int, Default: "5", Min: 1, Max: 30, Help: "one task-chat reply takes at most this long"},
 	{Key: "ARGUS_TASK_BUDGET_USD", Aliases: []string{"TASK_BUDGET_USD"}, Kind: Str, Default: "8", Help: "all planning and runs of one task together spend at most this (USD)"},
 	{Key: "ARGUS_TASK_PLAN_DEBOUNCE_SEC", Aliases: []string{"TASK_PLAN_DEBOUNCE_SEC"}, Kind: Int, Default: "120", Min: 0, Max: 1800, Help: "a task must stay in the agent column this long before it is planned (a card dragged through costs nothing)"},
+	// the capability executor argus actd (ADR-0022; compose profile actions, its own volume argus-act)
+	{Key: "ARGUS_ACTIONS_MODE", Kind: Str, Default: "off", Choices: []string{"off", "dry-run", "on"}, Help: "off: no capability runs, every action request is refused with a reason; dry-run: only the plan phase runs; on: the approved capability steps run"},
+	{Key: "ARGUS_ACT_DIR", Kind: Path, Default: "/var/lib/argus-act", Help: "the executor's own volume (keys, credentials, backups, the audit chain); must exist, owned by the executor's user, mode 0700, when the mode is not off"},
+	{Key: "ARGUS_ACTIONS_APPROVAL_TTL", Kind: Str, Default: "24h", Help: "an approval older than this is refused (5m..168h)"},
+	{Key: "ARGUS_ACTIONS_PER_DAY", Kind: Int, Default: "20", Min: 1, Max: 200, Help: "actions started a day at most (ARGUS_TZ days)"},
+	{Key: "ARGUS_ACTIONS_BACKUP_DAYS", Kind: Int, Default: "30", Min: 1, Max: 365, Help: "how long the sealed old values of write steps are kept"},
+	{Key: "ARGUS_ACT_HTTP_HOSTS", Kind: List, Help: "http.check: the hosts it may GET, [internal:]host[:port], *.suffix allowed, no IP address, no bare *; without a port only 443 (80 with plain http); without internal: non-public addresses are refused (empty: http.check is not offered)"},
+	{Key: "ARGUS_ACT_GITLAB_URL", Kind: Str, Help: "gitlab.ci-variable: the GitLab the variables are in, https://gitlab.example.com (a path prefix is allowed); the group access token is stored only in actd's volume (argus actd credential set gitlab/token), never here"},
+	{Key: "ARGUS_ACT_GITLAB_PROJECTS", Kind: List, Help: "gitlab.ci-variable: the projects whose CI/CD variables of scope develop may be read and changed, numeric ids or group/project paths (an id and the path of the same project are one project); empty: the capabilities are not offered"},
+	{Key: "ARGUS_ACT_KEYCLOAK_URL", Kind: Str, Help: "keycloak.read: the identity provider, https://id.example.com (a path prefix such as /auth is kept); read-only admin queries of the realms on ARGUS_ACT_KEYCLOAK_REALMS; the client secret is stored only in actd's volume (argus actd credential set keycloak/client), never here; empty: keycloak.read is not offered"},
+	{Key: "ARGUS_ACT_KEYCLOAK_REALMS", Kind: List, Help: "keycloak.read: the realms that may be read (names, A-Z a-z 0-9 _ . -); required when ARGUS_ACT_KEYCLOAK_URL is set"},
+	{Key: "ARGUS_ACT_KEYCLOAK_CLIENT_ID", Kind: Str, Help: "keycloak.read: the confidential client with a service account (client credentials); required when ARGUS_ACT_KEYCLOAK_URL is set"},
+	{Key: "ARGUS_ACT_KEYCLOAK_CLIENT_REALM", Kind: Str, Help: "keycloak.read: the realm the client lives in; every query first asks this realm's token endpoint (the only POST allowed); required with several realms on ARGUS_ACT_KEYCLOAK_REALMS; empty: the only realm on the list"},
+	{Key: "ARGUS_ACT_KEYCLOAK_MAX_READS", Kind: Int, Default: "5", Min: 1, Max: 50, Help: "keycloak.read: the most user-returning queries (users, user) one action may run; more are refused"},
+	{Key: "ARGUS_ACT_DEVELOP_LABELS", Kind: List, Default: "env:stage", Help: "the board labels that mark a task of the stage (develop) environment; a write-tier capability runs only when the task has one of them, no other env: label, no label containing prod, release or pre-release, and the develop classification; the approval signs the labels the admin saw (the model's label alone is not enough)"},
+	{Key: "ARGUS_ACT_CATALOGUE_DETAIL", Kind: Str, Default: "full", Choices: []string{"full", "aliases"}, Help: "what the intake's capability list tells the model provider about the allow-lists: full (the hosts, project paths and realms) or aliases (stable aliases that Go maps back before validation)"},
+	{Key: "ARGUS_ACT_HTTP_ALLOW_HTTP", Kind: Bool, Default: "0", Help: "1: http.check, ARGUS_ACT_GITLAB_URL and ARGUS_ACT_KEYCLOAK_URL may use plain http:// (test installations only)"},
+	{Key: "ARGUS_APPROVAL_KEY_DIR", Kind: Path, Default: "/var/lib/argus-approve", Help: "the api's approval signing key (approval.key, approval.pub), in a folder only the api mounts (compose volume argus-approve; 0700, owned by the api's user); created at the api's first start; missing: approvals are not signed and actd refuses every step"},
 	// Settings -> Kubernetes: kubeconfigs root stores and checks (argus secrets apply-kube) and the agent's read-only tool
 	{Key: "ARGUS_KUBE_DIR", Kind: Path, Default: "${ARGUS_ETC_DIR}/kube", Help: "kubeconfigs (root:<agent group> 0750; a file is readable by the group only while its check says read-only)"},
 	{Key: "ARGUS_KUBECTL", Kind: Path, Default: "/usr/local/lib/argus/kubectl", Help: "the pinned kubectl (argus secrets install-kubectl puts it there)"},
@@ -282,6 +322,14 @@ var Fields = []Field{
 	{Key: "ARGUS_SOURCES_FANOUT_MAX_SECONDS", Kind: Int, Default: "60", Min: 5, Max: 300, Help: "fan-out: wall time at most"},
 	{Key: "ARGUS_SOURCES_FANOUT_MAX_OUTPUT", Kind: Int, Default: "6000", Min: 1000, Max: 50000, Help: "argus sources find: text output cap in bytes"},
 	{Key: "GRAFANA_*_URL", Kind: Str, Pattern: true, Help: "the Grafana of one monitoring site; with the grafana-<id>-token secret it is listed as data source grafana/<id>"},
+	// the marketing module's search jobs (internal/marketing/seo); the key is a Settings -> Data sources entry (google)
+	{Key: "ARGUS_GSC_SITE", Aliases: []string{"GSC_SITE"}, Kind: Str, Help: "the Search Console property (sc-domain:example.com or https://www.example.com/)"},
+	{Key: "ARGUS_GSC_URLS_FILE", Kind: Path, Default: "${ARGUS_ETC_DIR}/seo-urls.txt", Help: "the key URLs whose index state the SEO page shows, one per line, at most 50 (missing: the home page)"},
+	{Key: "ARGUS_SEO_BRAND", Aliases: []string{"SEO_BRAND"}, Kind: Str, Help: "brand words, | separated: a brand query gets no low-CTR suggestion"},
+	{Key: "ARGUS_GA_PROPERTY", Aliases: []string{"GA_PROPERTY"}, Kind: Str, Help: "GA4 property id for the high-bounce suggestion, read with the same key (empty: skipped)"},
+	// the marketing module's CDN log job (internal/marketing/cdn)
+	{Key: "ARGUS_CDN_INDEX", Kind: Str, Help: "the index pattern of the CDN's access logs in Elasticsearch / OpenSearch (empty: the CDN job is off)"},
+	{Key: "ARGUS_CDN_SOURCE", Kind: Str, Help: "the Elasticsearch data source (its name in Settings -> Data sources) that holds that index (empty: the first)"},
 	{Key: "DEMO_MODE", Kind: Bool, Default: "0", Help: "1: sample data, every write refused"},
 	{Key: "DEMO_PASSWORD", Kind: Str, Secret: true, Help: "the demo users' throwaway password"},
 	{Key: "DEMO_VIEWER", Kind: Str, Default: "demo.viewer"},
@@ -536,7 +584,9 @@ var Importable = []string{"COMPANY_NAME", "ARGUS_DISPLAY_NAME", "ARGUS_TZ", "ARG
 	"OUTLINE_PARENT", "OUTLINE_PILOT", "OUTLINE_MARKER", "JIRA_PROJECT", "MATRIX_HOMESERVER", "MATRIX_SERVER_NAME",
 	"MATRIX_QA_ROOM_LABEL", "MATRIX_NOTIFY_ROOM", "MATRIX_WATCH_ROOMS", "MATRIX_ALERT_ROOMS", "MATRIX_KUMA_ROOMS",
 	"ARGUS_NOTIFY_MATRIX", "TELEGRAM_CHAT_ID", "ARGUS_CERT_WARN_DAYS", "ARGUS_CERT_FAIL_DAYS", "FEATURE_TODAY", "FEATURE_PROBLEMS",
-	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER", "ARGUS_CRED_WARN_DAYS", "ARGUS_CRED_CRIT_DAYS", "ARGUS_CRED_ROTATE_DAYS", "ARGUS_CRED_TODAY_DAYS"}
+	"ARGUS_INCIDENT_AUTORESOLVE_HOURS", "ARGUS_INCIDENT_CHAT_RESOLVE_HOURS", "ARGUS_INCIDENT_REOPEN_DAYS", "ARGUS_SELFCHECK_PAGE_AFTER", "ARGUS_CRED_WARN_DAYS", "ARGUS_CRED_CRIT_DAYS", "ARGUS_CRED_ROTATE_DAYS", "ARGUS_CRED_TODAY_DAYS",
+	"ARGUS_MODULES", "ARGUS_GOOGLEBOT_SITEMAP", "ARGUS_GOOGLEBOT_INTERVAL", "ARGUS_GOOGLEBOT_HOST_LABEL", "ARGUS_GOOGLEBOT_LOKI_UID", "ARGUS_SEO_HOSTS",
+	"ARGUS_GSC_SITE", "ARGUS_SEO_BRAND", "ARGUS_GA_PROPERTY", "ARGUS_CDN_INDEX", "ARGUS_CDN_SOURCE"}
 
 // IsImportable says whether key (a canonical name, or a name matching a pattern key) is one of Importable.
 func IsImportable(key string) bool {
@@ -791,8 +841,9 @@ func (c *Config) fill() Errors {
 			}
 		}
 	}
-	if s("ARGUS_COLLECT_CERTS") == "1" && len(list("ARGUS_CERT_TARGETS")) == 0 && len(list("ARGUS_CERT_FILES")) == 0 {
-		bad(field["ARGUS_CERT_TARGETS"], "ARGUS_CERT_TARGETS or ARGUS_CERT_FILES is required when ARGUS_COLLECT_CERTS=1")
+	if s("ARGUS_COLLECT_CERTS") == "1" && len(list("ARGUS_CERT_TARGETS")) == 0 && len(list("ARGUS_CERT_FILES")) == 0 &&
+		s("ARGUS_CERT_FROM_SERVICE_MAP") != "1" && !fileExists(s("ARGUS_CERT_DOMAINS_FILE")) {
+		bad(field["ARGUS_CERT_TARGETS"], "ARGUS_CERT_TARGETS, ARGUS_CERT_FILES, ARGUS_CERT_DOMAINS_FILE or ARGUS_CERT_FROM_SERVICE_MAP=1 is required when ARGUS_COLLECT_CERTS=1")
 	}
 	for _, p := range list("ARGUS_CERT_FILES") {
 		if !filepath.IsAbs(p) {
@@ -1024,4 +1075,12 @@ func contains(xs []string, x string) bool {
 		}
 	}
 	return false
+}
+
+func fileExists(p string) bool {
+	if p == "" {
+		return false
+	}
+	_, err := os.Stat(p)
+	return err == nil
 }

@@ -440,6 +440,11 @@ func openDB(path string) (*sql.DB, error) {
 	return db, nil
 }
 
+// openReadOnly opens a database for reading only.
+func openReadOnly(path string) (*sql.DB, error) {
+	return sql.Open("sqlite", "file:"+path+"?mode=ro&_pragma=busy_timeout(10000)")
+}
+
 // schema is the earlier jobs' CREATE TABLE IF NOT EXISTS (the same as the ops baseline migration); it leaves an
 // existing database untouched.
 const schema = `

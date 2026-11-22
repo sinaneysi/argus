@@ -2,6 +2,15 @@ package model
 
 // cli.go: the cli provider. `claude -p --output-format stream-json --verbose`, the prompt on stdin (a long task file
 // does not fit in one argument), a clean environment, a throwaway HOME and CLAUDE_CONFIG_DIR, no session persistence.
+//
+// The file tools reach the working folder only, in two layers:
+//  1. the CLI's own rules: --restricted (the file tools stay in the working folder, no code-running tools),
+//     permissions.blockReadsOutsideWorkingDirectories, and Read deny rules (they bind Glob and Grep too) for the
+//     volume, /proc, /sys, /etc and /dev that a caller can add to but never remove;
+//  2. the OS: `argus model-exec` applies a Landlock ruleset and then execs the CLI, so the CLI and everything it
+//     starts can open only the programs and libraries, the CA and name-resolution files, /proc and /sys (Landlock
+//     keeps other processes' entries, the worker's environment among them, closed), a few devices, and the call's
+//     HOME and working folder. Without Landlock a call fails closed unless ARGUS_MODEL_SANDBOX=off.
 
 import (
 	"bufio"
@@ -13,16 +22,19 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/sinaneysi/argus/internal/sandbox"
 )
 
 // cliEnv is what the Claude CLI may see: PATH, HOME, LANG, TZ, the login and the proxies; nothing of the worker's own
 // environment (no data-source credential, no master key).
 func cliEnv(env map[string]string, home string) []string {
 	out := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=" + home, "LANG=C.UTF-8", "CLAUDE_CONFIG_DIR=" + home + "/.claude",
-		"DISABLE_AUTOUPDATER=1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"}
+		"TMPDIR=" + home + "/tmp", "DISABLE_AUTOUPDATER=1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"}
 	if tz := os.Getenv("TZ"); tz != "" {
 		out = append(out, "TZ="+tz)
 	}
@@ -35,20 +47,67 @@ func cliEnv(env map[string]string, home string) []string {
 	return out
 }
 
+// landlockABI is sandbox.ABI (tests: a kernel without Landlock).
+var landlockABI = sandbox.ABI
+
+// denyRead are the folders every CLI call's Read rules deny (with Options.StateDir).
+var denyRead = []string{"/var/lib/argus", "/proc", "/sys", "/etc", "/dev"}
+
+// cliSettings are the settings of every call (--settings): no read outside the working folders.
+const cliSettings = `{"permissions":{"blockReadsOutsideWorkingDirectories":true}}`
+
+// denyRules are the --disallowedTools rules every call carries: Read(//abs/**) for denyRead and the state folder.
+func (r *Runner) denyRules() []string {
+	dirs := append([]string{}, denyRead...)
+	if sd := filepath.Clean(r.O.StateDir); filepath.IsAbs(sd) && sd != "/" {
+		dup := false
+		for _, d := range dirs {
+			dup = dup || d == sd
+		}
+		if !dup {
+			dirs = append(dirs, sd)
+		}
+	}
+	out := make([]string, 0, len(dirs))
+	for _, d := range dirs {
+		out = append(out, "Read(/"+d+"/**)")
+	}
+	return out
+}
+
 func (r *Runner) cliArgs(req Request) []string {
 	args := []string{"-p", "--output-format", "stream-json", "--verbose", "--no-session-persistence",
 		"--max-turns", strconv.Itoa(req.MaxTurns), "--max-budget-usd", strconv.FormatFloat(req.BudgetUSD, 'f', 2, 64),
-		"--tools", strings.Join(req.Tools, ",")}
+		"--tools", strings.Join(req.Tools, ","), "--restricted", "--strict-mcp-config", "--settings", cliSettings}
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
 	}
 	if req.Agent != "" {
 		args = append(args, "--agent", req.Agent)
 	}
-	if len(req.Disallow) > 0 {
-		args = append(args, "--disallowedTools", strings.Join(req.Disallow, ","))
+	deny := append(r.denyRules(), req.Disallow...)
+	return append(args, "--disallowedTools", strings.Join(deny, ","))
+}
+
+// sandboxRules are the paths the CLI may open under Landlock; everything else (the volume, /etc, other folders in
+// /tmp) is denied. home and dir are the call's throwaway HOME and working folder.
+func sandboxRules(bin, home, dir string) sandbox.Rules {
+	r := sandbox.Rules{
+		Exec: []string{"/usr", "/lib", "/lib64", "/bin"},
+		Read: []string{"/etc/ssl", "/etc/ca-certificates", "/etc/pki", "/etc/resolv.conf", "/etc/hosts", "/etc/nsswitch.conf",
+			"/etc/host.conf", "/etc/gai.conf", "/etc/localtime", "/etc/ld.so.cache", "/proc", "/sys", "/dev/urandom",
+			"/dev/random", "/dev/zero"},
+		Write: []string{"/dev/null", home},
 	}
-	return args
+	if real, err := filepath.EvalSymlinks(bin); err == nil {
+		if d := filepath.Dir(real); d != "/" && !strings.HasPrefix(d+"/", "/usr/") {
+			r.Exec = append(r.Exec, d)
+		}
+	}
+	if dir != "" && dir != home {
+		r.Write = append(r.Write, dir)
+	}
+	return r
 }
 
 func (r *Runner) runCLI(ctx context.Context, req Request, res *Result) {
@@ -59,12 +118,28 @@ func (r *Runner) runCLI(ctx context.Context, req Request, res *Result) {
 	}
 	defer os.RemoveAll(home)
 	_ = os.MkdirAll(home+"/.claude", 0o700)
-	cmd := exec.CommandContext(ctx, r.O.ClaudeBin, r.cliArgs(req)...)
-	cmd.Env = append(cliEnv(r.env(), home), r.O.ExtraEnv...)
-	cmd.Dir = home
+	_ = os.MkdirAll(home+"/tmp", 0o700)
+	dir := home
 	if req.Dir != "" {
-		cmd.Dir = req.Dir
+		dir = req.Dir
 	}
+	argv := append([]string{r.O.ClaudeBin}, r.cliArgs(req)...)
+	res.Sandbox = "off"
+	if len(r.O.SandboxExec) > 0 {
+		abi := landlockABI()
+		if abi < 1 {
+			res.IsError, res.ExitCode, res.Sandbox = true, sandbox.Unavailable, "unavailable"
+			res.Error = "could not start: the Landlock sandbox is not available (Linux 5.13+ with landlock in the LSM list, " +
+				"and a seccomp profile that allows it); ARGUS_MODEL_SANDBOX=off runs the CLI with its own rules only"
+			return
+		}
+		res.Sandbox = fmt.Sprintf("landlock-v%d", abi)
+		pre := append(append([]string{}, r.O.SandboxExec...), sandboxRules(r.O.ClaudeBin, home, dir).Args()...)
+		argv = append(append(pre, "--"), argv...)
+	}
+	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
+	cmd.Env = append(cliEnv(r.env(), home), r.O.ExtraEnv...)
+	cmd.Dir = dir
 	cmd.Stdin = strings.NewReader(req.Prompt)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) } // the CLI and what it started

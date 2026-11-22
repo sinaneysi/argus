@@ -1,0 +1,110 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/sinaneysi/argus/internal/config"
+	"github.com/sinaneysi/argus/internal/migrate"
+	"github.com/sinaneysi/argus/internal/needs"
+)
+
+// The marketing jobs wait for the module, then for Grafana and the edge groups file, and say which one is missing.
+func TestMarketingJobsGate(t *testing.T) {
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	write := func(extra string) *config.Config {
+		os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+"\n"+extra), 0o600)
+		c, err := config.Load(config.Options{File: env, Environ: []string{}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		migrate.EnsureDirs(c)
+		return c
+	}
+	reasons := func(c *config.Config) map[string]string {
+		det := needs.FromConfig(func(k string) config.Value { return c.Values[k] }, false)
+		det.Active = true
+		out := map[string]string{}
+		for _, j := range marketingJobs(c, det, io.Discard) {
+			_, r := j.Ready()
+			out[j.Name] = r
+		}
+		return out
+	}
+	c := write("")
+	for n, r := range reasons(c) {
+		if !strings.Contains(r, "marketing module is off") {
+			t.Errorf("%s: %q", n, r)
+		}
+	}
+	c = write("ARGUS_MODULES=marketing\n")
+	r := reasons(c)
+	if !strings.Contains(r["googlebot-watch"], "Grafana") || !strings.Contains(r["googlebot-sitemaps"], "ARGUS_GOOGLEBOT_SITEMAP") ||
+		!strings.Contains(r["seo-check"], "no crawler database") {
+		t.Fatalf("%v", r)
+	}
+	os.WriteFile(filepath.Join(c.EtcDir, "googlebot-edges.tsv"), []byte("primary\tjson\t{job=\"nginx\"}\n"), 0o600)
+	c = write("ARGUS_MODULES=marketing\nARGUS_GOOGLEBOT_SITEMAP=https://www.example.com/sitemap.xml\n")
+	if r := reasons(c); r["googlebot-sitemaps"] != "" {
+		t.Fatalf("%v", r)
+	}
+	// the admin's switch wins over ARGUS_MODULES
+	if !marketingOn(c) {
+		t.Fatal("on by ARGUS_MODULES")
+	}
+	if _, err := migrate.ApplyFile(context.Background(), c.AuthDB, migrate.Auth); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", "file:"+c.AuthDB)
+	db.Exec("INSERT INTO auth_settings (key, value) VALUES ('module.marketing', '0')")
+	db.Close()
+	if marketingOn(c) {
+		t.Fatal("the admin switched it off")
+	}
+}
+
+// The Send requests of the SEO page are consumed before the send, so a failing channel never loops.
+func TestSEOSendConsumesFirst(t *testing.T) {
+	vol := t.TempDir()
+	env := filepath.Join(vol, "argus.env")
+	os.WriteFile(env, []byte("COMPANY_NAME=Example\nARGUS_PUBLIC_URL=https://argus.example.com\nARGUS_LAYOUT=volume\nARGUS_STATE_DIR="+vol+"\n"), 0o600)
+	c, err := config.Load(config.Options{File: env, Environ: []string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	migrate.EnsureDirs(c)
+	if _, err := migrate.ApplyFile(context.Background(), c.DB, migrate.Ops); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", "file:"+c.DB)
+	db.Exec("INSERT INTO seo_suggestions VALUES ('2026-11-05','ctr',0,'https://www.example.com/a','q','Low CTR for q','10000 impressions','fix',1)")
+	db.Close()
+	dir := filepath.Join(c.SettingsIn, "seo-send")
+	os.MkdirAll(dir, 0o700)
+	for _, n := range []string{"1.json", "2.json"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(`{"by": "admin"}`), 0o600)
+	}
+	err = seoSendRun(context.Background(), c, io.Discard)
+	if err == nil || !strings.Contains(err.Error(), "no notice channel") {
+		t.Fatalf("%v", err)
+	}
+	if left, _ := os.ReadDir(dir); len(left) != 0 {
+		t.Fatalf("requests left: %v", left)
+	}
+	if err := seoSendRun(context.Background(), c, io.Discard); err != nil {
+		t.Fatalf("nothing pending: %v", err)
+	}
+	det := needs.FromConfig(func(k string) config.Value { return c.Values[k] }, false)
+	det.Active = true
+	for _, j := range seoJobs(c, det, io.Discard) {
+		if ok, r := j.Ready(); ok || !strings.Contains(r, "module is off") {
+			t.Errorf("%s: %v %q", j.Name, ok, r)
+		}
+	}
+}

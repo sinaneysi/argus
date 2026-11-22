@@ -1,0 +1,8 @@
+status	name	newest	age_h	size	median_prev7	kinds
+OK	orders	config/orders-cfg-20261208.tar	27	5000	5000	2
+OK	billing	billing_09.sql	72	2000	2000	1
+FAIL(small)	search	idx-8.snap	1	100	900000	1
+FAIL(stale)	applogs	old/weekly-1.tgz	1848	9999	9999	2
+FAIL(empty)	empty	-	-	-	-	0
+FAIL(small)	thumbs	t-3.zip	6	40	50	1
+FAIL(empty)	nolist	-	-	-	-	0

@@ -1,0 +1,8 @@
+# test
+orders	store/db-backups/orders/	30	auto
+billing	store/db-backups/billing/	30	auto
+search	store/db-backups/search/	26	auto
+applogs	store/logs/app/	4	auto
+empty	store/db-backups/empty/	30	auto
+thumbs	store/media/thumbs/	48	45
+nolist	store/missing/x/	30	auto

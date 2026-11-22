@@ -1,0 +1,966 @@
+{
+"bucket": 1792959900,
+"width": 600,
+"lines": [
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960054,
+"text": "127.0.0.1\t499\t0.050\t100\twww.example.com\t-\t-\t/q?a=1&&b=&=z&c+d=e%20f\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959938,
+"text": "66.249.79.200\t404\t0.0004\t100\texample.com\t10.0.0.5:80\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960479,
+"text": "66.249.79.200\t301\t0.050\t5000\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/product-1/x\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960036,
+"text": "198.51.100.7\t404\t1.5\t100\twww.example.com\tforeign-cache\tmiss\t/category/phones?page=3&sort=new&page=3\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959999,
+"text": "::1\t500\t0.2\t100\texample.com\t\t-\t/category/x?page=1&page=2\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960221,
+"text": "192.168.1.5\t429\t3\t\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones/type-smart"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960488,
+"text": "198.51.100.7\t20x\t3\t\t\t-\t-\t/frag#x?y\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960020,
+"text": "::1\t404\tabc\t\twww.example.com\tforeign-cache\tBYPASS\t/product-1/x\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960248,
+"text": "10.1.2.3\t429\t3\t5000\twww.example.com\t10.0.0.5:80\t-\t/a%0Ab\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959962,
+"text": "198.51.100.7\t499\t3\t\t\t203.0.113.5:443\t-\t/sitemap-pdp-1.xml.gz\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960263,
+"text": "2001:4860:4801:10::1\t429\t0.2\t5000\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/blog/post-1/\tGooglebot-Image/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960153,
+"text": "127.0.0.1\t404\t3\t100\twww.example.com\tforeign-cache\tBYPASS\t/\\u00c3\\u00a9/y\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960340,
+"text": "::1\t302\t0.0004\t\t\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones?sort=new\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960054,
+"text": "192.178.4.9\t499\t12.0\t100\t\t127.0.0.1:9000\t-\t/category/phones/type-smart\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959904,
+"text": "2001:4860:4801:10::1\t404\t-\t\texample.com\t203.0.113.5:443\t-\t/comment?x\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960367,
+"text": "not-an-ip\t503\t0.0004\t5000\twww.example.com\tforeign-cache\tMISS\t/page/about\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960095,
+"text": "66.249.79.200\t301\t3\t0\twww.example.com\t-\t-\t/frag#x?y\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959900,
+"text": "172.71.1.1\t200\t0.2\t\twww.example.com\t10.0.0.5:80\t-\t/category/%C3%A9t%C3%A9/x\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960158,
+"text": "10.1.2.3\t429\t-\t5000\twww.example.com\t10.0.0.5:80\t-\t/page/about\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960391,
+"text": "192.168.1.5\t302\t0.2\t0\twww.example.com\tforeign-cache\tSTALE\t/api/v1/items\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960065,
+"text": "::1\t200\t12.0\t\texample.com\t203.0.113.5:443\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959993,
+"text": "198.51.100.7\t403\t-\t0\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960128,
+"text": "172.71.1.1\t503\t12.0\t0\t\t203.0.113.5:443\t-\t/bad%ZZ%\tGooglebot-Video/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960430,
+"text": "192.168.1.5\t304\t0.050\t100\twww.example.com\tforeign-cache\tEXPIRED\t/category/%C3%A9t%C3%A9/x\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960257,
+"text": "10.1.2.3\t200\t12.0\t100\texample.com\t\t-\t/category/%C3%A9t%C3%A9/x\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960394,
+"text": "172.71.1.1\t200\t0.050\t5000\tSHOP.Example.com\t203.0.113.5:443\t-\t/product-22/a-b?color=red&page=2\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960104,
+"text": "192.168.1.5\t200\t1.5\t5000\tSHOP.Example.com\t10.0.0.5:80\t-\t/api/v1/items\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960374,
+"text": "127.0.0.1\t500\t0.2\t0\twww.example.com\tforeign-cache\tHIT\t/category/phones?sort=new\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960385,
+"text": "not-an-ip\t200\t-\t0\texample.com\t10.0.0.5:80\t-\t/\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960344,
+"text": "192.178.4.9\t504\t12.0\t100\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/blog/post-1/\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960233,
+"text": "198.51.100.7\t403\t0.0004\t0\twww.example.com\t203.0.113.5:443\t-\t/sitemap-pdp-1.xml.gz\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960497,
+"text": "::1\t404\t1.5\t0\twww.example.com\tforeign-cache\tmiss\t/frag#x?y\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960076,
+"text": "2001:4860:4801:10::1\t410\t0.2\t100\tSHOP.Example.com\t203.0.113.5:443\t-\t/comment?x\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960008,
+"text": "::1\t200\t12.0\t0\tSHOP.Example.com\t10.0.0.5:80\t-\t/category/phones?page=3&sort=new&page=3\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960475,
+"text": "66.249.66.1\t503\t0.2\t5000\tSHOP.Example.com\t127.0.0.1:9000\t-\t/comment?x\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960104,
+"text": "198.51.100.7\t410\t3\t0\twww.example.com\tforeign-cache\t-\t/brand/acme\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960024,
+"text": "127.0.0.1\t410\t-\t100\texample.com\t\t-\t/product-22/a-b?color=red&page=2\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960025,
+"text": "2001:4860:4801:10::1\t500\t-\t0\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/brand/acme\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960307,
+"text": "192.168.1.5\t200\t12.0\t0\t\t127.0.0.1:9000\t-\t/_next/static/c.js\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960331,
+"text": "192.178.4.9\t304\t-\t100\twww.example.com\tforeign-cache\tSTALE\t/\\u00c3\\u00a9/y\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959918,
+"text": "127.0.0.1\t304\t\t100\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones?page=3&sort=new&page=3\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960178,
+"text": "66.249.66.1\t200\t1.5\t\texample.com\t\t-\t/category/x?page=1&page=2\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960052,
+"text": "::1\t200\t3\t\twww.example.com\t-\t-\t/product-1/x"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960335,
+"text": "66.249.79.200\t302\t0.050\t100\twww.example.com\tforeign-cache\t-\t/product-22/a-b?color=red&page=2\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960364,
+"text": "66.249.66.1\t304\t0.0004\t\texample.com\t10.0.0.5:80\t-\t/comment?x\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960065,
+"text": "198.51.100.7\t200\t1.5\t0\tSHOP.Example.com\t203.0.113.5:443\t-\t/blog/post-1/\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960196,
+"text": "192.168.1.5\t403\t1.5\t\tSHOP.Example.com\t10.0.0.5:80\t-\t/a%0Ab\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792959915,
+"text": "66.249.66.1\t20x\t12.0\t5000\twww.example.com\tforeign-cache\tMISS\t/category/x?page=1&page=2\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960459,
+"text": "127.0.0.1\t403\t\t0\texample.com\t-\t-\t/category/%C3%A9t%C3%A9/x\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960255,
+"text": "66.249.66.1\t504\t1.5\t100\twww.example.com\t203.0.113.5:443\t-\t/api/v1/items\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960067,
+"text": "66.249.66.1\t200\tabc\t\texample.com\t203.0.113.5:443\t-\t/blog/post-1/\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960370,
+"text": "2001:4860:4801:10::1\t200\t\t5000\twww.example.com\tforeign-cache\tSTALE\t/robots.txt\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960150,
+"text": "66.249.66.1\t200\t\t0\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959985,
+"text": "192.168.1.5\t302\t12.0\t0\twww.example.com\t10.0.0.5:80\t-\t/a%0Ab\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960309,
+"text": "172.71.1.1\t200\t0.0004\t100\tSHOP.Example.com\t-\t-\t/\\\"quoted\tGooglebot-Video/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792959986,
+"text": "172.71.1.1\t403\t1.5\t5000\twww.example.com\tforeign-cache\tUPDATING\t/category/phones?sort=new\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959944,
+"text": "::1\t499\t0.0004\t0\twww.example.com\t203.0.113.5:443\t-\t/q?a=1&&b=&=z&c+d=e%20f\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959931,
+"text": "66.249.66.1\t200\t-\t100\t\t\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960444,
+"text": "not-an-ip\t301\t3\t\twww.example.com\t\t-\t/product-22/a-b?color=red&page=2\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960448,
+"text": "66.249.79.200\t499\t0.2\t5000\twww.example.com\tforeign-cache\tEXPIRED\t/bad%ZZ%\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960371,
+"text": "192.168.1.5\t504\t0.0004\t100\t\t203.0.113.5:443\t-\t/blog/post-1/\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959979,
+"text": "172.71.1.1\t200\t-\t\tSHOP.Example.com\t127.0.0.1:9000\t-\t/q?a=1&&b=&=z&c+d=e%20f\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960393,
+"text": "66.249.66.1\t410\t\t100\texample.com\t203.0.113.5:443\t-\t/page/about\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960428,
+"text": "198.51.100.7\t410\t3\t5000\twww.example.com\tforeign-cache\t-\t/blog/post-1/\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959917,
+"text": "198.51.100.7\t410\t0.2\t5000\tSHOP.Example.com\t\t-\t/category/%C3%A9t%C3%A9/x\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960495,
+"text": "66.249.79.200\t200\t\t\texample.com\t127.0.0.1:9000\t-\t/\\\"quoted\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960015,
+"text": "10.1.2.3\t301\t3\t5000\t\t10.0.0.5:80\t-\t/category/phones/type-smart\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960403,
+"text": "not-an-ip\t410\t0.0004\t\twww.example.com\tforeign-cache\tSTALE\t/_next/static/c.js\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960239,
+"text": "66.249.66.1\t304\t-\t5000\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960159,
+"text": "10.1.2.3\t200\t0.0004\t5000\twww.example.com\t-\t-\t/img/a.webp\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960187,
+"text": "66.249.79.200\t200\t\t0\texample.com\t-\t-\t/img/a.webp\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960223,
+"text": "192.178.4.9\t503\t-\t5000\twww.example.com\tforeign-cache\tBYPASS\t/\\u00c3\\u00a9/y\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959982,
+"text": "66.249.66.1\t200\t0.0004\t5000\texample.com\t203.0.113.5:443\t-\t/blog/post-1/\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960463,
+"text": "2001:4860:4801:10::1\t200\t3\t5000\tSHOP.Example.com\t-\t-\t/blog/post-1/\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960315,
+"text": "not-an-ip\t301\t\t5000\t\t10.0.0.5:80\t-\t/category/phones/type-smart\tGooglebot-Image/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792959976,
+"text": "192.178.4.9\t403\t3\t0\twww.example.com\tforeign-cache\tUPDATING\t/img/a.webp\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960149,
+"text": "66.249.79.200\t200\t-\t100\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/sitemap-pdp-1.xml.gz\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959920,
+"text": "127.0.0.1\t404\t0.0004\t0\t\t-\t-\t/robots.txt\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960184,
+"text": "172.71.1.1\t304\t1.5\t0\twww.example.com\t-\t-\t/bad%ZZ%\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960309,
+"text": "not-an-ip\t410\t0.0004\t\twww.example.com\tforeign-cache\tHIT\t/img/a.webp"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959900,
+"text": "66.249.79.200\t404\t3\t5000\texample.com\t10.0.0.5:80\t-\t/bad%ZZ%\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960434,
+"text": "not-an-ip\t200\t3\t100\twww.example.com\t10.0.0.5:80\t-\t/category/phones?sort=new\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960211,
+"text": "2001:4860:4801:10::1\t499\t\t5000\twww.example.com\t10.0.0.5:80\t-\t/product-22/a-b?color=red&page=2\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960437,
+"text": "172.71.1.1\t301\t0.0004\t\twww.example.com\tforeign-cache\tHIT\t/\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960371,
+"text": "198.51.100.7\t304\t12.0\t5000\texample.com\t127.0.0.1:9000\t-\t/bad%ZZ%\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960214,
+"text": "66.249.66.1\t200\t12.0\t5000\t\t10.0.0.5:80\t-\t/a%0Ab\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960279,
+"text": "192.178.4.9\t410\t0.050\t\t\t-\t-\t/category/x?page=1&page=2\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960102,
+"text": "66.249.66.1\t503\t\t100\twww.example.com\tforeign-cache\t-\t/blog/post-1/\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960376,
+"text": "192.178.4.9\t20x\t\t100\t\t127.0.0.1:9000\t-\t/category/phones/type-smart\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960327,
+"text": "not-an-ip\t200\t1.5\t5000\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959953,
+"text": "66.249.66.1\t200\t0.0004\t5000\tSHOP.Example.com\t203.0.113.5:443\t-\t/category/phones?page=3&sort=new&page=3\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960069,
+"text": "10.1.2.3\t301\t1.5\t5000\twww.example.com\tforeign-cache\tBYPASS\t/sitemap-pdp-1.xml.gz\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960073,
+"text": "66.249.79.200\t200\t0.2\t\twww.example.com\t-\t-\t/img/a.webp\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960289,
+"text": "10.1.2.3\t503\tabc\t5000\twww.example.com\t10.0.0.5:80\t-\t/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960281,
+"text": "::1\t200\t3\t0\tSHOP.Example.com\t-\t-\t/api/v1/items\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792959931,
+"text": "not-an-ip\t404\t12.0\t5000\twww.example.com\tforeign-cache\tHIT\t/brand/acme\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960163,
+"text": "192.178.4.9\t500\t0.2\t\tSHOP.Example.com\t-\t-\t/robots.txt\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960224,
+"text": "198.51.100.7\t302\t0.050\t100\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones?page=3&sort=new&page=3\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960295,
+"text": "198.51.100.7\t200\t0.0004\t5000\texample.com\t\t-\t/category/phones/type-smart\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960210,
+"text": "2001:4860:4801:10::1\t429\t12.0\t\twww.example.com\tforeign-cache\tSTALE\t/frag#x?y\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960301,
+"text": "2001:4860:4801:10::1\t301\t0.0004\t100\twww.example.com\t\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960064,
+"text": "127.0.0.1\t200\t0.2\t100\tSHOP.Example.com\t127.0.0.1:9000\t-\t/product-22/a-b?color=red&page=2\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960331,
+"text": "192.168.1.5\t500\t3\t0\texample.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/img/a.webp\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960140,
+"text": "::1\t504\t0.2\t\twww.example.com\tforeign-cache\tEXPIRED\t/sitemap-pdp-1.xml.gz\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960103,
+"text": "192.168.1.5\t301\t1.5\t0\texample.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/blog/post-1/\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959966,
+"text": "127.0.0.1\t302\t12.0\t0\twww.example.com\t203.0.113.5:443\t-\t/brand/acme\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959904,
+"text": "192.168.1.5\t200\t12.0\t5000\tSHOP.Example.com\t10.0.0.5:80\t-\t/blog/post-1/\tGooglebot-Video/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960022,
+"text": "66.249.66.1\t301\t12.0\t100\twww.example.com\tforeign-cache\tmiss\t/brand/acme\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960008,
+"text": "not-an-ip\t429\t-\t0\twww.example.com\t-\t-\t/robots.txt\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960108,
+"text": "198.51.100.7\t200\t12.0\t100\tSHOP.Example.com\t\t-\t/category/x?page=1&page=2\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960219,
+"text": "66.249.79.200\t301\t0.050\t5000\t\t10.0.0.5:80\t-\t/img/a.webp\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960304,
+"text": "not-an-ip\t403\t1.5\t100\twww.example.com\tforeign-cache\tEXPIRED\t/img/a.webp\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960327,
+"text": "66.249.66.1\t302\t-\t5000\t\t10.0.0.5:80\t-\t/sitemap-pdp-1.xml.gz\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960314,
+"text": "192.178.4.9\t200\t0.0004\t0\t\t10.0.0.5:80\t-\t/product-22/a-b?color=red&page=2\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960371,
+"text": "2001:4860:4801:10::1\t200\t0.050\t100\texample.com\t203.0.113.5:443\t-\t/_next/static/c.js\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960486,
+"text": "172.71.1.1\t200\t-\t0\twww.example.com\tforeign-cache\tEXPIRED\t/category/phones/type-smart\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959968,
+"text": "66.249.79.200\t404\t3\t0\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/product-1/x"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959954,
+"text": "172.71.1.1\t200\t0.0004\t100\texample.com\t203.0.113.5:443\t-\t/bad%ZZ%\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960384,
+"text": "2001:4860:4801:10::1\t429\t12.0\t100\t\t127.0.0.1:9000\t-\t/category/phones/type-smart\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960267,
+"text": "66.249.79.200\t200\t12.0\t0\twww.example.com\tforeign-cache\tHIT\t/category/x?page=1&page=2\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960299,
+"text": "172.71.1.1\t410\t\t5000\tSHOP.Example.com\t127.0.0.1:9000\t-\t/bad%ZZ%\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960276,
+"text": "192.168.1.5\t403\t3\t0\twww.example.com\t10.0.0.5:80\t-\t/frag#x?y\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960140,
+"text": "192.168.1.5\t503\t3\t0\t\t\t-\t/category/phones?page=3&sort=new&page=3\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960031,
+"text": "10.1.2.3\t404\t-\t100\twww.example.com\tforeign-cache\tWEIRD\t/category/x?page=1&page=2\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960033,
+"text": "66.249.79.200\t200\t-\t100\twww.example.com\t127.0.0.1:9000\t-\t/_next/static/c.js\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959967,
+"text": "172.71.1.1\t500\t0.2\t0\texample.com\t\t-\t/blog/post-1/\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959967,
+"text": "10.1.2.3\t429\t\t0\tSHOP.Example.com\t127.0.0.1:9000\t-\t/a%0Ab\tFeedFetcher-Google; (+http://www.google.com/feedfetcher.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960047,
+"text": "198.51.100.7\t403\t3\t0\twww.example.com\tforeign-cache\tWEIRD\t/bad%ZZ%\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959937,
+"text": "192.178.4.9\t200\t0.0004\t0\tSHOP.Example.com\t203.0.113.5:443\t-\t/robots.txt\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960170,
+"text": "66.249.79.200\t20x\t0.050\t\t\t127.0.0.1:9000\t-\t/comment?x\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960448,
+"text": "not-an-ip\t504\t0.0004\t\tSHOP.Example.com\t\t-\t/sitemap-pdp-1.xml.gz\tGooglebot-Image/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960268,
+"text": "10.1.2.3\t503\t0.2\t5000\twww.example.com\tforeign-cache\tHIT\t/blog/post-1/\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960217,
+"text": "not-an-ip\t504\t-\t100\twww.example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones?sort=new\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960327,
+"text": "::1\t304\t0.050\t0\t\t10.0.0.5:80, 10.0.0.6:80\t-\t/frag#x?y\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959955,
+"text": "66.249.66.1\t429\t-\t\twww.example.com\t127.0.0.1:9000\t-\t/sitemap-pdp-1.xml.gz\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960129,
+"text": "127.0.0.1\t429\t\t0\twww.example.com\tforeign-cache\tUPDATING\t/category/phones/type-smart\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960149,
+"text": "2001:4860:4801:10::1\t410\tabc\t100\texample.com\t203.0.113.5:443\t-\t/a%0Ab\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792959911,
+"text": "66.249.66.1\t499\t-\t5000\t\t10.0.0.5:80, 10.0.0.6:80\t-\t/category/phones/type-smart\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959963,
+"text": "::1\t200\t0.0004\t0\texample.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/product-1/x\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792959912,
+"text": "172.71.1.1\t403\t12.0\t0\twww.example.com\tforeign-cache\tWEIRD\t/frag#x?y\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960078,
+"text": "::1\t302\t0.2\t\twww.example.com\t203.0.113.5:443\t-\t/page/about\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960284,
+"text": "127.0.0.1\t500\t3\t100\t\t10.0.0.5:80, 10.0.0.6:80\t-\t/bad%ZZ%\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960137,
+"text": "not-an-ip\t200\t0.2\t\tSHOP.Example.com\t203.0.113.5:443\t-\t/product-1/x\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960467,
+"text": "not-an-ip\t404\t\t\twww.example.com\tforeign-cache\tWEIRD\t/\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960141,
+"text": "192.178.4.9\t200\t-\t0\t\t-\t-\t/frag#x?y\tGooglebot-Video/1.0"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960449,
+"text": "192.168.1.5\t410\t0.050\t100\t\t203.0.113.5:443\t-\t/bad%ZZ%\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960300,
+"text": "172.71.1.1\t429\t0.2\t0\texample.com\t10.0.0.5:80\t-\t/\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960009,
+"text": "172.71.1.1\t200\t1.5\t\twww.example.com\tforeign-cache\tHIT\t/\tMozilla/5.0 (Linux; Android 6.0.1; Pixel 8) Chrome/130 Mobile Safari/537.36 (compatible; Googlebot/2.1)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959943,
+"text": "66.249.79.200\t500\t0.050\t100\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/\\u00c3\\u00a9/y\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960009,
+"text": "192.178.4.9\t301\t12.0\t100\twww.example.com\t10.0.0.5:80\t-\t/\\\"quoted\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960388,
+"text": "66.249.79.200\t200\t0.2\t0\tSHOP.Example.com\t-\t-\t/robots.txt\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960167,
+"text": "66.249.66.1\t304\t\t\twww.example.com\tforeign-cache\tSTALE\t/robots.txt\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960194,
+"text": "172.71.1.1\t500\t0.050\t5000\twww.example.com\t\t-\t/comment?x\tMozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+},
+{
+"group": "primary",
+"label": "edge-02",
+"ts": 1792960380,
+"text": "66.249.66.1\t403\t12.0\t100\tSHOP.Example.com\t10.0.0.5:80, 10.0.0.6:80\t-\t/img/a.webp"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960195,
+"text": "66.249.66.1\t200\t-\t5000\twww.example.com\t\t-\t/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\tGooglebot-Image/1.0"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960406,
+"text": "172.71.1.1\t304\t\t0\twww.example.com\tforeign-cache\t-\t/page/about\tGooglebot-Image/1.0"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792959982,
+"text": "192.168.1.5\t503\t0.2\t\tSHOP.Example.com\t10.0.0.5:80\t-\t/_next/static/c.js\tMozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960332,
+"text": "not-an-ip\t200\t-\t0\tSHOP.Example.com\t-\t-\t/img/a.webp\tMozilla/5.0 (compatible; Googlebot/2.1) \\u00c3\\u00a9"
+},
+{
+"group": "primary",
+"label": "edge-01",
+"ts": 1792960288,
+"text": "not-an-ip\t301\t3\t0\twww.example.com\t-\t-\t/q?a=1&&b=&=z&c+d=e%20f\tMozilla/5.0 (X11; Linux x86_64; Storebot-Google/1.0)"
+},
+{
+"group": "cache",
+"label": "cache-01",
+"ts": 1792960434,
+"text": "2001:4860:4801:10::1\t504\t3\t\twww.example.com\tforeign-cache\tUPDATING\t/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\tAdsBot-Google (+http://www.google.com/adsbot.html)"
+}
+]
+}

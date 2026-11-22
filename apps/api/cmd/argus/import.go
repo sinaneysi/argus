@@ -7,6 +7,7 @@ package main
 // read. Nothing is printed but names: never a value.
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -44,7 +45,7 @@ board/board.db, auth/auth.db, the *.json state files, settings-in/ and settings-
                 outline.json/.token, kube/ (clusters.json and kubeconfigs)
   -env FILE     a KEY=value file of the earlier installation (repeatable; the first file that sets a key wins):
                 GITLAB_URL + GITLAB_RO_TOKEN, MATRIX_HOMESERVER + MATRIX_ACCESS_TOKEN, PROM_URL, GRAFANA_<ID>_URL +
-                GRAFANA_<ID>_TOKEN, CLAUDE_CODE_OAUTH_TOKEN
+                GRAFANA_<ID>_TOKEN, MC_HOST_<alias> (S3 of the backup check), CLAUDE_CODE_OAUTH_TOKEN
   -reports DIR  its reports folder (the RCA reports)
   -auth DB      the users database to import instead of <state dir>/auth/auth.db
   -totp-legacy-label L  the label the 2FA secrets were written under (default: TOTP_LEGACY_LABEL); they are
@@ -517,7 +518,10 @@ func (im *importer) totp(context.Context) error {
 
 // --- integrations: Settings -> Data sources ----------------------------------------------------------------------------
 
-var grafanaURLRe = regexp.MustCompile(`^GRAFANA_([A-Z0-9_]{1,20})_URL$`)
+var (
+	grafanaURLRe = regexp.MustCompile(`^GRAFANA_([A-Z0-9_]{1,20})_URL$`)
+	mcHostRe     = regexp.MustCompile(`^MC_HOST_([A-Za-z0-9_]{1,20})$`)
+)
 
 func (im *importer) etcFile(name string) string {
 	if im.etc == "" {
@@ -629,6 +633,27 @@ func (im *importer) integrations(context.Context) error {
 			return err
 		}
 	}
+	// Google Search Console: the service-account key file (GSC_KEY, else gsc-key.json in the etc folder)
+	kf := env["GSC_KEY"]
+	if kf == "" && im.etc != "" {
+		kf = filepath.Join(im.etc, "gsc-key.json")
+	} else if kf != "" && im.etc != "" && !fileOK(kf) {
+		kf = filepath.Join(im.etc, filepath.Base(kf))
+	}
+	if kf != "" && fileOK(kf) {
+		var buf bytes.Buffer
+		raw, _ := os.ReadFile(kf)
+		if json.Compact(&buf, raw) != nil {
+			im.skip_("data source google/main: %s is not JSON", filepath.Base(kf))
+		} else if err := im.source(sources.Entry{Type: "google", Name: "main", Env: "shared", URL: "https://www.googleapis.com", Purpose: "marketing"},
+			buf.String(), filepath.Base(kf)); err != nil {
+			return err
+		}
+	}
+	if uf := filepath.Join(im.etc, "seo-urls.txt"); im.etc != "" && fileOK(uf) && !im.dry {
+		copyFile(uf, c.Values["ARGUS_GSC_URLS_FILE"].Raw, 0o640)
+		im.did("SEO key URLs: seo-urls.txt -> %s", c.Values["ARGUS_GSC_URLS_FILE"].Raw)
+	}
 	// Alertmanager / Prometheus
 	for _, k := range []string{"ALERTMANAGER_URL", "PROM_URL", "PROMETHEUS_URL"} {
 		if u := env[k]; u != "" {
@@ -655,6 +680,27 @@ func (im *importer) integrations(context.Context) error {
 			continue
 		}
 		if err := im.source(sources.Entry{Type: "grafana", Name: name, Env: "shared", URL: env[k], Purpose: "agent"}, tok, im.envSrc[k]); err != nil {
+			return err
+		}
+	}
+	// S3 / MinIO of the backup check: MC_HOST_<alias>=https://<access key>:<secret key>@<host>
+	var mks []string
+	for k := range env {
+		if mcHostRe.MatchString(k) {
+			mks = append(mks, k)
+		}
+	}
+	sort.Strings(mks)
+	for _, k := range mks {
+		name := strings.Trim(strings.ReplaceAll(strings.ToLower(mcHostRe.FindStringSubmatch(k)[1]), "_", "-"), "-")
+		u, err := url.Parse(env[k])
+		if err != nil || u.User == nil || u.Host == "" || !sources.NameRe.MatchString(name) {
+			im.skip_("data source s3/%s: %s is not https://<access key>:<secret key>@<host>", name, k)
+			continue
+		}
+		secretKey, _ := u.User.Password()
+		if err := im.source(sources.Entry{Type: "s3", Name: name, Env: "shared", URL: u.Scheme + "://" + u.Host, Purpose: "backups",
+			Username: u.User.Username()}, secretKey, im.envSrc[k]); err != nil {
 			return err
 		}
 	}
@@ -842,8 +888,17 @@ func (im *importer) otherDBs(ctx context.Context) error {
 			continue
 		}
 		if name == "googlebot.db" && im.gbot {
-			if err := im.copyDB(ctx, p, filepath.Join(im.c.StateDir, name), "crawler log database"); err != nil {
+			to := im.c.Values["ARGUS_GOOGLEBOT_DB"].Raw
+			if to == "" {
+				to = filepath.Join(im.c.StateDir, name)
+			}
+			if err := im.copyDB(ctx, p, to, "crawler log database"); err != nil {
 				return err
+			}
+			if !im.dry { // adopt it into the module's schema now (gw_errors is new), as the job would at its first run
+				if _, err := migrate.ApplyFile(ctx, to, migrate.Googlebot); err != nil {
+					return fmt.Errorf("crawler log database: migrate: %w", err)
+				}
 			}
 			continue
 		}
