@@ -1,10 +1,11 @@
 package main
 
-// ideas.go: argus ideas (the decision side of Ideas): apply applies the Ideas review's requests (explore, accept
-// with the build prompt, reject, built) and rewrites ideas-status.json; status only rewrites the status file. In the
-// volume layout the worker runs apply within seconds of a request and status every hour.
+// ideas.go: argus ideas: apply applies the Ideas review's requests (explore, accept with the build prompt, reject,
+// built) and rewrites ideas-status.json; status only rewrites the status file; run is one adviser's model run. In
+// the volume layout the worker runs apply within seconds of a request, status every hour and run (auto) every hour.
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -14,16 +15,23 @@ import (
 	"github.com/sinaneysi/argus/internal/collect"
 	"github.com/sinaneysi/argus/internal/config"
 	"github.com/sinaneysi/argus/internal/ideas"
+	"github.com/sinaneysi/argus/internal/model"
 )
 
 const ideasHelp = `usage: argus ideas apply [-file PATH]
        argus ideas status [-file PATH]
+       argus ideas run [-file PATH] [-adviser auto|KEY]
 
 apply   apply the Ideas review's requests (ARGUS_SETTINGS_IN/idea-actions: explore, accept, reject, built); an
         accepted idea gets its build prompt (template ARGUS_ETC_DIR/ideas-build.md, else the built-in one); then
         rewrite ideas-status.json next to ARGUS_DB.
 status  rewrite ideas-status.json only (the switch FEATURE_IDEAS, the advisers of ARGUS_ETC_DIR/ideas.json and
         IDEAS_SCHEDULE, their last runs, the IDEAS_* caps).
+run     one adviser's model run: auto (the default) runs the adviser whose weekly slot is due, if any; a key
+        (devops, qa, noc) is "Generate now" (once a day per adviser). The adviser reads a read-only workspace of
+        facts (ideas-work next to ARGUS_DB) through the model runtime (ARGUS_MODEL_PROVIDER); the JSON answer is
+        validated, deduplicated against earlier ideas and stored. Files in ARGUS_ETC_DIR (built-in defaults):
+        ideas-run.md, ideas-agents/<agent>.md, ideas-features.md, ideas-job-model.md (optional).
 `
 
 func runIdeas(args []string, stdout, stderr io.Writer) int {
@@ -42,10 +50,11 @@ func runIdeas(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("ideas "+cmd, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	file := fs.String("file", "", "configuration file (default: ARGUS_CONFIG, else "+config.DefaultFile+")")
+	adviser := fs.String("adviser", "auto", "run: auto, or the adviser's key")
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
-	if (cmd != "apply" && cmd != "status") || fs.NArg() != 0 {
+	if (cmd != "apply" && cmd != "status" && cmd != "run") || fs.NArg() != 0 {
 		fmt.Fprint(stderr, ideasHelp)
 		return 2
 	}
@@ -56,6 +65,15 @@ func runIdeas(args []string, stdout, stderr io.Writer) int {
 	if c.DemoMode {
 		fmt.Fprintln(stderr, "argus ideas: disabled in the demo (DEMO_MODE=1): nothing was changed")
 		return 1
+	}
+	if cmd == "run" {
+		out, err := ideasModelRun(context.Background(), c, *adviser)
+		if err != nil {
+			fmt.Fprintln(stderr, "argus ideas run:", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, out)
+		return 0
 	}
 	out, err := ideasRun(c, cmd)
 	if err != nil {
@@ -89,4 +107,16 @@ func ideasRun(c *config.Config, cmd string) (string, error) {
 	}
 	n, err := o.Apply(db)
 	return fmt.Sprintf("ideas: %d request(s) applied", n), err
+}
+
+// ideasModelRun is one adviser run (target auto or an adviser's key).
+func ideasModelRun(ctx context.Context, c *config.Config, target string) (string, error) {
+	db, err := openOpsDB(c)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	o := ideasOptions(c)
+	f := ideas.RunFiles{EtcDir: c.Values["ARGUS_ETC_DIR"].Raw, BoardDB: c.BoardDB}
+	return o.Run(ctx, db, model.New(modelOptions(c, db)), f, target)
 }
