@@ -8,6 +8,7 @@ file is how Argus implements it, and where the two disagree, this file wins.
 
 | file | what |
 |---|---|
+| [`BRAND.md`](BRAND.md) | the brand book: name, mark usage, colour roles, type, voice and tone, product imagery |
 | [`tokens.css`](tokens.css) | every token as a CSS custom property: colour pairs (`light-dark()`), type, space, density, shape, motion |
 | [`scripts/contrast.mjs`](scripts/contrast.mjs) | the contrast gate: every documented pair in both themes (`node packages/design/scripts/contrast.mjs`) |
 | [`brand/`](brand/) | the mark: `mark.svg` (light), `mark-dark.svg` (dark), `mark-512.png` |
