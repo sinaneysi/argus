@@ -83,6 +83,9 @@ func volumeJobs(c *config.Config, every map[string]time.Duration, stderr io.Writ
 	jobs = append(jobs, worker.Job{Name: "board-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "board-requests"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
+	jobs = append(jobs, worker.Job{Name: "jira-connect-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "jira-connect"), func() error {
+		return boardSyncJob(context.Background(), c)
+	})})
 	jobs = append(jobs, worker.Job{Name: "gitlab-issues-requests", Every: applyEvery, Run: pendingJob(filepath.Join(c.SettingsIn, "gitlab-issues"), func() error {
 		return boardSyncJob(context.Background(), c)
 	})})
